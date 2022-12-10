@@ -1,10 +1,139 @@
 
 const fs = require('fs');
 require('dotenv').config();
-const APIKEY = process.env.AYRSHARE_API_KEY;
 
+const APIKEY = process.env.AYRSHARE_API_KEY;
+const defBody = "#Ayrshare feed";
+
+const appTitle = 'Ayrshare feed';
 const feedPath = './feed';
-const defDescription = process.env.DEF_DESCRIPTION;
+const postFile = 'post.json';
+
+var prompt = require('prompt');
+prompt.start();
+
+class Post {
+
+    static nextPostDate = new Date();
+    static postDateInterval = 7; // days
+    static platforms = {
+        video: ["facebook", "instagram", "youtube"],
+        image: ["twitter", "facebook", "instagram"],
+        text: ["twitter", "facebook"]
+    };
+    id = "";
+    path = "";
+    body = "";
+    images = [];
+    videos = [];
+    platforms = [];
+    scheduled = null;
+    posted= null;
+    result = {};
+
+    constructor(postPath) {
+        this.path=postPath;
+        const files = getFiles(this.path);
+        if (files.includes(postFile)) {
+            const data = JSON.parse(fs.readFileSync(this.path+'/'+postFile));
+            if (data) {
+                this.id = data?.id;
+                this.scheduled= data?.scheduled?new Date(data.scheduled):null;
+                this.posted = data?.posted?new Date(data.posted):null;
+                this.result = data?.result;
+            }
+        }
+        try {
+            this.body = fs.readFileSync(postDir+'/body.txt'); 
+        } catch (e) {
+            this.body = defBody;
+        }
+        this.images = files.filter(file=>["jpg","jpeg","png"].includes(file.split('.').pop()));
+        this.videos = files.filter(file=>["mp4"].includes(file.split('.').pop()));
+        
+
+        this.write();
+    }
+    write() {
+        fs.writeFileSync(this.path+'/'+postFile,this.getData());
+    }
+    getData() {
+        return JSON.stringify({
+            id : this.id,
+            path : this.path,
+            body : this.body,
+            images : this.images,
+            videos : this.videos,
+            platforms : this.platforms,
+            scheduled : this.scheduled,
+            posted : this.posted,
+            result : this.result
+        },null, "\t");
+    }
+
+    async handle() {
+        if (!this.scheduled) {
+            await this.schedule();
+            console.log('* scheduling post '+this.path+' at '+this.scheduled);
+        } else {
+            console.log('- post '+this.path+' scheduled at '+this.scheduled);
+        }
+    }
+
+    async  schedule() {
+        this.scheduled = Post.nextPostDate;
+        if (this.images.length) {
+            await this.scheduleImagePost();
+        } else if (this.videos.length) {
+            await this.scheduleVideoPost();
+        } else {
+            await this.scheduleTextPost();
+        }
+        this.write();
+        Post.nextPostDate.setDate(Post.nextPostDate.getDate()+Post.postDateInterval);
+    }
+    
+    async scheduleTextPost() {
+        this.platforms = Post.platforms['text'];
+        this.result = await this.scheduleAyrShare([]);
+    }
+    async scheduleImagePost() {
+        this.platforms = Post.platforms['image'];
+        const media = this.images; // ... 
+        this.result = await this.scheduleAyrShare(media);
+    }
+    async scheduleVideoPost() {
+        this.platforms = Post.platforms['video'];
+        const media = this.video; // ... 
+        this.result = await this.scheduleAyrShare(media);
+    }
+
+    async scheduleAyrShare(media) {
+        return ['ok'];
+        const res = await fetch("https://app.ayrshare.com/api/post", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${APIKEY}`
+          },
+          body: JSON.stringify(media.length?{
+            post: this.body, // required
+            platforms: this.platforms, // required
+            mediaUrls: this.media, //optional
+            scheduleDate: this.scheduled
+          }:{
+            post: this.body, // required
+            platforms: this.platforms, // required
+            scheduleDate: this.scheduled
+          }),
+        }).catch(console.error);
+        return res.json();
+    }
+
+}
+
+
+
 
 function getDirectories(path) {
     return fs.readdirSync(path).filter(function (file) {
@@ -17,83 +146,28 @@ function getFiles(path) {
     });
 }
 
-async function handlePostDir(postDir) {
-    console.log('handling '+postDir+' ..');
-    const files = getFiles(postDir);
-    if (files.includes('.scheduled')) {
-        const date = fs.readFileSync(postDir+'/.scheduled');
-        console.log('Already scheduled on '+date);  
-        console.log();  
-        return;
-    }
-    const body = fs.readFileSync(postDir+'/description.txt');
-    // catch error
-    const imageFiles = files.filter(file=>["jpg","jpeg","png"].includes(file.split('.').pop()));
-    const videoFiles = files.filter(file=>["mp4"].includes(file.split('.').pop()));
-    let success =false, posted=false;
-    if (imageFiles.length) {
-        const res = await createImagePost(postDir,body,imageFiles.map(file=>postDir+'/'+file));
-        success = true; // check
-        posted = true; // write stamp
-    }
-    if (videoFiles.length) {
-        const res = await createVideoPost(postDir,body,videoFiles.map(file=>postDir+'/'+file));
-        success = true; // check
-        posted = true; // write stamp
-    }
-    if (!posted) {
-        const res = await createTextPost(postDir,body);
-        success = true; // check
-        posted = true; // write stamp
-    }
-    console.log();
-}
 
-
-async function createTextPost(body) {
-    return await createPost(body,[],["twitter", "facebook"])
-
-}
-
-async function createImagePost(body,files) {
-    return await createPost(body,[],["twitter", "facebook", "instagram"])
-
-}
-
-async function createVideoPost(body,files) {
-    return await createPost(body,[],["facebook", "instagram", "youtube"])
-}
-
-async function createPost(body,media,platforms) {
-    const res = await fetch("https://app.ayrshare.com/api/post", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${APIKEY}`
-      },
-      body: JSON.stringify(media.length?{
-        post: body, // required
-        platforms: platforms, // required
-        mediaUrls: media, //optional
-        scheduleDate: date
-      }:{
-        post: body, // required
-        platforms: platforms, // required
-        scheduleDate: date
-      }),
-    }).catch(console.error);
-    return res.json();
-}
 
 /* main */
+async function main() {
+    console.log(appTitle+' starting .. ');
+    console.log();
 
-console.log('Ayrshare-feed starting .. ');
-console.log();
+    if (!fs.existsSync(feedPath)) {
+        fs.mkdirSync(feedPath);
+    }
 
-if (!fs.existsSync(feedPath)) {
-    fs.mkdirSync(feedPath);
+    Post.nextPostDate = new Date('2023-01-01');
+    const posts = [];
+    getDirectories(feedPath).forEach(postDir=> {
+        posts.push(new Post(feedPath+'/'+postDir));
+    });
+    for (const post of posts) {
+        await post.handle();
+    }
+
+    console.log();
+    console.log('All done.');
 }
 
-getDirectories(feedPath).forEach(postDir=> {
-    handlePostDir(feedPath+'/'+postDir);
-});
+main();
