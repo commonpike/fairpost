@@ -81,7 +81,7 @@ class Post {
     }
 
     async  schedule() {
-        this.scheduled = Post.nextPostDate;
+        this.scheduled = new Date(Post.nextPostDate);
         if (this.images.length) {
             await this.scheduleImagePost();
         } else if (this.videos.length) {
@@ -157,11 +157,20 @@ async function main() {
         fs.mkdirSync(feedPath);
     }
 
-    Post.nextPostDate = new Date('2023-01-01');
+    
+    let lastPostDate = new Date('2023-01-01');
     const posts = [];
     getDirectories(feedPath).forEach(postDir=> {
-        posts.push(new Post(feedPath+'/'+postDir));
+        const post = new Post(feedPath+'/'+postDir);
+        posts.push(post);
+        if (post.scheduled && post.scheduled>lastPostDate) {
+            //console.log(post.scheduled,lastPostDate);
+            lastPostDate = new Date(post.scheduled);
+        }
     });
+    Post.nextPostDate = new Date(lastPostDate);
+    Post.nextPostDate.setDate(Post.nextPostDate.getDate()+Post.postDateInterval);
+    //console.log(Post.nextPostDate,lastPostDate);
     for (const post of posts) {
         await post.handle();
     }
