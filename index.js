@@ -1,11 +1,14 @@
 
 const fs = require('fs');
+const path = require('path');
+const { randomUUID } = require('crypto');
+
 require('dotenv').config();
 const fetch = require('node-fetch');
 
 const APIKEY = process.env.AYRSHARE_API_KEY;
 
-const appTitle = 'Ayrshare feed';
+// TBD move to env
 const feedPath = './feed';
 
 
@@ -14,6 +17,7 @@ var prompt = require('prompt');
 prompt.start();
 
 // TBD move to class
+const appTitle = 'Ayrshare feed';
 const defBody = "#Ayrshare feed";
 const postFile = 'post.json';
 
@@ -56,6 +60,7 @@ class Post {
         } catch (e) {
             this.body = defBody;
         }
+        // TBD this.title
         this.images = files.filter(file=>["jpg","jpeg","png"].includes(file.split('.').pop()));
         this.videos = files.filter(file=>["mp4"].includes(file.split('.').pop()));
         // TBD throw errors for mixed types
@@ -124,7 +129,13 @@ class Post {
     async scheduleImagePost() {
         this.platforms = Post.platforms['image'];
         const media = await this.uploadMedia(this.images); 
-        this.result = await this.scheduleAyrShare(media);
+        if (media.length>4 && this.platforms.includes('twitter')) {
+            this.result = [];
+            this.result.push(await this.scheduleAyrShare(media,this.platforms.filter(p=>p!=='twitter')));
+            this.result.push(await this.scheduleAyrShare(media.slice(0, 4),'twitter'));
+        } else {
+            this.result = await this.scheduleAyrShare(media);
+        }
         this.id = this.result.id;
     }
     async scheduleVideoPost() {
@@ -138,8 +149,10 @@ class Post {
         const urls= [];
         for (const file of media) {
             const buffer = fs.readFileSync(this.path+'/'+file); 
-            const ext = file.split('.').pop();
-            const res1 = await fetch("https://app.ayrshare.com/api/media/uploadUrl?fileName="+file+"&contentType="+ext, {
+            const ext = path.extname(file);
+            const basename = path.basename(file, ext);
+            const uname = basename+'-'+randomUUID()+ext;
+            const res1 = await fetch("https://app.ayrshare.com/api/media/uploadUrl?fileName="+uname+"&contentType="+ext.substring(1), {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${APIKEY}`
@@ -148,6 +161,7 @@ class Post {
             .catch(console.error);
             const data = await res1.json();
             console.log(data);
+            console.log('uploading..',uname);
             const uploadUrl = data.uploadUrl;
             const contentType = data.contentType;
             const accessUrl = data.accessUrl;
@@ -168,11 +182,15 @@ class Post {
         return urls;
     }
 
-    async scheduleAyrShare(media) {
+    async scheduleAyrShare(media,platforms=[]) {
         if (Post.testing) {
             return ['testing'];
         }
+        if (!platforms.length) {
+            platforms = this.platforms;
+        }
 
+        // todo in constructor
         const title = this.body.split('\n', 1)[0];
         const res = await fetch("https://app.ayrshare.com/api/post", {
           method: "POST",
@@ -182,7 +200,7 @@ class Post {
           },
           body: JSON.stringify(media.length?{
             post: this.body, // required
-            platforms: this.platforms, // required
+            platforms: platforms, // required
             mediaUrls: media, 
             scheduleDate: this.scheduled,
             requiresApproval: Post.requiresApproval,
@@ -190,6 +208,9 @@ class Post {
             youTubeOptions: {
                 title: title, // required max 100
                 visibility: "public" // optional def private
+            }, 
+            instagramOptions: {
+                // "autoResize": true -- only enterprise plans
             }
           }:{
             post: this.body, // required
@@ -229,7 +250,8 @@ async function main() {
     }
 
     
-    let lastPostDate = new Date('2022-12-04');
+    
+    let lastPostDate = new Date();
     const posts = [];
     getDirectories(feedPath).forEach(postDir=> {
         const post = new Post(feedPath+'/'+postDir);
@@ -239,8 +261,14 @@ async function main() {
             lastPostDate = new Date(post.scheduled);
         }
     });
-    Post.nextPostDate = new Date(lastPostDate);
-    Post.nextPostDate.setDate(Post.nextPostDate.getDate()+Post.postDateInterval);
+
+    const today = new Date();
+    if (lastPostDate<today) {
+        Post.nextPostDate = today;
+    } else {
+        Post.nextPostDate = new Date(lastPostDate);
+        Post.nextPostDate.setDate(Post.nextPostDate.getDate()+Post.postDateInterval);
+    }
     //console.log(Post.nextPostDate,lastPostDate);
     for (const post of posts) {
         await post.handle();
