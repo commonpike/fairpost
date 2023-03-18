@@ -1,6 +1,20 @@
 
+/*
+    Usage
+    node index.js --feed=path-to-dir --date=2023-03-18
+
+    reads folders in dir `path-to-dir`
+    creates Post object foreach folder
+    determines post.type (text,images,video)
+    if not scheduled yet, schedules it
+    writes result in post.json in that dir
+
+*/
+
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
+
 const { randomUUID } = require('crypto');
 
 require('dotenv').config();
@@ -8,23 +22,21 @@ const fetch = require('node-fetch');
 
 const APIKEY = process.env.AYRSHARE_API_KEY;
 
-// TBD move to env
-const feedPath = './feed';
 
 
-
-var prompt = require('prompt');
-prompt.start();
-
-// TBD move to class
+const feedPath = argv('feed') ?? process.env.AYRSHARE_FEEDPATH;
+const nextPostDate = argv('date')?new Date(argv('date')):null;
+const dryRun = argv('dry-run') ?? false;
 const appTitle = 'Ayrshare feed';
-const defBody = "#Ayrshare feed";
-const postFile = 'post.json';
+
 
 class Post {
 
+    static defBody = "#Ayrshare feed";
+    static postFile = 'post.json';
+
     static nextPostDate = new Date();
-    static postDateInterval = 7; // days
+    static postDateInterval = Number(process.env.AYRSHARE_INTERVAL); 
     static testing = false;
     static requiresApproval = false;
     static platforms = {
@@ -46,8 +58,8 @@ class Post {
     constructor(postPath) {
         this.path=postPath;
         const files = getFiles(this.path);
-        if (files.includes(postFile)) {
-            const data = JSON.parse(fs.readFileSync(this.path+'/'+postFile));
+        if (files.includes(Post.postFile)) {
+            const data = JSON.parse(fs.readFileSync(this.path+'/'+Post.postFile));
             if (data) {
                 this.id = data?.id;
                 this.scheduled= data?.scheduled?new Date(data.scheduled):null;
@@ -58,7 +70,7 @@ class Post {
         try {
             this.body = fs.readFileSync(this.path+'/body.txt','utf8'); 
         } catch (e) {
-            this.body = defBody;
+            this.body = Post.defBody;
         }
         // TBD this.title
         this.images = files.filter(file=>["jpg","jpeg","png"].includes(file.split('.').pop()));
@@ -75,7 +87,11 @@ class Post {
         this.write();
     }
     write() {
-        fs.writeFileSync(this.path+'/'+postFile,this.getData());
+        if (!Post.testing) {
+            fs.writeFileSync(this.path+'/'+Post.postFile,this.getData());
+        } else if (!this.posted) {
+            //console.log('result:',this.getData());
+        }
     }
     getData() {
         return JSON.stringify({
@@ -123,25 +139,46 @@ class Post {
     
     async scheduleTextPost() {
         this.platforms = Post.platforms['text'];
-        this.result = await this.scheduleAyrShare([]);
+        this.result = await this.scheduleAyrShare([],this.platforms);
         this.id = this.result.id;
     }
     async scheduleImagePost() {
         this.platforms = Post.platforms['image'];
+        this.result = [];
+        let platforms = this.platforms;
+        if (this.platforms.includes('instagram')) {
+            const originalImages = this.images;
+            const resizedImages = [];
+            let haveResized=false;
+            for (const image of originalImages) {
+                const metadata = await sharp(this.path+'/'+image).metadata();
+                if (metadata.width > 1440) {
+                    console.log('Resizing '+image+' for instagram ..');
+                    await sharp(this.path+'/'+image).resize({ width: 1440 }).toFile(this.path+'/_instagram-'+image);
+                    resizedImages.push('_instagram-'+image);
+                    haveResized=true;
+                } else {
+                    resizedImages.push(image);
+                }
+            }
+            if (haveResized) {
+                const media = await this.uploadMedia(resizedImages); 
+                this.result.push(await this.scheduleAyrShare(media,'instagram'));
+                platforms = platforms.filter(p=>p!=='instagram');
+            }
+        }
         const media = await this.uploadMedia(this.images); 
         if (media.length>4 && this.platforms.includes('twitter')) {
-            this.result = [];
-            this.result.push(await this.scheduleAyrShare(media,this.platforms.filter(p=>p!=='twitter')));
             this.result.push(await this.scheduleAyrShare(media.slice(0, 4),'twitter'));
-        } else {
-            this.result = await this.scheduleAyrShare(media);
-        }
-        this.id = this.result.id;
+            platforms = platforms.filter(p=>p!=='twitter');
+        } 
+        this.result.push(await this.scheduleAyrShare(media,platforms));
+        this.id = this.result[0].id;
     }
     async scheduleVideoPost() {
         this.platforms = Post.platforms['video'];
         const media = await this.uploadMedia(this.videos); 
-        this.result = await this.scheduleAyrShare(media);
+        this.result = await this.scheduleAyrShare(media,this.platforms);
         this.id = this.result.id;
     }
 
@@ -160,7 +197,7 @@ class Post {
             })
             .catch(console.error);
             const data = await res1.json();
-            console.log(data);
+            //console.log(data);
             console.log('uploading..',uname);
             const uploadUrl = data.uploadUrl;
             const contentType = data.contentType;
@@ -175,8 +212,8 @@ class Post {
                 body: buffer,
             })
             .catch(console.error);
-            console.log(res2);
-            urls.push(accessUrl);
+            //console.log(res2);
+            urls.push(accessUrl.replace(/ /g, '%20'));
 
         }
         return urls;
@@ -187,7 +224,7 @@ class Post {
             return ['testing'];
         }
         if (!platforms.length) {
-            platforms = this.platforms;
+            return ['no platforms'];
         }
 
         // todo in constructor
@@ -219,22 +256,33 @@ class Post {
             requiresApproval: Post.requiresApproval
           }),
         }).catch(console.error);
-        return res.json();
+        const result = res.json();
+        if (result['status']==='error') {
+            console.error(result);
+        } else {
+            this.posted = new Date();
+        }
+        return result;
     }
 
 }
 
 
-
+function argv(key) {
+    if ( process.argv.includes( `--${ key }` ) ) return true;
+    const value = process.argv.find( element => element.startsWith( `--${ key }=` ) );
+    if ( !value ) return null;
+    return value.replace( `--${ key }=` , '' );
+}
 
 function getDirectories(path) {
     return fs.readdirSync(path).filter(function (file) {
-        return fs.statSync(path+'/'+file).isDirectory();
+        return !file.startsWith('_') && fs.statSync(path+'/'+file).isDirectory();
     });
 }
 function getFiles(path) {
     return fs.readdirSync(path).filter(function (file) {
-        return fs.statSync(path+'/'+file).isFile();
+        return !file.startsWith('_') && fs.statSync(path+'/'+file).isFile();
     });
 }
 
@@ -242,15 +290,15 @@ function getFiles(path) {
 
 /* main */
 async function main() {
-    console.log(appTitle+' starting .. ');
+
+    Post.testing = Post.testing || dryRun;
+    console.log(appTitle+' starting .. ',Post.testing?'dry-run':'');
     console.log();
 
     if (!fs.existsSync(feedPath)) {
         fs.mkdirSync(feedPath);
     }
 
-    
-    
     let lastPostDate = new Date();
     const posts = [];
     getDirectories(feedPath).forEach(postDir=> {
@@ -263,7 +311,9 @@ async function main() {
     });
 
     const today = new Date();
-    if (lastPostDate<today) {
+    if (nextPostDate) {
+        Post.nextPostDate = nextPostDate;
+    } else if (lastPostDate<today) {
         Post.nextPostDate = today;
     } else {
         Post.nextPostDate = new Date(lastPostDate);
@@ -275,7 +325,7 @@ async function main() {
     }
 
     console.log();
-    console.log('All done.');
+    console.log('All done',Post.testing?' (dry-run).':'.');
 }
 
 main();
