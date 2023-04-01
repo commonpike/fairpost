@@ -1,7 +1,7 @@
 
 /*
     Usage
-    node index.js --feed=path-to-dir --date=2023-03-18
+    node index.js [--feed=path-to-dir] [--date=2023-03-18] [--dry-run]
 
     reads folders in dir `path-to-dir`
     creates Post object foreach folder
@@ -25,7 +25,7 @@ const APIKEY = process.env.AYRSHARE_API_KEY;
 
 
 const feedPath = argv('feed') ?? process.env.AYRSHARE_FEEDPATH;
-const nextPostDate = argv('date')?new Date(argv('date')):null;
+let nextPostDate = argv('date')?new Date(argv('date')):null;
 const dryRun = argv('dry-run') ?? false;
 const appTitle = 'Ayrshare feed';
 
@@ -299,7 +299,7 @@ async function main() {
         fs.mkdirSync(feedPath);
     }
 
-    let lastPostDate = new Date();
+    let lastPostDate = new Date('1970-01-01');
     const posts = [];
     getDirectories(feedPath).forEach(postDir=> {
         const post = new Post(feedPath+'/'+postDir);
@@ -312,14 +312,19 @@ async function main() {
 
     const today = new Date();
     if (nextPostDate) {
+        // post date was given on command line
         Post.nextPostDate = nextPostDate;
-    } else if (lastPostDate<today) {
-        Post.nextPostDate = today;
     } else {
-        Post.nextPostDate = new Date(lastPostDate);
-        Post.nextPostDate.setDate(Post.nextPostDate.getDate()+Post.postDateInterval);
+        nextPostDate = new Date(lastPostDate);
+        nextPostDate.setDate(nextPostDate.getDate()+Post.postDateInterval);
+        if (nextPostDate<today) {
+            Post.nextPostDate = today;
+        } else {
+            Post.nextPostDate = nextPostDate;
+        }
     }
-    //console.log(Post.nextPostDate,lastPostDate);
+    console.log('Last post date',lastPostDate);
+    console.log('Next post date',Post.nextPostDate);
     for (const post of posts) {
         await post.handle();
     }
