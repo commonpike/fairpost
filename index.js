@@ -1,208 +1,262 @@
-
+"use strict";
 /*
     Usage
-    node index.js [--feed=path-to-dir] [--date=2023-03-18] [--dry-run]
+    node index.js
+        --dry-run
+        --debug
+        --platforms=x[,y,..]|all
+        --date=yyyy-mm-dd|now
+        --posts=dir1[,dir2,..]
+        --max=x
+        --interval=7
+        --types=[text,images,video]|auto
 
-    reads folders in dir `path-to-dir`
-    creates Post object foreach folder
-    determines post.type (text,images,video)
-    if not scheduled yet, schedules it
+    creates up to `max` posts for each folder
+    given in `posts` or in the .env feed dir
+
+    for each, determines post.type (text,images,video)
+    and if these match the requested type, processes them:
+
+    for each platform in requested platforms and
+    supported platforms for the given type, if the
+    post is not yet scheduled, schedules it
+
     writes result in post.json in that dir
 
 */
-
-const fs = require('fs');
-const path = require('path');
-const sharp = require('sharp');
-
-const { randomUUID } = require('crypto');
-
-require('dotenv').config();
-const fetch = require('node-fetch');
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs = require("fs");
+const path = require("path");
+const sharp = require("sharp");
+const crypto_1 = require("crypto");
+const dotenv = require("dotenv");
+dotenv.config();
+// constants
+const APP_TITLE = 'Ayrshare feed';
 const APIKEY = process.env.AYRSHARE_API_KEY;
-
-
-
-const feedPath = argv('feed') ?? process.env.AYRSHARE_FEEDPATH;
-let nextPostDate = argv('date')?new Date(argv('date')):null;
-const dryRun = argv('dry-run') ?? false;
-const appTitle = 'Ayrshare feed';
-
-
+const FEED_PATH = process.env.AYRSHARE_FEEDPATH;
+const SUPPORTED_PLATFORMS = process.env.AYRSHARE_PLATFORMS?.split(',') ?? [];
+const REDDIT_SUBREDDIT = process.env.AYRSHARE_SUBREDDIT;
+// arguments
+const DRY_RUN = !!getArgument('dry-run') ?? false;
+const DEBUG = !!getArgument('debug') ?? false;
+const REQUESTED_PLATFORMS = getArgument('platforms')?.split(',') ?? SUPPORTED_PLATFORMS;
+const POST_DIRS = getArgument('posts')?.split(',') ?? [];
+const POST_MAX = getArgument('max') ? Number(getArgument('max')) : 0;
+const FIRST_POSTDATE = getArgument('date') ? new Date(getArgument('date')) : null;
+const POSTDATE_INTERVAL = getArgument('interval') ? Number(getArgument('interval')) : Number(process.env.AYRSHARE_INTERVAL);
+const REQUESTED_TYPES = getArgument('types')?.split(',') ?? ['text', 'image', 'video'];
+// Classes
 class Post {
-
     static defBody = "#Ayrshare feed";
     static postFile = 'post.json';
-
-    static nextPostDate = new Date();
-    static postDateInterval = Number(process.env.AYRSHARE_INTERVAL); 
-    static testing = false;
     static requiresApproval = false;
-    static platforms = {
-        video: ["facebook", "youtube","instagram"],
-        image: ["twitter", "facebook", "instagram"],
-        text: ["twitter", "facebook"]
+    static dryRun = DRY_RUN;
+    static debug = DEBUG;
+    static supported = SUPPORTED_PLATFORMS;
+    static postDateInterval = POSTDATE_INTERVAL;
+    static nextPostDate = new Date();
+    static type2platforms = {
+        video: ["facebook", "youtube", "instagram", "linkedin", "tiktok"],
+        image: ["twitter", "facebook", "instagram", "linkedin", "reddit"],
+        text: ["twitter", "facebook", "linkedin", "reddit"]
     };
-    id = "";
-    path = "";
-    body = "";
-    type= "";
-    images = [];
-    videos = [];
-    platforms = [];
-    scheduled = null;
-    posted= null;
-    result = {};
-
-    constructor(postPath) {
-        this.path=postPath;
-        const files = getFiles(this.path);
+    path = '';
+    data = undefined || undefined;
+    constructor(path) {
+        this.path = path;
+        const files = this.getFiles();
         if (files.includes(Post.postFile)) {
-            const data = JSON.parse(fs.readFileSync(this.path+'/'+Post.postFile));
+            const data = JSON.parse(fs.readFileSync(this.path + '/' + Post.postFile, 'utf8'));
             if (data) {
-                this.id = data?.id;
-                this.scheduled= data?.scheduled?new Date(data.scheduled):null;
-                this.posted = data?.posted?new Date(data.posted):null;
-                this.result = data?.result;
+                this.data = data;
+                this.data.scheduled = data?.scheduled ? new Date(data.scheduled) : undefined;
+                this.data.posted = data?.posted ? new Date(data.posted) : undefined;
             }
         }
+        if (!this.data) {
+            this.data = {
+                type: 'text',
+                platforms: [],
+                title: '',
+                body: '#Ayrshare feed',
+                images: [],
+                videos: [],
+                media: {},
+                scheduled: undefined,
+                posted: undefined,
+                pending: true,
+                results: {}
+            };
+        }
+        if (!this.data.media) {
+            this.data.media = {};
+        }
         try {
-            this.body = fs.readFileSync(this.path+'/body.txt','utf8'); 
-        } catch (e) {
-            this.body = Post.defBody;
+            this.data.body = fs.readFileSync(path + '/body.txt', 'utf8');
         }
-        // TBD this.title
-        this.images = files.filter(file=>["jpg","jpeg","png"].includes(file.split('.').pop()));
-        this.videos = files.filter(file=>["mp4"].includes(file.split('.').pop()));
+        catch (e) {
+            this.data.body = Post.defBody;
+        }
+        this.data.title = this.data.body.split('\n', 1)[0];
+        // TBD config extensions
+        this.data.images = files.filter(file => ["jpg", "jpeg", "png"].includes(file.split('.')?.pop() ?? ''));
+        this.data.videos = files.filter(file => ["mp4"].includes(file.split('.')?.pop() ?? ''));
         // TBD throw errors for mixed types
-        if (this.images.length) {
-            this.type="image";
-        } else if (this.videos.length) {
-            this.type="video";
-        } else {
-            this.type="text";
+        if (this.data.images.length) {
+            this.data.type = "image";
         }
-
+        else if (this.data.videos.length) {
+            this.data.type = "video";
+        }
+        else {
+            this.data.type = "text";
+        }
+        this.data.platforms = Post.type2platforms[this.data.type]
+            .filter(platform => Post.supported.includes(platform));
         this.write();
     }
     write() {
-        if (!Post.testing) {
-            fs.writeFileSync(this.path+'/'+Post.postFile,this.getData());
-        } else if (!this.posted) {
-            //console.log('result:',this.getData());
+        if (Post.debug) {
+            console.log(this.getJson());
+        }
+        if (!Post.dryRun) {
+            fs.writeFileSync(this.path + '/' + Post.postFile, this.getJson());
         }
     }
-    getData() {
-        return JSON.stringify({
-            id : this.id,
-            path : this.path,
-            type: this.type,
-            body : this.body,
-            images : this.images,
-            videos : this.videos,
-            platforms : this.platforms,
-            scheduled : this.scheduled,
-            posted : this.posted,
-            result : this.result
-        },null, "\t");
+    getJson() {
+        return JSON.stringify(this.data, null, "\t");
     }
-
-    async handle() {
-        if (!this.scheduled) {
-            await this.schedule();
-            console.log('* scheduling post '+this.path+' at '+this.scheduled);
-        } else {
-            console.log('- post '+this.path+' scheduled at '+this.scheduled);
+    getFiles() {
+        return fs.readdirSync(this.path).filter(file => {
+            return !file.startsWith('_') && fs.statSync(this.path + '/' + file).isFile();
+        });
+    }
+    async process(requestedPlatforms) {
+        const processedPlatforms = Object.values(this.data.results)
+            .filter(r => r.status === 'success').flatMap(r => r.platforms);
+        const pendingPlatforms = this.data.platforms
+            .filter(platform => !processedPlatforms.includes(platform));
+        const processPlatforms = requestedPlatforms ?
+            pendingPlatforms.filter(platform => requestedPlatforms.includes(platform)) : pendingPlatforms;
+        if (processPlatforms.length) {
+            console.log('+ scheduling post ' + this.path, Post.nextPostDate, processPlatforms);
+            await this.schedule(processPlatforms);
+        }
+        else {
+            console.log('v post ' + this.path + ' already scheduled at ' + this.data.scheduled);
         }
     }
-
-    async  schedule() {
-        this.scheduled = new Date(Post.nextPostDate);
-        switch (this.type) {
+    async schedule(platforms) {
+        this.data.scheduled = new Date(Post.nextPostDate);
+        switch (this.data.type) {
             case "image":
-                await this.scheduleImagePost();
+                await this.prepareImagePost(platforms);
                 break;
             case "video":
-                await this.scheduleVideoPost();
+                await this.prepareVideoPost(platforms);
                 break;
             default:
-                await this.scheduleTextPost();
+                await this.prepareTextPost(platforms);
         }
-        if (this.result.status!=='error') {
-            Post.nextPostDate.setDate(Post.nextPostDate.getDate()+Post.postDateInterval);
-        } else {
-            this.scheduled=null;
+        const results = await this.ayrshare(platforms);
+        if (Object.values(results).map(r => r.status).includes('success')) {
+            this.data.posted = new Date();
+            Post.nextPostDate.setDate(Post.nextPostDate.getDate() + Post.postDateInterval);
+        }
+        else {
+            this.data.posted = undefined;
+            this.data.scheduled = undefined;
+            if (Post.dryRun) {
+                Post.nextPostDate.setDate(Post.nextPostDate.getDate() + Post.postDateInterval);
+            }
+        }
+        if (Object.values(results).every(r => r.status === 'success')) {
+            this.data.pending = false;
+        }
+        for (const platform in results) {
+            this.data.results[platform] = results[platform];
         }
         this.write();
     }
-    
-    async scheduleTextPost() {
-        this.platforms = Post.platforms['text'];
-        this.result = await this.scheduleAyrShare([],this.platforms);
-        this.id = this.result.id;
+    async prepareTextPost(platforms) {
+        return;
     }
-    async scheduleImagePost() {
-        this.platforms = Post.platforms['image'];
-        this.result = [];
-        let platforms = this.platforms;
-        if (this.platforms.includes('instagram')) {
-            const originalImages = this.images;
+    async prepareVideoPost(platforms) {
+        const media = await this.uploadMedia(this.data.videos);
+        // linkedin: max 9 media
+        if (platforms.includes('linkedin') && media.length > 9) {
+            this.data.media['linkedin'] = media.slice(0, 9);
+        }
+        // reddit: max 1 media
+        if (platforms.includes('reddit') && media.length > 1) {
+            this.data.media['reddit'] = media.slice(0, 1);
+        }
+        // tiktok: max len 60s
+        // ... 
+        // rest
+        this.data.media['default'] = media;
+    }
+    async prepareImagePost(platforms) {
+        // insta: max 1440 wide
+        if (platforms.includes('instagram')) {
+            const originalImages = this.data.images;
             const resizedImages = [];
-            let haveResized=false;
+            let haveResized = false;
             for (const image of originalImages) {
-                const metadata = await sharp(this.path+'/'+image).metadata();
+                const metadata = await sharp(this.path + '/' + image).metadata();
                 if (metadata.width > 1440) {
-                    console.log('Resizing '+image+' for instagram ..');
-                    await sharp(this.path+'/'+image).resize({ width: 1440 }).toFile(this.path+'/_instagram-'+image);
-                    resizedImages.push('_instagram-'+image);
-                    haveResized=true;
-                } else {
+                    console.log('Resizing ' + image + ' for instagram ..');
+                    await sharp(this.path + '/' + image).resize({ width: 1440 }).toFile(this.path + '/_instagram-' + image);
+                    resizedImages.push('_instagram-' + image);
+                    haveResized = true;
+                }
+                else {
                     resizedImages.push(image);
                 }
             }
             if (haveResized) {
-                const media = await this.uploadMedia(resizedImages); 
-                this.result.push(await this.scheduleAyrShare(media,'instagram'));
-                platforms = platforms.filter(p=>p!=='instagram');
+                this.data.media['instagram'] = await this.uploadMedia(resizedImages);
             }
         }
-        const media = await this.uploadMedia(this.images); 
-        if (media.length>4 && this.platforms.includes('twitter')) {
-            this.result.push(await this.scheduleAyrShare(media.slice(0, 4),'twitter'));
-            platforms = platforms.filter(p=>p!=='twitter');
-        } 
-        this.result.push(await this.scheduleAyrShare(media,platforms));
-        this.id = this.result[0].id;
+        const media = await this.uploadMedia(this.data.images);
+        // twitter: max 4 media
+        if (platforms.includes('twitter') && media.length > 4) {
+            this.data.media['twitter'] = media.slice(0, 4);
+        }
+        // linkedin: max 9 media
+        if (platforms.includes('linkedin') && media.length > 9) {
+            this.data.media['linkedin'] = media.slice(0, 9);
+        }
+        // reddit: max 1 media
+        if (platforms.includes('reddit') && media.length > 1) {
+            this.data.media['reddit'] = media.slice(0, 1);
+        }
+        // rest
+        this.data.media['default'] = media;
     }
-    async scheduleVideoPost() {
-        this.platforms = Post.platforms['video'];
-        const media = await this.uploadMedia(this.videos); 
-        this.result = await this.scheduleAyrShare(media,this.platforms);
-        this.id = this.result.id;
-    }
-
     async uploadMedia(media) {
-        const urls= [];
+        const urls = [];
         for (const file of media) {
-            const buffer = fs.readFileSync(this.path+'/'+file); 
+            const buffer = fs.readFileSync(this.path + '/' + file);
             const ext = path.extname(file);
             const basename = path.basename(file, ext);
-            const uname = basename+'-'+randomUUID()+ext;
-            const res1 = await fetch("https://app.ayrshare.com/api/media/uploadUrl?fileName="+uname+"&contentType="+ext.substring(1), {
+            const uname = basename + '-' + (0, crypto_1.randomUUID)() + ext;
+            const res1 = await fetch("https://app.ayrshare.com/api/media/uploadUrl?fileName=" + uname + "&contentType=" + ext.substring(1), {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${APIKEY}`
                 }
-            })
-            .catch(console.error);
+            });
+            if (!res1) {
+                return [];
+            }
             const data = await res1.json();
             //console.log(data);
-            console.log('uploading..',uname);
+            console.log('uploading..', uname);
             const uploadUrl = data.uploadUrl;
             const contentType = data.contentType;
             const accessUrl = data.accessUrl;
-            
             const res2 = await fetch(uploadUrl, {
                 method: "PUT",
                 headers: {
@@ -210,127 +264,183 @@ class Post {
                     "Authorization": `Bearer ${APIKEY}`
                 },
                 body: buffer,
-            })
-            .catch(console.error);
-            //console.log(res2);
+            });
+            if (!res2) {
+                return [];
+            }
             urls.push(accessUrl.replace(/ /g, '%20'));
-
         }
         return urls;
     }
-
-    async scheduleAyrShare(media,platforms=[]) {
-        if (Post.testing) {
-            return ['testing'];
-        }
+    async ayrshare(platforms) {
         if (!platforms.length) {
-            return ['no platforms'];
+            return {};
         }
-
-        // todo in constructor
-        const title = this.body.split('\n', 1)[0];
-        const res = await fetch("https://app.ayrshare.com/api/post", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${APIKEY}`
-          },
-          body: JSON.stringify(media.length?{
-            post: this.body, // required
-            platforms: platforms, // required
-            mediaUrls: media, 
-            scheduleDate: this.scheduled,
-            requiresApproval: Post.requiresApproval,
-            isVideo: (this.type==='video'),
-            youTubeOptions: {
-                title: title, // required max 100
-                visibility: "public" // optional def private
-            }, 
-            instagramOptions: {
-                // "autoResize": true -- only enterprise plans
+        const result = {};
+        const mediaPlatforms = Object.keys(this.data.media);
+        for (const mediaPlatform in this.data.media) {
+            const media = this.data.media[mediaPlatform];
+            const postPlatforms = mediaPlatform === 'default' ?
+                platforms.filter(p => !mediaPlatforms.includes[p]) : [mediaPlatform];
+            if (Post.dryRun) {
+                result[mediaPlatform] = {
+                    dryrun: true,
+                    status: 'dryrun',
+                    platforms: postPlatforms,
+                    media: media
+                };
             }
-          }:{
-            post: this.body, // required
-            platforms: this.platforms, // required
-            scheduleDate: this.scheduled,
-            requiresApproval: Post.requiresApproval
-          }),
-        }).catch(console.error);
-        const result = res.json();
-        if (result['status']==='error') {
-            console.error(result);
-        } else {
-            this.posted = new Date();
+            else {
+                const res = await fetch("https://app.ayrshare.com/api/post", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${APIKEY}`
+                    },
+                    body: JSON.stringify(media.length ? {
+                        post: this.data.body,
+                        platforms: postPlatforms,
+                        mediaUrls: media,
+                        scheduleDate: this.data.scheduled,
+                        requiresApproval: Post.requiresApproval,
+                        isVideo: (this.data.type === 'video'),
+                        youTubeOptions: {
+                            title: this.data.title,
+                            visibility: "public" // optional def private
+                        },
+                        instagramOptions: {
+                        // "autoResize": true -- only enterprise plans
+                        },
+                        redditOptions: {
+                            title: this.data.title,
+                            subreddit: REDDIT_SUBREDDIT, // required (no "/r/" needed)
+                        }
+                    } : {
+                        post: this.data.body,
+                        platforms: this.data.platforms,
+                        scheduleDate: this.data.scheduled,
+                        requiresApproval: Post.requiresApproval
+                    })
+                }).catch(e => {
+                    console.error(e);
+                    result[mediaPlatform] = {
+                        dryrun: false,
+                        status: 'error',
+                        error: e,
+                        platforms: platforms,
+                        media: media
+                    };
+                });
+                if (res) {
+                    result[mediaPlatform] = res.json();
+                    if (result[mediaPlatform]['status'] === 'error') {
+                        console.error(result);
+                    }
+                    result[mediaPlatform]['dryrun'] = false;
+                    result[mediaPlatform]['platforms'] = platforms;
+                    result[mediaPlatform]['media'] = media;
+                }
+            }
         }
         return result;
     }
-
 }
-
-
-function argv(key) {
-    if ( process.argv.includes( `--${ key }` ) ) return true;
-    const value = process.argv.find( element => element.startsWith( `--${ key }=` ) );
-    if ( !value ) return null;
-    return value.replace( `--${ key }=` , '' );
+class Feed {
+    path = '';
+    constructor(path) {
+        this.path = path;
+    }
+    getDirectories(path) {
+        return fs.readdirSync(path).filter(function (file) {
+            return !file.startsWith('_') && fs.statSync(path + '/' + file).isDirectory();
+        });
+    }
+    getPosts() {
+        const posts = [];
+        this.getDirectories(this.path).forEach(postDir => {
+            const post = new Post(this.path + '/' + postDir);
+            posts.push(post);
+        });
+        return posts;
+    }
+    getPendingPosts() {
+        return this.getPosts().filter(p => p.data.pending);
+    }
+    getNextPostDate() {
+        const today = new Date();
+        let lastPostDate = new Date('1970-01-01');
+        this.getPosts().forEach(post => {
+            if (post.data.scheduled && post.data.scheduled > lastPostDate) {
+                //console.log(post.scheduled,lastPostDate);
+                lastPostDate = new Date(post.data.scheduled);
+            }
+        });
+        const nextPostDate = new Date(lastPostDate);
+        nextPostDate.setDate(nextPostDate.getDate() + Post.postDateInterval);
+        console.log('Last post date', lastPostDate);
+        console.log('Next post date', Post.nextPostDate);
+        if (nextPostDate < today) {
+            return today;
+        }
+        return nextPostDate;
+    }
 }
-
-function getDirectories(path) {
-    return fs.readdirSync(path).filter(function (file) {
-        return !file.startsWith('_') && fs.statSync(path+'/'+file).isDirectory();
-    });
+// utilities
+function getArgument(key) {
+    if (process.argv.includes(`--${key}`))
+        return true;
+    const value = process.argv.find(element => element.startsWith(`--${key}=`));
+    if (!value)
+        return null;
+    return value.replace(`--${key}=`, '');
 }
-function getFiles(path) {
-    return fs.readdirSync(path).filter(function (file) {
-        return !file.startsWith('_') && fs.statSync(path+'/'+file).isFile();
-    });
-}
-
-
-
 /* main */
 async function main() {
-
-    Post.testing = Post.testing || dryRun;
-    console.log(appTitle+' starting .. ',Post.testing?'dry-run':'');
+    console.log(APP_TITLE + ' starting .. ', Post.dryRun ? 'dry-run' : '');
     console.log();
-
-    if (!fs.existsSync(feedPath)) {
-        fs.mkdirSync(feedPath);
+    if (!fs.existsSync(FEED_PATH)) {
+        fs.mkdirSync(FEED_PATH);
     }
-
-    let lastPostDate = new Date('1970-01-01');
-    const posts = [];
-    getDirectories(feedPath).forEach(postDir=> {
-        const post = new Post(feedPath+'/'+postDir);
-        posts.push(post);
-        if (post.scheduled && post.scheduled>lastPostDate) {
-            //console.log(post.scheduled,lastPostDate);
-            lastPostDate = new Date(post.scheduled);
+    let posts = [];
+    if (!POST_DIRS.length) {
+        const feed = new Feed(FEED_PATH);
+        posts = feed.getPendingPosts();
+        if (FIRST_POSTDATE) {
+            Post.nextPostDate = FIRST_POSTDATE;
         }
-    });
-
-    const today = new Date();
-    if (nextPostDate) {
-        // post date was given on command line
-        Post.nextPostDate = nextPostDate;
-    } else {
-        nextPostDate = new Date(lastPostDate);
-        nextPostDate.setDate(nextPostDate.getDate()+Post.postDateInterval);
-        if (nextPostDate<today) {
-            Post.nextPostDate = today;
-        } else {
-            Post.nextPostDate = nextPostDate;
+        else {
+            Post.nextPostDate = feed.getNextPostDate();
         }
     }
-    console.log('Last post date',lastPostDate);
-    console.log('Next post date',Post.nextPostDate);
+    else {
+        posts = POST_DIRS.map(d => new Post(d));
+        if (FIRST_POSTDATE) {
+            Post.nextPostDate = FIRST_POSTDATE;
+        }
+        else {
+            Post.nextPostDate = new Date();
+        }
+    }
+    if (POST_MAX) {
+        posts = posts.slice(0, POST_MAX);
+    }
+    console.log();
     for (const post of posts) {
-        await post.handle();
+        console.log('Found', post.path, post.data.type, '...');
     }
-
+    for (const post of posts) {
+        console.log();
+        if (REQUESTED_TYPES.includes(post.data.type)) {
+            console.log('Processing', post.path, post.data.type, '...');
+            await post.process(REQUESTED_PLATFORMS);
+        }
+        else {
+            console.log('Skipping', post.path, post.data.type, '...');
+        }
+        console.log();
+    }
     console.log();
-    console.log('All done',Post.testing?' (dry-run).':'.');
+    console.log('All done', Post.dryRun ? ' (dry-run).' : '.');
 }
-
 main();
+//# sourceMappingURL=index.js.map
