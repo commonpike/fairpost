@@ -195,7 +195,8 @@ class Post {
 
         const results = await this.ayrshare(platforms);
         
-        if (Object.values(results).map(r=>r.status).includes('success')) {
+        if (Object.values(results).map(r=>r.status).includes('success') || 
+            Object.values(results).map(r=>r.status).includes('scheduled')) {
             this.data.posted=new Date();
             Post.nextPostDate.setDate(Post.nextPostDate.getDate()+Post.postDateInterval);
         } else {
@@ -205,7 +206,7 @@ class Post {
                 Post.nextPostDate.setDate(Post.nextPostDate.getDate()+Post.postDateInterval);
             }
         }
-        if (Object.values(results).every(r=>r.status==='success')) {
+        if (Object.values(results).every(r=>r.status==='success' || r.status==='scheduled')) {
             this.data.pending=false;
         }
         
@@ -229,11 +230,12 @@ class Post {
             this.data.media['linkedin'] = media.slice(0, 9);
         }
         // reddit: max 1 media
-        if (platforms.includes('reddit') && media.length>1) {
-            this.data.media['reddit'] = media.slice(0, 1);
-        } 
+        //if (platforms.includes('reddit') && media.length>1) {
+        //    this.data.media['reddit'] = media.slice(0, 1);
+        //} 
         // tiktok: max len 60s
         // ... 
+
         // rest
         this.data.media['default']=media;
 
@@ -267,14 +269,15 @@ class Post {
         if (platforms.includes('twitter') && media.length>4) {
             this.data.media['twitter'] = media.slice(0, 4);
         } 
-        // linkedin: max 9 media
-        if (platforms.includes('linkedin') && media.length>9) {
-            this.data.media['linkedin'] = media.slice(0, 9);
-        } 
         // reddit: max 1 media
         if (platforms.includes('reddit') && media.length>1) {
             this.data.media['reddit'] = media.slice(0, 1);
         } 
+        // linkedin: max 9 media
+        if (platforms.includes('linkedin') && media.length>9) {
+            this.data.media['linkedin'] = media.slice(0, 9);
+        } 
+        
         // rest
         this.data.media['default']=media;
 
@@ -289,6 +292,7 @@ class Post {
             const ext = path.extname(file);
             const basename = path.basename(file, ext);
             const uname = basename+'-'+randomUUID()+ext;
+            console.log('fetching uploadid...',this.path+'/'+file);
             const res1 = await fetch("https://app.ayrshare.com/api/media/uploadUrl?fileName="+uname+"&contentType="+ext.substring(1), {
                 method: "GET",
                 headers: {
@@ -340,11 +344,16 @@ class Post {
         
         for (const mediaPlatform in this.data.media) {
 
+            let error = undefined as Error | undefined;
             const media = this.data.media[mediaPlatform];
             
             const postPlatforms = mediaPlatform==='default'?
-                platforms.filter(p=>!mediaPlatforms.includes[p]):[mediaPlatform]; 
+                platforms.filter(p=>!mediaPlatforms.includes(p)):
+                (platforms.includes(mediaPlatform))?[mediaPlatform]:[]; 
             
+            if (!postPlatforms.length) {
+                continue;
+            }
             if (Post.dryRun) {
                 result[mediaPlatform] = {
                     dryrun:true,
@@ -353,55 +362,65 @@ class Post {
                     media:media
                 };
             } else {
+                const body = JSON.stringify(media.length?{
+                    post: this.data.body, // required
+                    platforms: postPlatforms, // required
+                    mediaUrls: media, 
+                    scheduleDate: this.data.scheduled,
+                    requiresApproval: Post.requiresApproval,
+                    isVideo: (this.data.type==='video'),
+                    youTubeOptions: {
+                        title: this.data.title, // required max 100
+                        visibility: "public" // optional def private
+                    }, 
+                    instagramOptions: {
+                        // "autoResize": true -- only enterprise plans
+                    },
+                    redditOptions: {
+                        title: this.data.title, // required 
+                        subreddit: REDDIT_SUBREDDIT,   // required (no "/r/" needed)
+                    } 
+                }:{
+                    post: this.data.body, // required
+                    platforms: this.data.platforms, // required
+                    scheduleDate: this.data.scheduled,
+                    requiresApproval: Post.requiresApproval
+                });
+                console.log('scheduling...',mediaPlatform);
+                //console.log(body);
                 const res = await fetch("https://app.ayrshare.com/api/post", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${APIKEY}`
                     },
-                    body: JSON.stringify(media.length?{
-                            post: this.data.body, // required
-                            platforms: postPlatforms, // required
-                            mediaUrls: media, 
-                            scheduleDate: this.data.scheduled,
-                            requiresApproval: Post.requiresApproval,
-                            isVideo: (this.data.type==='video'),
-                            youTubeOptions: {
-                                title: this.data.title, // required max 100
-                                visibility: "public" // optional def private
-                            }, 
-                            instagramOptions: {
-                                // "autoResize": true -- only enterprise plans
-                            },
-                            redditOptions: {
-                                title: this.data.title, // required 
-                                subreddit: REDDIT_SUBREDDIT,   // required (no "/r/" needed)
-                            } 
-                        }:{
-                            post: this.data.body, // required
-                            platforms: this.data.platforms, // required
-                            scheduleDate: this.data.scheduled,
-                            requiresApproval: Post.requiresApproval
-                        }
-                    )
+                    body: body
                 }).catch(e=> {
-                    console.error(e);
-                    result[mediaPlatform]={
-                        dryrun:false,
-                        status: 'error',
-                        error: e,
-                        platforms: platforms,
-                        media:media
-                    };
+                    error = e;
                 });
-                if (res) {
-                    result[mediaPlatform] = res.json()  as unknown as PostResult;
-                    if (result[mediaPlatform]['status']==='error') {
+                
+                if (res && res.ok) {
+                    //console.log(res.json());
+                    result[mediaPlatform] = await res.json()  as unknown as PostResult;
+                    if (result[mediaPlatform]['status']!=='success' && result[mediaPlatform]['status']!=='scheduled') {
                         console.error(result);
                     } 
                     result[mediaPlatform]['dryrun'] = false;
-                    result[mediaPlatform]['platforms'] = platforms;
+                    result[mediaPlatform]['platforms'] = postPlatforms;
                     result[mediaPlatform]['media'] = media;
+                } else {
+                    console.error(res);
+                    error = new Error('no result');
+                }
+                if (error!==undefined) {
+                    console.error(error);
+                    result[mediaPlatform]={
+                        dryrun:false,
+                        status: 'error',
+                        error: error,
+                        platforms: postPlatforms,
+                        media:media
+                    };
                 }
             }
         }
@@ -444,7 +463,7 @@ class Feed {
         nextPostDate.setDate(nextPostDate.getDate()+Post.postDateInterval);
 
         console.log('Last post date',lastPostDate);
-        console.log('Next post date',Post.nextPostDate);
+        console.log('Next post date',nextPostDate);
 
         if (nextPostDate<today) {
             return today;
@@ -493,7 +512,7 @@ async function main() {
         }
     }
 
-    if (POST_MAX) {
+    if (POST_MAX!==0) {
         posts = posts.slice(0,POST_MAX);
     }
 
