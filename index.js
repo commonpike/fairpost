@@ -311,7 +311,7 @@ class Post {
                     scheduleDate: this.data.scheduled,
                     requiresApproval: Post.requiresApproval
                 });
-                console.log('scheduling...', postPlatforms);
+                console.log('scheduling...', mediaPlatform);
                 //console.log(body);
                 const res = await fetch("https://app.ayrshare.com/api/post", {
                     method: "POST",
@@ -326,8 +326,11 @@ class Post {
                 if (res && res.ok) {
                     //console.log(res.json());
                     result[mediaPlatform] = await res.json();
-                    if (result[mediaPlatform]['status'] !== 'success') {
+                    if (result[mediaPlatform]['status'] !== 'success' && result[mediaPlatform]['status'] !== 'scheduled') {
                         console.error(result);
+                    }
+                    else {
+                        console.log(result);
                     }
                     result[mediaPlatform]['dryrun'] = false;
                     result[mediaPlatform]['platforms'] = postPlatforms;

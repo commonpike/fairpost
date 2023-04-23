@@ -404,7 +404,9 @@ class Post {
                     result[mediaPlatform] = await res.json()  as unknown as PostResult;
                     if (result[mediaPlatform]['status']!=='success' && result[mediaPlatform]['status']!=='scheduled') {
                         console.error(result);
-                    } 
+                    } else {
+                        console.log(result);
+                    }
                     result[mediaPlatform]['dryrun'] = false;
                     result[mediaPlatform]['platforms'] = postPlatforms;
                     result[mediaPlatform]['media'] = media;
