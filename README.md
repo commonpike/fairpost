@@ -1,4 +1,8 @@
-# Ayrshare-feed
+# Fayrshare
+
+```
+tsc --config .env-fayrshare && build/fayrshare.js
+```
 
 Ayrshare feed helps you manage your ayrshare
 feed from the command line.
