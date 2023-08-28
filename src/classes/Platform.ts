@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import Folder from "./Folder";
-import Post from "../interfaces/Post";
-import { PlatformSlug, PostStatus, blankPost } from "../interfaces/Post";
+import Post from "./Post";
+import { PostStatus } from "./Post";
+import { PlatformSlug } from "../platforms";
 
 
 
@@ -17,7 +18,7 @@ export default class Platform {
     * Return the intended name for a post of this
     * platform to be saved in this folder.
     */
-   getPostFileName() {
+    getPostFileName() {
         return '_'+this.slug+'.json';
     }
 
@@ -30,20 +31,12 @@ export default class Platform {
 
     getPost(folder: Folder): Post | undefined {
         if (fs.existsSync(folder.path+'/'+this.getPostFileName())) {
-            return JSON.parse(fs.readFileSync(folder.path+'/'+this.getPostFileName(), 'utf8'));
+            const data = JSON.parse(fs.readFileSync(folder.path+'/'+this.getPostFileName(), 'utf8'));
+            if (data) {
+                return new Post(folder,this,data);
+            }
         }
         return;
-    }
-
-    /*
-    * savePost
-    *
-    * Save the given post for this platform for the
-    * given folder.
-    */
-
-    savePost(folder: Folder, post: Post): void {
-        fs.writeFileSync(folder.path+'/'+this.getPostFileName(),JSON.stringify(post,null,"\t"));
     }
 
     /*
@@ -58,15 +51,14 @@ export default class Platform {
     * unscheduled.
     */
     preparePost(folder: Folder): Post | undefined {
-        const post = this.getPost(folder) ?? blankPost;
+        
+        const post = this.getPost(folder) ?? new Post(folder,this);
         if (post.status===PostStatus.PUBLISHED) {
             return;
         }
         if (post.status===PostStatus.FAILED) {
             post.status=PostStatus.UNSCHEDULED;
         }
-        post.path = folder.path;
-        post.platform = this.slug;
         
         // some default logic. override this 
         // in your own platform if you need.
@@ -74,28 +66,43 @@ export default class Platform {
         post.files = folder.getFiles();
         
         if (post.files.text?.includes('body.txt')) {
-            post.body = fs.readFileSync(post.path+'/body.txt','utf8'); 
+            post.body = fs.readFileSync(post.folder.path+'/body.txt','utf8'); 
         } else {
             post.body = this.defaultBody; 
         }
         
         if (post.files.text?.includes('title.txt')) {
-            post.title = fs.readFileSync(post.path+'/title.txt','utf8'); 
+            post.title = fs.readFileSync(post.folder.path+'/title.txt','utf8'); 
         } else {
             post.title = post.body.split('\n', 1)[0];
         }
 
         if (post.files.text?.includes('tags.txt')) {
-            post.tags = fs.readFileSync(post.path+'/tags.txt','utf8'); 
+            post.tags = fs.readFileSync(post.folder.path+'/tags.txt','utf8'); 
         } 
 
-        this.savePost(folder,post);
+        post.save();
         return post;
     }
 
-    // schedulePost()
+    /*
+    * publishPost
+    *
+    * publish the post for this platform, sync. 
+    * set the posted date to now.
+    * add the result to post.results
+    * on success, set the status to published and return true,
+    * else set the status to failed and return false
+    */
 
-    // publishPost()
+    publishPost(post: Post, dryrun:boolean = false): boolean {
+        post.posted = new Date();
+        post.results.push({
+            error: 'publishing not implemented for '+this.slug
+        });
+        post.status = PostStatus.FAILED;
+        return false;
+    }
 }
 
 

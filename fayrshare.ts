@@ -1,7 +1,8 @@
 /*
     Usage
 
-    node fayrshare.js .. 
+    tsc && node build/fayrshare.js
+    node build/fayrshare.js .. 
 
 */
 
