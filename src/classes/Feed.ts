@@ -14,6 +14,7 @@ export default class Feed {
     path: string = '';
     platforms: Platform[] = [];
     folders: Folder[] = [];
+    interval: number;
 
     constructor(configPath?: string) {
         if (configPath) {
@@ -34,7 +35,7 @@ export default class Feed {
                 this.platforms.push(new platforms[constructor]());
             }
         });
-        
+        this.interval = Number(process.env.FAYRSHARE_FEED_INTERVAL);
 
     }
 
@@ -107,7 +108,35 @@ export default class Feed {
         return posts;
     }
 
-    scheduleNextPosts(date: Date, filters?: {
+    
+    getLastPost(platform:PlatformSlug): Post | void {
+        let lastPost: Post = undefined;
+        const posts = this.getPosts({
+            platforms: [platform],
+            status: [PostStatus.PUBLISHED]
+        });
+        for (const post of posts) {
+            if (!lastPost || post.posted >= lastPost.posted) {
+                lastPost = post;
+            }
+        }
+        return lastPost;
+    }
+    
+   
+    getNextPostDate(platform:PlatformSlug): Date {
+        let nextDate = null;
+        const lastPost = this.getLastPost(platform);
+        if (lastPost) {
+            nextDate = new Date(lastPost.posted);
+            nextDate.setDate(nextDate.getDate()+this.interval);
+        } else {
+            nextDate = new Date();
+        }
+        return nextDate;
+    }
+
+    scheduleNextPosts(date?: Date, filters?: {
         paths?:[string], 
         platforms?:[PlatformSlug]
     }): Post[] {
@@ -115,10 +144,11 @@ export default class Feed {
         const platforms = filters?.platforms?.map(platform=>this.platforms[platform]) ?? this.platforms;
         const folders = this.getFolders(filters?.paths);
         for (const platform of platforms) {
+            const nextDate = date?date:this.getNextPostDate(platform);
             for (const folder of folders) {
                 const post = platform.getPost(folder);
                 if (post?.status===PostStatus.UNSCHEDULED) {
-                    post.schedule(date);
+                    post.schedule(nextDate);
                     posts.push(post);
                     break;
                 }
