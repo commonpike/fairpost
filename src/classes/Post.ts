@@ -11,15 +11,15 @@ export default class Post {
   status: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   posted?: Date;
-  results?: [{}];
+  results: {}[] = [];
   title: string = '';
   body?: string;
   tags?: string;
   files?: {
-    text?: string[],
-    image?: string[],
-    video?: string[],
-    other?: string[]
+    text: string[],
+    image: string[],
+    video: string[],
+    other: string[]
   };
 
   constructor(folder: Folder, platform: Platform, data?: any) {

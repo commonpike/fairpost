@@ -50,7 +50,7 @@ export default class Platform {
     * If the post exists and is failed, set it back to 
     * unscheduled.
     */
-    preparePost(folder: Folder): Post | undefined {
+    async preparePost(folder: Folder): Promise<Post | undefined> {
         
         const post = this.getPost(folder) ?? new Post(folder,this);
         if (post.status===PostStatus.PUBLISHED) {
@@ -81,6 +81,10 @@ export default class Platform {
             post.tags = fs.readFileSync(post.folder.path+'/tags.txt','utf8'); 
         } 
 
+        if (post.title) {
+            post.valid = true;
+        }
+        
         post.save();
         return post;
     }
@@ -95,7 +99,7 @@ export default class Platform {
     * else set the status to failed and return false
     */
 
-    publishPost(post: Post, dryrun:boolean = false): boolean {
+    async publishPost(post: Post, dryrun:boolean = false): Promise<boolean> {
         post.posted = new Date();
         post.results.push({
             error: 'publishing not implemented for '+this.slug

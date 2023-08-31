@@ -4,11 +4,11 @@ import * as path from 'path';
 export default class Folder {
 
   path: string;
-  files: {
-    text?: string[],
-    image?: string[],
-    video?: string[],
-    other?: string[]
+  files?: {
+    text: string[],
+    image: string[],
+    video: string[],
+    other: string[]
   };
 
   constructor(path: string) {
@@ -24,7 +24,12 @@ export default class Folder {
       !file.startsWith('_') && 
       !file.startsWith('.');
     });
-    this.files = {};
+    this.files = {
+      text: [],
+      image: [],
+      video: [],
+      other: []
+    };
     this.files.text = files.filter(file=>["txt"].includes(file.split('.')?.pop()??''));
     this.files.image = files.filter(file=>["jpg","jpeg","png"].includes(file.split('.')?.pop()??''));
     this.files.video = files.filter(file=>["mp4"].includes(file.split('.')?.pop()??''));

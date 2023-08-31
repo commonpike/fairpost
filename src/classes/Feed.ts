@@ -86,10 +86,10 @@ export default class Feed {
         return posts;
     }
 
-    preparePosts(filters?: {
+    async preparePosts(filters?: {
         paths?:[string], 
         platforms?:[PlatformSlug]
-    }): Post[] {
+    }): Promise<Post[]> {
         
         const posts: Post[] = [];
         const platforms = filters?.platforms?.map(platform=>this.platforms[platform]) ?? this.platforms;
@@ -98,7 +98,7 @@ export default class Feed {
             for (const platform of platforms) {
                 const post = platform.getPost(folder);
                 if (post?.status!==PostStatus.PUBLISHED) {
-                    const newPost = platform.preparePost(folder);
+                    const newPost = await platform.preparePost(folder);
                     if (newPost) {
                         posts.push(newPost);
                     }
@@ -157,10 +157,10 @@ export default class Feed {
         return posts;
     }
 
-    publishDuePosts(filters?: {
+    async publishDuePosts(filters?: {
         paths?:[string], 
         platforms?:[PlatformSlug]
-    }, dryrun:boolean = false): Post[] {
+    }, dryrun:boolean = false): Promise<Post[]> {
         const now = new Date();
         const posts: Post[] = [];
         const platforms = filters?.platforms?.map(platform=>this.platforms[platform]) ?? this.platforms;
@@ -170,7 +170,7 @@ export default class Feed {
                 const post = platform.getPost(folder);
                 if (post?.status===PostStatus.SCHEDULED) {
                     if (post.scheduled <= now) {
-                        platform.publish(post,dryrun);
+                        await platform.publish(post,dryrun);
                         posts.push(post);
                         break;
                     }
