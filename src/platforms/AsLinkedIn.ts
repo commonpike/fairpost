@@ -7,6 +7,11 @@ import Post from "../classes/Post";
 export default class AsLinkedIn extends Ayrshare {
     slug = PlatformSlug.ASLINKEDIN;
 
+    constructor() {
+        super();
+        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('linkedin');
+    }
+
     async preparePost(folder: Folder): Promise<Post | undefined> {
         const post = await super.preparePost(folder);
         if (post) {

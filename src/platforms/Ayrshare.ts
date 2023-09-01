@@ -33,6 +33,7 @@ export default abstract class Ayrshare extends Platform {
 
     constructor() {
         super();
+        this.active = process.env.FAYRSHARE_AYRSHARE_ACTIVE==='true';
         this.APIKEY = process.env.FAYRSHARE_AYRSHARE_API_KEY;
     }
 

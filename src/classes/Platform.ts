@@ -9,8 +9,9 @@ import { PlatformSlug } from "../platforms";
 
 export default class Platform {
 
+    active: boolean = false;
     slug: PlatformSlug = PlatformSlug.UNKNOWN;
-    defaultBody = "Fayrshare feed";
+    defaultBody: string = "Fayrshare feed";
 
     /*
     * getPostFileName
@@ -30,6 +31,9 @@ export default class Platform {
     */
 
     getPost(folder: Folder): Post | undefined {
+
+        console.log(this.slug,'getPost',folder.path);
+
         if (fs.existsSync(folder.path+'/'+this.getPostFileName())) {
             const data = JSON.parse(fs.readFileSync(folder.path+'/'+this.getPostFileName(), 'utf8'));
             if (data) {
@@ -52,6 +56,8 @@ export default class Platform {
     */
     async preparePost(folder: Folder): Promise<Post | undefined> {
         
+        console.log(this.slug,'preparePost',folder.path);
+
         const post = this.getPost(folder) ?? new Post(folder,this);
         if (post.status===PostStatus.PUBLISHED) {
             return;
@@ -59,6 +65,7 @@ export default class Platform {
         if (post.status===PostStatus.FAILED) {
             post.status=PostStatus.UNSCHEDULED;
         }
+        
         
         // some default logic. override this 
         // in your own platform if you need.
@@ -83,6 +90,10 @@ export default class Platform {
 
         if (post.title) {
             post.valid = true;
+        }
+        
+        if (post.status===PostStatus.UNKNOWN) {
+            post.status=PostStatus.UNSCHEDULED;
         }
         
         post.save();

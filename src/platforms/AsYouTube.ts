@@ -7,6 +7,11 @@ import Post from "../classes/Post";
 export default class AsYouTube extends Ayrshare {
     slug = PlatformSlug.ASYOUTUBE;
 
+    constructor() {
+        super();
+        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('youtube');
+    }
+
     async preparePost(folder: Folder): Promise<Post | undefined> {
         const post = await super.preparePost(folder);
         if (post) {

@@ -7,6 +7,11 @@ import Post from "../classes/Post";
 export default class AsTikTok extends Ayrshare {
     slug = PlatformSlug.ASTIKTOK;
 
+    constructor() {
+        super();
+        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('tiktok');
+    }
+
     async preparePost(folder: Folder): Promise<Post | undefined> {
         const post = await super.preparePost(folder);
         if (post) {

@@ -7,6 +7,11 @@ import Post from "../classes/Post";
 export default class AsFacebook extends Ayrshare {
     slug: PlatformSlug = PlatformSlug.ASFACEBOOK;
 
+    constructor() {
+        super();
+        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('facebook');
+    }
+
     async preparePost(folder: Folder): Promise<Post | undefined> {
         return super.preparePost(folder);
     }

@@ -12,7 +12,9 @@ import { PlatformSlug } from '../platforms';
 export default class Feed {
 
     path: string = '';
-    platforms: Platform[] = [];
+    platforms: {
+        [slug in PlatformSlug]? : Platform;
+    } = {};
     folders: Folder[] = [];
     interval: number;
 
@@ -28,19 +30,22 @@ export default class Feed {
         } else {
             throw new Error('Problem reading .env config file');
         }
+        this.interval = Number(process.env.FAYRSHARE_FEED_INTERVAL ?? 7);
+
         const platformClasses = fs.readdirSync(path.resolve(__dirname+'/../platforms'));
         platformClasses.forEach(file=> {
             const constructor = file.replace('.ts','').replace('.js','');
             if (platforms[constructor] !== undefined) {
-                this.platforms.push(new platforms[constructor]());
+                const platform = new platforms[constructor]();
+                if (platform.active) {
+                    this.platforms[platform.slug] = platform;
+                }
             }
         });
-        this.interval = Number(process.env.FAYRSHARE_FEED_INTERVAL);
-
     }
 
-    getPlatforms(): Platform[] {
-        return this.platforms;
+    getPlatforms(platforms?:PlatformSlug[]): Platform[] {
+        return platforms?.map(platform=>this.platforms[platform]) ?? Object.values(this.platforms);
     }
 
     getAllFolders(): Folder[] {
@@ -61,19 +66,16 @@ export default class Feed {
     }
 
     getFolders(paths?: string[]): Folder[] {
-        if (!paths) {
-            return this.getAllFolders();
-        } 
-        return paths.map(path=>new Folder(this.path+'/'+path));
+        return paths?.map(path=>new Folder(this.path+'/'+path)) ?? this.getAllFolders();
     }
 
     getPosts(filters?: {
-        paths?:[string], 
-        platforms?:[PlatformSlug], 
-        status?:[PostStatus]
+        paths?:string[]
+        platforms?:PlatformSlug[], 
+        status?:PostStatus
     }): Post[] {
         const posts: Post[] = [];
-        const platforms = filters?.platforms?.map(platform=>this.platforms[platform]) ?? this.platforms;
+        const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
         for (const folder of folders) {
             for (const platform of platforms) {
@@ -87,12 +89,12 @@ export default class Feed {
     }
 
     async preparePosts(filters?: {
-        paths?:[string], 
-        platforms?:[PlatformSlug]
+        paths?:string[]
+        platforms?:PlatformSlug[]
     }): Promise<Post[]> {
         
         const posts: Post[] = [];
-        const platforms = filters?.platforms?.map(platform=>this.platforms[platform]) ?? this.platforms;
+        const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
         for (const folder of folders) {
             for (const platform of platforms) {
@@ -113,7 +115,7 @@ export default class Feed {
         let lastPost: Post = undefined;
         const posts = this.getPosts({
             platforms: [platform],
-            status: [PostStatus.PUBLISHED]
+            status: PostStatus.PUBLISHED
         });
         for (const post of posts) {
             if (!lastPost || post.posted >= lastPost.posted) {
@@ -137,40 +139,41 @@ export default class Feed {
     }
 
     scheduleNextPosts(date?: Date, filters?: {
-        paths?:[string], 
-        platforms?:[PlatformSlug]
+        paths?:string[]
+        platforms?:PlatformSlug[]
     }): Post[] {
         const posts: Post[] = [];
-        const platforms = filters?.platforms?.map(platform=>this.platforms[platform]) ?? this.platforms;
+        const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
         for (const platform of platforms) {
-            const nextDate = date?date:this.getNextPostDate(platform);
+            const nextDate = date?date:this.getNextPostDate(platform.slug);
             for (const folder of folders) {
                 const post = platform.getPost(folder);
-                if (post?.status===PostStatus.UNSCHEDULED) {
+                if (post.valid && post?.status===PostStatus.UNSCHEDULED) {
                     post.schedule(nextDate);
                     posts.push(post);
                     break;
                 }
+                
             }
         }
         return posts;
     }
 
     async publishDuePosts(filters?: {
-        paths?:[string], 
-        platforms?:[PlatformSlug]
+        paths?:string[]
+        platforms?:PlatformSlug[]
     }, dryrun:boolean = false): Promise<Post[]> {
         const now = new Date();
         const posts: Post[] = [];
-        const platforms = filters?.platforms?.map(platform=>this.platforms[platform]) ?? this.platforms;
+        const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
         for (const folder of folders) {
             for (const platform of platforms) {
                 const post = platform.getPost(folder);
                 if (post?.status===PostStatus.SCHEDULED) {
                     if (post.scheduled <= now) {
-                        await platform.publish(post,dryrun);
+                        await platform.publishPost(post,dryrun);
                         posts.push(post);
                         break;
                     }

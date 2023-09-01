@@ -7,6 +7,11 @@ import Post from "../classes/Post";
 export default class AsTwitter extends Ayrshare {
     slug = PlatformSlug.ASTWITTER;
 
+    constructor() {
+        super();
+        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('twitter');
+    }
+
     async preparePost(folder: Folder): Promise<Post | undefined> {
         const post = await super.preparePost(folder);
         if (post) {

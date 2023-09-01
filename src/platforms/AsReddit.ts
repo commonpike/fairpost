@@ -11,7 +11,9 @@ export default class AsReddit extends Ayrshare {
     constructor() {
         super();
         this.SUBREDDIT = process.env.FAYRSHARE_REDDIT_SUBREDDIT;
+        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('reddit');
     }
+    
 
     async preparePost(folder: Folder): Promise<Post | undefined> {
         const post = await super.preparePost(folder);

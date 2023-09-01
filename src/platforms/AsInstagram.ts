@@ -8,6 +8,11 @@ import * as sharp from 'sharp';
 export default class AsInstagram extends Ayrshare {
     slug = PlatformSlug.ASINSTAGRAM;
 
+    constructor() {
+        super();
+        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('instagram');
+    }
+
     async preparePost(folder: Folder): Promise<Post | undefined> {
         const post = await super.preparePost(folder);
         if (post) {
