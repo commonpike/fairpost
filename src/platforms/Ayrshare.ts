@@ -6,6 +6,7 @@ import { PlatformSlug } from ".";
 import Platform from "../classes/Platform";
 import Folder from "../classes/Folder";
 import Post from "../classes/Post";
+import { PostStatus } from "../classes/Post";
 
 interface AyrshareResult {
     success: boolean;
@@ -60,6 +61,9 @@ export default abstract class Ayrshare extends Platform {
         
         const result = await this.publishAyrshare(post,platformOptions, uploads);
         post.results.push(result);
+        if (result.success) {
+            post.status = PostStatus.PUBLISHED;
+        }
         post.save();
 
         if (!result.success) {
@@ -117,6 +121,9 @@ export default abstract class Ayrshare extends Platform {
     async publishAyrshare(post: Post, platformOptions: {}, uploads: string[]): Promise<AyrshareResult> {
         
         const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
+        const scheduleDate = post.scheduled;
+        //scheduleDate.setDate(scheduleDate.getDate()+100);
+        
         const result = {
             success: false,
             error: undefined,
@@ -132,7 +139,7 @@ export default abstract class Ayrshare extends Platform {
             post: post.body, // required
             platforms: [postPlatform], // required
             mediaUrls: uploads, 
-            scheduleDate: post.scheduled,
+            scheduleDate: scheduleDate,
             requiresApproval: this.requiresApproval,
             ...platformOptions
             /*
@@ -152,7 +159,7 @@ export default abstract class Ayrshare extends Platform {
         }:{
             post: post.body, // required
             platforms: [postPlatform], // required
-            scheduleDate: post.scheduled,
+            scheduleDate: scheduleDate,
             requiresApproval: this.requiresApproval
         });
         console.log('scheduling...',postPlatform);
@@ -168,22 +175,27 @@ export default abstract class Ayrshare extends Platform {
             result.error = e;
         });
         
-        if (res && res.ok) {
-            //console.log(res.json());
-            result.response = await res.json()  as unknown as {
-                status?: string
-            };
-            if (result.response['status']!=='success' && result.response['status']!=='scheduled') {
-                result.success = false;
-                result.error = new Error('bad result status: '+result.response['status']);
-            } else {
-                console.log(result);
-            }
+        if (res) {
+            if (res.ok) {
+                //console.log(res.json());
+                result.response = await res.json()  as unknown as {
+                    status?: string
+                };
+                if (result.response['status']!=='success' && result.response['status']!=='scheduled') {
+                    console.error('* Failed.');
+                    result.error = new Error('Bad result status: '+result.response['status']);
+                } else {
+                    console.error(' .. Published.');
+                    result.success = true;
+                }
+                return result;
+            } 
+            const response = await res.json();
+            console.error('* Failed.');
+            result.error = new Error(JSON.stringify(response));
             return result;
-        } 
-
-        console.error(res);
-        result.success = false;
+        }
+        console.error('* Failed.');
         result.error = new Error('no result');
         return result;
     }

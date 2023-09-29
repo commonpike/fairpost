@@ -32,7 +32,7 @@ export default class Platform {
 
     getPost(folder: Folder): Post | undefined {
 
-        console.log(this.slug,'getPost',folder.path);
+        //console.log(this.slug,'getPost',folder.path);
 
         if (fs.existsSync(folder.path+'/'+this.getPostFileName())) {
             const data = JSON.parse(fs.readFileSync(folder.path+'/'+this.getPostFileName(), 'utf8'));
@@ -74,6 +74,9 @@ export default class Platform {
         
         if (post.files.text?.includes('body.txt')) {
             post.body = fs.readFileSync(post.folder.path+'/body.txt','utf8'); 
+        } else if (post.files.text.length === 1 ) {
+            const bodyFile = post.files.text[0];
+            post.body = fs.readFileSync(post.folder.path+'/'+bodyFile,'utf8'); 
         } else {
             post.body = this.defaultBody; 
         }
@@ -116,6 +119,7 @@ export default class Platform {
             error: 'publishing not implemented for '+this.slug
         });
         post.status = PostStatus.FAILED;
+        post.save();
         return false;
     }
 }

@@ -1,7 +1,7 @@
 # Fairpost
 
 ```
-tsc && node fairpost.js help
+tsc && fairpost.js help
 ```
 
 Ayrshare feed helps you manage your ayrshare
@@ -30,9 +30,9 @@ The next post can then be `scheduled`, and
 any due posts can be `published` :
 
 ```
-node fairpost.js prepare-posts
-node fairpost.js schedule-next-posts
-node fairpost.js publish-due-posts
+fairpost.js prepare-posts
+fairpost.js schedule-next-posts
+fairpost.js publish-due-posts
 ```
 
 Each of these commands (and others) accept `--arguments`
@@ -52,13 +52,13 @@ next post automatically.
 ## cli
 
 ```
-node fairpost.js help 
-node fairpost.js get-feed [--config=xxx]
-node fairpost.js get-folders [--folders=xxx,xxx]
-node fairpost.js prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]
-node fairpost.js get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
-node fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
-node fairpost.js publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]
+fairpost.js help 
+fairpost.js get-feed [--config=xxx]
+fairpost.js get-folders [--folders=xxx,xxx]
+fairpost.js prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]
+fairpost.js get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
+fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
+fairpost.js publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]
 ```
 
 ## Create a new platform

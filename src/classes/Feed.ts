@@ -170,11 +170,12 @@ export default class Feed {
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
-        for (const folder of folders) {
-            for (const platform of platforms) {
+        for (const platform of platforms) {
+            for (const folder of folders) {
                 const post = platform.getPost(folder);
                 if (post?.status===PostStatus.SCHEDULED) {
                     if (post.scheduled <= now) {
+                        console.log('Posting',platform.slug,folder.path);
                         await platform.publishPost(post,dryrun);
                         posts.push(post);
                         break;

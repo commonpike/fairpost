@@ -46,6 +46,9 @@ async function main() {
         case 'get-feed':
             result = feed;
             break;
+        case 'get-platforms':
+            result = feed.getPlatforms(PLATFORMS);
+            break;
         case 'get-folders':
             result = feed.getFolders(FOLDERS);
             break;
@@ -79,6 +82,7 @@ async function main() {
             console.log(`
 ${cmd} help 
 ${cmd} get-feed [--config=xxx]
+${cmd} get-platforms [--platforms=xxx,xxx]
 ${cmd} get-folders [--folders=xxx,xxx]
 ${cmd} prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]
 ${cmd} get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,xxx]

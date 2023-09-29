@@ -3,6 +3,8 @@ import Ayrshare from "./Ayrshare";
 import { PlatformSlug } from ".";
 import Folder from "../classes/Folder";
 import Post from "../classes/Post";
+import * as fs from 'fs';
+import * as sharp from 'sharp';
 
 export default class AsTwitter extends Ayrshare {
     slug = PlatformSlug.ASTWITTER;
@@ -19,6 +21,18 @@ export default class AsTwitter extends Ayrshare {
             // twitter: max 4 images 
             if (post.files.image.length>4) {
                 post.files.image.length=4;
+            }
+            // twitter: max 5mb images
+            for (const image of post.files.image) {
+                var size = fs.statSync(post.folder.path+'/'+image).size / (1024*1024);
+                if (size>=5) {
+                    console.log('Resizing '+image+' for twitter ..');
+                    await sharp(post.folder.path+'/'+image).resize({ 
+                        width: 1200 
+                    }).toFile(post.folder.path+'/_twitter-'+image);
+                    post.files.image.push('_twitter-'+image);
+                    post.files.image = post.files.image.filter(file => file !== image);
+                } 
             }
             post.save();
         }

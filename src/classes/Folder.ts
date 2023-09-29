@@ -17,7 +17,12 @@ export default class Folder {
 
   getFiles() {
     if (this.files!=undefined) {
-      return { ...this.files };
+      return {
+        text: [ ...this.files.text ],
+        image: [ ...this.files.image ],
+        video: [ ...this.files.video ],
+        other: [ ...this.files.other ]
+      };
     }
     const files = fs.readdirSync(this.path).filter(file => {
       return fs.statSync(this.path+'/'+file).isFile() && 
@@ -38,7 +43,12 @@ export default class Folder {
       && !this.files.image?.includes(file)
       && !this.files.video?.includes(file)
     );
-    return { ...this.files };
+    return {
+      text: [ ...this.files.text ],
+      image: [ ...this.files.image ],
+      video: [ ...this.files.video ],
+      other: [ ...this.files.other ]
+    };
   }
 
 }

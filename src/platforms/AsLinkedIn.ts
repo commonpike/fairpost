@@ -3,6 +3,8 @@ import Ayrshare from "./Ayrshare";
 import { PlatformSlug } from ".";
 import Folder from "../classes/Folder";
 import Post from "../classes/Post";
+import * as fs from 'fs';
+import * as sharp from 'sharp';
 
 export default class AsLinkedIn extends Ayrshare {
     slug = PlatformSlug.ASLINKEDIN;
@@ -21,6 +23,18 @@ export default class AsLinkedIn extends Ayrshare {
             if (post.files.image.length + post.files.video.length > 9 ) {
                 post.files.image.length = Math.max(0,post.files.image.length - post.files.video.length);
             } 
+            // linkedin: max 5mb images
+            for (const image of post.files.image) {
+                var size = fs.statSync(post.folder.path+'/'+image).size / (1024*1024);
+                if (size>=5) {
+                    console.log('Resizing '+image+' for linkedin ..');
+                    await sharp(post.folder.path+'/'+image).resize({ 
+                        width: 1200 
+                    }).toFile(post.folder.path+'/_linkedin-'+image);
+                    post.files.image.push('_linkedin-'+image);
+                    post.files.image = post.files.image.filter(file => file !== image);
+                } 
+            }
             post.save();
         }
         return post;
