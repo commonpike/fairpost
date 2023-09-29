@@ -1,50 +1,63 @@
 # Fairpost
 
 ```
-tsc --config .env-fairpost && build/fairpost.js
+tsc && node fairpost.js help
 ```
 
 Ayrshare feed helps you manage your ayrshare
 feed from the command line.
 
-Each post is a folder, containing
-- body.txt (txt, required)
-- images (png,jpg,optional)
-- one video (mp4, optional)
-after posting, a postfile is added (post.json)
+Each post is a folder, containing at least one 
+text file (the post body) and optionally images
+or a video. 
 
-The script typically determines the post type 
-by looking at the folders contents,
-and decides which platforms that post type
-is suitable for.
 
-Posts typically sit in a `feed` folder;
-this script typically checks which posts 
-have not been processed yet and processes
-these, unless you specify posts on the
-command line.
+Edit the .env file to manage the platforms
+you want to support, amongst others. 
 
-The first post is scheduled at an interval
-after the last successful post, or today,
-unless a date is given on the command line.
-Subsequent posts are scheduled at an interval
-after each previous successful post.
+Folders need to be `prepared` (iow turned into posts)
+before they can be posted to a platform. 
+Each platform, as defined in src/platforms, will 
+handle the folder contents by itself. It may
+decide to modify the media (eg, scale images) 
+before posting, or not to post the folder (eg, 
+when it only contains images and the platform 
+is youtube). Finally, it will add a json file
+describing the post for that platform in the 
+folder.
 
-TODO
-The script also processes the media, resizing
-images and cropping video where needed. Specific
-limits for each platform are applied automatically.
+The next post can then be `scheduled`, and
+any due posts can be `published` :
+
+```
+node build/index.js prepare-posts
+node build/index.js schedule-next-posts
+node build/index.js publish-due-posts
+```
+
+Each of these commands (and others) accept `--arguments`
+that may help you, for example, to immediately publish
+a certain post to a certain platform if you like.
+
+But more commonly, you would call this script
+every day and just add posts to the feed folder as 
+time goes by. 
+The script will then automatically prepare these posts,
+schedule the next post using a certain interval, 
+publish any post when it is due, and schedule the 
+next post automatically.
+
+
 
 ## cli
 
-node index.js 
-  --dry-run
-  --debug
-  --platforms=x[,y,..]|all 
-  --date=yyyy-mm-dd|now
-  --posts=dir1[,dir2,..]|feed
-  --interval=7
-  --type=text|images|video|auto
-
-
+```
+node fairpost.js help 
+node fairpost.js get-feed [--config=xxx]
+node fairpost.js get-folders [--folders=xxx,xxx]
+node fairpost.js prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]
+node fairpost.js get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
+node fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
+node fairpost.js publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]
+```
 
