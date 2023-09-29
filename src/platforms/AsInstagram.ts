@@ -10,7 +10,7 @@ export default class AsInstagram extends Ayrshare {
 
     constructor() {
         super();
-        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('instagram');
+        this.active = process.env.FAIRPOST_AYRSHARE_PLATFORMS.split(',').includes('instagram');
     }
 
     async preparePost(folder: Folder): Promise<Post | undefined> {

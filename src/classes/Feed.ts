@@ -25,18 +25,20 @@ export default class Feed {
         } else {
             dotenv.config();
         }
-        if (process.env.FAYRSHARE_FEED_PATH) {
-            this.path = process.env.FAYRSHARE_FEED_PATH;
+        if (process.env.FAIRPOST_FEED_PATH) {
+            this.path = process.env.FAIRPOST_FEED_PATH;
         } else {
             throw new Error('Problem reading .env config file');
         }
-        this.interval = Number(process.env.FAYRSHARE_FEED_INTERVAL ?? 7);
+        this.interval = Number(process.env.FAIRPOST_FEED_INTERVAL ?? 7);
 
+        const activePlatformSlugs = process.env.FAIRPOST_FEED_PLATFORMS.split(',');
         const platformClasses = fs.readdirSync(path.resolve(__dirname+'/../platforms'));
         platformClasses.forEach(file=> {
             const constructor = file.replace('.ts','').replace('.js','');
             if (platforms[constructor] !== undefined) {
                 const platform = new platforms[constructor]();
+                platform.active = activePlatformSlugs.includes(platform.slug);
                 if (platform.active) {
                     this.platforms[platform.slug] = platform;
                 }

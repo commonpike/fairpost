@@ -10,8 +10,8 @@ export default class AsReddit extends Ayrshare {
 
     constructor() {
         super();
-        this.SUBREDDIT = process.env.FAYRSHARE_REDDIT_SUBREDDIT;
-        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('reddit');
+        this.SUBREDDIT = process.env.FAIRPOST_REDDIT_SUBREDDIT;
+        this.active = process.env.FAIRPOST_AYRSHARE_PLATFORMS.split(',').includes('reddit');
     }
     
 

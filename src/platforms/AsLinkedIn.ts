@@ -9,7 +9,7 @@ export default class AsLinkedIn extends Ayrshare {
 
     constructor() {
         super();
-        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('linkedin');
+        this.active = process.env.FAIRPOST_AYRSHARE_PLATFORMS.split(',').includes('linkedin');
     }
 
     async preparePost(folder: Folder): Promise<Post | undefined> {

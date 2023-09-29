@@ -9,7 +9,7 @@ export default class AsTwitter extends Ayrshare {
 
     constructor() {
         super();
-        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('twitter');
+        this.active = process.env.FAIRPOST_AYRSHARE_PLATFORMS.split(',').includes('twitter');
     }
 
     async preparePost(folder: Folder): Promise<Post | undefined> {

@@ -9,7 +9,7 @@ export default class AsTikTok extends Ayrshare {
 
     constructor() {
         super();
-        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('tiktok');
+        this.active = process.env.FAIRPOST_AYRSHARE_PLATFORMS.split(',').includes('tiktok');
     }
 
     async preparePost(folder: Folder): Promise<Post | undefined> {

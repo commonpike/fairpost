@@ -9,7 +9,7 @@ export default class AsYouTube extends Ayrshare {
 
     constructor() {
         super();
-        this.active = process.env.FAYRSHARE_AYRSHARE_PLATFORMS.split(',').includes('youtube');
+        this.active = process.env.FAIRPOST_AYRSHARE_PLATFORMS.split(',').includes('youtube');
     }
 
     async preparePost(folder: Folder): Promise<Post | undefined> {
