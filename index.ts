@@ -1,9 +1,10 @@
 /*
     Usage
 
-    tsc && node build/fayrshare.js
-    node build/fayrshare.js .. 
-
+    ```
+    tsc 
+    node build/index.js .. 
+    ```
     
 */
 
@@ -37,7 +38,7 @@ function getOption(key:string):boolean|string|null {
 async function main() {
 
     const feed = new Feed(CONFIG);
-    console.log('Fayrshare '+feed.path+' starting .. ',DRY_RUN?'dry-run':'');
+    console.log('Fairpost '+feed.path+' starting .. ',DRY_RUN?'dry-run':'');
     console.log();
 
     let result: any = '';

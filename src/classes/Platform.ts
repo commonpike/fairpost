@@ -11,7 +11,7 @@ export default class Platform {
 
     active: boolean = false;
     slug: PlatformSlug = PlatformSlug.UNKNOWN;
-    defaultBody: string = "Fayrshare feed";
+    defaultBody: string = "Fairpost feed";
 
     /*
     * getPostFileName

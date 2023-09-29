@@ -1,7 +1,7 @@
-# Fayrshare
+# Fairpost
 
 ```
-tsc --config .env-fayrshare && build/fayrshare.js
+tsc --config .env-fairpost && build/fairpost.js
 ```
 
 Ayrshare feed helps you manage your ayrshare

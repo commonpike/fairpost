@@ -7,6 +7,6 @@
   },
   "include": [
     "index.ts",
-    "fayrshare.ts"
+    "fairpost.ts"
   ]
 }
