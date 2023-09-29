@@ -30,9 +30,9 @@ The next post can then be `scheduled`, and
 any due posts can be `published` :
 
 ```
-node build/index.js prepare-posts
-node build/index.js schedule-next-posts
-node build/index.js publish-due-posts
+node fairpost.js prepare-posts
+node fairpost.js schedule-next-posts
+node fairpost.js publish-due-posts
 ```
 
 Each of these commands (and others) accept `--arguments`
@@ -60,4 +60,15 @@ node fairpost.js get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,x
 node fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
 node fairpost.js publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]
 ```
+
+## Create a new platform
+
+To add support for your own platform, add a class to `src/platforms`
+extending `src/classes/Platform`. You want to override at least the
+method `preparePost(folder: Folder)` and 
+`publishPost(post: Post, dryrun:boolean = false)`.
+
+Then add a slug for your platform to `src/platforms/index.js` and
+enable your platform in your `.env`.
+
 

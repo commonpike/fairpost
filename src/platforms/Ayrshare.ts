@@ -15,10 +15,10 @@ interface AyrshareResult {
 
 export default abstract class Ayrshare extends Platform {
 
-    APIKEY: string;
 
     requiresApproval: boolean = false;
 
+    // map fairpost platforms to ayrshare platforms
     platforms: {
         [slug in PlatformSlug]?: string
     } = {
@@ -33,8 +33,6 @@ export default abstract class Ayrshare extends Platform {
 
     constructor() {
         super();
-        this.active = process.env.FAIRPOST_AYRSHARE_ACTIVE==='true';
-        this.APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
     }
 
 
@@ -71,6 +69,7 @@ export default abstract class Ayrshare extends Platform {
     }
 
     async uploadMedia(media: string[]): Promise<string[]> {
+        const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
         const urls= [] as string[];
         for (const file of media) {
             const buffer = fs.readFileSync(file); 
@@ -81,7 +80,7 @@ export default abstract class Ayrshare extends Platform {
             const res1 = await fetch("https://app.ayrshare.com/api/media/uploadUrl?fileName="+uname+"&contentType="+ext.substring(1), {
                 method: "GET",
                 headers: {
-                    "Authorization": `Bearer ${this.APIKEY}`
+                    "Authorization": `Bearer ${APIKEY}`
                 }
             });
 
@@ -100,7 +99,7 @@ export default abstract class Ayrshare extends Platform {
                 method: "PUT",
                 headers: {
                     "Content-Type": contentType,
-                    "Authorization": `Bearer ${this.APIKEY}`
+                    "Authorization": `Bearer ${APIKEY}`
                 },
                 body: buffer,
             });
@@ -117,6 +116,7 @@ export default abstract class Ayrshare extends Platform {
 
     async publishAyrshare(post: Post, platformOptions: {}, uploads: string[]): Promise<AyrshareResult> {
         
+        const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
         const result = {
             success: false,
             error: undefined,
@@ -161,7 +161,7 @@ export default abstract class Ayrshare extends Platform {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${this.APIKEY}`
+                "Authorization": `Bearer ${APIKEY}`
             },
             body: body
         }).catch(e=> {

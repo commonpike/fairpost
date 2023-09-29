@@ -20,6 +20,7 @@ export default class AsTwitter extends Ayrshare {
             if (post.files.image.length>4) {
                 post.files.image.length=4;
             }
+            post.save();
         }
         return post;
     }
