@@ -1,8 +1,8 @@
 
 import Ayrshare from "./Ayrshare";
 import { PlatformSlug } from ".";
-import Folder from "../classes/Folder";
-import Post from "../classes/Post";
+import Folder from "../Folder";
+import Post from "../Post";
 import * as fs from 'fs';
 import * as sharp from 'sharp';
 
