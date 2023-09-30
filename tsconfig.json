@@ -2,9 +2,11 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "commonjs",
-    "sourceMap": true
+    "sourceMap": true,
+    "outDir": "build"
   },
   "include": [
-    "index.ts"
+    "index.ts",
+    "fairpost.ts"
   ]
 }
