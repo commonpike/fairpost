@@ -1,8 +1,8 @@
 
 import Ayrshare from "./Ayrshare";
 import { PlatformSlug } from ".";
-import Folder from "../classes/Folder";
-import Post from "../classes/Post";
+import Folder from "../Folder";
+import Post from "../Post";
 
 export default class AsYouTube extends Ayrshare {
     slug = PlatformSlug.ASYOUTUBE;

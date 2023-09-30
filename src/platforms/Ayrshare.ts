@@ -3,10 +3,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
 import { PlatformSlug } from ".";
-import Platform from "../classes/Platform";
-import Folder from "../classes/Folder";
-import Post from "../classes/Post";
-import { PostStatus } from "../classes/Post";
+import Platform from "../Platform";
+import Folder from "../Folder";
+import Post from "../Post";
+import { PostStatus } from "../Post";
 
 interface AyrshareResult {
     success: boolean;

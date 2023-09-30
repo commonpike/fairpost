@@ -75,13 +75,25 @@ next post automatically.
 
 ```
 fairpost.js help 
-fairpost.js get-feed [--config=xxx]
+fairpost.js get-feed
 fairpost.js get-folders [--folders=xxx,xxx]
 fairpost.js prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]
 fairpost.js get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
 fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
 fairpost.js publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]
 ```
+
+### Common arguments 
+
+```
+# Select which config file to use
+fairpost.js [command] [arguments] --config=.env-test
+
+# Set the cli output format to pure json
+fairpost.js [command] [arguments] --report=json
+
+```
+
 
 ## Add a new platform
 

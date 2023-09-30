@@ -6,8 +6,8 @@ import Platform from "./Platform";
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import * as platforms from '../platforms';
-import { PlatformSlug } from '../platforms';
+import * as platforms from './platforms';
+import { PlatformSlug } from './platforms';
 
 export default class Feed {
 
@@ -20,7 +20,7 @@ export default class Feed {
 
     constructor(configPath?: string) {
         if (configPath) {
-            const configPathResolved = path.resolve(__dirname+'/../../../'+configPath);
+            const configPathResolved = path.resolve(__dirname+'/../../'+configPath);
             dotenv.config({ path:configPathResolved });
         } else {
             dotenv.config();
@@ -33,7 +33,7 @@ export default class Feed {
         this.interval = Number(process.env.FAIRPOST_FEED_INTERVAL ?? 7);
 
         const activePlatformSlugs = process.env.FAIRPOST_FEED_PLATFORMS.split(',');
-        const platformClasses = fs.readdirSync(path.resolve(__dirname+'/../platforms'));
+        const platformClasses = fs.readdirSync(path.resolve(__dirname+'/platforms'));
         platformClasses.forEach(file=> {
             const constructor = file.replace('.ts','').replace('.js','');
             if (platforms[constructor] !== undefined) {

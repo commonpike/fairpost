@@ -3,7 +3,7 @@ import * as path from 'path';
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import { PlatformSlug } from "../platforms";
+import { PlatformSlug } from "./platforms";
 
 
 

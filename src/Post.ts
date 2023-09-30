@@ -56,6 +56,16 @@ export default class Post {
     this.save();
   }
 
+  report(): string {
+    let report = '';
+    report += '\nPost: '+this.platform.slug+' : '+this.folder.path;
+    report += '\n - valid: '+this.valid;
+    report += '\n - status: '+this.status;
+    report += '\n - scheduled: '+this.scheduled;
+    report += '\n - posted: '+this.posted;
+    return report;
+  }
+
 }
 
 export enum PostStatus {
