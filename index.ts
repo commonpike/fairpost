@@ -3,6 +3,7 @@
     Fairpost cli handler     
 */
 
+import Logger from './src/Logger';
 import Feed from './src/Feed';
 import { PostStatus } from './src/Post';
 import { PlatformSlug } from './src/platforms';
@@ -11,8 +12,8 @@ import { PlatformSlug } from './src/platforms';
 const COMMAND = process.argv[2] ?? 'help'
 
 // options
-const DRY_RUN = !!getOption('dry-run') ?? false;
 const CONFIG = (getOption('config') as string ) ?? '.env';
+const DRY_RUN = !!getOption('dry-run') ?? false;
 const REPORT = (getOption('report') as string ) ?? 'text';
 const PLATFORMS = (getOption('platforms') as string)?.split(',') as PlatformSlug[] ?? undefined;
 const FOLDERS = (getOption('folders') as string)?.split(',') ?? undefined;
@@ -37,8 +38,7 @@ async function main() {
     let report = '';
 
     const feed = new Feed(CONFIG);
-    report += 'Fairpost '+feed.path+' starting .. ',DRY_RUN?'dry-run':'';
-    report += '\n';
+    Logger.trace('Fairpost '+feed.path+' '+COMMAND,DRY_RUN?' dry-run':'');
 
 
     try {

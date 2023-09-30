@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import * as path from 'path';
+import Logger from './Logger';
 
 export default class Folder {
 
@@ -16,6 +16,7 @@ export default class Folder {
   }
 
   getFiles() {
+    Logger.trace('Folder','getFiles');
     if (this.files!=undefined) {
       return {
         text: [ ...this.files.text ],

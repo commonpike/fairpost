@@ -2,6 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import Logger from './Logger';
 import Platform from "./Platform";
 import Folder from "./Folder";
 import Post from "./Post";
@@ -47,10 +48,12 @@ export default class Feed {
     }
 
     getPlatforms(platforms?:PlatformSlug[]): Platform[] {
+        Logger.trace('Feed','getPlatforms');
         return platforms?.map(platform=>this.platforms[platform]) ?? Object.values(this.platforms);
     }
 
     getAllFolders(): Folder[] {
+        Logger.trace('Feed','getAllFolders');
         if (this.folders.length) {
             return this.folders;
         }
@@ -68,6 +71,7 @@ export default class Feed {
     }
 
     getFolders(paths?: string[]): Folder[] {
+        Logger.trace('Feed','getFolders');
         return paths?.map(path=>new Folder(this.path+'/'+path)) ?? this.getAllFolders();
     }
 
@@ -76,6 +80,7 @@ export default class Feed {
         platforms?:PlatformSlug[], 
         status?:PostStatus
     }): Post[] {
+        Logger.trace('Feed','getPosts');
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
@@ -94,7 +99,7 @@ export default class Feed {
         paths?:string[]
         platforms?:PlatformSlug[]
     }): Promise<Post[]> {
-        
+        Logger.trace('Feed','preparePosts');
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
@@ -114,6 +119,7 @@ export default class Feed {
 
     
     getLastPost(platform:PlatformSlug): Post | void {
+        Logger.trace('Feed','getLastPost');
         let lastPost: Post = undefined;
         const posts = this.getPosts({
             platforms: [platform],
@@ -129,6 +135,7 @@ export default class Feed {
     
    
     getNextPostDate(platform:PlatformSlug): Date {
+        Logger.trace('Feed','getNextPostDate');
         let nextDate = null;
         const lastPost = this.getLastPost(platform);
         if (lastPost) {
@@ -144,6 +151,7 @@ export default class Feed {
         paths?:string[]
         platforms?:PlatformSlug[]
     }): Post[] {
+        Logger.trace('Feed','scheduleNextPosts');
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
@@ -166,6 +174,7 @@ export default class Feed {
         paths?:string[]
         platforms?:PlatformSlug[]
     }, dryrun:boolean = false): Promise<Post[]> {
+        Logger.trace('Feed','publishDuePosts');
         const now = new Date();
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);

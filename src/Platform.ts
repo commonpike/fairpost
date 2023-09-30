@@ -1,11 +1,9 @@
 import * as fs from 'fs';
-import * as path from 'path';
+import Logger from './Logger';
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
 import { PlatformSlug } from "./platforms";
-
-
 
 export default class Platform {
 
@@ -32,7 +30,7 @@ export default class Platform {
 
     getPost(folder: Folder): Post | undefined {
 
-        //console.log(this.slug,'getPost',folder.path);
+        Logger.trace('Platform','getPost');
 
         if (fs.existsSync(folder.path+'/'+this.getPostFileName())) {
             const data = JSON.parse(fs.readFileSync(folder.path+'/'+this.getPostFileName(), 'utf8'));
@@ -56,7 +54,7 @@ export default class Platform {
     */
     async preparePost(folder: Folder): Promise<Post | undefined> {
         
-        console.log(this.slug,'preparePost',folder.path);
+        Logger.trace('Platform','preparePost');
 
         const post = this.getPost(folder) ?? new Post(folder,this);
         if (post.status===PostStatus.PUBLISHED) {
@@ -114,6 +112,8 @@ export default class Platform {
     */
 
     async publishPost(post: Post, dryrun:boolean = false): Promise<boolean> {
+        
+        Logger.trace('Platform','publishPost');
         post.posted = new Date();
         post.results.push({
             error: 'publishing not implemented for '+this.slug
