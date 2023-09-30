@@ -1,8 +1,6 @@
 # Fairpost
 
-```
-tsc && fairpost.js help
-```
+
 
 Ayrshare feed helps you manage your ayrshare
 feed from the command line.
@@ -11,10 +9,28 @@ Each post is a folder, containing at least one
 text file (the post body) and optionally images
 or a video. 
 
-
 Edit the .env file to manage the platforms
 you want to support, amongst others. 
 
+## Setting up 
+```
+# install
+npm install
+
+# compile typescript code
+tsc
+
+# copy and edit config file
+cp .env.dist .env && nano .env
+
+# run
+./fairpost.js help
+```
+
+## Prepare
+```
+fairpost.js prepare-posts
+```
 Folders need to be `prepared` (iow turned into posts)
 before they can be posted to a platform. 
 Each platform, as defined in src/platforms, will 
@@ -26,14 +42,20 @@ is youtube). Finally, it will add a json file
 describing the post for that platform in the 
 folder.
 
-The next post can then be `scheduled`, and
-any due posts can be `published` :
-
+## Schedule
 ```
-fairpost.js prepare-posts
-fairpost.js schedule-next-posts
+fairpost.js schedule-next-post
+```
+The next post can then be `scheduled`. For each platform this just updates the json file in one post to set the status to scheduled, and set the schedule date. By default the date will be `FAIRPOST_FEED_INTERVAL` days after the last post for that platform, or `now`, whichever is latest.
+
+## Publish
+```
 fairpost.js publish-due-posts
 ```
+This will publish any scheduled posts that are past their due date.
+
+
+## Arguments
 
 Each of these commands (and others) accept `--arguments`
 that may help you, for example, to immediately publish
@@ -49,7 +71,7 @@ next post automatically.
 
 
 
-## cli
+## Cli
 
 ```
 fairpost.js help 
@@ -61,9 +83,9 @@ fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx] [--fold
 fairpost.js publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]
 ```
 
-## Create a new platform
+## Add a new platform
 
-To add support for your own platform, add a class to `src/platforms`
+To add support for a new platform, add a class to `src/platforms`
 extending `src/classes/Platform`. You want to override at least the
 method `preparePost(folder: Folder)` and 
 `publishPost(post: Post, dryrun:boolean = false)`.

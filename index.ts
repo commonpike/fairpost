@@ -1,11 +1,6 @@
 /*
-    Usage
-
-    ```
-    tsc 
-    node build/index.js .. 
-    ```
-    
+    202309*pike
+    Fairpost cli handler     
 */
 
 import Feed from './src/classes/Feed';
