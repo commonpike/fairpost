@@ -1,6 +1,6 @@
 
 import * as fs from 'fs';
-import * as path from 'path';
+import Logger from './Logger';
 import Folder from "./Folder";
 import Platform from "./Platform";
 
@@ -41,6 +41,7 @@ export default class Post {
   */
 
   save(): void {
+    Logger.trace('Post','save');
     const data = { ...this};
     delete data.folder;
     delete data.platform;
@@ -51,12 +52,14 @@ export default class Post {
   }
 
   schedule(date:Date): void {
+    Logger.trace('Post','schedule');
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
   }
 
   report(): string {
+    Logger.trace('Post','report');
     let report = '';
     report += '\nPost: '+this.platform.slug+' : '+this.folder.path;
     report += '\n - valid: '+this.valid;
