@@ -56,7 +56,13 @@ folder.
 ```
 fairpost.js schedule-next-post
 ```
-The next post can then be `scheduled`. For each platform this just updates the json file in one post to set the status to scheduled, and set the schedule date. By default the date will be `FAIRPOST_FEED_INTERVAL` days after the last post for that platform, or `now`, whichever is latest.
+The next post can then be `scheduled`. For each platform,
+if there is not already a scheduled post, this will update
+the json file in one post to set the status to scheduled, 
+and set the schedule date. 
+By default the date will be `FAIRPOST_FEED_INTERVAL` days 
+after the last post for that platform, or `now`, whichever 
+is latest.
 
 ## Publish
 ```
