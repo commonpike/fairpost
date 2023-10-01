@@ -1,16 +1,26 @@
 # Fairpost
 
-
-
-Ayrshare feed helps you manage your ayrshare
-feed from the command line.
+Fairpost helps you manage your social
+feeds from the command line, using Node.
 
 Each post is a folder, containing at least one 
 text file (the post body) and optionally images
 or a video. 
 
+To smoothly maintain your feed, you can run 
+fairpost every day. Fairpost will prepare and 
+schedule new content to be posted on all your 
+platforms on a regular basis, while
+you can just focus on creating new content.
+
+Or, if you prefer, you can manually publish one
+specific post on all supported and enabled 
+platforms at once.
+
 Edit the .env file to manage the platforms
-you want to support, amongst others. 
+you want to support, the interval for new posts,
+etcetera. For each platform, you'll have to 
+register the app to post on your behalf.
 
 ## Setting up 
 ```
