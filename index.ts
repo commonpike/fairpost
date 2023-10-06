@@ -7,6 +7,7 @@ import Logger from './src/Logger';
 import Feed from './src/Feed';
 import { PostStatus } from './src/Post';
 import { PlatformSlug } from './src/platforms';
+import Facebook from './src/platforms/Facebook';
 
 // arguments 
 const COMMAND = process.argv[2] ?? 'help'
@@ -102,6 +103,19 @@ async function main() {
                 });
                 result = nextposts;
                 break;
+            case 'facebook-get-page-token':
+                const userToken = (getOption('user-token') as string );
+                if (!userToken) {
+                    throw new Error('Missing parameter: user-token');
+                }
+                const appUserId = (getOption('app-user-id') as string );
+                if (!appUserId) {
+                    throw new Error('Missing parameter: app-user-id');
+                }
+                const facebook = new Facebook();
+                result = await facebook.getPageToken(appUserId, userToken);
+                report = 'Page Token: '+result;
+                break;
             default: 
                 const cmd = process.argv[1];
                 result = [
@@ -112,12 +126,13 @@ async function main() {
                     `${cmd} prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]`,
                     `${cmd} get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,xxx]`,
                     `${cmd} schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx] [--folders=xxx,xxx]`,
-                    `${cmd} publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]`
+                    `${cmd} publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]`,
+                    `${cmd} facebook-get-page-token --app-user-id=xxx --user-token=xxx`
                 ];
                 result.forEach(line => report += '\n'+line);
         }
     } catch (e) {
-        console.error(e.getMessage());
+        console.error(e.message);
     }
 
     switch(REPORT) {

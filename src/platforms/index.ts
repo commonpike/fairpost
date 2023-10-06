@@ -14,5 +14,6 @@ export enum PlatformSlug {
     ASTWITTER = "astwitter",
     ASTIKTOK = "astiktok",
     ASLINKEDIN = "aslinkedin",
-    ASREDDIT = "asreddit"
+    ASREDDIT = "asreddit",
+    FACEBOOK = "facebook"
 }
