@@ -35,7 +35,7 @@ function getOption(key:string):boolean|string|null {
 /* main */
 async function main() {
 
-    let result: any = '';
+    let result: any;
     let report = '';
 
     const feed = new Feed(CONFIG);
@@ -54,6 +54,10 @@ async function main() {
                     report += 'Platform: '+platform.slug+'\n';
                 });
                 result = platforms;
+                break;
+            case 'test-platforms':
+                result = await feed.testPlatforms(PLATFORMS);
+                report = "Result: \n"+ JSON.stringify(result,null,'\t');
                 break;
             case 'get-folders':
                 const folders = feed.getFolders(FOLDERS);
@@ -121,6 +125,7 @@ async function main() {
                 result = [
                     `${cmd} help`,
                     `${cmd} get-feed [--config=xxx]`,
+                    `${cmd} test [--platforms=xxx,xxx]`,
                     `${cmd} get-platforms [--platforms=xxx,xxx]`,
                     `${cmd} get-folders [--folders=xxx,xxx]`,
                     `${cmd} prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]`,

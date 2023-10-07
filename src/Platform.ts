@@ -122,6 +122,17 @@ export default class Platform {
         post.save();
         return false;
     }
+
+    /*
+    * test
+    *
+    * Test the platform installation. This should not post 
+    * anything, but test access tokens et al. It can return
+    * anything.
+    */
+    async test(): Promise<any> {
+        return 'No tests';
+    }
 }
 
 

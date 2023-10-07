@@ -37,6 +37,7 @@ export default class Feed {
         const platformClasses = fs.readdirSync(path.resolve(__dirname+'/platforms'));
         platformClasses.forEach(file=> {
             const constructor = file.replace('.ts','').replace('.js','');
+            // nb import * as platforms loaded the constructors
             if (platforms[constructor] !== undefined) {
                 const platform = new platforms[constructor]();
                 platform.active = activePlatformSlugs.includes(platform.slug);
@@ -48,8 +49,16 @@ export default class Feed {
     }
 
     getPlatforms(platforms?:PlatformSlug[]): Platform[] {
-        Logger.trace('Feed','getPlatforms');
+        Logger.trace('Feed','getPlatforms',platforms);
         return platforms?.map(platform=>this.platforms[platform]) ?? Object.values(this.platforms);
+    }
+
+    async testPlatforms(platforms?:PlatformSlug[]): Promise<{ [slug:string] : {}}> {
+        const results = {};
+        for (const platform of this.getPlatforms(platforms)) {
+            results[platform.slug] = await platform.test();
+        }
+        return results;
     }
 
     getAllFolders(): Folder[] {
