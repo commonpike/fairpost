@@ -1,0 +1,54 @@
+# Platform: Facebook
+
+The `facebook` platform manage a facebook **page* (not your feed)
+using the plain graph api - no extensions installed.
+
+## Setting up the Facebook platform
+
+https://dev.to/xaypanya/how-to-connect-your-nodejs-server-to-facebook-page-api-1hol
+https://developers.facebook.com/docs/pages/getting-started
+https://developers.facebook.com/docs/pages-api/posts
+
+### Create a new App in your facebook account
+ - go to https://developers.facebook.com/
+ - create an app that can manage pages 
+ - for instagram, you'll need to attach a business account (...) that is connected to a facebook page
+ - under 'settings', find your app ID 
+   - save this as `FAIRPOST_FACEBOOK_APP_ID` in your .env
+ - under 'settings', find your app secret
+   - save this as `FAIRPOST_FACEBOOK_APP_SECRET` in your .env
+
+### Find the page id of the page you want the app to manage
+  - go to https://business.facebook.com/
+  - find your page (currently under 'settings > business assets')
+  - note the page id 
+    - save this as `FAIRPOST_FACEBOOK_PAGE_ID` in your .env
+
+### Get a (short lived) Page Access Token for the page you want the app to manage
+
+This is good for testing, but you'll have to refresh this token often.
+
+ - go to https://developers.facebook.com/tools/explorer/
+ - select your app 
+ - add permission `pages_manage_posts` and `business_management` to your app
+ - request a (short lived) page access token
+   - save this as `FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN` in your .env
+
+### Get a (long lived) Page Access Token for the page you want the app to manage
+
+This token should last forever. It involves get a long-lived user token and then requesting the 'accounts' for your 'app scoped user id'; but this app provides a tool to help you do that: 
+
+ - go to https://developers.facebook.com/tools/explorer/
+ - select your app 
+ - add permission `pages_manage_posts` and `business_management` to your app
+ - request a (short lived) user access token
+ - click 'submit' to submit the default `?me` query
+   - remember the `id` in the response as your id
+ - call `./fairpost.js facebook-get-page-token
+    --app-user-id={your id} --user-token={your token}`
+   - note the token returned 
+   - save this as `FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN` in your .env
+
+### Enable and test the facebook platform
+ - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
+ - call `./fairpost.js facebook-test`
