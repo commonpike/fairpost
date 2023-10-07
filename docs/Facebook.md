@@ -30,7 +30,13 @@ This is good for testing, but you'll have to refresh this token often.
 
  - go to https://developers.facebook.com/tools/explorer/
  - select your app 
- - add permission `pages_manage_posts` and `business_management` to your app
+ - add permissions
+   - pages_manage_engagement
+   - pages_manage_posts
+   - pages_read_engagement
+   - pages_read_user_engagement
+   - publish_video
+   - business_management
  - request a (short lived) page access token
    - save this as `FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN` in your .env
 
@@ -40,7 +46,13 @@ This token should last forever. It involves get a long-lived user token and then
 
  - go to https://developers.facebook.com/tools/explorer/
  - select your app 
- - add permission `pages_manage_posts` and `business_management` to your app
+ - add permissions
+   - pages_manage_engagement
+   - pages_manage_posts
+   - pages_read_engagement
+   - pages_read_user_engagement
+   - publish_video
+   - business_management
  - request a (short lived) user access token
  - click 'submit' to submit the default `?me` query
    - remember the `id` in the response as your id

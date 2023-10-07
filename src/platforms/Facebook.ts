@@ -66,7 +66,7 @@ export default class Facebook extends Platform {
         };
         url.search = new URLSearchParams(query).toString();
 
-        Logger.trace('fetching',url);
+        Logger.trace('fetching',url.href);
         const res1 = await fetch(url,{
             method: 'GET',
             headers: { 'Accept': 'application/json'},
@@ -91,10 +91,19 @@ export default class Facebook extends Platform {
             const data2 = await res2.json();
         */
 
-        const data2 = await this.get('accounts',{
-            'access_token' : llUserAccessToken
+        const url2 = new URL('https://graph.facebook.com');
+        url2.pathname = appUserId + "/accounts";
+        const query2 = {
+            access_token : llUserAccessToken
+        };
+        url2.search = new URLSearchParams(query2).toString();
+        Logger.trace('fetching',url.href);
+        const res2 = await fetch(url2,{
+            method: 'GET',
+            headers: { 'Accept': 'application/json'},
         });
-
+        const data2 = await res2.json();
+        
         let llPageAccessToken = '';
         if (data2.data) {
             data2.data.forEach(page=> {
