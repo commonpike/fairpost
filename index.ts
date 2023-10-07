@@ -127,6 +127,7 @@ async function main() {
                     `${cmd} get-feed [--config=xxx]`,
                     `${cmd} test [--platforms=xxx,xxx]`,
                     `${cmd} get-platforms [--platforms=xxx,xxx]`,
+                    `${cmd} test-platforms [--platforms=xxx,xxx]`,
                     `${cmd} get-folders [--folders=xxx,xxx]`,
                     `${cmd} prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]`,
                     `${cmd} get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,xxx]`,

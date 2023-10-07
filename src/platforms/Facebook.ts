@@ -5,6 +5,7 @@ import { PlatformSlug } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 import * as fs from 'fs';
+import * as path from 'path';
 import * as sharp from 'sharp';
 
 export default class Facebook extends Platform {
@@ -39,6 +40,10 @@ export default class Facebook extends Platform {
         return super.publishPost(post,dryrun);
     }
 
+    async test() {
+        return this.get();
+    }
+
     /*
     * Return a long lived page access token.
     * 
@@ -47,14 +52,6 @@ export default class Facebook extends Platform {
     async getPageToken(appUserId: string, userAccessToken :string): Promise<string> {
 
         // get a long lived UserAccessToken
-        /*
-        let url1 = `https://graph.facebook.com/${this.GRAPH_API_VERSION}`;
-        url1 += '/oauth/access_token?';
-        url1 += "grant_type=fb_exchange_token&";
-        url1 += `client_id=${process.env.FAIRPOST_FACEBOOK_APP_ID}&`;
-        url1 += `client_secret=${process.env.FAIRPOST_FACEBOOK_APP_SECRET}&`;
-        url1 += `fb_exchange_token=${userAccessToken}`;
-        */
 
         const url = new URL('https://graph.facebook.com');
         url.pathname = this.GRAPH_API_VERSION + "/oauth/access_token";
@@ -79,17 +76,7 @@ export default class Facebook extends Platform {
             throw new Error('No llUserAccessToken access_token in response.');
         }
 
-        /*let url2 = `https://graph.facebook.com/${this.GRAPH_API_VERSION}`;
-            url2 += `/${appUserId}/accounts?`;
-            url2 += `access_token=${llUserAccessToken}`;
-
-            Logger.trace('fetching',url2);
-            const res2 = await fetch(url2,{
-                method: 'GET',
-                headers: { 'Accept': 'application/json'},
-            });
-            const data2 = await res2.json();
-        */
+        // get a long lived PageAccessToken
 
         const url2 = new URL('https://graph.facebook.com');
         url2.pathname = appUserId + "/accounts";
@@ -120,16 +107,13 @@ export default class Facebook extends Platform {
         return llPageAccessToken;
     }
 
-    async test() {
-        return this.get();
-    }
-
     private async get(
-        method: string = '', 
+        call: string = '', 
         query: { [key:string]: string } = {}
     ) {
         const url = new URL('https://graph.facebook.com');
-        url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID +"/" + method,
+        url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
+        url.pathname +=  "/" + call,
         url.search = new URLSearchParams(query).toString();
         Logger.trace('GET',url.href);
         const res = await fetch(url,{
@@ -145,12 +129,25 @@ export default class Facebook extends Platform {
         return result;
     }
 
+    private async testPost() {
+        return this.post(
+            'feed',
+            {
+                "message":"test",
+                "link":"https://test.com",
+                "published":"false",
+                "scheduled_publish_time":"tomorrow",
+            }
+        );
+    }
+
     private async post(
-        method: string = '', 
+        call: string = '', 
         body = {}
     ) {
         const url = new URL('https://graph.facebook.com');
-        url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID +"/" + method,
+        url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
+        url.pathname += "/" + call,
         Logger.trace('POST',url.href);
         const res = await fetch(url,{
             method: 'POST',
@@ -163,6 +160,77 @@ export default class Facebook extends Platform {
         });
         const result = await res.json();
         return result;
+
+    }
+
+    private async postImage(
+        file: string = ''
+    ): Promise<string> {
+
+        Logger.trace('Reading file',file);
+        const rawData = fs.readFileSync(file);
+        const blob = new Blob([rawData]);
+
+        const url = new URL('https://graph.facebook.com');
+        url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
+        url.pathname += "/photos";
+
+        const body = new FormData();
+        body.set("published", "false");
+        body.set("source", blob, path.basename(file));
+
+        Logger.trace('POST',url.href);
+        const res = await fetch(url,{
+            method: 'POST',
+            headers: { 
+                'Accept': 'application/json',
+                'Authorization': 'Bearer '+process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN
+            },
+            body
+        });
+
+        const result = await res.json();
+        if (!result['id']) {
+            console.error(result);
+            throw new Error('No id returned when uploading photo');
+        }
+        return result['id'];
+
+    }
+
+    private async postVideo(
+        file: string = ''
+    ): Promise<string> {
+
+        Logger.trace('Reading file',file);
+        const rawData = fs.readFileSync(file);
+        const blob = new Blob([rawData]);
+
+        const url = new URL('https://graph.facebook.com');
+        url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
+        url.pathname += "/videos";
+
+        const body = new FormData();
+        body.set("published", "false");
+        body.set("source", blob, path.basename(file));
+
+        Logger.trace('POST',url.href);
+        const res = await fetch(url,{
+            method: 'POST',
+            headers: { 
+                'Accept': 'application/json',
+                'Authorization': 'Bearer '+process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN
+            },
+            body
+        });
+
+        const result = await res.json();
+        if (!result['id']) {
+            console.error(result);
+            throw new Error('No id returned when uploading video');
+        }
+        return result['id'];
+
     }
 
 }

@@ -60,7 +60,29 @@ This token should last forever. It involves get a long-lived user token and then
 
 ### Enable and test the facebook platform
  - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
- - call `./fairpost.js facebook-test`
+ - call `./fairpost.js test --platforms=facebook`
+
+# Limitations 
+
+## Images 
+
+From https://developers.facebook.com/docs/graph-api/reference/page/photos/ :
+
+Facebook strips all location metadata before publishing and resizes images to different dimensions to best support rendering in multiple sizes.
+
+
+### Supported Formats
+Facebook supports the following formats:
+ - JPEG
+ - BMP
+ - PNG
+ - GIF
+ - TIFF
+
+### File Size
+
+Files must be 4MB or smaller in size.
+For PNG files, try keep the file size below 1 MB. PNG files larger than 1 MB may appear pixelated after upload.
 
 # Random documentation
 
@@ -72,3 +94,6 @@ https://developers.facebook.com/docs/video-api/guides/publishing
 
 large uploads:
 https://developers.facebook.com/docs/graph-api/guides/upload/
+
+https://www.npmjs.com/package/formdata-node
+https://medium.com/deno-the-complete-reference/sending-form-data-using-fetch-in-node-js-8cedd0b2af85
