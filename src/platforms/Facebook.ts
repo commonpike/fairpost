@@ -131,7 +131,7 @@ export default class Facebook extends Platform {
         const url = new URL('https://graph.facebook.com');
         url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID +"/" + method,
         url.search = new URLSearchParams(query).toString();
-        Logger.trace('fetching',url.href);
+        Logger.trace('GET',url.href);
         const res = await fetch(url,{
             method: 'GET',
             headers: process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN ? { 
@@ -142,7 +142,26 @@ export default class Facebook extends Platform {
             }
         });
         const result = await res.json();
-        console.log(result);
+        return result;
+    }
+
+    private async post(
+        method: string = '', 
+        body = {}
+    ) {
+        const url = new URL('https://graph.facebook.com');
+        url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID +"/" + method,
+        Logger.trace('POST',url.href);
+        const res = await fetch(url,{
+            method: 'POST',
+            headers: { 
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer '+process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN
+            },
+            body: JSON.stringify(body)
+        });
+        const result = await res.json();
         return result;
     }
 

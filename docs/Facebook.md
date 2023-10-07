@@ -5,9 +5,6 @@ using the plain graph api - no extensions installed.
 
 ## Setting up the Facebook platform
 
-https://dev.to/xaypanya/how-to-connect-your-nodejs-server-to-facebook-page-api-1hol
-https://developers.facebook.com/docs/pages/getting-started
-https://developers.facebook.com/docs/pages-api/posts
 
 ### Create a new App in your facebook account
  - go to https://developers.facebook.com/
@@ -64,3 +61,14 @@ This token should last forever. It involves get a long-lived user token and then
 ### Enable and test the facebook platform
  - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
  - call `./fairpost.js facebook-test`
+
+# Random documentation
+
+https://dev.to/xaypanya/how-to-connect-your-nodejs-server-to-facebook-page-api-1hol
+https://developers.facebook.com/docs/pages/getting-started
+https://developers.facebook.com/docs/pages-api/posts
+https://developers.facebook.com/docs/graph-api/reference/page/photos/
+https://developers.facebook.com/docs/video-api/guides/publishing
+
+large uploads:
+https://developers.facebook.com/docs/graph-api/guides/upload/
