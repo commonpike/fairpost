@@ -4,6 +4,7 @@ import Platform from "../Platform";
 import { PlatformSlug } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
+import { PostStatus } from "../Post";
 import * as fs from 'fs';
 import * as path from 'path';
 import * as sharp from 'sharp';
@@ -19,11 +20,16 @@ export default class Facebook extends Platform {
     async preparePost(folder: Folder): Promise<Post | undefined> {
         const post = await super.preparePost(folder);
         if (post && post.files) {
-            // facebook : max 10mb images
+            // facebook: video post can only contain 1 video
+            if (post.files.video.length) {
+                post.files.video.length = 1;
+                post.files.image = [];
+            } 
+            // facebook : max 4mb images
             for (const image of post.files.image) {
                 var size = fs.statSync(post.folder.path+'/'+image).size / (1024*1024);
-                if (size>=10) {
-                    console.log('Resizing '+image+' for facebook ..');
+                if (size>=4) {
+                    Logger.trace('Resizing '+image+' for facebook ..');
                     await sharp(post.folder.path+'/'+image).resize({ 
                         width: 1200 
                     }).toFile(post.folder.path+'/_facebook-'+image);
@@ -37,7 +43,42 @@ export default class Facebook extends Platform {
     }
 
     async publishPost(post: Post, dryrun:boolean = false): Promise<boolean> {
-        return super.publishPost(post,dryrun);
+
+        let result = dryrun ? { id: '-99' } : {} as {id: string};
+
+        if (post.files.video) {
+            if (!dryrun) {
+                result = await this.publishVideo(post.files.video[0],post.title,post.body);
+            }
+        } else {
+            const attachments = [];
+            if (post.files.image.length) {
+                for (const image of post.files.image) {
+                    attachments.push({"media_fbid": this.uploadPhoto(post.folder.path+'/'+image)});
+                }
+            }
+            if (!dryrun) {
+                result = await this.post(
+                    'feed',
+                    {
+                        "message":post.body,
+                        "published":process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
+                        "scheduled_publish_time":"tomorrow",
+                        "attached_media": attachments
+                    }
+                );
+            }
+        }
+
+        post.results.push(result);
+        if (result.id) {
+            post.status = PostStatus.PUBLISHED;
+        } else {
+            console.error(this.slug,"No id returned in post",result);
+        }
+        post.save();
+        return !!result.id;
+
     }
 
     async test() {
@@ -107,13 +148,21 @@ export default class Facebook extends Platform {
         return llPageAccessToken;
     }
 
+    /*
+    * Do a GET request on the page.
+    *
+    * arguments: 
+    * endpoint: the path to call 
+    * query: query string as object
+    */
+
     private async get(
-        call: string = '', 
+        endpoint: string = '', 
         query: { [key:string]: string } = {}
     ) {
         const url = new URL('https://graph.facebook.com');
         url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
-        url.pathname +=  "/" + call,
+        url.pathname +=  "/" + endpoint,
         url.search = new URLSearchParams(query).toString();
         Logger.trace('GET',url.href);
         const res = await fetch(url,{
@@ -129,25 +178,21 @@ export default class Facebook extends Platform {
         return result;
     }
 
-    private async testPost() {
-        return this.post(
-            'feed',
-            {
-                "message":"test",
-                "link":"https://test.com",
-                "published":"false",
-                "scheduled_publish_time":"tomorrow",
-            }
-        );
-    }
+    /*
+    * Do a POST request on the page.
+    *
+    * arguments: 
+    * endpoint: the path to call 
+    * body: body as object
+    */
 
     private async post(
-        call: string = '', 
+        endpoint: string = '', 
         body = {}
     ) {
         const url = new URL('https://graph.facebook.com');
         url.pathname = this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
-        url.pathname += "/" + call,
+        url.pathname += "/" + endpoint,
         Logger.trace('POST',url.href);
         const res = await fetch(url,{
             method: 'POST',
@@ -163,8 +208,18 @@ export default class Facebook extends Platform {
 
     }
 
-    private async postImage(
-        file: string = ''
+    /*
+    * POST an image to the /photos endpoint using multipart/form-data
+    *
+    * arguments: 
+    * file: path to the file to post
+    * 
+    * returns:
+    * id of the uploaded photo to use in post attachments
+    */
+    private async uploadPhoto(
+        file: string = '',
+        published = false
     ): Promise<string> {
 
         Logger.trace('Reading file',file);
@@ -176,7 +231,7 @@ export default class Facebook extends Platform {
         url.pathname += "/photos";
 
         const body = new FormData();
-        body.set("published", "false");
+        body.set("published", published? "true":"false");
         body.set("source", blob, path.basename(file));
 
         Logger.trace('POST',url.href);
@@ -198,9 +253,21 @@ export default class Facebook extends Platform {
 
     }
 
-    private async postVideo(
-        file: string = ''
-    ): Promise<string> {
+    /*
+    * POST a video to the page using multipart/form-data
+    *
+    * arguments: 
+    * file: path to the video to post
+    * published: wether to publish it or not
+    * 
+    * returns:
+    * { id: string }
+    */
+    private async publishVideo(
+        file: string,
+        title: string,
+        description: string
+    ): Promise<{ id: string }> {
 
         Logger.trace('Reading file',file);
         const rawData = fs.readFileSync(file);
@@ -211,7 +278,9 @@ export default class Facebook extends Platform {
         url.pathname += "/videos";
 
         const body = new FormData();
-        body.set("published", "false");
+        body.set("title", title);
+        body.set("description",description);
+        body.set("published", process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS);
         body.set("source", blob, path.basename(file));
 
         Logger.trace('POST',url.href);
@@ -229,7 +298,7 @@ export default class Facebook extends Platform {
             console.error(result);
             throw new Error('No id returned when uploading video');
         }
-        return result['id'];
+        return result;
 
     }
 
