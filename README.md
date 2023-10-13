@@ -91,7 +91,6 @@ add folders with content.
 
 ```
 # basic commands:
-# basic commands:
 fairpost.js help
 fairpost.js get-feed [--config=xxx]
 fairpost.js test-platform --platform=xxx
@@ -103,13 +102,13 @@ fairpost.js get-folders [--folders=xxx,xxx]
 fairpost.js get-post --folder=xxx --platform=xxx
 fairpost.js get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
 fairpost.js prepare-post --folder=xxx --platform=xxx
-fairpost.js prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
 fairpost.js schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx 
 fairpost.js schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx
 fairpost.js publish-post --folders=xxx --platforms=xxx [--dry-run]
 fairpost.js publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
 
 # feed planning:
+fairpost.js prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
 fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
 fairpost.js publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
 
