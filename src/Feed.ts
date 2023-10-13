@@ -37,6 +37,7 @@ export default class Feed {
         const platformClasses = fs.readdirSync(path.resolve(__dirname+'/platforms'));
         platformClasses.forEach(file=> {
             const constructor = file.replace('.ts','').replace('.js','');
+            // nb import * as platforms loaded the constructors
             if (platforms[constructor] !== undefined) {
                 const platform = new platforms[constructor]();
                 platform.active = activePlatformSlugs.includes(platform.slug);
@@ -47,9 +48,29 @@ export default class Feed {
         });
     }
 
+    getPlatform(platform:PlatformSlug): Platform {
+        Logger.trace('Feed','getPlatform',platform);
+        return this.getPlatforms([platform])[0];
+    }
+
     getPlatforms(platforms?:PlatformSlug[]): Platform[] {
-        Logger.trace('Feed','getPlatforms');
+        Logger.trace('Feed','getPlatforms',platforms);
         return platforms?.map(platform=>this.platforms[platform]) ?? Object.values(this.platforms);
+    }
+
+    async testPlatform(platform:PlatformSlug): Promise<{}> {
+        Logger.trace('Feed','testPlatform',platform);
+        const results = await this.testPlatforms([platform]);
+        return results[platform];
+    }
+
+    async testPlatforms(platforms?:PlatformSlug[]): Promise<{ [slug:string] : {}}> {
+        Logger.trace('Feed','testPlatforms',platforms);
+        const results = {};
+        for (const platform of this.getPlatforms(platforms)) {
+            results[platform.slug] = await platform.test();
+        }
+        return results;
     }
 
     getAllFolders(): Folder[] {
@@ -70,9 +91,19 @@ export default class Feed {
         return this.folders;
     }
 
+    getFolder(path: string): Folder | undefined {
+        Logger.trace('Feed','getFolder',path);
+        return this.getFolders([path])[0];
+    }
+
     getFolders(paths?: string[]): Folder[] {
-        Logger.trace('Feed','getFolders');
+        Logger.trace('Feed','getFolders',paths);
         return paths?.map(path=>new Folder(this.path+'/'+path)) ?? this.getAllFolders();
+    }
+
+    getPost(path: string, platform: PlatformSlug): Post | undefined {
+        Logger.trace('Feed','getPost');
+        return this.getPosts({paths:[path],platforms:[platform]})[0];
     }
 
     getPosts(filters?: {
@@ -95,11 +126,16 @@ export default class Feed {
         return posts;
     }
 
+    async preparePost(path: string, platform: PlatformSlug): Promise<Post | undefined> {
+        Logger.trace('Feed','preparePost',path,platform);
+        return (await this.preparePosts({paths:[path],platforms:[platform]}))[0];
+    }
+
     async preparePosts(filters?: {
         paths?:string[]
         platforms?:PlatformSlug[]
     }): Promise<Post[]> {
-        Logger.trace('Feed','preparePosts');
+        Logger.trace('Feed','preparePosts',filters);
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
@@ -117,7 +153,92 @@ export default class Feed {
         return posts;
     }
 
-    
+    schedulePost(path: string, platform: PlatformSlug, date: Date): Post {
+        Logger.trace('Feed','schedulePost',path,platform,date);
+        const post = this.getPost(path,platform);
+        if (!post.valid) {
+            throw new Error('Post is not valid');
+        }
+        if (post.status!==PostStatus.UNSCHEDULED) {
+            throw new Error('Post is not unscheduled');
+        }
+        post.schedule(date);
+        return post;
+    }
+
+    schedulePosts(filters: {
+        paths?:string[]
+        platforms?:PlatformSlug[]
+    }, date: Date): Post[] {
+        Logger.trace('Feed','schedulePosts',filters,date);
+        const posts: Post[] = [];
+        const platforms = this.getPlatforms(filters?.platforms);
+        const folders = this.getFolders(filters?.paths);
+        for (const platform of platforms) {
+            for (const folder of folders) {
+                const post = platform.getPost(folder);
+                if (!post.valid) {
+                    throw new Error('Post is not valid');
+                }
+                if (post.status!==PostStatus.UNSCHEDULED) {
+                    throw new Error('Post is not unscheduled');
+                }
+                post.schedule(date);
+                posts.push(post);
+            }
+        }
+        return posts;
+    }
+
+    async publishPost(
+        path:string,
+        slug:PlatformSlug,
+        dryrun:boolean = false
+    ): Promise<Post> {
+        Logger.trace('Feed','publishPost',path,slug,dryrun);
+        const now = new Date();
+        const platform = this.getPlatform(slug);
+        const folder = this.getFolder(path);
+        const post = platform.getPost(folder);
+        if (post.valid) {
+            post.schedule(now);
+            Logger.trace('Posting',slug,path);
+            await platform.publishPost(post,dryrun);
+        } else {
+            throw new Error('Post is not valid');
+        }
+        return post;
+    }
+
+    async publishPosts(filters?: {
+        paths?:string[]
+        platforms?:PlatformSlug[]
+    }, dryrun:boolean = false): Promise<Post[]> {
+        Logger.trace('Feed','publishPosts',filters,dryrun);
+        const now = new Date();
+        const posts: Post[] = [];
+        const platforms = this.getPlatforms(filters?.platforms);
+        const folders = this.getFolders(filters?.paths);
+        for (const platform of platforms) {
+            for (const folder of folders) {
+                const post = platform.getPost(folder);
+                if (post.valid) {
+                    post.schedule(now);
+                    Logger.trace('Posting',platform.slug,folder.path);
+                    await platform.publishPost(post,dryrun);
+                    posts.push(post);
+                } else {
+                    Logger.warn('Skipping invalid post',platform.slug,folder.path);
+                }
+            }
+        }
+        return posts;
+    }
+
+    /*
+        feed planning 
+    */
+
     getLastPost(platform:PlatformSlug): Post | void {
         Logger.trace('Feed','getLastPost');
         let lastPost: Post = undefined;

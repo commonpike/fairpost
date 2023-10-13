@@ -1,4 +1,5 @@
 
+import Logger from '../Logger';
 import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
@@ -80,7 +81,7 @@ export default abstract class Ayrshare extends Platform {
             const ext = path.extname(file);
             const basename = path.basename(file, ext);
             const uname = basename+'-'+randomUUID()+ext;
-            console.log('fetching uploadid...',file);
+            Logger.trace('fetching uploadid...',file);
             const res1 = await fetch("https://app.ayrshare.com/api/media/uploadUrl?fileName="+uname+"&contentType="+ext.substring(1), {
                 method: "GET",
                 headers: {
@@ -94,7 +95,7 @@ export default abstract class Ayrshare extends Platform {
 
             const data = await res1.json();
             //console.log(data);
-            console.log('uploading..',uname);
+            Logger.trace('uploading..',uname);
             const uploadUrl = data.uploadUrl;
             const contentType = data.contentType;
             const accessUrl = data.accessUrl;
@@ -162,7 +163,7 @@ export default abstract class Ayrshare extends Platform {
             scheduleDate: scheduleDate,
             requiresApproval: this.requiresApproval
         });
-        console.log('scheduling...',postPlatform);
+        Logger.trace('scheduling...',postPlatform);
         //console.log(body);
         const res = await fetch("https://app.ayrshare.com/api/post", {
             method: "POST",

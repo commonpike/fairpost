@@ -1,4 +1,5 @@
 
+import Logger from '../Logger';
 import Ayrshare from "./Ayrshare";
 import { PlatformSlug } from ".";
 import Folder from "../Folder";
@@ -27,7 +28,7 @@ export default class AsLinkedIn extends Ayrshare {
             for (const image of post.files.image) {
                 var size = fs.statSync(post.folder.path+'/'+image).size / (1024*1024);
                 if (size>=5) {
-                    console.log('Resizing '+image+' for linkedin ..');
+                    Logger.trace('Resizing '+image+' for linkedin ..');
                     await sharp(post.folder.path+'/'+image).resize({ 
                         width: 1200 
                     }).toFile(post.folder.path+'/_linkedin-'+image);

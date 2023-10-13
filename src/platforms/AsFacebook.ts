@@ -1,4 +1,5 @@
 
+import Logger from '../Logger';
 import Ayrshare from "./Ayrshare";
 import { PlatformSlug } from ".";
 import Folder from "../Folder";

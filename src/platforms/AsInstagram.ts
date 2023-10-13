@@ -1,4 +1,5 @@
 
+import Logger from '../Logger';
 import Ayrshare from "./Ayrshare";
 import { PlatformSlug } from ".";
 import Folder from "../Folder";
@@ -17,10 +18,10 @@ export default class AsInstagram extends Ayrshare {
         if (post) {
             // instagram: 1 video for reel
             if (post.files.video.length) {
-                console.log('Removing images for instagram reel..');
+                Logger.trace('Removing images for instagram reel..');
                 post.files.image = [];
                 if (post.files.video.length > 1) {
-                    console.log('Using first video for instagram reel..');
+                    Logger.trace('Using first video for instagram reel..');
                     post.files.video = [post.files.video[0]];
                 }
             }
@@ -28,7 +29,7 @@ export default class AsInstagram extends Ayrshare {
             for (const image of post.files.image) {
                 const metadata = await sharp(post.folder.path+'/'+image).metadata();
                 if (metadata.width > 1440) {
-                    console.log('Resizing '+image+' for instagram ..');
+                    Logger.trace('Resizing '+image+' for instagram ..');
                     await sharp(post.folder.path+'/'+image).resize({ 
                         width: 1440 
                     }).toFile(post.folder.path+'/_instagram-'+image);

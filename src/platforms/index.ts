@@ -5,6 +5,7 @@ export { default as AsFacebook } from "./AsFacebook";
 export { default as AsTikTok } from "./AsTikTok";
 export { default as AsLinkedIn } from "./AsLinkedIn";
 export { default as AsReddit } from "./AsReddit";
+export { default as Facebook } from "./Facebook";
 
 export enum PlatformSlug {
     UNKNOWN = "unknown",
@@ -14,5 +15,6 @@ export enum PlatformSlug {
     ASTWITTER = "astwitter",
     ASTIKTOK = "astiktok",
     ASLINKEDIN = "aslinkedin",
-    ASREDDIT = "asreddit"
+    ASREDDIT = "asreddit",
+    FACEBOOK = "facebook"
 }
