@@ -121,11 +121,31 @@ async function main() {
                 report += schedpost.report();
                 result = schedpost;
                 break;
-            
+            case 'schedule-posts':
+                const schedposts = feed.schedulePosts({
+                    paths: FOLDERS,
+                    platforms: PLATFORMS
+                }, new Date(DATE));
+                schedposts.forEach(post => {
+                    report += post.report();
+                });
+                result = schedposts;
+                break;
             case 'publish-post':
                 const pubpost = await feed.publishPost(FOLDER,PLATFORM, DRY_RUN);
                 report += pubpost.report();
                 result = pubpost;
+                break;
+            
+            case 'publish-posts':
+                const pubposts = await feed.publishPosts({
+                    paths:FOLDERS,
+                    platforms:PLATFORMS
+                }, DRY_RUN);
+                pubposts.forEach(post => {
+                    report += post.report();
+                });
+                result = pubposts;
                 break;
                 
             /* feed planning */
@@ -140,17 +160,17 @@ async function main() {
                 result = nextposts;
                 break;
             case 'publish-due-posts':
-                const pubposts = await feed.publishDuePosts({
+                const dueposts = await feed.publishDuePosts({
                     paths:FOLDERS,
                     platforms:PLATFORMS
                 }, DRY_RUN);
                 pubposts.forEach(post => {
                     report += post.report();
                 });
-                result = nextposts;
+                result = dueposts;
                 break;
 
-            /* platform speific tools */
+            /* platform specific tools */
             case 'facebook-get-page-token':
                 const userToken = (getOption('user-token') as string );
                 const appUserId = (getOption('app-user-id') as string );
@@ -162,7 +182,7 @@ async function main() {
             default: 
                 const cmd = path.basename(process.argv[1]);
                 result = [
-                    'basic commands:',
+                    '# basic commands:',
                     `${cmd} help`,
                     `${cmd} get-feed [--config=xxx]`,
                     `${cmd} test-platform --platform=xxx`,
@@ -176,11 +196,13 @@ async function main() {
                     `${cmd} prepare-post --folder=xxx --platform=xxx`,
                     `${cmd} prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,
                     `${cmd} schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx `,
+                    `${cmd} schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx`,
                     `${cmd} publish-post --folders=xxx --platforms=xxx [--dry-run]`,
-                    '\nfeed planning:',
+                    `${cmd} publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,
+                    '\n# feed planning:',
                     `${cmd} schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
                     `${cmd} publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
-                    '\nplatform tools:',
+                    '\n# platform tools:',
                     `${cmd} facebook-get-page-token --app-user-id=xxx --user-token=xxx`
                 ];
                 result.forEach(line => report += '\n'+line);

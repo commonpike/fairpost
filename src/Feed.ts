@@ -154,7 +154,7 @@ export default class Feed {
     }
 
     schedulePost(path: string, platform: PlatformSlug, date: Date): Post {
-        Logger.trace('Feed','schedulePost');
+        Logger.trace('Feed','schedulePost',path,platform,date);
         const post = this.getPost(path,platform);
         if (!post.valid) {
             throw new Error('Post is not valid');
@@ -166,19 +166,73 @@ export default class Feed {
         return post;
     }
 
+    schedulePosts(filters: {
+        paths?:string[]
+        platforms?:PlatformSlug[]
+    }, date: Date): Post[] {
+        Logger.trace('Feed','schedulePosts',filters,date);
+        const posts: Post[] = [];
+        const platforms = this.getPlatforms(filters?.platforms);
+        const folders = this.getFolders(filters?.paths);
+        for (const platform of platforms) {
+            for (const folder of folders) {
+                const post = platform.getPost(folder);
+                if (!post.valid) {
+                    throw new Error('Post is not valid');
+                }
+                if (post.status!==PostStatus.UNSCHEDULED) {
+                    throw new Error('Post is not unscheduled');
+                }
+                post.schedule(date);
+                posts.push(post);
+            }
+        }
+        return posts;
+    }
+
     async publishPost(
         path:string,
         slug:PlatformSlug,
         dryrun:boolean = false
     ): Promise<Post> {
-        Logger.trace('Feed','publishPost');
+        Logger.trace('Feed','publishPost',path,slug,dryrun);
         const now = new Date();
-        const post = this.getPost(path,slug);
-        this.schedulePost(path,slug,now);
         const platform = this.getPlatform(slug);
-        console.log('Posting',slug,path);
-        await platform.publishPost(post,dryrun);
+        const folder = this.getFolder(path);
+        const post = platform.getPost(folder);
+        if (post.valid) {
+            post.schedule(now);
+            Logger.trace('Posting',slug,path);
+            await platform.publishPost(post,dryrun);
+        } else {
+            throw new Error('Post is not valid');
+        }
         return post;
+    }
+
+    async publishPosts(filters?: {
+        paths?:string[]
+        platforms?:PlatformSlug[]
+    }, dryrun:boolean = false): Promise<Post[]> {
+        Logger.trace('Feed','publishPosts',filters,dryrun);
+        const now = new Date();
+        const posts: Post[] = [];
+        const platforms = this.getPlatforms(filters?.platforms);
+        const folders = this.getFolders(filters?.paths);
+        for (const platform of platforms) {
+            for (const folder of folders) {
+                const post = platform.getPost(folder);
+                if (post.valid) {
+                    post.schedule(now);
+                    Logger.trace('Posting',platform.slug,folder.path);
+                    await platform.publishPost(post,dryrun);
+                    posts.push(post);
+                } else {
+                    Logger.warn('Skipping invalid post',platform.slug,folder.path);
+                }
+            }
+        }
+        return posts;
     }
 
     /*

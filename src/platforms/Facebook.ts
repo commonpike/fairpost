@@ -46,7 +46,7 @@ export default class Facebook extends Platform {
 
         let result = dryrun ? { id: '-99' } : {} as {id: string};
 
-        if (post.files.video) {
+        if (post.files.video.length) {
             if (!dryrun) {
                 result = await this.publishVideo(post.files.video[0],post.title,post.body);
             }
@@ -54,7 +54,7 @@ export default class Facebook extends Platform {
             const attachments = [];
             if (post.files.image.length) {
                 for (const image of post.files.image) {
-                    attachments.push({"media_fbid": this.uploadPhoto(post.folder.path+'/'+image)});
+                    attachments.push({"media_fbid": await this.uploadPhoto(post.folder.path+'/'+image)});
                 }
             }
             if (!dryrun) {
@@ -63,7 +63,7 @@ export default class Facebook extends Platform {
                     {
                         "message":post.body,
                         "published":process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
-                        "scheduled_publish_time":"tomorrow",
+                        //"scheduled_publish_time":"tomorrow",
                         "attached_media": attachments
                     }
                 );
@@ -72,7 +72,9 @@ export default class Facebook extends Platform {
 
         post.results.push(result);
         if (result.id) {
-            post.status = PostStatus.PUBLISHED;
+            if (!dryrun) {
+                post.status = PostStatus.PUBLISHED;
+            }
         } else {
             console.error(this.slug,"No id returned in post",result);
         }
@@ -85,69 +87,7 @@ export default class Facebook extends Platform {
         return this.get();
     }
 
-    /*
-    * Return a long lived page access token.
-    * 
-    * UserAccessToken: a shortlived user access token
-    */ 
-    async getPageToken(appUserId: string, userAccessToken :string): Promise<string> {
-
-        // get a long lived UserAccessToken
-
-        const url = new URL('https://graph.facebook.com');
-        url.pathname = this.GRAPH_API_VERSION + "/oauth/access_token";
-        const query = {
-            grant_type : "fb_exchange_token",
-            client_id : process.env.FAIRPOST_FACEBOOK_APP_ID,
-            client_secret : process.env.FAIRPOST_FACEBOOK_APP_SECRET,
-            fb_exchange_token : userAccessToken
-        };
-        url.search = new URLSearchParams(query).toString();
-
-        Logger.trace('fetching',url.href);
-        const res1 = await fetch(url,{
-            method: 'GET',
-            headers: { 'Accept': 'application/json'},
-        });
-        const data1 = await res1.json();
-        const llUserAccessToken = data1['access_token'];
-
-        if (!llUserAccessToken) {
-            console.error(data1);
-            throw new Error('No llUserAccessToken access_token in response.');
-        }
-
-        // get a long lived PageAccessToken
-
-        const url2 = new URL('https://graph.facebook.com');
-        url2.pathname = appUserId + "/accounts";
-        const query2 = {
-            access_token : llUserAccessToken
-        };
-        url2.search = new URLSearchParams(query2).toString();
-        Logger.trace('fetching',url.href);
-        const res2 = await fetch(url2,{
-            method: 'GET',
-            headers: { 'Accept': 'application/json'},
-        });
-        const data2 = await res2.json();
-        
-        let llPageAccessToken = '';
-        if (data2.data) {
-            data2.data.forEach(page=> {
-                if (page.id===process.env.FAIRPOST_FACEBOOK_PAGE_ID) {
-                    llPageAccessToken = page.access_token;
-                }
-            })
-        }
-        if (!llPageAccessToken) {
-            console.error(data2);
-            throw new Error('No llPageAccessToken for page '+process.env.FAIRPOST_FACEBOOK_PAGE_ID+'  in response.');
-        }
-
-        return llPageAccessToken;
-    }
-
+    
     /*
     * Do a GET request on the page.
     *
@@ -301,5 +241,69 @@ export default class Facebook extends Platform {
         return result;
 
     }
+
+    /*
+    * Return a long lived page access token.
+    * 
+    * UserAccessToken: a shortlived user access token
+    */ 
+    async getPageToken(appUserId: string, userAccessToken :string): Promise<string> {
+
+        // get a long lived UserAccessToken
+
+        const url = new URL('https://graph.facebook.com');
+        url.pathname = this.GRAPH_API_VERSION + "/oauth/access_token";
+        const query = {
+            grant_type : "fb_exchange_token",
+            client_id : process.env.FAIRPOST_FACEBOOK_APP_ID,
+            client_secret : process.env.FAIRPOST_FACEBOOK_APP_SECRET,
+            fb_exchange_token : userAccessToken
+        };
+        url.search = new URLSearchParams(query).toString();
+
+        Logger.trace('fetching',url.href);
+        const res1 = await fetch(url,{
+            method: 'GET',
+            headers: { 'Accept': 'application/json'},
+        });
+        const data1 = await res1.json();
+        const llUserAccessToken = data1['access_token'];
+
+        if (!llUserAccessToken) {
+            console.error(data1);
+            throw new Error('No llUserAccessToken access_token in response.');
+        }
+
+        // get a long lived PageAccessToken
+
+        const url2 = new URL('https://graph.facebook.com');
+        url2.pathname = appUserId + "/accounts";
+        const query2 = {
+            access_token : llUserAccessToken
+        };
+        url2.search = new URLSearchParams(query2).toString();
+        Logger.trace('fetching',url.href);
+        const res2 = await fetch(url2,{
+            method: 'GET',
+            headers: { 'Accept': 'application/json'},
+        });
+        const data2 = await res2.json();
+        
+        let llPageAccessToken = '';
+        if (data2.data) {
+            data2.data.forEach(page=> {
+                if (page.id===process.env.FAIRPOST_FACEBOOK_PAGE_ID) {
+                    llPageAccessToken = page.access_token;
+                }
+            })
+        }
+        if (!llPageAccessToken) {
+            console.error(data2);
+            throw new Error('No llPageAccessToken for page '+process.env.FAIRPOST_FACEBOOK_PAGE_ID+'  in response.');
+        }
+
+        return llPageAccessToken;
+    }
+
 
 }

@@ -71,32 +71,50 @@ fairpost.js publish-due-posts
 This will publish any scheduled posts that are past their due date.
 
 
-## Arguments
+## Other commands
 
-Each of these commands (and others) accept `--arguments`
+Other commands accept `--arguments`
 that may help you, for example, to immediately publish
 a certain post to a certain platform if you like.
 
 But more commonly, you would call this script
-every day and just add posts to the feed folder as 
-time goes by. 
-The script will then automatically prepare these posts,
+every day. 
+The script will then automatically prepare the posts,
 schedule the next post using a certain interval, 
 publish any post when it is due, and schedule the 
-next post automatically.
+next post automatically. All you have to do is 
+add folders with content.
 
 
 
 ## Cli
 
 ```
-fairpost.js help 
-fairpost.js get-feed
+# basic commands:
+# basic commands:
+fairpost.js help
+fairpost.js get-feed [--config=xxx]
+fairpost.js test-platform --platform=xxx
+fairpost.js test-platforms [--platforms=xxx,xxx]
+fairpost.js get-platform --platform=xxx
+fairpost.js get-platforms [--platforms=xxx,xxx]
+fairpost.js get-folder --folder=xxx
 fairpost.js get-folders [--folders=xxx,xxx]
-fairpost.js prepare-posts [--platforms=xxx,xxx] [--folders=xxx,xxx]
-fairpost.js get-posts [--status=xxx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
-fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx] [--folders=xxx,xxx]
-fairpost.js publish-due-posts [--platforms=xxx,xxx] [--folders=xxx,xxx] [--dry-run]
+fairpost.js get-post --folder=xxx --platform=xxx
+fairpost.js get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost.js prepare-post --folder=xxx --platform=xxx
+fairpost.js prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
+fairpost.js schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx 
+fairpost.js schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx
+fairpost.js publish-post --folders=xxx --platforms=xxx [--dry-run]
+fairpost.js publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
+
+# feed planning:
+fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost.js publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+
+# platform tools:
+fairpost.js facebook-get-page-token --app-user-id=xxx --user-token=xxx
 ```
 
 ### Common arguments 
