@@ -11,7 +11,7 @@ import { PostStatus } from "../Post";
 interface AyrshareResult {
   success: boolean;
   error?: Error;
-  response: {};
+  response: object;
 }
 
 export default abstract class Ayrshare extends Platform {
@@ -38,9 +38,9 @@ export default abstract class Ayrshare extends Platform {
     return super.preparePost(folder);
   }
 
-  async publishPost(
+  async publishAyrshare(
     post: Post,
-    platformOptions: {},
+    platformOptions: object,
     dryrun: boolean = false,
   ): Promise<boolean> {
     const media = [...post.files.image, ...post.files.video].map(
@@ -59,7 +59,7 @@ export default abstract class Ayrshare extends Platform {
       return true;
     }
 
-    const result = await this.publishAyrshare(post, platformOptions, uploads);
+    const result = await this.postAyrshare(post, platformOptions, uploads);
     post.results.push(result);
     if (result.success) {
       post.status = PostStatus.PUBLISHED;
@@ -124,9 +124,9 @@ export default abstract class Ayrshare extends Platform {
     return urls;
   }
 
-  async publishAyrshare(
+  async postAyrshare(
     post: Post,
-    platformOptions: {},
+    platformOptions: object,
     uploads: string[],
   ): Promise<AyrshareResult> {
     const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;

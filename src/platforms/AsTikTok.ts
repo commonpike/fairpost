@@ -1,4 +1,3 @@
-import Logger from "../Logger";
 import Ayrshare from "./Ayrshare";
 import { PlatformId } from ".";
 import Folder from "../Folder";
@@ -27,6 +26,6 @@ export default class AsTikTok extends Ayrshare {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    return super.publishPost(post, {}, dryrun);
+    return super.publishAyrshare(post, {}, dryrun);
   }
 }

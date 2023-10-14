@@ -1,4 +1,3 @@
-import Logger from "../Logger";
 import Ayrshare from "./Ayrshare";
 import { PlatformId } from ".";
 import Folder from "../Folder";
@@ -28,7 +27,7 @@ export default class AsYouTube extends Ayrshare {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    return super.publishPost(
+    return super.publishAyrshare(
       post,
       {
         youTubeOptions: {

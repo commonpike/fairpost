@@ -110,7 +110,7 @@ export default class Platform {
    */
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Platform", "publishPost");
+    Logger.trace("Platform", "publishPost", post.id, dryrun);
     post.results.push({
       error: "publishing not implemented for " + this.id,
     });
@@ -127,7 +127,7 @@ export default class Platform {
    * anything, but test access tokens et al. It can return
    * anything.
    */
-  async test(): Promise<any> {
+  async test(): Promise<unknown> {
     return "No tests";
   }
 }

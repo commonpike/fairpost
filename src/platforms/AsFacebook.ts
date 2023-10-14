@@ -1,4 +1,3 @@
-import Logger from "../Logger";
 import Ayrshare from "./Ayrshare";
 import { PlatformId } from ".";
 import Folder from "../Folder";
@@ -18,7 +17,7 @@ export default class AsFacebook extends Ayrshare {
     if (post) {
       // facebook : max 10mb images
       for (const image of post.files.image) {
-        var size =
+        const size =
           fs.statSync(post.folder.path + "/" + image).size / (1024 * 1024);
         if (size >= 10) {
           console.log("Resizing " + image + " for facebook ..");
@@ -37,6 +36,6 @@ export default class AsFacebook extends Ayrshare {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    return super.publishPost(post, {}, dryrun);
+    return super.publishAyrshare(post, {}, dryrun);
   }
 }

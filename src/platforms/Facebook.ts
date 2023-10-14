@@ -26,7 +26,7 @@ export default class Facebook extends Platform {
       }
       // facebook : max 4mb images
       for (const image of post.files.image) {
-        var size =
+        const size =
           fs.statSync(post.folder.path + "/" + image).size / (1024 * 1024);
         if (size >= 4) {
           Logger.trace("Resizing " + image + " for facebook ..");

@@ -48,7 +48,7 @@ export default class AsInstagram extends Ayrshare {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    return super.publishPost(
+    return super.publishAyrshare(
       post,
       {
         isVideo: post.files.video.length !== 0,

@@ -65,7 +65,7 @@ export default class Feed {
     );
   }
 
-  async testPlatform(platformId: PlatformId): Promise<{}> {
+  async testPlatform(platformId: PlatformId): Promise<unknown> {
     Logger.trace("Feed", "testPlatform", platformId);
     const results = await this.testPlatforms([platformId]);
     return results[platformId];
@@ -73,7 +73,7 @@ export default class Feed {
 
   async testPlatforms(
     platformsIds?: PlatformId[],
-  ): Promise<{ [id: string]: {} }> {
+  ): Promise<{ [id: string]: unknown }> {
     Logger.trace("Feed", "testPlatforms", platformsIds);
     const results = {};
     for (const platform of this.getPlatforms(platformsIds)) {

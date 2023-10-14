@@ -11,7 +11,7 @@ export default class Post {
   status: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
-  results: {}[] = [];
+  results: object[] = [];
   title: string = "";
   body?: string;
   tags?: string;
@@ -22,14 +22,14 @@ export default class Post {
     other: string[];
   };
 
-  constructor(folder: Folder, platform: Platform, data?: any) {
+  constructor(folder: Folder, platform: Platform, data?: object) {
     this.folder = folder;
     this.platform = platform;
     this.id = this.folder.id + ":" + this.platform.id;
     if (data) {
       Object.assign(this, data);
-      this.scheduled = data.scheduled ? new Date(data.scheduled) : undefined;
-      this.published = data.published ? new Date(data.published) : undefined;
+      this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
+      this.published = this.published ? new Date(this.published) : undefined;
     }
   }
 

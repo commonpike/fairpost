@@ -24,7 +24,7 @@ export default class AsTwitter extends Ayrshare {
       }
       // twitter: max 5mb images
       for (const image of post.files.image) {
-        var size =
+        const size =
           fs.statSync(post.folder.path + "/" + image).size / (1024 * 1024);
         if (size >= 5) {
           Logger.trace("Resizing " + image + " for twitter ..");
@@ -43,6 +43,6 @@ export default class AsTwitter extends Ayrshare {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    return super.publishPost(post, {}, dryrun);
+    return super.publishAyrshare(post, {}, dryrun);
   }
 }
