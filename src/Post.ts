@@ -5,6 +5,7 @@ import Folder from "./Folder";
 import Platform from "./Platform";
 
 export default class Post {
+  id: string;
   folder: Folder;
   platform: Platform;
   valid: boolean = false;
@@ -25,6 +26,7 @@ export default class Post {
   constructor(folder: Folder, platform: Platform, data?: any) {
     this.folder = folder;
     this.platform = platform;
+    this.id = this.folder.id+':'+this.platform.id;
     if (data) {
       Object.assign(this, data);
       this.scheduled = data.scheduled ? new Date(data.scheduled): undefined;
@@ -61,7 +63,7 @@ export default class Post {
   report(): string {
     Logger.trace('Post','report');
     let report = '';
-    report += '\nPost: '+this.platform.id+' : '+this.folder.id;
+    report += '\nPost: '+this.id;
     report += '\n - valid: '+this.valid;
     report += '\n - status: '+this.status;
     report += '\n - scheduled: '+this.scheduled;
