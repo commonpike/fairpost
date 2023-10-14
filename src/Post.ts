@@ -10,7 +10,7 @@ export default class Post {
   valid: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
-  posted?: Date;
+  published?: Date;
   results: {}[] = [];
   title: string = '';
   body?: string;
@@ -28,7 +28,7 @@ export default class Post {
     if (data) {
       Object.assign(this, data);
       this.scheduled = data.scheduled ? new Date(data.scheduled): undefined;
-      this.posted = data.posted ? new Date(data.posted): undefined;
+      this.published = data.published ? new Date(data.published): undefined;
     }
   }
 
@@ -65,7 +65,7 @@ export default class Post {
     report += '\n - valid: '+this.valid;
     report += '\n - status: '+this.status;
     report += '\n - scheduled: '+this.scheduled;
-    report += '\n - posted: '+this.posted;
+    report += '\n - published: '+this.published;
     return report;
   }
 

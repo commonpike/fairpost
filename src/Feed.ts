@@ -247,7 +247,7 @@ export default class Feed {
             status: PostStatus.PUBLISHED
         });
         for (const post of posts) {
-            if (!lastPost || post.posted >= lastPost.posted) {
+            if (!lastPost || post.published >= lastPost.published) {
                 lastPost = post;
             }
         }
@@ -260,7 +260,7 @@ export default class Feed {
         let nextDate = null;
         const lastPost = this.getLastPost(platformId);
         if (lastPost) {
-            nextDate = new Date(lastPost.posted);
+            nextDate = new Date(lastPost.published);
             nextDate.setDate(nextDate.getDate()+this.interval);
         } else {
             nextDate = new Date();

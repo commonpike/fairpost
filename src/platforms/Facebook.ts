@@ -74,6 +74,7 @@ export default class Facebook extends Platform {
         if (result.id) {
             if (!dryrun) {
                 post.status = PostStatus.PUBLISHED;
+                post.published = new Date();
             }
         } else {
             console.error(this.id,"No id returned in post",result);

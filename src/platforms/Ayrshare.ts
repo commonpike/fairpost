@@ -64,6 +64,7 @@ export default abstract class Ayrshare extends Platform {
         post.results.push(result);
         if (result.success) {
             post.status = PostStatus.PUBLISHED;
+            post.published = new Date();
         }
         post.save();
 

@@ -9,7 +9,7 @@ or a video.
 
 To smoothly maintain your feed, you can run 
 fairpost every day. Fairpost will prepare and 
-schedule new content to be posted on all your 
+schedule new content to be published on all your 
 platforms on a regular basis, while
 you can just focus on creating new content.
 
@@ -42,7 +42,7 @@ cp .env.dist .env && nano .env
 fairpost.js prepare-posts
 ```
 Folders need to be `prepared` (iow turned into posts)
-before they can be posted to a platform. 
+before they can be published to a platform. 
 Each platform, as defined in src/platforms, will 
 handle the folder contents by itself. It may
 decide to modify the media (eg, scale images) 
