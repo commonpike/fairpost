@@ -12,6 +12,7 @@ import { PlatformId } from './platforms';
 
 export default class Feed {
 
+    id: string = '';
     path: string = '';
     platforms: {
         [id in PlatformId]? : Platform;
@@ -28,6 +29,7 @@ export default class Feed {
         }
         if (process.env.FAIRPOST_FEED_PATH) {
             this.path = process.env.FAIRPOST_FEED_PATH;
+            this.id = this.path;
         } else {
             throw new Error('Problem reading .env config file');
         }
@@ -103,18 +105,18 @@ export default class Feed {
 
     getPost(path: string, platformId: PlatformId): Post | undefined {
         Logger.trace('Feed','getPost');
-        return this.getPosts({paths:[path],platforms:[platformId]})[0];
+        return this.getPosts({folders:[path],platforms:[platformId]})[0];
     }
 
     getPosts(filters?: {
-        paths?:string[]
+        folders?:string[]
         platforms?:PlatformId[], 
         status?:PostStatus
     }): Post[] {
         Logger.trace('Feed','getPosts');
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
-        const folders = this.getFolders(filters?.paths);
+        const folders = this.getFolders(filters?.folders);
         for (const folder of folders) {
             for (const platform of platforms) {
                 const post = platform.getPost(folder);
@@ -128,17 +130,17 @@ export default class Feed {
 
     async preparePost(path: string, platformId: PlatformId): Promise<Post | undefined> {
         Logger.trace('Feed','preparePost',path,platformId);
-        return (await this.preparePosts({paths:[path],platforms:[platformId]}))[0];
+        return (await this.preparePosts({folders:[path],platforms:[platformId]}))[0];
     }
 
     async preparePosts(filters?: {
-        paths?:string[]
+        folders?:string[]
         platforms?:PlatformId[]
     }): Promise<Post[]> {
         Logger.trace('Feed','preparePosts',filters);
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
-        const folders = this.getFolders(filters?.paths);
+        const folders = this.getFolders(filters?.folders);
         for (const folder of folders) {
             for (const platform of platforms) {
                 const post = platform.getPost(folder);
@@ -167,13 +169,13 @@ export default class Feed {
     }
 
     schedulePosts(filters: {
-        paths?:string[]
+        folders?:string[]
         platforms?:PlatformId[]
     }, date: Date): Post[] {
         Logger.trace('Feed','schedulePosts',filters,date);
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
-        const folders = this.getFolders(filters?.paths);
+        const folders = this.getFolders(filters?.folders);
         for (const platform of platforms) {
             for (const folder of folders) {
                 const post = platform.getPost(folder);
@@ -211,24 +213,24 @@ export default class Feed {
     }
 
     async publishPosts(filters?: {
-        paths?:string[]
+        folders?:string[]
         platforms?:PlatformId[]
     }, dryrun:boolean = false): Promise<Post[]> {
         Logger.trace('Feed','publishPosts',filters,dryrun);
         const now = new Date();
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
-        const folders = this.getFolders(filters?.paths);
+        const folders = this.getFolders(filters?.folders);
         for (const platform of platforms) {
             for (const folder of folders) {
                 const post = platform.getPost(folder);
                 if (post.valid) {
                     post.schedule(now);
-                    Logger.trace('Posting',platform.id,folder.path);
+                    Logger.trace('Posting',platform.id,folder.id);
                     await platform.publishPost(post,dryrun);
                     posts.push(post);
                 } else {
-                    Logger.warn('Skipping invalid post',platform.id,folder.path);
+                    Logger.warn('Skipping invalid post',platform.id,folder.id);
                 }
             }
         }
@@ -269,13 +271,13 @@ export default class Feed {
     }
 
     scheduleNextPosts(date?: Date, filters?: {
-        paths?:string[]
+        folders?:string[]
         platforms?:PlatformId[]
     }): Post[] {
         Logger.trace('Feed','scheduleNextPosts');
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
-        const folders = this.getFolders(filters?.paths);
+        const folders = this.getFolders(filters?.folders);
         for (const platform of platforms) {
             const nextDate = date?date:this.getNextPostDate(platform.id);
             for (const folder of folders) {
@@ -292,20 +294,20 @@ export default class Feed {
     }
 
     async publishDuePosts(filters?: {
-        paths?:string[]
+        folders?:string[]
         platforms?:PlatformId[]
     }, dryrun:boolean = false): Promise<Post[]> {
         Logger.trace('Feed','publishDuePosts');
         const now = new Date();
         const posts: Post[] = [];
         const platforms = this.getPlatforms(filters?.platforms);
-        const folders = this.getFolders(filters?.paths);
+        const folders = this.getFolders(filters?.folders);
         for (const platform of platforms) {
             for (const folder of folders) {
                 const post = platform.getPost(folder);
                 if (post?.status===PostStatus.SCHEDULED) {
                     if (post.scheduled <= now) {
-                        console.log('Posting',platform.id,folder.path);
+                        console.log('Posting',platform.id,folder.id);
                         await platform.publishPost(post,dryrun);
                         posts.push(post);
                         break;

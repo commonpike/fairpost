@@ -105,7 +105,7 @@ export default class Platform {
     * publishPost
     *
     * publish the post for this platform, sync. 
-    * set the published date to now.
+    * set the posted date to now.
     * add the result to post.results
     * on success, set the status to published and return true,
     * else set the status to failed and return false
@@ -114,10 +114,10 @@ export default class Platform {
     async publishPost(post: Post, dryrun:boolean = false): Promise<boolean> {
         
         Logger.trace('Platform','publishPost');
-        post.published = new Date();
         post.results.push({
             error: 'publishing not implemented for '+this.id
         });
+        post.published = undefined;
         post.status = PostStatus.FAILED;
         post.save();
         return false;
