@@ -22,7 +22,7 @@ export default abstract class Ayrshare extends Platform {
 
     // map fairpost platforms to ayrshare platforms
     platforms: {
-        [slug in PlatformSlug]?: string
+        [platformId in PlatformSlug]?: string
     } = {
         [PlatformSlug.ASYOUTUBE]: "youtube",
         [PlatformSlug.ASINSTAGRAM]: "instagram",
@@ -131,9 +131,9 @@ export default abstract class Ayrshare extends Platform {
             response: {}
         } as AyrshareResult;
 
-        const postPlatform = this.platforms[this.slug];
+        const postPlatform = this.platforms[this.id];
         if (!postPlatform) {
-            result.error = new Error('No ayrshare platform associated with platform '+this.slug);
+            result.error = new Error('No ayrshare platform associated with platform '+this.id);
             return result;
         }
         const body = JSON.stringify(uploads.length?{

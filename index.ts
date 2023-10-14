@@ -53,13 +53,13 @@ async function main() {
                 break;
             case 'get-platform':
                 const platform = feed.getPlatform(PLATFORM);
-                report += 'Platform: '+platform.slug+'\n';
+                report += 'Platform: '+platform.id+'\n';
                 result = platform;
                 break;
             case 'get-platforms':
                 const platforms = feed.getPlatforms(PLATFORMS);
                 platforms.forEach(platform => {
-                    report += 'Platform: '+platform.slug+'\n';
+                    report += 'Platform: '+platform.id+'\n';
                 });
                 result = platforms;
                 break;

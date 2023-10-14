@@ -5,7 +5,7 @@ import Folder from "../Folder";
 import Post from "../Post";
 
 export default class AsReddit extends Ayrshare {
-    slug = PlatformSlug.ASREDDIT;
+    id = PlatformSlug.ASREDDIT;
     SUBREDDIT: string;
 
     constructor() {

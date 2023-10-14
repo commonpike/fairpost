@@ -135,7 +135,7 @@ extending `src/classes/Platform`. You want to override at least the
 method `preparePost(folder: Folder)` and 
 `publishPost(post: Post, dryrun:boolean = false)`.
 
-Then add a slug for your platform to `src/platforms/index.js` and
+Then add a platformId for your platform to `src/platforms/index.js` and
 enable your platform in your `.env`.
 
 

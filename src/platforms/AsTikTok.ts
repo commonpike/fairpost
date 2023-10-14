@@ -5,7 +5,7 @@ import Folder from "../Folder";
 import Post from "../Post";
 
 export default class AsTikTok extends Ayrshare {
-    slug = PlatformSlug.ASTIKTOK;
+    id = PlatformSlug.ASTIKTOK;
 
     constructor() {
         super();

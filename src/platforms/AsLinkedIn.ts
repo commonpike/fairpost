@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import * as sharp from 'sharp';
 
 export default class AsLinkedIn extends Ayrshare {
-    slug = PlatformSlug.ASLINKEDIN;
+    id = PlatformSlug.ASLINKEDIN;
 
     constructor() {
         super();

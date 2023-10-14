@@ -7,7 +7,7 @@ import Post from "../Post";
 import * as sharp from 'sharp';
 
 export default class AsInstagram extends Ayrshare {
-    slug = PlatformSlug.ASINSTAGRAM;
+    id = PlatformSlug.ASINSTAGRAM;
 
     constructor() {
         super();

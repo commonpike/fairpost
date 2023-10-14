@@ -5,7 +5,7 @@ import Folder from "../Folder";
 import Post from "../Post";
 
 export default class AsYouTube extends Ayrshare {
-    slug = PlatformSlug.ASYOUTUBE;
+    id = PlatformSlug.ASYOUTUBE;
 
     constructor() {
         super();

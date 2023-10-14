@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as sharp from 'sharp';
 
 export default class Facebook extends Platform {
-    slug: PlatformSlug = PlatformSlug.FACEBOOK;
+    id: PlatformSlug = PlatformSlug.FACEBOOK;
     GRAPH_API_VERSION: string = 'v18.0';
 
     constructor() {
@@ -76,7 +76,7 @@ export default class Facebook extends Platform {
                 post.status = PostStatus.PUBLISHED;
             }
         } else {
-            console.error(this.slug,"No id returned in post",result);
+            console.error(this.id,"No id returned in post",result);
         }
         post.save();
         return !!result.id;

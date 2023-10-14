@@ -61,7 +61,7 @@ export default class Post {
   report(): string {
     Logger.trace('Post','report');
     let report = '';
-    report += '\nPost: '+this.platform.slug+' : '+this.folder.path;
+    report += '\nPost: '+this.platform.id+' : '+this.folder.path;
     report += '\n - valid: '+this.valid;
     report += '\n - status: '+this.status;
     report += '\n - scheduled: '+this.scheduled;

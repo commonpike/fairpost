@@ -14,7 +14,7 @@ export default class Feed {
 
     path: string = '';
     platforms: {
-        [slug in PlatformSlug]? : Platform;
+        [id in PlatformSlug]? : Platform;
     } = {};
     folders: Folder[] = [];
     interval: number;
@@ -33,16 +33,16 @@ export default class Feed {
         }
         this.interval = Number(process.env.FAIRPOST_FEED_INTERVAL ?? 7);
 
-        const activePlatformSlugs = process.env.FAIRPOST_FEED_PLATFORMS.split(',');
+        const activePlatformIds = process.env.FAIRPOST_FEED_PLATFORMS.split(',');
         const platformClasses = fs.readdirSync(path.resolve(__dirname+'/platforms'));
         platformClasses.forEach(file=> {
             const constructor = file.replace('.ts','').replace('.js','');
             // nb import * as platforms loaded the constructors
             if (platforms[constructor] !== undefined) {
                 const platform = new platforms[constructor]();
-                platform.active = activePlatformSlugs.includes(platform.slug);
+                platform.active = activePlatformIds.includes(platform.id);
                 if (platform.active) {
-                    this.platforms[platform.slug] = platform;
+                    this.platforms[platform.id] = platform;
                 }
             }
         });
@@ -64,11 +64,11 @@ export default class Feed {
         return results[platform];
     }
 
-    async testPlatforms(platforms?:PlatformSlug[]): Promise<{ [slug:string] : {}}> {
+    async testPlatforms(platforms?:PlatformSlug[]): Promise<{ [id:string] : {}}> {
         Logger.trace('Feed','testPlatforms',platforms);
         const results = {};
         for (const platform of this.getPlatforms(platforms)) {
-            results[platform.slug] = await platform.test();
+            results[platform.id] = await platform.test();
         }
         return results;
     }
@@ -192,17 +192,17 @@ export default class Feed {
 
     async publishPost(
         path:string,
-        slug:PlatformSlug,
+        id:PlatformSlug,
         dryrun:boolean = false
     ): Promise<Post> {
-        Logger.trace('Feed','publishPost',path,slug,dryrun);
+        Logger.trace('Feed','publishPost',path,id,dryrun);
         const now = new Date();
-        const platform = this.getPlatform(slug);
+        const platform = this.getPlatform(id);
         const folder = this.getFolder(path);
         const post = platform.getPost(folder);
         if (post.valid) {
             post.schedule(now);
-            Logger.trace('Posting',slug,path);
+            Logger.trace('Posting',id,path);
             await platform.publishPost(post,dryrun);
         } else {
             throw new Error('Post is not valid');
@@ -224,11 +224,11 @@ export default class Feed {
                 const post = platform.getPost(folder);
                 if (post.valid) {
                     post.schedule(now);
-                    Logger.trace('Posting',platform.slug,folder.path);
+                    Logger.trace('Posting',platform.id,folder.path);
                     await platform.publishPost(post,dryrun);
                     posts.push(post);
                 } else {
-                    Logger.warn('Skipping invalid post',platform.slug,folder.path);
+                    Logger.warn('Skipping invalid post',platform.id,folder.path);
                 }
             }
         }
@@ -277,7 +277,7 @@ export default class Feed {
         const platforms = this.getPlatforms(filters?.platforms);
         const folders = this.getFolders(filters?.paths);
         for (const platform of platforms) {
-            const nextDate = date?date:this.getNextPostDate(platform.slug);
+            const nextDate = date?date:this.getNextPostDate(platform.id);
             for (const folder of folders) {
                 const post = platform.getPost(folder);
                 if (post.valid && post?.status===PostStatus.UNSCHEDULED) {
@@ -305,7 +305,7 @@ export default class Feed {
                 const post = platform.getPost(folder);
                 if (post?.status===PostStatus.SCHEDULED) {
                     if (post.scheduled <= now) {
-                        console.log('Posting',platform.slug,folder.path);
+                        console.log('Posting',platform.id,folder.path);
                         await platform.publishPost(post,dryrun);
                         posts.push(post);
                         break;

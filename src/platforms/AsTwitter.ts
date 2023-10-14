@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as sharp from 'sharp';
 
 export default class AsTwitter extends Ayrshare {
-    slug = PlatformSlug.ASTWITTER;
+    id = PlatformSlug.ASTWITTER;
 
     constructor() {
         super();

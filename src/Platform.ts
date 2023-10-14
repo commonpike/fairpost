@@ -8,7 +8,7 @@ import { PlatformSlug } from "./platforms";
 export default class Platform {
 
     active: boolean = false;
-    slug: PlatformSlug = PlatformSlug.UNKNOWN;
+    id: PlatformSlug = PlatformSlug.UNKNOWN;
     defaultBody: string = "Fairpost feed";
 
     /*
@@ -18,7 +18,7 @@ export default class Platform {
     * platform to be saved in this folder.
     */
     getPostFileName() {
-        return '_'+this.slug+'.json';
+        return '_'+this.id+'.json';
     }
 
     /*
@@ -116,7 +116,7 @@ export default class Platform {
         Logger.trace('Platform','publishPost');
         post.posted = new Date();
         post.results.push({
-            error: 'publishing not implemented for '+this.slug
+            error: 'publishing not implemented for '+this.id
         });
         post.status = PostStatus.FAILED;
         post.save();
