@@ -4,8 +4,8 @@
   "description": "Feeds data to ayrshare based on folders in feed dir; marks folder that are done.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "tsc",
+    "build": "tsc",
+    "test": "npm run lint",
     "prettier": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"

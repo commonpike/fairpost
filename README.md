@@ -28,7 +28,7 @@ register the app to post on your behalf.
 npm install
 
 # compile typescript code
-tsc
+npm run build
 
 # copy and edit config file
 cp .env.dist .env && nano .env
