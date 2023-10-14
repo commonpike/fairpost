@@ -36,7 +36,7 @@ cp .env.dist .env && nano .env
 # run
 ./fairpost.js help
 ```
-
+ 
 ## Prepare
 ```
 fairpost.js prepare-posts
