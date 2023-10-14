@@ -1,6 +1,8 @@
 # Feed
 feed
 .DS_Store
+build
+*.log
 
 # Logs
 logs
