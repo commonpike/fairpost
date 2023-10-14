@@ -1,6 +1,5 @@
-
-import * as fs from 'fs';
-import Logger from './Logger';
+import * as fs from "fs";
+import Logger from "./Logger";
 import Folder from "./Folder";
 import Platform from "./Platform";
 
@@ -13,71 +12,68 @@ export default class Post {
   scheduled?: Date;
   published?: Date;
   results: {}[] = [];
-  title: string = '';
+  title: string = "";
   body?: string;
   tags?: string;
   files?: {
-    text: string[],
-    image: string[],
-    video: string[],
-    other: string[]
+    text: string[];
+    image: string[];
+    video: string[];
+    other: string[];
   };
 
   constructor(folder: Folder, platform: Platform, data?: any) {
     this.folder = folder;
     this.platform = platform;
-    this.id = this.folder.id+':'+this.platform.id;
+    this.id = this.folder.id + ":" + this.platform.id;
     if (data) {
       Object.assign(this, data);
-      this.scheduled = data.scheduled ? new Date(data.scheduled): undefined;
-      this.published = data.published ? new Date(data.published): undefined;
+      this.scheduled = data.scheduled ? new Date(data.scheduled) : undefined;
+      this.published = data.published ? new Date(data.published) : undefined;
     }
   }
 
-
   /*
-  * save
-  *
-  * Save this post for this platform for the
-  * given folder.
-  */
+   * save
+   *
+   * Save this post for this platform for the
+   * given folder.
+   */
 
   save(): void {
-    Logger.trace('Post','save');
-    const data = { ...this};
+    Logger.trace("Post", "save");
+    const data = { ...this };
     delete data.folder;
     delete data.platform;
     fs.writeFileSync(
-      this.folder.path+'/'+this.platform.getPostFileName(),
-      JSON.stringify(data,null,"\t")
+      this.folder.path + "/" + this.platform.getPostFileName(),
+      JSON.stringify(data, null, "\t"),
     );
   }
 
-  schedule(date:Date): void {
-    Logger.trace('Post','schedule');
+  schedule(date: Date): void {
+    Logger.trace("Post", "schedule");
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
   }
 
   report(): string {
-    Logger.trace('Post','report');
-    let report = '';
-    report += '\nPost: '+this.id;
-    report += '\n - valid: '+this.valid;
-    report += '\n - status: '+this.status;
-    report += '\n - scheduled: '+this.scheduled;
-    report += '\n - published: '+this.published;
+    Logger.trace("Post", "report");
+    let report = "";
+    report += "\nPost: " + this.id;
+    report += "\n - valid: " + this.valid;
+    report += "\n - status: " + this.status;
+    report += "\n - scheduled: " + this.scheduled;
+    report += "\n - published: " + this.published;
     return report;
   }
-
 }
 
 export enum PostStatus {
-    UNKNOWN = "unknown",
-    UNSCHEDULED = "unscheduled",
-    SCHEDULED = "scheduled",
-    PUBLISHED = "published",
-    FAILED = "failed"
+  UNKNOWN = "unknown",
+  UNSCHEDULED = "unscheduled",
+  SCHEDULED = "scheduled",
+  PUBLISHED = "published",
+  FAILED = "failed",
 }
-

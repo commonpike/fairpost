@@ -8,13 +8,13 @@ export { default as AsReddit } from "./AsReddit";
 export { default as Facebook } from "./Facebook";
 
 export enum PlatformId {
-    UNKNOWN = "unknown",
-    ASYOUTUBE = "asyoutube",
-    ASINSTAGRAM = "asinstagram",
-    ASFACEBOOK = "asfacebook",
-    ASTWITTER = "astwitter",
-    ASTIKTOK = "astiktok",
-    ASLINKEDIN = "aslinkedin",
-    ASREDDIT = "asreddit",
-    FACEBOOK = "facebook"
+  UNKNOWN = "unknown",
+  ASYOUTUBE = "asyoutube",
+  ASINSTAGRAM = "asinstagram",
+  ASFACEBOOK = "asfacebook",
+  ASTWITTER = "astwitter",
+  ASTIKTOK = "astiktok",
+  ASLINKEDIN = "aslinkedin",
+  ASREDDIT = "asreddit",
+  FACEBOOK = "facebook",
 }
