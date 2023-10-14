@@ -5,7 +5,7 @@ name: QA
 
 on:
   pull_request:
-    branches: [ "develop", "master" ]
+    branches: [ "develop", "main" ]
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x]
+        node-version: [18.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
