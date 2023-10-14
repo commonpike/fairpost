@@ -1,13 +1,13 @@
 import Logger from '../Logger';
 import Ayrshare from "./Ayrshare";
-import { PlatformSlug } from ".";
+import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 import * as fs from 'fs';
 import * as sharp from 'sharp';
 
 export default class AsTwitter extends Ayrshare {
-    id = PlatformSlug.ASTWITTER;
+    id = PlatformId.ASTWITTER;
 
     constructor() {
         super();

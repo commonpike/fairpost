@@ -3,7 +3,7 @@ import Logger from '../Logger';
 import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
-import { PlatformSlug } from ".";
+import { PlatformId } from ".";
 import Platform from "../Platform";
 import Folder from "../Folder";
 import Post from "../Post";
@@ -22,15 +22,15 @@ export default abstract class Ayrshare extends Platform {
 
     // map fairpost platforms to ayrshare platforms
     platforms: {
-        [platformId in PlatformSlug]?: string
+        [platformId in PlatformId]?: string
     } = {
-        [PlatformSlug.ASYOUTUBE]: "youtube",
-        [PlatformSlug.ASINSTAGRAM]: "instagram",
-        [PlatformSlug.ASFACEBOOK]: "facebook",
-        [PlatformSlug.ASTWITTER]: "twitter",
-        [PlatformSlug.ASTIKTOK]: "tiktok",
-        [PlatformSlug.ASLINKEDIN]: "linkedin",
-        [PlatformSlug.ASREDDIT]: "reddit"
+        [PlatformId.ASYOUTUBE]: "youtube",
+        [PlatformId.ASINSTAGRAM]: "instagram",
+        [PlatformId.ASFACEBOOK]: "facebook",
+        [PlatformId.ASTWITTER]: "twitter",
+        [PlatformId.ASTIKTOK]: "tiktok",
+        [PlatformId.ASLINKEDIN]: "linkedin",
+        [PlatformId.ASREDDIT]: "reddit"
     };
 
     constructor() {

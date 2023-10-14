@@ -1,11 +1,11 @@
 import Logger from '../Logger';
 import Ayrshare from "./Ayrshare";
-import { PlatformSlug } from ".";
+import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 
 export default class AsYouTube extends Ayrshare {
-    id = PlatformSlug.ASYOUTUBE;
+    id = PlatformId.ASYOUTUBE;
 
     constructor() {
         super();

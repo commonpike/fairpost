@@ -7,7 +7,7 @@ import * as path from 'path';
 import Logger from './src/Logger';
 import Feed from './src/Feed';
 import { PostStatus } from './src/Post';
-import { PlatformSlug } from './src/platforms';
+import { PlatformId } from './src/platforms';
 import Facebook from './src/platforms/Facebook';
 
 // arguments 
@@ -17,8 +17,8 @@ const COMMAND = process.argv[2] ?? 'help'
 const CONFIG = (getOption('config') as string ) ?? '.env';
 const DRY_RUN = !!getOption('dry-run') ?? false;
 const REPORT = (getOption('report') as string ) ?? 'text';
-const PLATFORMS = (getOption('platforms') as string)?.split(',') as PlatformSlug[] ?? undefined;
-const PLATFORM = (getOption('platform') as string) as PlatformSlug ?? undefined;
+const PLATFORMS = (getOption('platforms') as string)?.split(',') as PlatformId[] ?? undefined;
+const PLATFORM = (getOption('platform') as string) as PlatformId ?? undefined;
 const FOLDERS = (getOption('folders') as string)?.split(',') ?? undefined;
 const FOLDER = (getOption('folder') as string) ?? undefined;
 const DATE = (getOption('date') as string) ?? undefined;

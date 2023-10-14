@@ -3,12 +3,12 @@ import Logger from './Logger';
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import { PlatformSlug } from "./platforms";
+import { PlatformId } from "./platforms";
 
 export default class Platform {
 
     active: boolean = false;
-    id: PlatformSlug = PlatformSlug.UNKNOWN;
+    id: PlatformId = PlatformId.UNKNOWN;
     defaultBody: string = "Fairpost feed";
 
     /*

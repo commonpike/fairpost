@@ -8,13 +8,13 @@ import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
 import * as platforms from './platforms';
-import { PlatformSlug } from './platforms';
+import { PlatformId } from './platforms';
 
 export default class Feed {
 
     path: string = '';
     platforms: {
-        [id in PlatformSlug]? : Platform;
+        [id in PlatformId]? : Platform;
     } = {};
     folders: Folder[] = [];
     interval: number;
@@ -48,23 +48,23 @@ export default class Feed {
         });
     }
 
-    getPlatform(platform:PlatformSlug): Platform {
+    getPlatform(platform:PlatformId): Platform {
         Logger.trace('Feed','getPlatform',platform);
         return this.getPlatforms([platform])[0];
     }
 
-    getPlatforms(platforms?:PlatformSlug[]): Platform[] {
+    getPlatforms(platforms?:PlatformId[]): Platform[] {
         Logger.trace('Feed','getPlatforms',platforms);
         return platforms?.map(platform=>this.platforms[platform]) ?? Object.values(this.platforms);
     }
 
-    async testPlatform(platform:PlatformSlug): Promise<{}> {
+    async testPlatform(platform:PlatformId): Promise<{}> {
         Logger.trace('Feed','testPlatform',platform);
         const results = await this.testPlatforms([platform]);
         return results[platform];
     }
 
-    async testPlatforms(platforms?:PlatformSlug[]): Promise<{ [id:string] : {}}> {
+    async testPlatforms(platforms?:PlatformId[]): Promise<{ [id:string] : {}}> {
         Logger.trace('Feed','testPlatforms',platforms);
         const results = {};
         for (const platform of this.getPlatforms(platforms)) {
@@ -101,14 +101,14 @@ export default class Feed {
         return paths?.map(path=>new Folder(this.path+'/'+path)) ?? this.getAllFolders();
     }
 
-    getPost(path: string, platform: PlatformSlug): Post | undefined {
+    getPost(path: string, platform: PlatformId): Post | undefined {
         Logger.trace('Feed','getPost');
         return this.getPosts({paths:[path],platforms:[platform]})[0];
     }
 
     getPosts(filters?: {
         paths?:string[]
-        platforms?:PlatformSlug[], 
+        platforms?:PlatformId[], 
         status?:PostStatus
     }): Post[] {
         Logger.trace('Feed','getPosts');
@@ -126,14 +126,14 @@ export default class Feed {
         return posts;
     }
 
-    async preparePost(path: string, platform: PlatformSlug): Promise<Post | undefined> {
+    async preparePost(path: string, platform: PlatformId): Promise<Post | undefined> {
         Logger.trace('Feed','preparePost',path,platform);
         return (await this.preparePosts({paths:[path],platforms:[platform]}))[0];
     }
 
     async preparePosts(filters?: {
         paths?:string[]
-        platforms?:PlatformSlug[]
+        platforms?:PlatformId[]
     }): Promise<Post[]> {
         Logger.trace('Feed','preparePosts',filters);
         const posts: Post[] = [];
@@ -153,7 +153,7 @@ export default class Feed {
         return posts;
     }
 
-    schedulePost(path: string, platform: PlatformSlug, date: Date): Post {
+    schedulePost(path: string, platform: PlatformId, date: Date): Post {
         Logger.trace('Feed','schedulePost',path,platform,date);
         const post = this.getPost(path,platform);
         if (!post.valid) {
@@ -168,7 +168,7 @@ export default class Feed {
 
     schedulePosts(filters: {
         paths?:string[]
-        platforms?:PlatformSlug[]
+        platforms?:PlatformId[]
     }, date: Date): Post[] {
         Logger.trace('Feed','schedulePosts',filters,date);
         const posts: Post[] = [];
@@ -192,7 +192,7 @@ export default class Feed {
 
     async publishPost(
         path:string,
-        id:PlatformSlug,
+        id:PlatformId,
         dryrun:boolean = false
     ): Promise<Post> {
         Logger.trace('Feed','publishPost',path,id,dryrun);
@@ -212,7 +212,7 @@ export default class Feed {
 
     async publishPosts(filters?: {
         paths?:string[]
-        platforms?:PlatformSlug[]
+        platforms?:PlatformId[]
     }, dryrun:boolean = false): Promise<Post[]> {
         Logger.trace('Feed','publishPosts',filters,dryrun);
         const now = new Date();
@@ -239,7 +239,7 @@ export default class Feed {
         feed planning 
     */
 
-    getLastPost(platform:PlatformSlug): Post | void {
+    getLastPost(platform:PlatformId): Post | void {
         Logger.trace('Feed','getLastPost');
         let lastPost: Post = undefined;
         const posts = this.getPosts({
@@ -255,7 +255,7 @@ export default class Feed {
     }
     
    
-    getNextPostDate(platform:PlatformSlug): Date {
+    getNextPostDate(platform:PlatformId): Date {
         Logger.trace('Feed','getNextPostDate');
         let nextDate = null;
         const lastPost = this.getLastPost(platform);
@@ -270,7 +270,7 @@ export default class Feed {
 
     scheduleNextPosts(date?: Date, filters?: {
         paths?:string[]
-        platforms?:PlatformSlug[]
+        platforms?:PlatformId[]
     }): Post[] {
         Logger.trace('Feed','scheduleNextPosts');
         const posts: Post[] = [];
@@ -293,7 +293,7 @@ export default class Feed {
 
     async publishDuePosts(filters?: {
         paths?:string[]
-        platforms?:PlatformSlug[]
+        platforms?:PlatformId[]
     }, dryrun:boolean = false): Promise<Post[]> {
         Logger.trace('Feed','publishDuePosts');
         const now = new Date();
