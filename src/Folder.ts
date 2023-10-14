@@ -3,6 +3,7 @@ import Logger from './Logger';
 
 export default class Folder {
 
+  id: string;
   path: string;
   files?: {
     text: string[],
@@ -12,6 +13,7 @@ export default class Folder {
   };
 
   constructor(path: string) {
+    this.id = path;
     this.path = path;
   }
 

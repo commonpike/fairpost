@@ -5,12 +5,13 @@ import Folder from "./Folder";
 import Platform from "./Platform";
 
 export default class Post {
+  id: string;
   folder: Folder;
   platform: Platform;
   valid: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
-  posted?: Date;
+  published?: Date;
   results: {}[] = [];
   title: string = '';
   body?: string;
@@ -25,10 +26,11 @@ export default class Post {
   constructor(folder: Folder, platform: Platform, data?: any) {
     this.folder = folder;
     this.platform = platform;
+    this.id = this.folder.id+':'+this.platform.id;
     if (data) {
       Object.assign(this, data);
       this.scheduled = data.scheduled ? new Date(data.scheduled): undefined;
-      this.posted = data.posted ? new Date(data.posted): undefined;
+      this.published = data.published ? new Date(data.published): undefined;
     }
   }
 
@@ -61,11 +63,11 @@ export default class Post {
   report(): string {
     Logger.trace('Post','report');
     let report = '';
-    report += '\nPost: '+this.platform.slug+' : '+this.folder.path;
+    report += '\nPost: '+this.id;
     report += '\n - valid: '+this.valid;
     report += '\n - status: '+this.status;
     report += '\n - scheduled: '+this.scheduled;
-    report += '\n - posted: '+this.posted;
+    report += '\n - published: '+this.published;
     return report;
   }
 

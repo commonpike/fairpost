@@ -1,11 +1,11 @@
 import Logger from '../Logger';
 import Ayrshare from "./Ayrshare";
-import { PlatformSlug } from ".";
+import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 
 export default class AsReddit extends Ayrshare {
-    slug = PlatformSlug.ASREDDIT;
+    id = PlatformId.ASREDDIT;
     SUBREDDIT: string;
 
     constructor() {

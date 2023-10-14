@@ -3,7 +3,7 @@ import Logger from '../Logger';
 import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
-import { PlatformSlug } from ".";
+import { PlatformId } from ".";
 import Platform from "../Platform";
 import Folder from "../Folder";
 import Post from "../Post";
@@ -22,15 +22,15 @@ export default abstract class Ayrshare extends Platform {
 
     // map fairpost platforms to ayrshare platforms
     platforms: {
-        [slug in PlatformSlug]?: string
+        [platformId in PlatformId]?: string
     } = {
-        [PlatformSlug.ASYOUTUBE]: "youtube",
-        [PlatformSlug.ASINSTAGRAM]: "instagram",
-        [PlatformSlug.ASFACEBOOK]: "facebook",
-        [PlatformSlug.ASTWITTER]: "twitter",
-        [PlatformSlug.ASTIKTOK]: "tiktok",
-        [PlatformSlug.ASLINKEDIN]: "linkedin",
-        [PlatformSlug.ASREDDIT]: "reddit"
+        [PlatformId.ASYOUTUBE]: "youtube",
+        [PlatformId.ASINSTAGRAM]: "instagram",
+        [PlatformId.ASFACEBOOK]: "facebook",
+        [PlatformId.ASTWITTER]: "twitter",
+        [PlatformId.ASTIKTOK]: "tiktok",
+        [PlatformId.ASLINKEDIN]: "linkedin",
+        [PlatformId.ASREDDIT]: "reddit"
     };
 
     constructor() {
@@ -64,6 +64,7 @@ export default abstract class Ayrshare extends Platform {
         post.results.push(result);
         if (result.success) {
             post.status = PostStatus.PUBLISHED;
+            post.published = new Date();
         }
         post.save();
 
@@ -131,9 +132,9 @@ export default abstract class Ayrshare extends Platform {
             response: {}
         } as AyrshareResult;
 
-        const postPlatform = this.platforms[this.slug];
+        const postPlatform = this.platforms[this.id];
         if (!postPlatform) {
-            result.error = new Error('No ayrshare platform associated with platform '+this.slug);
+            result.error = new Error('No ayrshare platform associated with platform '+this.id);
             return result;
         }
         const body = JSON.stringify(uploads.length?{

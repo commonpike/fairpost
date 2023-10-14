@@ -7,7 +7,7 @@ export { default as AsLinkedIn } from "./AsLinkedIn";
 export { default as AsReddit } from "./AsReddit";
 export { default as Facebook } from "./Facebook";
 
-export enum PlatformSlug {
+export enum PlatformId {
     UNKNOWN = "unknown",
     ASYOUTUBE = "asyoutube",
     ASINSTAGRAM = "asinstagram",

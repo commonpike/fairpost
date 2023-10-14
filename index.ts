@@ -7,7 +7,7 @@ import * as path from 'path';
 import Logger from './src/Logger';
 import Feed from './src/Feed';
 import { PostStatus } from './src/Post';
-import { PlatformSlug } from './src/platforms';
+import { PlatformId } from './src/platforms';
 import Facebook from './src/platforms/Facebook';
 
 // arguments 
@@ -17,8 +17,8 @@ const COMMAND = process.argv[2] ?? 'help'
 const CONFIG = (getOption('config') as string ) ?? '.env';
 const DRY_RUN = !!getOption('dry-run') ?? false;
 const REPORT = (getOption('report') as string ) ?? 'text';
-const PLATFORMS = (getOption('platforms') as string)?.split(',') as PlatformSlug[] ?? undefined;
-const PLATFORM = (getOption('platform') as string) as PlatformSlug ?? undefined;
+const PLATFORMS = (getOption('platforms') as string)?.split(',') as PlatformId[] ?? undefined;
+const PLATFORM = (getOption('platform') as string) as PlatformId ?? undefined;
 const FOLDERS = (getOption('folders') as string)?.split(',') ?? undefined;
 const FOLDER = (getOption('folder') as string) ?? undefined;
 const DATE = (getOption('date') as string) ?? undefined;
@@ -42,24 +42,24 @@ async function main() {
     let report = '';
 
     const feed = new Feed(CONFIG);
-    Logger.trace('Fairpost '+feed.path+' '+COMMAND,DRY_RUN?' dry-run':'');
+    Logger.trace('Fairpost '+feed.id+' '+COMMAND,DRY_RUN?' dry-run':'');
 
 
     try {
         switch(COMMAND) {
             case 'get-feed':
                 result = feed;
-                report = 'Feed: '+feed.path;
+                report = 'Feed: '+feed.id;
                 break;
             case 'get-platform':
                 const platform = feed.getPlatform(PLATFORM);
-                report += 'Platform: '+platform.slug+'\n';
+                report += 'Platform: '+platform.id+'\n';
                 result = platform;
                 break;
             case 'get-platforms':
                 const platforms = feed.getPlatforms(PLATFORMS);
                 platforms.forEach(platform => {
-                    report += 'Platform: '+platform.slug+'\n';
+                    report += 'Platform: '+platform.id+'\n';
                 });
                 result = platforms;
                 break;
@@ -73,13 +73,13 @@ async function main() {
                 break;
             case 'get-folder':
                 const folder = feed.getFolder(FOLDER);
-                report += 'Folder: '+folder.path+'\n';
+                report += 'Folder: '+folder.id+'\n';
                 result = folder;
                 break;
             case 'get-folders':
                 const folders = feed.getFolders(FOLDERS);
                 folders.forEach(folder => {
-                    report += 'Folder: '+folder.path+'\n';
+                    report += 'Folder: '+folder.id+'\n';
                 });
                 result = folders;
                 break;
@@ -90,7 +90,7 @@ async function main() {
                 break;
             case 'get-posts':
                 const allposts = feed.getPosts({
-                    paths:FOLDERS, 
+                    folders:FOLDERS, 
                     platforms:PLATFORMS, 
                     status: STATUS
                 });
@@ -106,7 +106,7 @@ async function main() {
                 break;
             case 'prepare-posts':
                 const prepposts = await feed.preparePosts({
-                    paths:FOLDERS, 
+                    folders:FOLDERS, 
                     platforms:PLATFORMS 
                 });
                 prepposts.forEach(post => {
@@ -123,7 +123,7 @@ async function main() {
                 break;
             case 'schedule-posts':
                 const schedposts = feed.schedulePosts({
-                    paths: FOLDERS,
+                    folders: FOLDERS,
                     platforms: PLATFORMS
                 }, new Date(DATE));
                 schedposts.forEach(post => {
@@ -139,7 +139,7 @@ async function main() {
             
             case 'publish-posts':
                 const pubposts = await feed.publishPosts({
-                    paths:FOLDERS,
+                    folders:FOLDERS,
                     platforms:PLATFORMS
                 }, DRY_RUN);
                 pubposts.forEach(post => {
@@ -151,7 +151,7 @@ async function main() {
             /* feed planning */
             case 'schedule-next-posts':
                 const nextposts = feed.scheduleNextPosts(DATE ? new Date(DATE): undefined,{
-                    paths:FOLDERS, 
+                    folders:FOLDERS, 
                     platforms:PLATFORMS 
                 });
                 nextposts.forEach(post => {
@@ -161,7 +161,7 @@ async function main() {
                 break;
             case 'publish-due-posts':
                 const dueposts = await feed.publishDuePosts({
-                    paths:FOLDERS,
+                    folders:FOLDERS,
                     platforms:PLATFORMS
                 }, DRY_RUN);
                 pubposts.forEach(post => {

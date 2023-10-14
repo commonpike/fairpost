@@ -1,13 +1,13 @@
 
 import Logger from '../Logger';
 import Ayrshare from "./Ayrshare";
-import { PlatformSlug } from ".";
+import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 import * as sharp from 'sharp';
 
 export default class AsInstagram extends Ayrshare {
-    slug = PlatformSlug.ASINSTAGRAM;
+    id = PlatformId.ASINSTAGRAM;
 
     constructor() {
         super();

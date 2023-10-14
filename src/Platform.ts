@@ -3,12 +3,12 @@ import Logger from './Logger';
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import { PlatformSlug } from "./platforms";
+import { PlatformId } from "./platforms";
 
 export default class Platform {
 
     active: boolean = false;
-    slug: PlatformSlug = PlatformSlug.UNKNOWN;
+    id: PlatformId = PlatformId.UNKNOWN;
     defaultBody: string = "Fairpost feed";
 
     /*
@@ -18,7 +18,7 @@ export default class Platform {
     * platform to be saved in this folder.
     */
     getPostFileName() {
-        return '_'+this.slug+'.json';
+        return '_'+this.id+'.json';
     }
 
     /*
@@ -114,10 +114,10 @@ export default class Platform {
     async publishPost(post: Post, dryrun:boolean = false): Promise<boolean> {
         
         Logger.trace('Platform','publishPost');
-        post.posted = new Date();
         post.results.push({
-            error: 'publishing not implemented for '+this.slug
+            error: 'publishing not implemented for '+this.id
         });
+        post.published = undefined;
         post.status = PostStatus.FAILED;
         post.save();
         return false;

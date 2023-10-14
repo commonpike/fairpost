@@ -1,7 +1,7 @@
 
 import Logger from "../Logger";
 import Platform from "../Platform";
-import { PlatformSlug } from ".";
+import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 import { PostStatus } from "../Post";
@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as sharp from 'sharp';
 
 export default class Facebook extends Platform {
-    slug: PlatformSlug = PlatformSlug.FACEBOOK;
+    id: PlatformId = PlatformId.FACEBOOK;
     GRAPH_API_VERSION: string = 'v18.0';
 
     constructor() {
@@ -74,9 +74,10 @@ export default class Facebook extends Platform {
         if (result.id) {
             if (!dryrun) {
                 post.status = PostStatus.PUBLISHED;
+                post.published = new Date();
             }
         } else {
-            console.error(this.slug,"No id returned in post",result);
+            console.error(this.id,"No id returned in post",result);
         }
         post.save();
         return !!result.id;
