@@ -5,7 +5,7 @@ name: QA
 
 on:
   pull_request:
-    branches: [ "develop", "master" ]
+    branches: [ "develop", "main" ]
 
 jobs:
   build:
