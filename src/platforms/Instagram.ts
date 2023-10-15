@@ -3,13 +3,13 @@ import Platform from "../Platform";
 import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
-import { PostStatus } from "../Post";
+//import { PostStatus } from "../Post";
 import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
 
-export default class Facebook extends Platform {
-  id: PlatformId = PlatformId.FACEBOOK;
+export default class Instagram extends Platform {
+  id: PlatformId = PlatformId.INSTAGRAM;
   GRAPH_API_VERSION: string = "v18.0";
 
   constructor() {
@@ -19,25 +19,38 @@ export default class Facebook extends Platform {
   async preparePost(folder: Folder): Promise<Post | undefined> {
     const post = await super.preparePost(folder);
     if (post && post.files) {
-      // facebook: video post can only contain 1 video
+      // instagram: 1 video for reel
       if (post.files.video.length) {
-        post.files.video.length = 1;
+        Logger.trace("Removing images for instagram reel..");
         post.files.image = [];
+        if (post.files.video.length > 1) {
+          Logger.trace("Using first video for instagram reel..");
+          post.files.video = [post.files.video[0]];
+        }
       }
-      // facebook : max 4mb images
+      // instagram : scale images, jpeg only
       for (const image of post.files.image) {
-        const size =
-          fs.statSync(post.folder.path + "/" + image).size / (1024 * 1024);
-        if (size >= 4) {
-          Logger.trace("Resizing " + image + " for facebook ..");
+        const metadata = await sharp(post.folder.path + "/" + image).metadata();
+        if (metadata.width > 1440) {
+          Logger.trace("Resizing " + image + " for instagram ..");
+          const extension = image.split(".")?.pop();
+          const basename = path.basename(
+            image,
+            extension ? "." + extension : "",
+          );
           await sharp(post.folder.path + "/" + image)
             .resize({
-              width: 1200,
+              width: 1440,
             })
-            .toFile(post.folder.path + "/_facebook-" + image);
-          post.files.image.push("_facebook-" + image);
+            .toFile(post.folder.path + "/_instagram-" + basename + ".JPEG");
+          post.files.image.push("_instagram-" + image);
           post.files.image = post.files.image.filter((file) => file !== image);
         }
+      }
+
+      // instagram: require media
+      if (post.files.image.length + post.files.video.length === 0) {
+        post.valid = false;
       }
       post.save();
     }
@@ -45,61 +58,68 @@ export default class Facebook extends Platform {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    let result = dryrun ? { id: "-99" } : ({} as { id: string });
-
-    if (post.files.video.length) {
-      if (!dryrun) {
-        result = await this.publishVideo(
-          post.files.video[0],
-          post.title,
-          post.body,
-        );
-      }
-    } else {
-      const attachments = [];
-      if (post.files.image.length) {
-        for (const image of post.files.image) {
-          attachments.push({
-            media_fbid: (
-              await this.uploadPhoto(post.folder.path + "/" + image)
-            )["id"],
-          });
-        }
-      }
-      if (!dryrun) {
-        result = (await this.postJson("%PAGE%/feed", {
-          message: post.body,
-          published: process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
-          attached_media: attachments,
-        })) as { id: string };
-      }
-    }
-
-    post.results.push({
-      date: new Date(),
-      link: "https://facebook.com/" + result.id,
-      dryrun: dryrun,
-      result: result,
-    });
-    if (result.id) {
-      if (!dryrun) {
-        post.status = PostStatus.PUBLISHED;
-        post.published = new Date();
-      }
-    } else {
-      Logger.error(
-        "Facebook.publishPost",
-        this.id,
-        "No id returned in post",
-        result,
-      );
-    }
-    post.save();
-    return !!result.id;
+    console.log("Instagram.publishPost", post, dryrun);
+    throw new Error("not implemented");
   }
 
   async test() {
-    return this.get();
+    return this.testUploadCarousel();
+  }
+
+  async testUploadCarousel() {
+    // upload photo to facebook
+    const photoId = (
+      await this.uploadPhoto("/Users/pike/Desktop/test/test.jpg", false)
+    )["id"];
+    if (!photoId) return;
+
+    // get photo link
+    const photoData = (await this.get(photoId, {
+      fields: "link,images,picture",
+    })) as {
+      images: {
+        width: number;
+        height: number;
+        source: string;
+      }[];
+    };
+    if (!photoData) return;
+
+    const maxPhoto = photoData.images?.reduce(function (prev, current) {
+      return prev && prev.width > current.width ? prev : current;
+    });
+    if (!maxPhoto) return;
+
+    const photoLink = maxPhoto["source"];
+
+    // upload link to instagram
+    const uploadId = (
+      await this.postJson("%USER%/media", {
+        is_carousel_item: true,
+        image_url: photoLink,
+      })
+    )["id"];
+    if (!uploadId) return;
+
+    // create carousel
+    const carouselId = (
+      await this.postJson("%USER%/media", {
+        media_type: "CAROUSEL",
+        caption: "test",
+        children: [uploadId, uploadId].join(","),
+      })
+    )["id"];
+    if (!carouselId) return;
+
+    // publish carousel
+    const igMediaId = (
+      await this.postJson("%USER%/media_publish", {
+        creation_id: carouselId,
+      })
+    )["id"];
+    if (!igMediaId) return;
+
+    return igMediaId;
   }
 
   /*
@@ -133,93 +153,6 @@ export default class Facebook extends Platform {
     return result;
   }
 
-  /*
-   * POST a video to the page/videos endpoint using multipart/form-data
-   *
-   * arguments:
-   * file: path to the video to post
-   * published: wether to publish it or not
-   *
-   * returns:
-   * { id: string }
-   */
-  private async publishVideo(
-    file: string,
-    title: string,
-    description: string,
-  ): Promise<{ id: string }> {
-    Logger.trace("Reading file", file);
-    const rawData = fs.readFileSync(file);
-    const blob = new Blob([rawData]);
-
-    const body = new FormData();
-    body.set("title", title);
-    body.set("description", description);
-    body.set("published", process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS);
-    body.set("source", blob, path.basename(file));
-
-    const result = (await this.postFormData("%PAGE%/videos", body)) as {
-      id: string;
-    };
-
-    if (!result["id"]) {
-      throw new Error("No id returned when uploading video");
-    }
-    return result;
-  }
-
-  /*
-   * Return a long lived page access token.
-   *
-   * appUserId: a app-scoped-user-id
-   * UserAccessToken: a shortlived user access token
-   */
-  async getPageToken(
-    appUserId: string,
-    userAccessToken: string,
-  ): Promise<string> {
-    // 1. Get a long lived UserAccessToken
-    const query1 = {
-      grant_type: "fb_exchange_token",
-      client_id: process.env.FAIRPOST_FACEBOOK_APP_ID,
-      client_secret: process.env.FAIRPOST_FACEBOOK_APP_SECRET,
-      fb_exchange_token: userAccessToken,
-    };
-    const data1 = (await this.get("oauth/access_token", query1)) as {
-      access_token: string;
-    };
-    const llUserAccessToken = data1["access_token"];
-    if (!llUserAccessToken) {
-      console.error(data1);
-      throw new Error("No llUserAccessToken access_token in response.");
-    }
-
-    // 2. Get a long lived PageAccessToken
-    const query2 = {
-      access_token: llUserAccessToken,
-    };
-    const data2 = (await this.get(appUserId + "/accounts", query2)) as {
-      data: {
-        id: string;
-        access_token: string;
-      }[];
-    };
-    const llPageAccessToken = data2.data?.find(
-      (page) => page.id === process.env.FAIRPOST_FACEBOOK_PAGE_ID,
-    )["access_token"];
-
-    if (!llPageAccessToken) {
-      console.error(data2);
-      throw new Error(
-        "No llPageAccessToken for page " +
-          process.env.FAIRPOST_FACEBOOK_PAGE_ID +
-          "  in response.",
-      );
-    }
-
-    return llPageAccessToken;
-  }
-
   // API implementation -------------------
 
   /*
@@ -236,11 +169,11 @@ export default class Facebook extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_FACEBOOK_USER_ID,
+      process.env.FAIRPOST_INSTAGRAM_USER_ID,
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -277,11 +210,11 @@ export default class Facebook extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_FACEBOOK_USER_ID,
+      process.env.FAIRPOST_INSTAGRAM_USER_ID,
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -315,11 +248,11 @@ export default class Facebook extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_FACEBOOK_USER_ID,
+      process.env.FAIRPOST_INSTAGRAM_USER_ID,
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
     );
 
     const url = new URL("https://graph.facebook.com");
