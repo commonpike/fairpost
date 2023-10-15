@@ -3,7 +3,7 @@ import Platform from "../Platform";
 import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
-import { PostStatus } from "../Post";
+//import { PostStatus } from "../Post";
 import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
@@ -57,9 +57,8 @@ export default class Instagram extends Platform {
     return post;
   }
 
-  
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    console.log("Instagram.publishPost",post,dryrun);
+    console.log("Instagram.publishPost", post, dryrun);
     throw new Error("not implemented");
   }
 
@@ -69,10 +68,9 @@ export default class Instagram extends Platform {
 
   async testUploadCarousel() {
     // upload photo to facebook
-    const photoId = (await this.uploadPhoto(
-      "/Users/pike/Desktop/test/test.jpg",
-      false,
-    ))["id"];
+    const photoId = (
+      await this.uploadPhoto("/Users/pike/Desktop/test/test.jpg", false)
+    )["id"];
     if (!photoId) return;
 
     // get photo link
