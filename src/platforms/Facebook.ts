@@ -45,11 +45,12 @@ export default class Facebook extends Platform {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    let result = dryrun ? { id: "-99" } : ({} as { id: string });
+    Logger.trace("Facebook.publishPost", post, dryrun);
+    let response = dryrun ? { id: "-99" } : ({} as { id: string });
 
     if (post.files.video.length) {
       if (!dryrun) {
-        result = await this.publishVideo(
+        response = await this.publishVideo(
           post.files.video[0],
           post.title,
           post.body,
@@ -67,35 +68,37 @@ export default class Facebook extends Platform {
         }
       }
       if (!dryrun) {
-        result = (await this.postJson("%PAGE%/feed", {
+        response = (await this.postJson("%PAGE%/feed", {
           message: post.body,
           published: process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
           attached_media: attachments,
         })) as { id: string };
       }
     }
+    const success = !!response.id;
 
     post.results.push({
       date: new Date(),
-      link: "https://facebook.com/" + result.id,
       dryrun: dryrun,
-      result: result,
+      success: success,
+      link: "https://facebook.com/" + response.id,
+      response: response,
     });
-    if (result.id) {
-      if (!dryrun) {
-        post.status = PostStatus.PUBLISHED;
-        post.published = new Date();
-      }
-    } else {
+
+    if (!success) {
       Logger.error(
         "Facebook.publishPost",
         this.id,
         "No id returned in post",
-        result,
+        response,
       );
+    } else if (!dryrun) {
+      post.status = PostStatus.PUBLISHED;
+      post.published = new Date();
     }
+
     post.save();
-    return !!result.id;
+    return success;
   }
 
   async test() {

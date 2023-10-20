@@ -28,6 +28,7 @@ export default class Instagram extends Platform {
           post.files.video = [post.files.video[0]];
         }
       }
+
       // instagram : scale images, jpeg only
       for (const image of post.files.image) {
         const metadata = await sharp(post.folder.path + "/" + image).metadata();
@@ -58,7 +59,20 @@ export default class Instagram extends Platform {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    console.log("Instagram.publishPost", post, dryrun);
+    Logger.trace("Instagram.publishPost", post, dryrun);
+    /*
+      let result = dryrun ? { id: "-99" } : ({} as { id: string });
+
+      if (post.files.video.length) {
+        if (!dryrun) {
+          result = await this.publishVideo(
+            post.files.video[0],
+            post.title,
+            post.body,
+          );
+        }
+      } else {
+      }*/
     throw new Error("not implemented");
   }
 

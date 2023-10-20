@@ -11,7 +11,7 @@ export default class Post {
   status: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
-  results: object[] = [];
+  results: PostResult[] = [];
   title: string = "";
   body?: string;
   tags?: string;
@@ -68,6 +68,14 @@ export default class Post {
     report += "\n - published: " + this.published;
     return report;
   }
+}
+
+export interface PostResult {
+  date: Date;
+  dryrun: boolean;
+  success: boolean;
+  link?: string;
+  response: object;
 }
 
 export enum PostStatus {

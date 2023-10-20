@@ -11,7 +11,13 @@ import { PostStatus } from "../Post";
 interface AyrshareResult {
   success: boolean;
   error?: Error;
-  response: object;
+  status?: string;
+  response: {
+    id: string;
+    postIds?: {
+      postUrl: string;
+    }[];
+  };
 }
 
 export default abstract class Ayrshare extends Platform {
@@ -51,26 +57,31 @@ export default abstract class Ayrshare extends Platform {
       post.results.push({
         date: new Date(),
         dryrun: true,
-        uploads: uploads,
+        response: uploads,
         success: true,
-        response: {},
       });
       post.save();
       return true;
     }
 
     const result = await this.postAyrshare(post, platformOptions, uploads);
-    post.results.push(result);
-    if (result.success) {
+    const success = !!result.success;
+    const link = result.response.postIds[0]?.postUrl ?? "";
+    post.results.push({
+      date: new Date(),
+      dryrun: dryrun,
+      success: success,
+      link: link,
+      response: result,
+    });
+
+    if (success && !dryrun) {
       post.status = PostStatus.PUBLISHED;
       post.published = new Date();
     }
     post.save();
 
-    if (!result.success) {
-      console.error(result.error);
-    }
-    return result.success ?? false;
+    return success;
   }
 
   async uploadMedia(media: string[]): Promise<string[]> {
@@ -193,28 +204,29 @@ export default abstract class Ayrshare extends Platform {
       if (res.ok) {
         //console.log(res.json());
         result.response = (await res.json()) as unknown as {
+          id: string;
           status?: string;
         };
         if (
           result.response["status"] !== "success" &&
           result.response["status"] !== "scheduled"
         ) {
-          console.error("* Failed.");
+          Logger.error("* Failed.");
           result.error = new Error(
             "Bad result status: " + result.response["status"],
           );
         } else {
-          console.error(" .. Published.");
+          Logger.trace(" .. Published.");
           result.success = true;
         }
         return result;
       }
       const response = await res.json();
-      console.error("* Failed.");
+      Logger.error("* Failed.");
       result.error = new Error(JSON.stringify(response));
       return result;
     }
-    console.error("* Failed.");
+    Logger.error("* Failed.");
     result.error = new Error("no result");
     return result;
   }
