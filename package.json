@@ -1,7 +1,7 @@
 {
-  "name": "ayrshare-feed",
-  "version": "1.0.0",
-  "description": "Feeds data to ayrshare based on folders in feed dir; marks folder that are done.",
+  "name": "fairpost",
+  "version": "1.1.0",
+  "description": "Feeds data to social media platforms based on folders in a dir",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
