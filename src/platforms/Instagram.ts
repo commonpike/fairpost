@@ -179,6 +179,7 @@ export default class Instagram extends Platform {
       caption: caption,
     })) as { id: string };
     if (!container?.id) {
+      Logger.error("No id returned for container for " + file, container);
       throw new Error("No id returned for container for " + file);
     }
 
@@ -189,6 +190,7 @@ export default class Instagram extends Platform {
         creation_id: container.id,
       })) as { id: string };
       if (!response?.id) {
+        Logger.error("No id returned for igMedia for " + file, response);
         throw new Error("No id returned for igMedia for " + file);
       }
       return response;
@@ -209,6 +211,7 @@ export default class Instagram extends Platform {
       caption: caption,
     })) as { id: string };
     if (!container?.id) {
+      Logger.error("No id returned for container for " + file, container);
       throw new Error("No id returned for container for " + file);
     }
 
@@ -219,6 +222,7 @@ export default class Instagram extends Platform {
         creation_id: container.id,
       })) as { id: string };
       if (!response?.id) {
+        Logger.error("No id returned for igMedia for " + file, response);
         throw new Error("No id returned for igMedia for " + file);
       }
       return response;
@@ -231,7 +235,65 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    return { id: "-99" };
+    const uploadIds = [] as string[];
+
+    for (const video of post.files.video) {
+      const videoId = (
+        await this.fbUploadVideo(post.folder.path + "/" + video)
+      )["id"];
+      const videoLink = await this.fbGetVideoLink(videoId);
+      uploadIds.push(
+        (
+          await this.postJson("%USER%/media", {
+            is_carousel_item: true,
+            video_url: videoLink,
+          })
+        )["id"],
+      );
+    }
+
+    for (const image of post.files.image) {
+      const photoId = (
+        await this.fbUploadPhoto(post.folder.path + "/" + image)
+      )["id"];
+      const photoLink = await this.fbGetPhotoLink(photoId);
+      uploadIds.push(
+        (
+          await this.postJson("%USER%/media", {
+            is_carousel_item: true,
+            image_url: photoLink,
+          })
+        )["id"],
+      );
+    }
+
+    // create carousel
+    const container = (await this.postJson("%USER%/media", {
+      media_type: "CAROUSEL",
+      caption: post.body,
+      children: uploadIds.join(","),
+    })) as {
+      id: string;
+    };
+    if (!container["id"]) {
+      Logger.error("No id returned for carroussel container ", container);
+      throw new Error("No id returned for carroussel container ");
+    }
+
+    // publish carousel
+    const response = dryrun
+      ? { id: "-99" }
+      : ((await this.postJson("%USER%/media_publish", {
+          creation_id: container["id"],
+        })) as {
+          id: string;
+        });
+    if (!response["id"]) {
+      Logger.error("No id returned for igMedia for carroussel", response);
+      throw new Error("No id returned for igMedia for carroussel");
+    }
+
+    return response;
   }
 
   /*

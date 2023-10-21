@@ -56,7 +56,7 @@ export default class Facebook extends Platform {
       if (!dryrun) {
         try {
           response = await this.publishVideo(
-            post.files.video[0],
+            post.folder.path + "/" + post.files.video[0],
             post.title,
             post.body,
           );
