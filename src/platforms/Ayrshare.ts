@@ -73,7 +73,7 @@ export default abstract class Ayrshare extends Platform {
 
     if (!dryrun) {
       if (!error) {
-        post.link = response.postIds?.find(e=>!!e)?.postUrl ?? "";
+        post.link = response.postIds?.find((e) => !!e)?.postUrl ?? "";
         post.status = PostStatus.PUBLISHED;
         post.published = new Date();
       } else {
@@ -122,9 +122,9 @@ export default abstract class Ayrshare extends Platform {
           Authorization: `Bearer ${APIKEY}`,
         },
         body: buffer,
-      }).catch(error => {
-          Logger.error(error);
-          throw new Error('Failed uploading '+file);
+      }).catch((error) => {
+        Logger.error(error);
+        throw new Error("Failed uploading " + file);
       });
 
       urls.push(data.accessUrl.replace(/ /g, "%20"));
