@@ -21,6 +21,7 @@ export default class Post {
     video: string[];
     other: string[];
   };
+  link?: string;
 
   constructor(folder: Folder, platform: Platform, data?: object) {
     this.folder = folder;
@@ -72,9 +73,9 @@ export default class Post {
 
 export interface PostResult {
   date: Date;
-  dryrun: boolean;
+  dryrun?: boolean;
+  error?: Error;
   success: boolean;
-  link?: string;
   response: object;
 }
 

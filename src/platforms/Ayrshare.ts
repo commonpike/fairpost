@@ -8,18 +8,6 @@ import Folder from "../Folder";
 import Post from "../Post";
 import { PostStatus } from "../Post";
 
-interface AyrshareResult {
-  success: boolean;
-  error?: Error;
-  status?: string;
-  response: {
-    id: string;
-    postIds?: {
-      postUrl: string;
-    }[];
-  };
-}
-
 export default abstract class Ayrshare extends Platform {
   requiresApproval: boolean = false;
 
@@ -49,39 +37,52 @@ export default abstract class Ayrshare extends Platform {
     platformOptions: object,
     dryrun: boolean = false,
   ): Promise<boolean> {
+    let error = undefined;
+    let response = dryrun
+      ? { postIds: [] }
+      : ({} as {
+          postIds?: {
+            postUrl: string;
+          }[];
+        });
+
     const media = [...post.files.image, ...post.files.video].map(
       (f) => post.folder.path + "/" + f,
     );
-    const uploads = media.length ? await this.uploadMedia(media) : [];
-    if (dryrun) {
-      post.results.push({
-        date: new Date(),
-        dryrun: true,
-        response: uploads,
-        success: true,
-      });
-      post.save();
-      return true;
+
+    try {
+      const uploads = media.length ? await this.uploadMedia(media) : [];
+      if (!dryrun) {
+        response = await this.postAyrshare(post, platformOptions, uploads);
+      }
+    } catch (e) {
+      error = e;
     }
 
-    const result = await this.postAyrshare(post, platformOptions, uploads);
-    const success = !!result.success;
-    const link = result.response.postIds[0]?.postUrl ?? "";
     post.results.push({
       date: new Date(),
       dryrun: dryrun,
-      success: success,
-      link: link,
-      response: result,
+      success: !error,
+      error: error,
+      response: response,
     });
 
-    if (success && !dryrun) {
-      post.status = PostStatus.PUBLISHED;
-      post.published = new Date();
+    if (error) {
+      Logger.error("Ayrshare.publishPost", this.id, "failed", response);
     }
-    post.save();
 
-    return success;
+    if (!dryrun) {
+      if (!error) {
+        post.link = response.postIds[0]?.postUrl ?? "";
+        post.status = PostStatus.PUBLISHED;
+        post.published = new Date();
+      } else {
+        post.status = PostStatus.FAILED;
+      }
+    }
+
+    post.save();
+    return !error;
   }
 
   async uploadMedia(media: string[]): Promise<string[]> {
@@ -93,7 +94,7 @@ export default abstract class Ayrshare extends Platform {
       const basename = path.basename(file, ext);
       const uname = basename + "-" + randomUUID() + ext;
       Logger.trace("fetching uploadid...", file);
-      const res1 = await fetch(
+      const data = (await fetch(
         "https://app.ayrshare.com/api/media/uploadUrl?fileName=" +
           uname +
           "&contentType=" +
@@ -104,33 +105,32 @@ export default abstract class Ayrshare extends Platform {
             Authorization: `Bearer ${APIKEY}`,
           },
         },
-      );
+      )
+        .then((res) => this.handleApiResponse(res))
+        .catch((err) => this.handleApiError(err))) as {
+        uploadUrl: string;
+        contentType: string;
+        accessUrl: string;
+      };
 
-      if (!res1) {
-        return [];
-      }
+      Logger.trace("uploading..", uname, data);
 
-      const data = await res1.json();
-      //console.log(data);
-      Logger.trace("uploading..", uname);
-      const uploadUrl = data.uploadUrl;
-      const contentType = data.contentType;
-      const accessUrl = data.accessUrl;
-
-      const res2 = await fetch(uploadUrl, {
+      (await fetch(data.uploadUrl, {
         method: "PUT",
         headers: {
-          "Content-Type": contentType,
+          "Content-Type": data.contentType,
           Authorization: `Bearer ${APIKEY}`,
         },
         body: buffer,
-      });
+      })
+        .then((res) => this.handleApiResponse(res))
+        .catch((err) => this.handleApiError(err))) as {
+        uploadUrl: string;
+        contentType: string;
+        accessUrl: string;
+      };
 
-      if (!res2) {
-        return [];
-      }
-
-      urls.push(accessUrl.replace(/ /g, "%20"));
+      urls.push(data.accessUrl.replace(/ /g, "%20"));
     }
     return urls;
   }
@@ -139,23 +139,16 @@ export default abstract class Ayrshare extends Platform {
     post: Post,
     platformOptions: object,
     uploads: string[],
-  ): Promise<AyrshareResult> {
+  ): Promise<object> {
     const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
     const scheduleDate = post.scheduled;
     //scheduleDate.setDate(scheduleDate.getDate()+100);
 
-    const result = {
-      success: false,
-      error: undefined,
-      response: {},
-    } as AyrshareResult;
-
     const postPlatform = this.platforms[this.id];
     if (!postPlatform) {
-      result.error = new Error(
+      throw new Error(
         "No ayrshare platform associated with platform " + this.id,
       );
-      return result;
     }
     const body = JSON.stringify(
       uploads.length
@@ -166,19 +159,6 @@ export default abstract class Ayrshare extends Platform {
             scheduleDate: scheduleDate,
             requiresApproval: this.requiresApproval,
             ...platformOptions,
-            /*
-            youTubeOptions: {
-                title: post.title, // required max 100
-                visibility: "public" // opt 'private'
-            }, 
-            instagramOptions: {
-                // "autoResize": true -- only enterprise plans
-                // isVideo: (this.data.type==='video'),
-            },
-            redditOptions: {
-                title: this.data.title, // required 
-                subreddit: REDDIT_SUBREDDIT,   // required (no "/r/" needed)
-            }*/
           }
         : {
             post: post.body, // required
@@ -188,46 +168,73 @@ export default abstract class Ayrshare extends Platform {
           },
     );
     Logger.trace("scheduling...", postPlatform);
-    //console.log(body);
-    const res = await fetch("https://app.ayrshare.com/api/post", {
+    const response = (await fetch("https://app.ayrshare.com/api/post", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${APIKEY}`,
       },
       body: body,
-    }).catch((e) => {
-      result.error = e;
-    });
+    })
+      .then((res) => this.handleApiResponse(res))
+      .catch((err) => this.handleApiError(err))) as {
+      id: string;
+      status?: string;
+    };
 
-    if (res) {
-      if (res.ok) {
-        //console.log(res.json());
-        result.response = (await res.json()) as unknown as {
-          id: string;
-          status?: string;
-        };
-        if (
-          result.response["status"] !== "success" &&
-          result.response["status"] !== "scheduled"
-        ) {
-          Logger.error("* Failed.");
-          result.error = new Error(
-            "Bad result status: " + result.response["status"],
-          );
-        } else {
-          Logger.trace(" .. Published.");
-          result.success = true;
-        }
-        return result;
-      }
-      const response = await res.json();
-      Logger.error("* Failed.");
-      result.error = new Error(JSON.stringify(response));
-      return result;
+    if (
+      response["status"] !== "success" &&
+      response["status"] !== "scheduled"
+    ) {
+      const error = "Bad result status: " + response["status"];
+      Logger.error(error);
+      throw new Error(error);
     }
-    Logger.error("* Failed.");
-    result.error = new Error("no result");
-    return result;
+    return response;
+  }
+
+  /*
+   * Handle api response
+   *
+   */
+  private async handleApiResponse(response: Response): Promise<object> {
+    if (!response.ok) {
+      Logger.error("Ayrshare.handleApiResponse", response);
+      throw new Error(response.status + ":" + response.statusText);
+    }
+    const data = await response.json();
+    if (data.status === "error") {
+      let error = response.status + ":";
+      data.status.errors.forEach(
+        (err: {
+          action: string;
+          platform: string;
+          code: number;
+          message: string;
+        }) => {
+          error +=
+            err.action +
+            "(" +
+            err.code +
+            "/" +
+            err.platform +
+            ") " +
+            err.message;
+        },
+      );
+      Logger.error("Ayrshare.handleApiResponse", error);
+      throw new Error(error);
+    }
+    Logger.trace("Ayrshare.handleApiResponse", "success");
+    return data;
+  }
+
+  /*
+   * Handle api error
+   *
+   */
+  private handleApiError(error: Error): Promise<object> {
+    Logger.error("Ayrshare.handleApiError", error);
+    throw error;
   }
 }

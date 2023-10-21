@@ -1,10 +1,15 @@
 # Platform: Instagram
 
 The `instagram` platform manage a instagram account 
-that is connected to a facebook **page* 
+that is connected to a facebook **page**
 using the plain facebook graph api - no extensions installed.
 
-It publishes **carousels** on that instagram account.
+It publishes **photo**, **video**, or 
+**carousels** posts on that instagram account.
+
+It uses the related facebook account to
+upload temporary files, because the instagram
+api requires files in posts to have an url.
 
 ## Setting up the Instagram platform
 

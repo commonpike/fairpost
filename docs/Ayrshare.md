@@ -8,6 +8,10 @@ But if you have an Ayrshare account, you can enable
 it here and enable the platforms that you have connected
 to Ayrshare, to publish to those platforms via Ayrshare.
 
+Ayrshare posts will not be scheduled on Ayrshare; 
+they will be published instantly. Use Fairpost for
+scheduling posts.
+
 The Ayrshare platforms supported by FairPost are 
 - asfacebook
 - asinstagram

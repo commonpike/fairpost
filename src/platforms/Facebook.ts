@@ -46,59 +46,72 @@ export default class Facebook extends Platform {
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Facebook.publishPost", post, dryrun);
-    let response = dryrun ? { id: "-99" } : ({} as { id: string });
+
+    let response = dryrun
+      ? { id: "-99" }
+      : ({} as { id?: string; error?: string });
+    let error = undefined;
 
     if (post.files.video.length) {
       if (!dryrun) {
-        response = await this.publishVideo(
-          post.files.video[0],
-          post.title,
-          post.body,
-        );
-      }
-    } else {
-      const attachments = [];
-      if (post.files.image.length) {
-        for (const image of post.files.image) {
-          attachments.push({
-            media_fbid: (
-              await this.uploadPhoto(post.folder.path + "/" + image)
-            )["id"],
-          });
+        try {
+          response = await this.publishVideo(
+            post.files.video[0],
+            post.title,
+            post.body,
+          );
+        } catch (e) {
+          error = e;
         }
       }
-      if (!dryrun) {
-        response = (await this.postJson("%PAGE%/feed", {
-          message: post.body,
-          published: process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
-          attached_media: attachments,
-        })) as { id: string };
+    } else {
+      try {
+        const attachments = [];
+        if (post.files.image.length) {
+          for (const image of post.files.image) {
+            attachments.push({
+              media_fbid: (
+                await this.uploadPhoto(post.folder.path + "/" + image)
+              )["id"],
+            });
+          }
+        }
+        if (!dryrun) {
+          response = (await this.postJson("%PAGE%/feed", {
+            message: post.body,
+            published: process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
+            attached_media: attachments,
+          })) as { id: string };
+        }
+      } catch (e) {
+        error = e;
       }
     }
-    const success = !!response.id;
 
     post.results.push({
       date: new Date(),
       dryrun: dryrun,
-      success: success,
-      link: "https://facebook.com/" + response.id,
+      success: !error,
+      error: error,
       response: response,
     });
 
-    if (!success) {
-      Logger.error(
-        "Facebook.publishPost",
-        this.id,
-        "No id returned in post",
-        response,
-      );
-    } else if (!dryrun) {
-      post.status = PostStatus.PUBLISHED;
-      post.published = new Date();
+    if (error) {
+      Logger.error("Facebook.publishPost", this.id, "failed", response);
+    }
+
+    if (!dryrun) {
+      if (!error) {
+        (post.link = "https://facebook.com/" + response.id),
+          (post.status = PostStatus.PUBLISHED);
+        post.published = new Date();
+      } else {
+        post.status = PostStatus.FAILED;
+      }
     }
 
     post.save();
-    return success;
+    return !error;
   }
 
   async test() {
@@ -347,6 +360,10 @@ export default class Facebook extends Platform {
    *
    */
   private async handleApiResponse(response: Response): Promise<object> {
+    if (!response.ok) {
+      Logger.error("Facebook.handleApiResponse", response);
+      throw new Error(response.status + ":" + response.statusText);
+    }
     const data = await response.json();
     if (data.error) {
       const error =

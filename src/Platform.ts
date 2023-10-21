@@ -112,7 +112,10 @@ export default class Platform {
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Platform", "publishPost", post.id, dryrun);
     post.results.push({
-      error: "publishing not implemented for " + this.id,
+      date: new Date(),
+      success: false,
+      error: new Error("publishing not implemented for " + this.id),
+      response: {},
     });
     post.published = undefined;
     post.status = PostStatus.FAILED;
