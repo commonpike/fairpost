@@ -42,12 +42,13 @@ export default class Instagram extends Platform {
             image,
             extension ? "." + extension : "",
           );
+          const outfile = "_instagram-" + basename + ".JPEG";
           await sharp(post.folder.path + "/" + image)
             .resize({
               width: 1440,
             })
-            .toFile(post.folder.path + "/_instagram-" + basename + ".JPEG");
-          post.files.image.push("_instagram-" + image);
+            .toFile(post.folder.path + "/" + outfile);
+          post.files.image.push(outfile);
           post.files.image = post.files.image.filter((file) => file !== image);
         }
       }

@@ -73,7 +73,7 @@ export default abstract class Ayrshare extends Platform {
 
     if (!dryrun) {
       if (!error) {
-        post.link = response.postIds[0]?.postUrl ?? "";
+        post.link = response.postIds?.find(e=>!!e)?.postUrl ?? "";
         post.status = PostStatus.PUBLISHED;
         post.published = new Date();
       } else {
@@ -115,20 +115,17 @@ export default abstract class Ayrshare extends Platform {
 
       Logger.trace("uploading..", uname, data);
 
-      (await fetch(data.uploadUrl, {
+      await fetch(data.uploadUrl, {
         method: "PUT",
         headers: {
           "Content-Type": data.contentType,
           Authorization: `Bearer ${APIKEY}`,
         },
         body: buffer,
-      })
-        .then((res) => this.handleApiResponse(res))
-        .catch((err) => this.handleApiError(err))) as {
-        uploadUrl: string;
-        contentType: string;
-        accessUrl: string;
-      };
+      }).catch(error => {
+          Logger.error(error);
+          throw new Error('Failed uploading '+file);
+      });
 
       urls.push(data.accessUrl.replace(/ /g, "%20"));
     }
@@ -167,7 +164,7 @@ export default abstract class Ayrshare extends Platform {
             requiresApproval: this.requiresApproval,
           },
     );
-    Logger.trace("scheduling...", postPlatform);
+    Logger.trace("publishing...", postPlatform);
     const response = (await fetch("https://app.ayrshare.com/api/post", {
       method: "POST",
       headers: {
