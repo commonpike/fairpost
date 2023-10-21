@@ -108,63 +108,7 @@ export default class Instagram extends Platform {
   }
 
   async test() {
-    return this.testUploadCarousel();
-  }
-
-  async testUploadCarousel() {
-    // upload photo to facebook
-    const photoId = (
-      await this.fbUploadPhoto("/Users/pike/Desktop/test/test.jpg")
-    )["id"];
-    if (!photoId) return;
-
-    // get photo link
-    const photoData = (await this.get(photoId, {
-      fields: "link,images,picture",
-    })) as {
-      images: {
-        width: number;
-        height: number;
-        source: string;
-      }[];
-    };
-    if (!photoData) return;
-
-    const maxPhoto = photoData.images?.reduce(function (prev, current) {
-      return prev && prev.width > current.width ? prev : current;
-    });
-    if (!maxPhoto) return;
-
-    const photoLink = maxPhoto["source"];
-
-    // upload link to instagram
-    const uploadId = (
-      await this.postJson("%USER%/media", {
-        is_carousel_item: true,
-        image_url: photoLink,
-      })
-    )["id"];
-    if (!uploadId) return;
-
-    // create carousel
-    const carouselId = (
-      await this.postJson("%USER%/media", {
-        media_type: "CAROUSEL",
-        caption: "test",
-        children: [uploadId, uploadId].join(","),
-      })
-    )["id"];
-    if (!carouselId) return;
-
-    // publish carousel
-    const igMediaId = (
-      await this.postJson("%USER%/media_publish", {
-        creation_id: carouselId,
-      })
-    )["id"];
-    if (!igMediaId) return;
-
-    return igMediaId;
+    return this.get();
   }
 
   private async publishPhoto(
@@ -281,19 +225,21 @@ export default class Instagram extends Platform {
     }
 
     // publish carousel
-    const response = dryrun
-      ? { id: "-99" }
-      : ((await this.postJson("%USER%/media_publish", {
-          creation_id: container["id"],
-        })) as {
-          id: string;
-        });
-    if (!response["id"]) {
-      Logger.error("No id returned for igMedia for carroussel", response);
-      throw new Error("No id returned for igMedia for carroussel");
+    if (!dryrun) {
+      const response = (await this.postJson("%USER%/media_publish", {
+        creation_id: container["id"],
+      })) as {
+        id: string;
+      };
+      if (!response["id"]) {
+        Logger.error("No id returned for igMedia for carroussel", response);
+        throw new Error("No id returned for igMedia for carroussel");
+      }
+
+      return response;
     }
 
-    return response;
+    return { id: "-99" };
   }
 
   /*
