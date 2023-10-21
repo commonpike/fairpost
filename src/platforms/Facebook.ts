@@ -45,46 +45,73 @@ export default class Facebook extends Platform {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    let result = dryrun ? { id: "-99" } : ({} as { id: string });
+    Logger.trace("Facebook.publishPost", post, dryrun);
+
+    let response = dryrun
+      ? { id: "-99" }
+      : ({} as { id?: string; error?: string });
+    let error = undefined;
 
     if (post.files.video.length) {
       if (!dryrun) {
-        result = await this.publishVideo(
-          post.files.video[0],
-          post.title,
-          post.body,
-        );
-      }
-    } else {
-      const attachments = [];
-      if (post.files.image.length) {
-        for (const image of post.files.image) {
-          attachments.push({
-            media_fbid: await this.uploadPhoto(post.folder.path + "/" + image),
-          });
+        try {
+          response = await this.publishVideo(
+            post.folder.path + "/" + post.files.video[0],
+            post.title,
+            post.body,
+          );
+        } catch (e) {
+          error = e;
         }
       }
-      if (!dryrun) {
-        result = await this.post("feed", {
-          message: post.body,
-          published: process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
-          //"scheduled_publish_time":"tomorrow",
-          attached_media: attachments,
-        });
+    } else {
+      try {
+        const attachments = [];
+        if (post.files.image.length) {
+          for (const image of post.files.image) {
+            attachments.push({
+              media_fbid: (
+                await this.uploadPhoto(post.folder.path + "/" + image)
+              )["id"],
+            });
+          }
+        }
+        if (!dryrun) {
+          response = (await this.postJson("%PAGE%/feed", {
+            message: post.body,
+            published: process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
+            attached_media: attachments,
+          })) as { id: string };
+        }
+      } catch (e) {
+        error = e;
       }
     }
 
-    post.results.push(result);
-    if (result.id) {
-      if (!dryrun) {
-        post.status = PostStatus.PUBLISHED;
-        post.published = new Date();
-      }
-    } else {
-      console.error(this.id, "No id returned in post", result);
+    post.results.push({
+      date: new Date(),
+      dryrun: dryrun,
+      success: !error,
+      error: error,
+      response: response,
+    });
+
+    if (error) {
+      Logger.error("Facebook.publishPost", this.id, "failed", response);
     }
+
+    if (!dryrun) {
+      if (!error) {
+        (post.link = "https://facebook.com/" + response.id),
+          (post.status = PostStatus.PUBLISHED);
+        post.published = new Date();
+      } else {
+        post.status = PostStatus.FAILED;
+      }
+    }
+
     post.save();
-    return !!result.id;
+    return !error;
   }
 
   async test() {
@@ -92,68 +119,7 @@ export default class Facebook extends Platform {
   }
 
   /*
-   * Do a GET request on the page.
-   *
-   * arguments:
-   * endpoint: the path to call
-   * query: query string as object
-   */
-
-  private async get(
-    endpoint: string = "",
-    query: { [key: string]: string } = {},
-  ) {
-    const url = new URL("https://graph.facebook.com");
-    url.pathname =
-      this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
-    (url.pathname += "/" + endpoint),
-      (url.search = new URLSearchParams(query).toString());
-    Logger.trace("GET", url.href);
-    const res = await fetch(url, {
-      method: "GET",
-      headers: process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN
-        ? {
-            Accept: "application/json",
-            Authorization:
-              "Bearer " + process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN,
-          }
-        : {
-            Accept: "application/json",
-          },
-    });
-    const result = await res.json();
-    return result;
-  }
-
-  /*
-   * Do a POST request on the page.
-   *
-   * arguments:
-   * endpoint: the path to call
-   * body: body as object
-   */
-
-  private async post(endpoint: string = "", body = {}) {
-    const url = new URL("https://graph.facebook.com");
-    url.pathname =
-      this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
-    (url.pathname += "/" + endpoint), Logger.trace("POST", url.href);
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization:
-          "Bearer " + process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN,
-      },
-      body: JSON.stringify(body),
-    });
-    const result = await res.json();
-    return result;
-  }
-
-  /*
-   * POST an image to the /photos endpoint using multipart/form-data
+   * POST an image to the page/photos endpoint using multipart/form-data
    *
    * arguments:
    * file: path to the file to post
@@ -164,41 +130,27 @@ export default class Facebook extends Platform {
   private async uploadPhoto(
     file: string = "",
     published = false,
-  ): Promise<string> {
+  ): Promise<{ id: string }> {
     Logger.trace("Reading file", file);
     const rawData = fs.readFileSync(file);
     const blob = new Blob([rawData]);
-
-    const url = new URL("https://graph.facebook.com");
-    url.pathname =
-      this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
-    url.pathname += "/photos";
 
     const body = new FormData();
     body.set("published", published ? "true" : "false");
     body.set("source", blob, path.basename(file));
 
-    Logger.trace("POST", url.href);
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization:
-          "Bearer " + process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN,
-      },
-      body,
-    });
+    const result = (await this.postFormData("%PAGE%/photos", body)) as {
+      id: "string";
+    };
 
-    const result = await res.json();
     if (!result["id"]) {
-      console.error(result);
       throw new Error("No id returned when uploading photo");
     }
-    return result["id"];
+    return result;
   }
 
   /*
-   * POST a video to the page using multipart/form-data
+   * POST a video to the page/videos endpoint using multipart/form-data
    *
    * arguments:
    * file: path to the video to post
@@ -216,31 +168,17 @@ export default class Facebook extends Platform {
     const rawData = fs.readFileSync(file);
     const blob = new Blob([rawData]);
 
-    const url = new URL("https://graph.facebook.com");
-    url.pathname =
-      this.GRAPH_API_VERSION + "/" + process.env.FAIRPOST_FACEBOOK_PAGE_ID;
-    url.pathname += "/videos";
-
     const body = new FormData();
     body.set("title", title);
     body.set("description", description);
     body.set("published", process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS);
     body.set("source", blob, path.basename(file));
 
-    Logger.trace("POST", url.href);
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization:
-          "Bearer " + process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN,
-      },
-      body,
-    });
+    const result = (await this.postFormData("%PAGE%/videos", body)) as {
+      id: string;
+    };
 
-    const result = await res.json();
     if (!result["id"]) {
-      console.error(result);
       throw new Error("No id returned when uploading video");
     }
     return result;
@@ -249,60 +187,43 @@ export default class Facebook extends Platform {
   /*
    * Return a long lived page access token.
    *
+   * appUserId: a app-scoped-user-id
    * UserAccessToken: a shortlived user access token
    */
   async getPageToken(
     appUserId: string,
     userAccessToken: string,
   ): Promise<string> {
-    // get a long lived UserAccessToken
-
-    const url = new URL("https://graph.facebook.com");
-    url.pathname = this.GRAPH_API_VERSION + "/oauth/access_token";
-    const query = {
+    // 1. Get a long lived UserAccessToken
+    const query1 = {
       grant_type: "fb_exchange_token",
       client_id: process.env.FAIRPOST_FACEBOOK_APP_ID,
       client_secret: process.env.FAIRPOST_FACEBOOK_APP_SECRET,
       fb_exchange_token: userAccessToken,
     };
-    url.search = new URLSearchParams(query).toString();
-
-    Logger.trace("fetching", url.href);
-    const res1 = await fetch(url, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-    const data1 = await res1.json();
+    const data1 = (await this.get("oauth/access_token", query1)) as {
+      access_token: string;
+    };
     const llUserAccessToken = data1["access_token"];
-
     if (!llUserAccessToken) {
       console.error(data1);
       throw new Error("No llUserAccessToken access_token in response.");
     }
 
-    // get a long lived PageAccessToken
-
-    const url2 = new URL("https://graph.facebook.com");
-    url2.pathname = appUserId + "/accounts";
+    // 2. Get a long lived PageAccessToken
     const query2 = {
       access_token: llUserAccessToken,
     };
-    url2.search = new URLSearchParams(query2).toString();
-    Logger.trace("fetching", url.href);
-    const res2 = await fetch(url2, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-    const data2 = await res2.json();
+    const data2 = (await this.get(appUserId + "/accounts", query2)) as {
+      data: {
+        id: string;
+        access_token: string;
+      }[];
+    };
+    const llPageAccessToken = data2.data?.find(
+      (page) => page.id === process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+    )["access_token"];
 
-    let llPageAccessToken = "";
-    if (data2.data) {
-      data2.data.forEach((page) => {
-        if (page.id === process.env.FAIRPOST_FACEBOOK_PAGE_ID) {
-          llPageAccessToken = page.access_token;
-        }
-      });
-    }
     if (!llPageAccessToken) {
       console.error(data2);
       throw new Error(
@@ -313,5 +234,161 @@ export default class Facebook extends Platform {
     }
 
     return llPageAccessToken;
+  }
+
+  // API implementation -------------------
+
+  /*
+   * Do a GET request on the graph.
+   *
+   * arguments:
+   * endpoint: the path to call
+   * query: query string as object
+   */
+
+  private async get(
+    endpoint: string = "%USER%",
+    query: { [key: string]: string } = {},
+  ): Promise<object> {
+    endpoint = endpoint.replace(
+      "%USER%",
+      process.env.FAIRPOST_FACEBOOK_USER_ID,
+    );
+    endpoint = endpoint.replace(
+      "%PAGE%",
+      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+    );
+
+    const url = new URL("https://graph.facebook.com");
+    url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
+    url.search = new URLSearchParams(query).toString();
+    Logger.trace("GET", url.href);
+    return await fetch(url, {
+      method: "GET",
+      headers: process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN
+        ? {
+            Accept: "application/json",
+            Authorization:
+              "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+          }
+        : {
+            Accept: "application/json",
+          },
+    })
+      .then((res) => this.handleApiResponse(res))
+      .catch((err) => this.handleApiError(err));
+  }
+
+  /*
+   * Do a Json POST request on the graph.
+   *
+   * arguments:
+   * endpoint: the path to call
+   * body: body as object
+   */
+
+  private async postJson(
+    endpoint: string = "%USER%",
+    body = {},
+  ): Promise<object> {
+    endpoint = endpoint.replace(
+      "%USER%",
+      process.env.FAIRPOST_FACEBOOK_USER_ID,
+    );
+    endpoint = endpoint.replace(
+      "%PAGE%",
+      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+    );
+
+    const url = new URL("https://graph.facebook.com");
+    url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
+    Logger.trace("POST", url.href);
+    return await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization:
+          "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+      },
+      body: JSON.stringify(body),
+    })
+      .then((res) => this.handleApiResponse(res))
+      .catch((err) => this.handleApiError(err));
+  }
+
+  /*
+   * Do a FormData POST request on the graph.
+   *
+   * arguments:
+   * endpoint: the path to call
+   * body: body as object
+   */
+
+  private async postFormData(
+    endpoint: string,
+    body: FormData,
+  ): Promise<object> {
+    endpoint = endpoint.replace(
+      "%USER%",
+      process.env.FAIRPOST_FACEBOOK_USER_ID,
+    );
+    endpoint = endpoint.replace(
+      "%PAGE%",
+      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+    );
+
+    const url = new URL("https://graph.facebook.com");
+    url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
+    Logger.trace("POST", url.href);
+
+    return await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization:
+          "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+      },
+      body: body,
+    })
+      .then((res) => this.handleApiResponse(res))
+      .catch((err) => this.handleApiError(err));
+  }
+
+  /*
+   * Handle api response
+   *
+   */
+  private async handleApiResponse(response: Response): Promise<object> {
+    if (!response.ok) {
+      Logger.error("Facebook.handleApiResponse", response);
+      throw new Error(response.status + ":" + response.statusText);
+    }
+    const data = await response.json();
+    if (data.error) {
+      const error =
+        response.status +
+        ":" +
+        data.error.type +
+        "(" +
+        data.error.code +
+        "/" +
+        data.error.error_subcode +
+        ") " +
+        data.error.message;
+      Logger.error("Facebook.handleApiResponse", error);
+      throw new Error(error);
+    }
+    Logger.trace("Facebook.handleApiResponse", "success");
+    return data;
+  }
+
+  /*
+   * Handle api error
+   *
+   */
+  private handleApiError(error: Error): Promise<object> {
+    Logger.error("Facebook.handleApiError", error);
+    throw error;
   }
 }

@@ -60,7 +60,7 @@ This token should last forever. It involves get a long-lived user token and then
 
 ### Enable and test the facebook platform
  - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
- - call `./fairpost.js test --platforms=facebook`
+ - call `./fairpost.js test-platform --platform=facebook`
 
 # Limitations 
 

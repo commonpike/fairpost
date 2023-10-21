@@ -11,7 +11,7 @@ export default class Post {
   status: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
-  results: object[] = [];
+  results: PostResult[] = [];
   title: string = "";
   body?: string;
   tags?: string;
@@ -21,6 +21,7 @@ export default class Post {
     video: string[];
     other: string[];
   };
+  link?: string;
 
   constructor(folder: Folder, platform: Platform, data?: object) {
     this.folder = folder;
@@ -68,6 +69,14 @@ export default class Post {
     report += "\n - published: " + this.published;
     return report;
   }
+}
+
+export interface PostResult {
+  date: Date;
+  dryrun?: boolean;
+  error?: Error;
+  success: boolean;
+  response: object;
 }
 
 export enum PostStatus {

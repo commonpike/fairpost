@@ -60,8 +60,11 @@ export default class Feed {
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
     Logger.trace("Feed", "getPlatforms", platformIds);
     return (
-      platformIds?.map((platformId) => this.platforms[platformId]) ??
-      Object.values(this.platforms)
+      platformIds
+        ?.map((platformId) => this.platforms[platformId])
+        .filter(function (p) {
+          return p !== undefined;
+        }) ?? Object.values(this.platforms)
     );
   }
 

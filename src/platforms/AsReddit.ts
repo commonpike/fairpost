@@ -9,7 +9,7 @@ export default class AsReddit extends Ayrshare {
 
   constructor() {
     super();
-    this.SUBREDDIT = process.env.FAIRPOST_REDDIT_SUBREDDIT;
+    this.SUBREDDIT = process.env.FAIRPOST_AYRSHARE_SUBREDDIT;
   }
 
   async preparePost(folder: Folder): Promise<Post | undefined> {
