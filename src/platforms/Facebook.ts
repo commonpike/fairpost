@@ -185,32 +185,14 @@ export default class Facebook extends Platform {
   }
 
   /*
-   * Return a short lived user access token.
-   *
-   */
-  async getUserAccessToken(appId: string, appSecret: string): Promise<string> {
-
-    const query = {
-      client_id: appId,
-      client_secret: appSecret,
-      grant_type: "client_credentials"
-    }
-    const data = (await this.get("oauth/access_token", query)) as {
-      access_token: string;
-      token_type: string;
-    };
-    if (!data['access_token']) {
-      throw new Error('Unable to get short lived user access token');
-    }
-    return data["access_token"];
-  }
-
-  /*
    * Return a long lived user access token.
    *
    */
-  async getLLUserAccessToken(appId: string, appSecret: string, userAccessToken: string): Promise<string> {
-
+  async getLLUserAccessToken(
+    appId: string,
+    appSecret: string,
+    userAccessToken: string,
+  ): Promise<string> {
     const query = {
       grant_type: "fb_exchange_token",
       client_id: appId,
@@ -226,29 +208,26 @@ export default class Facebook extends Platform {
     }
 
     return data["access_token"];
-    
   }
-
 
   /*
    * Return an app scoped user id
    *
    */
   async getAppUserId(accessToken: string): Promise<string> {
-
     const query = {
-      fields: 'id,name',
-      access_token: accessToken
+      fields: "id,name",
+      access_token: accessToken,
     };
     const data = (await this.get("me", query)) as {
       id: string;
       name: string;
     };
-    if (!data['id']) {
+    if (!data["id"]) {
       console.error(data);
       throw new Error("Can not get app scoped user id.");
     }
-    return data['id'];
+    return data["id"];
   }
 
   /*
@@ -257,12 +236,15 @@ export default class Facebook extends Platform {
   async getLLPageToken(
     appId: string,
     appSecret: string,
-    pageId: string
+    pageId: string,
+    userAccessToken: string,
   ): Promise<string> {
-
-    const userAccessToken = await this.getUserAccessToken(appId,appSecret);
-    const llUserAccessToken = await this.getLLUserAccessToken(appId,appSecret,userAccessToken);
     const appUserId = await this.getAppUserId(userAccessToken);
+    const llUserAccessToken = await this.getLLUserAccessToken(
+      appId,
+      appSecret,
+      userAccessToken,
+    );
 
     const query = {
       access_token: llUserAccessToken,
@@ -273,9 +255,9 @@ export default class Facebook extends Platform {
         access_token: string;
       }[];
     };
-    const llPageAccessToken = data.data?.find(
-      (page) => page.id === pageId,
-    )["access_token"];
+    const llPageAccessToken = data.data?.find((page) => page.id === pageId)[
+      "access_token"
+    ];
 
     if (!llPageAccessToken) {
       console.error(data);
@@ -288,27 +270,26 @@ export default class Facebook extends Platform {
   }
 
   /*
-   * Return a long lived page access token.
+   * Return a long lived facebook page access token.
    *
-   * appUserId: a app-scoped-user-id
    * UserAccessToken: a shortlived user access token
    */
-  async getPageToken(): Promise<string> {
-
+  async getPageToken(userAccessToken: string): Promise<string> {
     if (!process.env.FAIRPOST_FACEBOOK_APP_ID) {
-      throw new Error('Set FAIRPOST_FACEBOOK_APP_ID first');
+      throw new Error("Set FAIRPOST_FACEBOOK_APP_ID first");
     }
     if (!process.env.FAIRPOST_FACEBOOK_APP_SECRET) {
-      throw new Error('Set FAIRPOST_FACEBOOK_APP_SECRET first');
+      throw new Error("Set FAIRPOST_FACEBOOK_APP_SECRET first");
     }
     if (!process.env.FAIRPOST_FACEBOOK_PAGE_ID) {
-      throw new Error('Set FAIRPOST_FACEBOOK_PAGE_ID first');
+      throw new Error("Set FAIRPOST_FACEBOOK_PAGE_ID first");
     }
-    
+
     return await this.getLLPageToken(
       process.env.FAIRPOST_FACEBOOK_APP_ID,
       process.env.FAIRPOST_FACEBOOK_APP_SECRET,
-      process.env.FAIRPOST_FACEBOOK_PAGE_ID
+      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+      userAccessToken,
     );
   }
 
