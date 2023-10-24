@@ -9,6 +9,7 @@ import Feed from "./src/Feed";
 import { PostStatus } from "./src/Post";
 import { PlatformId } from "./src/platforms";
 import Facebook from "./src/platforms/Facebook";
+import Instagram from "./src/platforms/Instagram";
 
 // arguments
 const COMMAND = process.argv[2] ?? "help";
@@ -197,11 +198,17 @@ async function main() {
       }
       /* platform specific tools */
       case "facebook-get-page-token": {
-        const userToken = getOption("user-token") as string;
-        const appUserId = getOption("app-user-id") as string;
         const facebook = new Facebook();
-        result = await facebook.getPageToken(appUserId, userToken);
-        report = "Page Token: " + result;
+        const accessToken = (getOption("user-token") as string) ?? undefined;
+        result = await facebook.getPageToken(accessToken);
+        report = "\nPage Token: " + result;
+        break;
+      }
+      case "instagram-get-page-token": {
+        const instagram = new Instagram();
+        const accessToken = (getOption("user-token") as string) ?? undefined;
+        result = await instagram.getPageToken(accessToken);
+        report = "\nPage Token: " + result;
         break;
       }
       default: {

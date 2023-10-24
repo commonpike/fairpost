@@ -1,5 +1,6 @@
 import Logger from "../Logger";
 import Platform from "../Platform";
+import Facebook from "./Facebook";
 import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
@@ -339,6 +340,30 @@ export default class Instagram extends Platform {
       throw new Error("No source url found for video " + id);
     }
     return videoData["source"];
+  }
+
+  /*
+   * Return a long lived instagram page access token.
+   *
+   * UserAccessToken: a shortlived user access token
+   */
+  async getPageToken(userAccessToken: string): Promise<string> {
+    if (!process.env.FAIRPOST_INSTAGRAM_APP_ID) {
+      throw new Error("Set FAIRPOST_INSTAGRAM_APP_ID first");
+    }
+    if (!process.env.FAIRPOST_INSTAGRAM_APP_SECRET) {
+      throw new Error("Set FAIRPOST_INSTAGRAM_APP_SECRET first");
+    }
+    if (!process.env.FAIRPOST_INSTAGRAM_PAGE_ID) {
+      throw new Error("Set FAIRPOST_INSTAGRAM_PAGE_ID first");
+    }
+    const facebook = new Facebook();
+    return await facebook.getLLPageToken(
+      process.env.FAIRPOST_INSTAGRAM_APP_ID,
+      process.env.FAIRPOST_INSTAGRAM_APP_SECRET,
+      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
+      userAccessToken,
+    );
   }
 
   // API implementation -------------------
