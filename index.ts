@@ -197,10 +197,8 @@ async function main() {
       }
       /* platform specific tools */
       case "facebook-get-page-token": {
-        const userToken = getOption("user-token") as string;
-        const appUserId = getOption("app-user-id") as string;
         const facebook = new Facebook();
-        result = await facebook.getPageToken(appUserId, userToken);
+        result = await facebook.getPageToken();
         report = "Page Token: " + result;
         break;
       }
