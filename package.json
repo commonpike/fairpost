@@ -4,7 +4,7 @@
   "description": "Feeds data to social media platforms based on folders in a dir",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "test": "npm run lint",
     "prettier": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "lint": "eslint . --ext .ts",

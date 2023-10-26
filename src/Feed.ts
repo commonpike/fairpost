@@ -54,7 +54,11 @@ export default class Feed {
 
   getPlatform(platformId: PlatformId): Platform {
     Logger.trace("Feed", "getPlatform", platformId);
-    return this.getPlatforms([platformId])[0];
+    const platform = this.getPlatforms([platformId])[0];
+    if (!platform) {
+      throw new Error('Unknown platform: '+platformId)
+    }
+    return platform;
   }
 
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
