@@ -110,7 +110,7 @@ export default class Instagram extends Platform {
   }
 
   async test() {
-    return this.get('me');
+    return this.get("me");
   }
 
   private async publishPhoto(
