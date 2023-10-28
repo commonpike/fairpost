@@ -9,7 +9,7 @@
 - create an company your account can manage
 - create an app to manage the company page \
 https://www.linkedin.com/developers/apps/new
-- add 'share on linkedin' product to the app
+- add 'share on linkedin' and 'advertising api' product to the app
 - on the 'settings' tab of your app
   - click the 'verify' button next to the page you want the app to manage \
     and follow instructions there
@@ -17,9 +17,23 @@ https://www.linkedin.com/developers/apps/new
   - copy ClientID and ClientSecret \
     and save those as `FAIRPOST_LINKEDIN_CLIENT_ID` and `FAIRPOST_LINKEDIN_CLIENT_SECRET` \
     in your `.env`
+  - make sure you have `w_member_social w_organization_social`
 
 
 ### Get an access token (...)
+
+https://learn.microsoft.com/en-us/linkedin/shared/authentication/postman-getting-started
+
+We need the 3-legged oauth, because 2-legged oauths is only if 
+> your application needs to access APIs that are not member specific
+
+- go to https://www.linkedin.com/developers/apps
+- select your app
+- on the auth app
+  - add https://oauth.pstmn.io/v1/callback as redirect url
+  - add https://oauth.pstmn.io/v1/browser-callback as redirect url
+- copy this collection into postman : https://www.postman.com/fairpost-test/workspace/linkedin
+- enter client id and client secret in postman collection env
 
 ### Enable and test the platform
  - Add 'linkedin' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
