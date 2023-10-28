@@ -52,7 +52,7 @@ export default class Platform {
    * If the post exists and is failed, set it back to
    * unscheduled.
    */
-  async preparePost(folder: Folder): Promise<Post | undefined> {
+  async preparePost(folder: Folder): Promise<Post> {
     Logger.trace("Platform", "preparePost");
 
     const post = this.getPost(folder) ?? new Post(folder, this);

@@ -115,7 +115,7 @@ export default class Facebook extends Platform {
   }
 
   async test() {
-    return this.get();
+    return this.get("me");
   }
 
   /*
