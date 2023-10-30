@@ -3,7 +3,7 @@ import Logger from "./Logger";
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import { PlatformId } from "./platforms";
+import { PlatformId } from "../platforms";
 
 /**
  * Platform base class to extend all platforms on
@@ -63,7 +63,7 @@ export default class Platform {
 
     const post = this.getPost(folder) ?? new Post(folder, this);
     if (post.status === PostStatus.PUBLISHED) {
-      return;
+      return post;
     }
     if (post.status === PostStatus.FAILED) {
       post.status = PostStatus.UNSCHEDULED;

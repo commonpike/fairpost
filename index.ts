@@ -4,9 +4,9 @@
 */
 
 import * as path from "path";
-import Logger from "./src/Logger";
-import Feed from "./src/Feed";
-import { PostStatus } from "./src/Post";
+import Logger from "./src/core/Logger";
+import Feed from "./src/core/Feed";
+import { PostStatus } from "./src/core/Post";
 import { PlatformId } from "./src/platforms";
 import Facebook from "./src/platforms/Facebook";
 import Instagram from "./src/platforms/Instagram";

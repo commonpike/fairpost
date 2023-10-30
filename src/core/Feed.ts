@@ -6,8 +6,8 @@ import Platform from "./Platform";
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import * as platforms from "./platforms";
-import { PlatformId } from "./platforms";
+import * as platforms from "../platforms";
+import { PlatformId } from "../platforms";
 
 /**
  * Feed - the core handler of fairpost
@@ -39,7 +39,7 @@ export default class Feed {
   constructor(configPath?: string) {
     if (configPath) {
       const configPathResolved = path.resolve(
-        __dirname + "/../../" + configPath,
+        __dirname + "/../../../" + configPath,
       );
       dotenv.config({ path: configPathResolved });
     } else {

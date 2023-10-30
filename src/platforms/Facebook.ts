@@ -1,9 +1,9 @@
-import Logger from "../Logger";
-import Platform from "../Platform";
+import Logger from "../core/Logger";
+import Platform from "../core/Platform";
 import { PlatformId } from ".";
-import Folder from "../Folder";
-import Post from "../Post";
-import { PostStatus } from "../Post";
+import Folder from "../core/Folder";
+import Post from "../core/Post";
+import { PostStatus } from "../core/Post";
 import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";

@@ -1,12 +1,12 @@
-import Logger from "../Logger";
+import Logger from "../core/Logger";
 import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
 import { PlatformId } from ".";
-import Platform from "../Platform";
-import Folder from "../Folder";
-import Post from "../Post";
-import { PostStatus } from "../Post";
+import Platform from "../core/Platform";
+import Folder from "../core/Folder";
+import Post from "../core/Post";
+import { PostStatus } from "../core/Post";
 
 /**
  * Ayrshare base class to extend all ayrshare platforms on
