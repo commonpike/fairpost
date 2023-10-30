@@ -2,7 +2,11 @@ import * as fs from "fs";
 import Logger from "./Logger";
 
 /**
+ * Folder - a folder within a feed
  *
+ * A folder represents one post on all enabled
+ * and applicable platforms. It is also just
+ * a folder on a filesystem.
  */
 export default class Folder {
   id: string;
@@ -19,7 +23,19 @@ export default class Folder {
     this.path = path;
   }
 
-  getFiles() {
+  /**
+   * Get the files in this folder
+   *
+   * reads info from disk once, then caches that
+   * @returns grouped filenames relative to folder
+   */
+
+  getFiles(): {
+    text: string[];
+    image: string[];
+    video: string[];
+    other: string[];
+  } {
     Logger.trace("Folder", "getFiles");
     if (this.files != undefined) {
       return {
