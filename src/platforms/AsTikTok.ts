@@ -3,6 +3,9 @@ import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 
+/**
+ * AsTikTok: support for tiktok platform through Ayrshare
+ */
 export default class AsTikTok extends Ayrshare {
   id = PlatformId.ASTIKTOK;
 

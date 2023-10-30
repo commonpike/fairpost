@@ -6,6 +6,9 @@ import Post from "../Post";
 import * as fs from "fs";
 import * as sharp from "sharp";
 
+/**
+ * AsTwitter: support for twitter platform through Ayrshare
+ */
 export default class AsTwitter extends Ayrshare {
   id = PlatformId.ASTWITTER;
 

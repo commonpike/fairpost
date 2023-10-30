@@ -9,6 +9,9 @@ import { PostStatus } from "./Post";
 import * as platforms from "./platforms";
 import { PlatformId } from "./platforms";
 
+/**
+ *
+ */
 export default class Feed {
   id: string = "";
   path: string = "";
@@ -273,7 +276,7 @@ export default class Feed {
 
   /*
         feed planning 
-    */
+  */
 
   getLastPost(platformId: PlatformId): Post | void {
     Logger.trace("Feed", "getLastPost");

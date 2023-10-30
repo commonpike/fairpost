@@ -1,6 +1,9 @@
 import * as fs from "fs";
 import Logger from "./Logger";
 
+/**
+ *
+ */
 export default class Folder {
   id: string;
   path: string;

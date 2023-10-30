@@ -3,6 +3,9 @@ import Logger from "./Logger";
 import Folder from "./Folder";
 import Platform from "./Platform";
 
+/**
+ *
+ */
 export default class Post {
   id: string;
   folder: Folder;
@@ -34,7 +37,7 @@ export default class Post {
     }
   }
 
-  /*
+  /**
    * save
    *
    * Save this post for this platform for the
