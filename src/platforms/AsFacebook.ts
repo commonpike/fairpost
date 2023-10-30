@@ -5,6 +5,9 @@ import Post from "../Post";
 import * as fs from "fs";
 import * as sharp from "sharp";
 
+/**
+ * AsFacebook: support for facebook platform through Ayrshare
+ */
 export default class AsFacebook extends Ayrshare {
   id: PlatformId = PlatformId.ASFACEBOOK;
 

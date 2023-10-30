@@ -5,26 +5,30 @@ import Post from "./Post";
 import { PostStatus } from "./Post";
 import { PlatformId } from "./platforms";
 
+/**
+ * Platform base class to extend all platforms on
+ *
+ * When extending, implement at least
+ * preparePost() and publishPost()
+ */
 export default class Platform {
   active: boolean = false;
   id: PlatformId = PlatformId.UNKNOWN;
   defaultBody: string = "Fairpost feed";
 
-  /*
+  /**
    * getPostFileName
-   *
-   * Return the intended name for a post of this
+   * @returns the intended name for a post of this
    * platform to be saved in this folder.
    */
-  getPostFileName() {
+  getPostFileName(): string {
     return "_" + this.id + ".json";
   }
 
-  /*
+  /**
    * getPost
-   *
-   * Return the post for this platform for the
-   * given folder, if it exists.
+   * @param folder - the folder to get the post for this platform from
+   * @returns {Post} the post for this platform for the given folder, if it exists.
    */
 
   getPost(folder: Folder): Post | undefined {
@@ -41,7 +45,7 @@ export default class Platform {
     return;
   }
 
-  /*
+  /**
    * preparePost
    *
    * Prepare the post for this platform for the
@@ -51,6 +55,8 @@ export default class Platform {
    * If the post exists and is published, ignore.
    * If the post exists and is failed, set it back to
    * unscheduled.
+   * @param folder - the folder for which to prepare a post for this platform
+   * @returns the prepared post
    */
   async preparePost(folder: Folder): Promise<Post> {
     Logger.trace("Platform", "preparePost");
@@ -99,7 +105,7 @@ export default class Platform {
     return post;
   }
 
-  /*
+  /**
    * publishPost
    *
    * publish the post for this platform, sync.
@@ -107,6 +113,7 @@ export default class Platform {
    * add the result to post.results
    * on success, set the status to published and return true,
    * else set the status to failed and return false
+   * @returns {Promise} succes status
    */
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
@@ -123,12 +130,13 @@ export default class Platform {
     return false;
   }
 
-  /*
+  /**
    * test
    *
    * Test the platform installation. This should not post
    * anything, but test access tokens et al. It can return
    * anything.
+   * @returns - any object
    */
   async test(): Promise<unknown> {
     return "No tests";

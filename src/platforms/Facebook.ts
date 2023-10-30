@@ -8,6 +8,13 @@ import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
 
+/**
+ * Facebook: support for facebook platform.
+ *
+ * Uses simple graph api calls to publish.
+ * Adds fb specific tools to get a long lived page token,
+ * also use by the instagram platform.
+ */
 export default class Facebook extends Platform {
   id: PlatformId = PlatformId.FACEBOOK;
   GRAPH_API_VERSION: string = "v18.0";
@@ -16,6 +23,7 @@ export default class Facebook extends Platform {
     super();
   }
 
+  /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post | undefined> {
     const post = await super.preparePost(folder);
     if (post && post.files) {
@@ -44,6 +52,7 @@ export default class Facebook extends Platform {
     return post;
   }
 
+  /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Facebook.publishPost", post, dryrun);
 
@@ -114,18 +123,16 @@ export default class Facebook extends Platform {
     return !error;
   }
 
+  /** @inheritdoc */
   async test() {
     return this.get("me");
   }
 
-  /*
+  /**
    * POST an image to the page/photos endpoint using multipart/form-data
-   *
-   * arguments:
-   * file: path to the file to post
-   *
-   * returns:
-   * id of the uploaded photo to use in post attachments
+   * @param file - path to the file to post
+   * @param published - wether the photo should be published as a single facebook post
+   * @returns id of the uploaded photo to use in post attachments
    */
   private async uploadPhoto(
     file: string = "",
@@ -149,15 +156,16 @@ export default class Facebook extends Platform {
     return result;
   }
 
-  /*
+  /**
    * POST a video to the page/videos endpoint using multipart/form-data
    *
-   * arguments:
-   * file: path to the video to post
-   * published: wether to publish it or not
-   *
-   * returns:
-   * { id: string }
+   * Videos will always become a single facebook post
+   * when using the api.
+   * Uses sync posting. may take a while or timeout.
+   * @param file - path to the video to post
+   * @param title - title of the post
+   * @param description - body text of the post
+   * @returns id of the uploaded video
    */
   private async publishVideo(
     file: string,
@@ -184,11 +192,14 @@ export default class Facebook extends Platform {
     return result;
   }
 
-  /*
-   * Return a long lived user access token.
-   *
+  /**
+   * Get a long lived user access token.
+   * @param appId - the appid from config
+   * @param appSecret - the app secret from config
+   * @param userAccessToken - the short lived user access token from api
+   * @returns A long lived access token
    */
-  async getLLUserAccessToken(
+  private async getLLUserAccessToken(
     appId: string,
     appSecret: string,
     userAccessToken: string,
@@ -210,11 +221,12 @@ export default class Facebook extends Platform {
     return data["access_token"];
   }
 
-  /*
-   * Return an app scoped user id
-   *
+  /**
+   * Get an app scoped user id
+   * @param accessToken - a access token returned from api
+   * @returns the app scoped user id ('me')
    */
-  async getAppUserId(accessToken: string): Promise<string> {
+  private async getAppUserId(accessToken: string): Promise<string> {
     const query = {
       fields: "id,name",
       access_token: accessToken,
@@ -230,8 +242,17 @@ export default class Facebook extends Platform {
     return data["id"];
   }
 
-  /*
-   * Return a long lived page access token.
+  /**
+   * Get a long lived page access token.
+   *
+   * This method is used by getPageToken here and getPageToken
+   * in the instagram class, to get a long lived page token
+   * for either facebook or instagram
+   * @param appId - the app id from config
+   * @param appSecret - the app secret from config
+   * @param pageId - the pageid to get a token for
+   * @param userAccessToken - the short lived user token from the api
+   * @returns long lived page access token
    */
   async getLLPageToken(
     appId: string,
@@ -269,10 +290,10 @@ export default class Facebook extends Platform {
     return llPageAccessToken;
   }
 
-  /*
+  /**
    * Return a long lived facebook page access token.
-   *
-   * UserAccessToken: a shortlived user access token
+   * @param userAccessToken - a shortlived user access token
+   * @returns a longlived user access token
    */
   async getPageToken(userAccessToken: string): Promise<string> {
     if (!process.env.FAIRPOST_FACEBOOK_APP_ID) {
@@ -295,12 +316,10 @@ export default class Facebook extends Platform {
 
   // API implementation -------------------
 
-  /*
+  /**
    * Do a GET request on the graph.
-   *
-   * arguments:
-   * endpoint: the path to call
-   * query: query string as object
+   * @param endpoint - the path to call
+   * @param query - query string as object
    */
 
   private async get(
@@ -336,12 +355,10 @@ export default class Facebook extends Platform {
       .catch((err) => this.handleApiError(err));
   }
 
-  /*
+  /**
    * Do a Json POST request on the graph.
-   *
-   * arguments:
-   * endpoint: the path to call
-   * body: body as object
+   * @param endpoint - the path to call
+   * @param body - body as object
    */
 
   private async postJson(
@@ -374,12 +391,10 @@ export default class Facebook extends Platform {
       .catch((err) => this.handleApiError(err));
   }
 
-  /*
+  /**
    * Do a FormData POST request on the graph.
-   *
-   * arguments:
-   * endpoint: the path to call
-   * body: body as object
+   * @param endpoint - the path to call
+   * @param body - body as object
    */
 
   private async postFormData(
@@ -412,9 +427,10 @@ export default class Facebook extends Platform {
       .catch((err) => this.handleApiError(err));
   }
 
-  /*
+  /**
    * Handle api response
-   *
+   * @param response - api response from fetch
+   * @returns parsed object from response
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
@@ -440,11 +456,11 @@ export default class Facebook extends Platform {
     return data;
   }
 
-  /*
+  /**
    * Handle api error
-   *
+   * @param error - the error returned from fetch
    */
-  private handleApiError(error: Error): Promise<object> {
+  private handleApiError(error: Error): never {
     Logger.error("Facebook.handleApiError", error);
     throw error;
   }

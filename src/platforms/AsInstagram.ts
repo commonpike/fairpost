@@ -5,6 +5,9 @@ import Folder from "../Folder";
 import Post from "../Post";
 import * as sharp from "sharp";
 
+/**
+ * AsInstagram: support for instagram platform through Ayrshare
+ */
 export default class AsInstagram extends Ayrshare {
   id = PlatformId.ASINSTAGRAM;
 

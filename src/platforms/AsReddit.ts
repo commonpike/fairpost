@@ -3,6 +3,9 @@ import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 
+/**
+ * AsReddit: support for reddit platform through Ayrshare
+ */
 export default class AsReddit extends Ayrshare {
   id = PlatformId.ASREDDIT;
   SUBREDDIT: string;

@@ -3,6 +3,9 @@ import { PlatformId } from ".";
 import Folder from "../Folder";
 import Post from "../Post";
 
+/**
+ * AsYouTube: support for youtube platform through Ayrshare
+ */
 export default class AsYouTube extends Ayrshare {
   id = PlatformId.ASYOUTUBE;
 

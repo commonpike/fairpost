@@ -6,6 +6,9 @@ import Post from "../Post";
 import * as fs from "fs";
 import * as sharp from "sharp";
 
+/**
+ * AsLinkedIn: support for linkedin platform through Ayrshare
+ */
 export default class AsLinkedIn extends Ayrshare {
   id = PlatformId.ASLINKEDIN;
 

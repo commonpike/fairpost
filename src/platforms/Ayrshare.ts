@@ -8,6 +8,11 @@ import Folder from "../Folder";
 import Post from "../Post";
 import { PostStatus } from "../Post";
 
+/**
+ * Ayrshare base class to extend all ayrshare platforms on
+ *
+ * publish is handled here; prepeare is handled in subclasses.
+ */
 export default abstract class Ayrshare extends Platform {
   requiresApproval: boolean = false;
 
@@ -28,6 +33,7 @@ export default abstract class Ayrshare extends Platform {
     super();
   }
 
+  /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post | undefined> {
     return super.preparePost(folder);
   }
@@ -190,9 +196,10 @@ export default abstract class Ayrshare extends Platform {
     return response;
   }
 
-  /*
+  /**
    * Handle api response
-   *
+   * @param response - the api response
+   * @returns parsed data from response
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
@@ -226,11 +233,11 @@ export default abstract class Ayrshare extends Platform {
     return data;
   }
 
-  /*
+  /**
    * Handle api error
-   *
+   * @param error - the error thrown from the api
    */
-  private handleApiError(error: Error): Promise<object> {
+  private handleApiError(error: Error) {
     Logger.error("Ayrshare.handleApiError", error);
     throw error;
   }
