@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import Logger from "./Logger";
+import Storage from "./Storage";
 import Platform from "./Platform";
 import Folder from "./Folder";
 import Post from "./Post";
@@ -45,29 +46,76 @@ export default class Feed {
     } else {
       dotenv.config();
     }
-    if (process.env.FAIRPOST_FEED_PATH) {
-      this.path = process.env.FAIRPOST_FEED_PATH;
-      this.id = this.path;
-    } else {
-      throw new Error("Problem reading .env config file");
-    }
-    this.interval = Number(process.env.FAIRPOST_FEED_INTERVAL ?? 7);
 
-    const activePlatformIds = process.env.FAIRPOST_FEED_PLATFORMS.split(",");
-    const platformClasses = fs.readdirSync(
-      path.resolve(__dirname + "/platforms"),
+    this.path = Storage.get("settings", "FEED_PATH");
+    this.id = this.path;
+
+    this.interval = Number(Storage.get("settings", "FEED_INTERVAL", "7"));
+    const activePlatformIds = Storage.get("settings", "FEED_PLATFORMS").split(
+      ",",
     );
+
+    const platformClasses = fs.readdirSync(
+      path.resolve(__dirname + "/../platforms"),
+    );
+
     platformClasses.forEach((file) => {
       const constructor = file.replace(".ts", "").replace(".js", "");
       // nb import * as platforms loaded the constructors
       if (platforms[constructor] !== undefined) {
         const platform = new platforms[constructor]();
-        platform.active = activePlatformIds.includes(platform.id);
-        if (platform.active) {
+        if (activePlatformIds.includes(platform.id)) {
+          platform.active = true;
           this.platforms[platform.id] = platform;
         }
       }
     });
+  }
+
+  /**
+   * Return a small report for this feed
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("Feed", "report");
+    let report = "";
+    report += "\nFeed: " + this.id;
+    report += "\n - path: " + this.path;
+    report += "\n - platforms: " + Object.keys(this.platforms).join();
+    report +=
+      "\n - folders: " +
+      this.getFolders()
+        .map((f) => f.path)
+        .join();
+    return report;
+  }
+
+  /**
+   * Set up one platform
+   * @param platformId - the slug of the platform
+   * @returns the setup result
+   */
+  async setupPlatform(platformId: PlatformId): Promise<unknown> {
+    Logger.trace("Feed", "setupPlatform", platformId);
+    const results = await this.setupPlatforms([platformId]);
+    return results[platformId];
+  }
+
+  /**
+   * Set up more platforms
+   * @param platformsIds - the slugs of the platforms
+   * @returns the setup results indexed by platform ids
+   */
+  async setupPlatforms(
+    platformsIds?: PlatformId[],
+  ): Promise<{ [id: string]: unknown }> {
+    Logger.trace("Feed", "setupPlatforms", platformsIds);
+    const results = {};
+    for (const platform of this.getPlatforms(platformsIds)) {
+      results[platform.id] = await platform.setup();
+    }
+    return results;
   }
 
   /**

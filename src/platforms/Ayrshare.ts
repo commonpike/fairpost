@@ -1,4 +1,5 @@
 import Logger from "../core/Logger";
+import Storage from "../core/Storage";
 import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
@@ -92,7 +93,7 @@ export default abstract class Ayrshare extends Platform {
   }
 
   async uploadMedia(media: string[]): Promise<string[]> {
-    const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
+    const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
     const urls = [] as string[];
     for (const file of media) {
       const buffer = fs.readFileSync(file);
@@ -143,7 +144,7 @@ export default abstract class Ayrshare extends Platform {
     platformOptions: object,
     uploads: string[],
   ): Promise<object> {
-    const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
+    const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
     const scheduleDate = post.scheduled;
     //scheduleDate.setDate(scheduleDate.getDate()+100);
 

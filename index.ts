@@ -49,19 +49,29 @@ async function main() {
     switch (COMMAND) {
       case "get-feed": {
         result = feed;
-        report = "Feed: " + feed.id;
+        report = feed.report();
+        break;
+      }
+      case "setup-platform": {
+        result = await feed.setupPlatform(PLATFORM);
+        report = "Result: \n" + JSON.stringify(result, null, "\t");
+        break;
+      }
+      case "setup-platforms": {
+        result = await feed.setupPlatforms(PLATFORMS);
+        report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "get-platform": {
         const platform = feed.getPlatform(PLATFORM);
-        report += "Platform: " + platform.id + "\n";
+        report += platform.report() + "\n";
         result = platform;
         break;
       }
       case "get-platforms": {
         const platforms = feed.getPlatforms(PLATFORMS);
         platforms.forEach((platform) => {
-          report += "Platform: " + platform.id + "\n";
+          report += platform.report() + "\n";
         });
         result = platforms;
         break;
@@ -78,14 +88,14 @@ async function main() {
       }
       case "get-folder": {
         const folder = feed.getFolder(FOLDER);
-        report += "Folder: " + folder.id + "\n";
+        report += folder.report() + "\n";
         result = folder;
         break;
       }
       case "get-folders": {
         const folders = feed.getFolders(FOLDERS);
         folders.forEach((folder) => {
-          report += "Folder: " + folder.id + "\n";
+          report += folder.report() + "\n";
         });
         result = folders;
         break;

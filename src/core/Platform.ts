@@ -17,6 +17,19 @@ export default class Platform {
   defaultBody: string = "Fairpost feed";
 
   /**
+   * Return a small report for this feed
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("Platform", "report");
+    let report = "";
+    report += "\nPlatform: " + this.id;
+    report += "\n - active: " + this.active;
+    return report;
+  }
+
+  /**
    * getPostFileName
    * @returns the intended name for a post of this
    * platform to be saved in this folder.
@@ -131,6 +144,22 @@ export default class Platform {
   }
 
   /**
+   * setup
+   *
+   * Set the platform up. Get the required keys and tokens.
+   * This may involve starting a webserver and/or communicating
+   * via the CLI.
+   * @returns - any object
+   */
+  async setup(): Promise<unknown> {
+    return (
+      "No setup implemented for " +
+      this.id +
+      ". Read the docs in the docs folder."
+    );
+  }
+
+  /**
    * test
    *
    * Test the platform installation. This should not post
@@ -139,6 +168,6 @@ export default class Platform {
    * @returns - any object
    */
   async test(): Promise<unknown> {
-    return "No tests";
+    return "No tests implemented for " + this.id;
   }
 }

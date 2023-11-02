@@ -43,6 +43,22 @@ export default class Post {
   }
 
   /**
+   * Return a small report for this post
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("Post", "report");
+    let report = "";
+    report += "\nPost: " + this.id;
+    report += "\n - valid: " + this.valid;
+    report += "\n - status: " + this.status;
+    report += "\n - scheduled: " + this.scheduled;
+    report += "\n - published: " + this.published;
+    return report;
+  }
+
+  /**
    * Save this post to disk
    */
 
@@ -69,22 +85,6 @@ export default class Post {
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
-  }
-
-  /**
-   * Return a small report for this post
-   * @returns the report in text
-   */
-
-  report(): string {
-    Logger.trace("Post", "report");
-    let report = "";
-    report += "\nPost: " + this.id;
-    report += "\n - valid: " + this.valid;
-    report += "\n - status: " + this.status;
-    report += "\n - scheduled: " + this.scheduled;
-    report += "\n - published: " + this.published;
-    return report;
   }
 }
 

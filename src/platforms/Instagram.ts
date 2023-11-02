@@ -1,3 +1,4 @@
+import Storage from "../core/Storage";
 import Logger from "../core/Logger";
 import Platform from "../core/Platform";
 import Facebook from "./Facebook";
@@ -392,20 +393,11 @@ export default class Instagram extends Platform {
    * @returns long lived page token
    */
   async getPageToken(userAccessToken: string): Promise<string> {
-    if (!process.env.FAIRPOST_INSTAGRAM_APP_ID) {
-      throw new Error("Set FAIRPOST_INSTAGRAM_APP_ID first");
-    }
-    if (!process.env.FAIRPOST_INSTAGRAM_APP_SECRET) {
-      throw new Error("Set FAIRPOST_INSTAGRAM_APP_SECRET first");
-    }
-    if (!process.env.FAIRPOST_INSTAGRAM_PAGE_ID) {
-      throw new Error("Set FAIRPOST_INSTAGRAM_PAGE_ID first");
-    }
     const facebook = new Facebook();
     return await facebook.getLLPageToken(
-      process.env.FAIRPOST_INSTAGRAM_APP_ID,
-      process.env.FAIRPOST_INSTAGRAM_APP_SECRET,
-      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
+      Storage.get("settings", "INSTAGRAM_APP_ID"),
+      Storage.get("settings", "INSTAGRAM_APP_SECRET"),
+      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
       userAccessToken,
     );
   }
@@ -425,24 +417,24 @@ export default class Instagram extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_INSTAGRAM_USER_ID,
+      Storage.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
+      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
+    const accessToken = Storage.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN");
     Logger.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
-      headers: process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN
+      headers: accessToken
         ? {
             Accept: "application/json",
-            Authorization:
-              "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+            Authorization: "Bearer " + accessToken,
           }
         : {
             Accept: "application/json",
@@ -465,11 +457,11 @@ export default class Instagram extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_INSTAGRAM_USER_ID,
+      Storage.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
+      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -481,7 +473,7 @@ export default class Instagram extends Platform {
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization:
-          "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+          "Bearer " + Storage.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: JSON.stringify(body),
     })
@@ -502,11 +494,11 @@ export default class Instagram extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_INSTAGRAM_USER_ID,
+      Storage.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
+      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -518,7 +510,7 @@ export default class Instagram extends Platform {
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+          "Bearer " + Storage.get("settings", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })

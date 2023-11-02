@@ -1,3 +1,4 @@
+import Storage from "../core/Storage";
 import Logger from "../core/Logger";
 import Platform from "../core/Platform";
 import { PlatformId } from ".";
@@ -88,7 +89,7 @@ export default class Facebook extends Platform {
         if (!dryrun) {
           response = (await this.postJson("%PAGE%/feed", {
             message: post.body,
-            published: process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS,
+            published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
             attached_media: attachments,
           })) as { id: string };
         }
@@ -179,7 +180,7 @@ export default class Facebook extends Platform {
     const body = new FormData();
     body.set("title", title);
     body.set("description", description);
-    body.set("published", process.env.FAIRPOST_FACEBOOK_PUBLISH_POSTS);
+    body.set("published", Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"));
     body.set("source", blob, path.basename(file));
 
     const result = (await this.postFormData("%PAGE%/videos", body)) as {
@@ -296,20 +297,10 @@ export default class Facebook extends Platform {
    * @returns a longlived user access token
    */
   async getPageToken(userAccessToken: string): Promise<string> {
-    if (!process.env.FAIRPOST_FACEBOOK_APP_ID) {
-      throw new Error("Set FAIRPOST_FACEBOOK_APP_ID first");
-    }
-    if (!process.env.FAIRPOST_FACEBOOK_APP_SECRET) {
-      throw new Error("Set FAIRPOST_FACEBOOK_APP_SECRET first");
-    }
-    if (!process.env.FAIRPOST_FACEBOOK_PAGE_ID) {
-      throw new Error("Set FAIRPOST_FACEBOOK_PAGE_ID first");
-    }
-
     return await this.getLLPageToken(
-      process.env.FAIRPOST_FACEBOOK_APP_ID,
-      process.env.FAIRPOST_FACEBOOK_APP_SECRET,
-      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+      Storage.get("settings", "FACEBOOK_APP_ID"),
+      Storage.get("settings", "FACEBOOK_APP_SECRET"),
+      Storage.get("settings", "FACEBOOK_PAGE_ID"),
       userAccessToken,
     );
   }
@@ -328,24 +319,24 @@ export default class Facebook extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_FACEBOOK_USER_ID,
+      Storage.get("settings", "FACEBOOK_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+      Storage.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
     Logger.trace("GET", url.href);
+    const accessToken = Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN");
     return await fetch(url, {
       method: "GET",
-      headers: process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN
+      headers: accessToken
         ? {
             Accept: "application/json",
-            Authorization:
-              "Bearer " + process.env.FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN,
+            Authorization: "Bearer " + accessToken,
           }
         : {
             Accept: "application/json",
@@ -367,11 +358,11 @@ export default class Facebook extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_FACEBOOK_USER_ID,
+      Storage.get("settings", "FACEBOOK_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+      Storage.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -383,7 +374,7 @@ export default class Facebook extends Platform {
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization:
-          "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+          "Bearer " + Storage.get("settings", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
       body: JSON.stringify(body),
     })
@@ -403,11 +394,11 @@ export default class Facebook extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_FACEBOOK_USER_ID,
+      Storage.get("settings", "FACEBOOK_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_FACEBOOK_PAGE_ID,
+      Storage.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -419,7 +410,7 @@ export default class Facebook extends Platform {
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+          "Bearer " + Storage.get("settings", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })

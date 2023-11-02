@@ -24,6 +24,25 @@ export default class Folder {
   }
 
   /**
+   * Return a small report for this feed
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("Folder", "report");
+    const files = this.getFiles();
+    let report = "";
+    report += "\nFolder: " + this.id;
+    report += "\n - path: " + this.path;
+    report +=
+      "\n - files: " +
+      Object.keys(files)
+        .map((k) => files[k].join())
+        .join();
+    return report;
+  }
+
+  /**
    * Get the files in this folder
    *
    * reads info from disk once, then caches that
