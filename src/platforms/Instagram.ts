@@ -1,7 +1,7 @@
 import Storage from "../core/Storage";
 import Logger from "../core/Logger";
 import Platform from "../core/Platform";
-import Facebook from "./Facebook";
+import InstagramAuth from "../auth/InstagramAuth";
 import { PlatformId } from ".";
 import Folder from "../core/Folder";
 import Post from "../core/Post";
@@ -122,6 +122,12 @@ export default class Instagram extends Platform {
   /** @inheritdoc */
   async test() {
     return this.get("me");
+  }
+
+  /** @inheritdoc */
+  async setup() {
+    const auth = new InstagramAuth();
+    await auth.setup();
   }
 
   /**
@@ -383,23 +389,6 @@ export default class Instagram extends Platform {
       throw new Error("No source url found for video " + id);
     }
     return videoData["source"];
-  }
-
-  /**
-   * Return a long lived instagram page access token.
-   *
-   * Uses the facebook `getLLPageToken` method
-   * @param userAccessToken - a shortlived user access token
-   * @returns long lived page token
-   */
-  async getPageToken(userAccessToken: string): Promise<string> {
-    const facebook = new Facebook();
-    return await facebook.getLLPageToken(
-      Storage.get("settings", "INSTAGRAM_APP_ID"),
-      Storage.get("settings", "INSTAGRAM_APP_SECRET"),
-      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
-      userAccessToken,
-    );
   }
 
   // API implementation -------------------

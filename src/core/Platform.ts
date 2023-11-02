@@ -151,11 +151,11 @@ export default class Platform {
    * via the CLI.
    * @returns - any object
    */
-  async setup(): Promise<unknown> {
-    return (
+  async setup() {
+    throw new Error(
       "No setup implemented for " +
-      this.id +
-      ". Read the docs in the docs folder."
+        this.id +
+        ". Read the docs in the docs folder.",
     );
   }
 

@@ -8,8 +8,6 @@ import Logger from "./src/core/Logger";
 import Feed from "./src/core/Feed";
 import { PostStatus } from "./src/core/Post";
 import { PlatformId } from "./src/platforms";
-import Facebook from "./src/platforms/Facebook";
-import Instagram from "./src/platforms/Instagram";
 
 // arguments
 const COMMAND = process.argv[2] ?? "help";
@@ -53,12 +51,14 @@ async function main() {
         break;
       }
       case "setup-platform": {
-        result = await feed.setupPlatform(PLATFORM);
+        await feed.setupPlatform(PLATFORM);
+        result = "Success"; // or error
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "setup-platforms": {
-        result = await feed.setupPlatforms(PLATFORMS);
+        await feed.setupPlatforms(PLATFORMS);
+        result = "Success"; // or error
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
@@ -205,27 +205,15 @@ async function main() {
         result = dueposts;
         break;
       }
-      /* platform specific tools */
-      case "facebook-get-page-token": {
-        const facebook = new Facebook();
-        const accessToken = (getOption("user-token") as string) ?? undefined;
-        result = await facebook.getPageToken(accessToken);
-        report = "\nPage Token: " + result;
-        break;
-      }
-      case "instagram-get-page-token": {
-        const instagram = new Instagram();
-        const accessToken = (getOption("user-token") as string) ?? undefined;
-        result = await instagram.getPageToken(accessToken);
-        report = "\nPage Token: " + result;
-        break;
-      }
+
       default: {
         const cmd = path.basename(process.argv[1]);
         result = [
           "# basic commands:",
           `${cmd} help`,
           `${cmd} get-feed [--config=xxx]`,
+          `${cmd} setup-platform --platform=xxx`,
+          `${cmd} setup-platforms [--platforms=xxx,xxx]`,
           `${cmd} test-platform --platform=xxx`,
           `${cmd} test-platforms [--platforms=xxx,xxx]`,
           `${cmd} get-platform --platform=xxx`,
@@ -243,8 +231,6 @@ async function main() {
           `${cmd} prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,
           `${cmd} schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
           `${cmd} publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
-          "\n# platform tools:",
-          `${cmd} facebook-get-page-token --app-user-id=xxx --user-token=xxx`,
         ];
         (result as string[]).forEach((line) => (report += "\n" + line));
       }

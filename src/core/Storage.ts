@@ -42,7 +42,9 @@ export default class Storage {
     if (storage === "env") {
       if (ui === "cli") {
         console.log("Store this value in your .env file:");
+        console.log();
         console.log("FAIRPOST_" + key + "=" + value);
+        console.log();
       } else {
         throw new Error("UI " + ui + " not implemented");
       }

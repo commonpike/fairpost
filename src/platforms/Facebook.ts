@@ -5,6 +5,7 @@ import { PlatformId } from ".";
 import Folder from "../core/Folder";
 import Post from "../core/Post";
 import { PostStatus } from "../core/Post";
+import FacebookAuth from "../auth/FacebookAuth";
 import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
@@ -129,6 +130,12 @@ export default class Facebook extends Platform {
     return this.get("me");
   }
 
+  /** @inheritdoc */
+  async setup() {
+    const auth = new FacebookAuth();
+    await auth.setup();
+  }
+
   /**
    * POST an image to the page/photos endpoint using multipart/form-data
    * @param file - path to the file to post
@@ -193,118 +200,6 @@ export default class Facebook extends Platform {
     return result;
   }
 
-  /**
-   * Get a long lived user access token.
-   * @param appId - the appid from config
-   * @param appSecret - the app secret from config
-   * @param userAccessToken - the short lived user access token from api
-   * @returns A long lived access token
-   */
-  private async getLLUserAccessToken(
-    appId: string,
-    appSecret: string,
-    userAccessToken: string,
-  ): Promise<string> {
-    const query = {
-      grant_type: "fb_exchange_token",
-      client_id: appId,
-      client_secret: appSecret,
-      fb_exchange_token: userAccessToken,
-    };
-    const data = (await this.get("oauth/access_token", query)) as {
-      access_token: string;
-    };
-    if (!data["access_token"]) {
-      console.error(data);
-      throw new Error("No llUserAccessToken access_token in response.");
-    }
-
-    return data["access_token"];
-  }
-
-  /**
-   * Get an app scoped user id
-   * @param accessToken - a access token returned from api
-   * @returns the app scoped user id ('me')
-   */
-  private async getAppUserId(accessToken: string): Promise<string> {
-    const query = {
-      fields: "id,name",
-      access_token: accessToken,
-    };
-    const data = (await this.get("me", query)) as {
-      id: string;
-      name: string;
-    };
-    if (!data["id"]) {
-      console.error(data);
-      throw new Error("Can not get app scoped user id.");
-    }
-    return data["id"];
-  }
-
-  /**
-   * Get a long lived page access token.
-   *
-   * This method is used by getPageToken here and getPageToken
-   * in the instagram class, to get a long lived page token
-   * for either facebook or instagram
-   * @param appId - the app id from config
-   * @param appSecret - the app secret from config
-   * @param pageId - the pageid to get a token for
-   * @param userAccessToken - the short lived user token from the api
-   * @returns long lived page access token
-   */
-  async getLLPageToken(
-    appId: string,
-    appSecret: string,
-    pageId: string,
-    userAccessToken: string,
-  ): Promise<string> {
-    const appUserId = await this.getAppUserId(userAccessToken);
-    const llUserAccessToken = await this.getLLUserAccessToken(
-      appId,
-      appSecret,
-      userAccessToken,
-    );
-
-    const query = {
-      access_token: llUserAccessToken,
-    };
-    const data = (await this.get(appUserId + "/accounts", query)) as {
-      data: {
-        id: string;
-        access_token: string;
-      }[];
-    };
-    const llPageAccessToken = data.data?.find((page) => page.id === pageId)[
-      "access_token"
-    ];
-
-    if (!llPageAccessToken) {
-      console.error(data);
-      throw new Error(
-        "No llPageAccessToken for page " + pageId + "  in response.",
-      );
-    }
-
-    return llPageAccessToken;
-  }
-
-  /**
-   * Return a long lived facebook page access token.
-   * @param userAccessToken - a shortlived user access token
-   * @returns a longlived user access token
-   */
-  async getPageToken(userAccessToken: string): Promise<string> {
-    return await this.getLLPageToken(
-      Storage.get("settings", "FACEBOOK_APP_ID"),
-      Storage.get("settings", "FACEBOOK_APP_SECRET"),
-      Storage.get("settings", "FACEBOOK_PAGE_ID"),
-      userAccessToken,
-    );
-  }
-
   // API implementation -------------------
 
   /**
@@ -314,13 +209,9 @@ export default class Facebook extends Platform {
    */
 
   private async get(
-    endpoint: string = "%USER%",
+    endpoint: string = "%PAGE%",
     query: { [key: string]: string } = {},
   ): Promise<object> {
-    endpoint = endpoint.replace(
-      "%USER%",
-      Storage.get("settings", "FACEBOOK_USER_ID"),
-    );
     endpoint = endpoint.replace(
       "%PAGE%",
       Storage.get("settings", "FACEBOOK_PAGE_ID"),
@@ -330,17 +221,13 @@ export default class Facebook extends Platform {
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
     Logger.trace("GET", url.href);
-    const accessToken = Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN");
     return await fetch(url, {
       method: "GET",
-      headers: accessToken
-        ? {
-            Accept: "application/json",
-            Authorization: "Bearer " + accessToken,
-          }
-        : {
-            Accept: "application/json",
-          },
+      headers: {
+        Accept: "application/json",
+        Authorization:
+          "Bearer " + Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+      },
     })
       .then((res) => this.handleApiResponse(res))
       .catch((err) => this.handleApiError(err));
@@ -353,13 +240,9 @@ export default class Facebook extends Platform {
    */
 
   private async postJson(
-    endpoint: string = "%USER%",
+    endpoint: string = "%PAGE%",
     body = {},
   ): Promise<object> {
-    endpoint = endpoint.replace(
-      "%USER%",
-      Storage.get("settings", "FACEBOOK_USER_ID"),
-    );
     endpoint = endpoint.replace(
       "%PAGE%",
       Storage.get("settings", "FACEBOOK_PAGE_ID"),
@@ -392,10 +275,6 @@ export default class Facebook extends Platform {
     endpoint: string,
     body: FormData,
   ): Promise<object> {
-    endpoint = endpoint.replace(
-      "%USER%",
-      Storage.get("settings", "FACEBOOK_USER_ID"),
-    );
     endpoint = endpoint.replace(
       "%PAGE%",
       Storage.get("settings", "FACEBOOK_PAGE_ID"),

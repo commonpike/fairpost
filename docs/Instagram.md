@@ -32,28 +32,20 @@ api requires files in posts to have an url.
   - note the user id 
     - save this as `FAIRPOST_INSTAGRAM_USER_ID` in your .env
 
-### Get a (long lived) Page Access Token for the page related to the instagram account you want the app to manage
-
-This token should last forever. It involves get a long-lived user token and then requesting the 'accounts' for your 'app scoped user id'; but this app provides a tool to help you do that: 
-
- - go to https://developers.facebook.com/tools/explorer/
- - select your app 
- - add permissions
-   - pages_manage_engagement
-   - pages_manage_posts
-   - pages_read_engagement
-   - pages_read_user_engagement
-   - publish_video
-   - business_management
-   - instagram_basic
-   - instagram_content_publish
- - request a (short lived) user access token
- - call `./fairpost.js instagram-get-page-token --user-token={your token}`
-   - note the token returned 
-   - save this as `FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN` in your .env
-
-### Enable and test the instagram platform
+### Enable the platform
  - Add 'instagram' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
+
+### Get a (long lived) Page Access Token for the page you want the app to manage
+
+This token should last forever. It involves getting a user access token,
+exchaning it for  a long-lived user token and 
+then requesting the 'accounts' for your 'app scoped user id'; 
+but this app provides a tool to help you do that: 
+
+ - call `./fairpost.js setup-platform --platform=instagram`
+ - follow instructions from the command line
+
+### Test the  platform
  - call `./fairpost.js test-platform --platform=instagram`
 
 # Limitations 
