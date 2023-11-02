@@ -91,7 +91,6 @@ add folders with content.
 
 ```
 # basic commands:
-# basic commands:
 fairpost.js help
 fairpost.js get-feed [--config=xxx]
 fairpost.js setup-platform --platform=xxx
