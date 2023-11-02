@@ -225,7 +225,7 @@ async function main() {
           `${cmd} prepare-post --folder=xxx --platform=xxx`,
           `${cmd} schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx `,
           `${cmd} schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx`,
-          `${cmd} publish-post --folders=xxx --platforms=xxx [--dry-run]`,
+          `${cmd} publish-post --folder=xxx --platform=xxx [--dry-run]`,
           `${cmd} publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,
           "\n# feed planning:",
           `${cmd} prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,

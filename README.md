@@ -91,8 +91,11 @@ add folders with content.
 
 ```
 # basic commands:
+# basic commands:
 fairpost.js help
 fairpost.js get-feed [--config=xxx]
+fairpost.js setup-platform --platform=xxx
+fairpost.js setup-platforms [--platforms=xxx,xxx]
 fairpost.js test-platform --platform=xxx
 fairpost.js test-platforms [--platforms=xxx,xxx]
 fairpost.js get-platform --platform=xxx
@@ -104,16 +107,13 @@ fairpost.js get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx]
 fairpost.js prepare-post --folder=xxx --platform=xxx
 fairpost.js schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx 
 fairpost.js schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx
-fairpost.js publish-post --folders=xxx --platforms=xxx [--dry-run]
+fairpost.js publish-post --folder=xxx --platform=xxx [--dry-run]
 fairpost.js publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
 
 # feed planning:
 fairpost.js prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
 fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
 fairpost.js publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
-
-# platform tools:
-fairpost.js facebook-get-page-token --app-user-id=xxx --user-token=xxx
 ```
 
 ### Common arguments 
@@ -132,11 +132,12 @@ fairpost.js [command] [arguments] --report=json
 
 To add support for a new platform, add a class to `src/platforms`
 extending `src/classes/Platform`. You want to override at least the
-method `preparePost(folder: Folder)` and 
-`publishPost(post: Post, dryrun:boolean = false)`. 
+method `preparePost(folder)` and  `publishPost(post,dryrun)`.
 
-Then add a platformId for your platform to `src/platforms/index.js` and
-enable your platform in your `.env`.
+Then import your class and add a platformId for your platform 
+in `src/platforms/index.ts` and enable your platform in your `.env`.
+
+
 
 
 
