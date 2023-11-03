@@ -27,16 +27,14 @@ export default class FacebookAuth extends OAuth2Client {
   }
 
   protected async requestCode(clientId: string): Promise<string> {
-    const host = Storage.get("settings", "CLIENT_HOSTNAME");
-    const port = Number(Storage.get("settings", "CLIENT_PORT"));
-    const state = String(Math.random());
+    const state = String(Math.random()).substring(2);
 
     // create auth url
     const url = new URL("https://www.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: "{{redirectUri}}", // super() will handle this
+      redirect_uri: this.getRedirectUri(),
       state: state,
       response_type: "code",
       scope: [
@@ -50,12 +48,7 @@ export default class FacebookAuth extends OAuth2Client {
     };
     url.search = new URLSearchParams(query).toString();
 
-    const result = await this.requestRemotePermissions(
-      "Facebook",
-      url.href,
-      host,
-      port,
-    );
+    const result = await this.requestRemotePermissions("Facebook", url.href);
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
       Logger.error(msg, result);
@@ -79,10 +72,7 @@ export default class FacebookAuth extends OAuth2Client {
     clientId: string,
     clientSecret: string,
   ): Promise<string> {
-    const redirectUri = this.getRedirectUri(
-      Storage.get("settings", "CLIENT_HOSTNAME"),
-      Number(Storage.get("settings", "CLIENT_PORT")),
-    );
+    const redirectUri = this.getRedirectUri();
 
     const result = await this.get("oauth/access_token", {
       client_id: clientId,

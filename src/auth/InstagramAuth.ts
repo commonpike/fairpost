@@ -25,16 +25,14 @@ export default class InstagramAuth extends FacebookAuth {
   }
 
   protected async requestCode(clientId: string): Promise<string> {
-    const host = Storage.get("settings", "CLIENT_HOSTNAME");
-    const port = Number(Storage.get("settings", "CLIENT_PORT"));
-    const state = String(Math.random());
+    const state = String(Math.random()).substring(2);
 
     // create auth url
     const url = new URL("https://www.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: "{{redirectUri}}", // super() will handle this
+      redirect_uri: this.getRedirectUri(),
       state: state,
       response_type: "code",
       scope: [
@@ -50,12 +48,8 @@ export default class InstagramAuth extends FacebookAuth {
     };
     url.search = new URLSearchParams(query).toString();
 
-    const result = await this.requestRemotePermissions(
-      "Instagram",
-      url.href,
-      host,
-      port,
-    );
+    const result = await this.requestRemotePermissions("Instagram", url.href);
+
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
       Logger.error(msg, result);

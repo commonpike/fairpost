@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as http from "http";
 import * as url from "url";
+import Storage from "../core/Storage";
 
 class DeferredResponseQuery {
   promise: Promise<{ [key: string]: string | string[] }>;
@@ -19,12 +20,14 @@ class DeferredResponseQuery {
  * requesting remote permissions on a service
  */
 export default class OAuth2Client {
-  protected getClientUrl(clientHost: string, clientPort: number): string {
+  protected getClientUrl(): string {
+    const clientHost = Storage.get("settings", "CLIENT_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "CLIENT_PORT"));
     return `http://${clientHost}:${clientPort}`;
   }
 
-  protected getRedirectUri(clientHost: string, clientPort: number): string {
-    return this.getClientUrl(clientHost, clientPort) + "/return";
+  protected getRedirectUri(): string {
+    return this.getClientUrl() + "/return";
   }
 
   /**
@@ -44,23 +47,14 @@ export default class OAuth2Client {
   protected async requestRemotePermissions(
     serviceName: string,
     serviceLink: string,
-    clientHost: string,
-    clientPort: number,
   ): Promise<{ [key: string]: string | string[] }> {
+    const clientHost = Storage.get("settings", "CLIENT_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "CLIENT_PORT"));
     const server = http.createServer();
     const deferred = new DeferredResponseQuery();
-    serviceLink = decodeURI(serviceLink).replace(
-      /{{redirectUri}}/g,
-      this.getRedirectUri(clientHost, clientPort),
-    );
 
     server.listen(clientPort, clientHost, () => {
-      console.log(
-        `Open a web browser and go to ${this.getClientUrl(
-          clientHost,
-          clientPort,
-        )}`,
-      );
+      console.log(`Open a web browser and go to ${this.getClientUrl()}`);
     });
     const requestListener = async function (
       request: http.IncomingMessage,
