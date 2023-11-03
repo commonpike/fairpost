@@ -55,6 +55,7 @@ export default class Post {
     report += "\n - status: " + this.status;
     report += "\n - scheduled: " + this.scheduled;
     report += "\n - published: " + this.published;
+    report += "\n - link: " + this.link;
     return report;
   }
 
