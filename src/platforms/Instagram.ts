@@ -26,6 +26,17 @@ export default class Instagram extends Platform {
   }
 
   /** @inheritdoc */
+  async setup() {
+    const auth = new InstagramAuth();
+    await auth.setup();
+  }
+
+  /** @inheritdoc */
+  async test() {
+    return this.get("me");
+  }
+
+  /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post | undefined> {
     const post = await super.preparePost(folder);
     if (post && post.files) {
@@ -117,17 +128,6 @@ export default class Instagram extends Platform {
 
     post.save();
     return !error;
-  }
-
-  /** @inheritdoc */
-  async test() {
-    return this.get("me");
-  }
-
-  /** @inheritdoc */
-  async setup() {
-    const auth = new InstagramAuth();
-    await auth.setup();
   }
 
   /**

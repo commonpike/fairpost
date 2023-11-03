@@ -387,7 +387,7 @@ export default class Feed {
     const folder = this.getFolder(path);
     const post = platform.getPost(folder);
     if (post.valid) {
-      post.schedule(now);
+      if (!dryrun) post.schedule(now);
       Logger.info("Posting", platformId, path);
       await platform.publishPost(post, dryrun);
     } else {

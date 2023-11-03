@@ -1,32 +1,33 @@
-import { auth } from "twitter-api-sdk";
+import { TwitterApi } from "twitter-api-v2";
+
 import OAuth2Client from "./OAuth2Client";
 import Logger from "../core/Logger";
 import Storage from "../core/Storage";
 
 export default class TwitterAuth extends OAuth2Client {
   async setup() {
-    const accessToken = await this.requestAccessToken();
-    Storage.set("auth", "TWITTER_ACCESS_TOKEN", accessToken);
+    const tokens = await this.requestAccessToken();
+    Storage.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
   }
 
-  protected async requestAccessToken(): Promise<string> {
-    const authClient = new auth.OAuth2User({
-      client_id: Storage.get("settings", "TWITTER_CLIENT_ID"),
-      client_secret: Storage.get("settings", "TWITTER_CLIENT_SECRET"),
-      callback: this.getRedirectUri(),
-      scopes: ["tweet.read", "tweet.write", "offline.access"],
+  protected async requestAccessToken(): Promise<{
+    client: TwitterApi;
+    scope: string[];
+    accessToken: string;
+    refreshToken?: string;
+  }> {
+    const client = new TwitterApi({
+      clientId: Storage.get("settings", "TWITTER_CLIENT_ID"),
+      clientSecret: Storage.get("settings", "TWITTER_CLIENT_SECRET"),
     });
+    const { url, codeVerifier, state } = client.generateOAuth2AuthLink(
+      this.getRedirectUri(),
+      {
+        scope: ["users.read", "tweet.read", "tweet.write", "offline.access"],
+      },
+    );
 
-    const state = String(Math.random()).substring(2);
-
-    // create auth url
-    const authUrl = authClient.generateAuthURL({
-      state: state,
-      code_challenge_method: "plain",
-      code_challenge: "fairpssst",
-    });
-
-    const result = await this.requestRemotePermissions("Twitter", authUrl);
+    const result = await this.requestRemotePermissions("Twitter", url);
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
       Logger.error(msg, result);
@@ -43,24 +44,15 @@ export default class TwitterAuth extends OAuth2Client {
       throw new Error(msg);
     }
 
-    const code = result["code"] as string;
-    const accessToken = await authClient.requestAccessToken(code);
-    /*
-      token: {
-        token_type: 'bearer',
-        access_token: 'xxx',
-        scope: 'tweet.write tweet.read offline.access',
-        refresh_token: 'xxxx',
-        expires_at: 1699017179875
-      }
-    */
-
-    if (!accessToken.token?.access_token) {
-      const msg = "Result does not contain access_token";
-      Logger.error(msg, accessToken);
-      throw new Error(msg);
+    const tokens = await client.loginWithOAuth2({
+      code: result["code"] as string,
+      codeVerifier: codeVerifier,
+      redirectUri: this.getRedirectUri(),
+    });
+    if (!tokens["accessToken"]) {
+      throw new Error("An accessToken was not returned");
     }
 
-    return accessToken.token.access_token as string;
+    return tokens;
   }
 }
