@@ -1,6 +1,7 @@
 export { default as Facebook } from "./Facebook";
 export { default as Instagram } from "./Instagram";
 export { default as Twitter } from "./Twitter";
+export { default as Reddit } from "./Reddit";
 export { default as AsYouTube } from "./AsYouTube";
 export { default as AsInstagram } from "./AsInstagram";
 export { default as AsTwitter } from "./AsTwitter";
@@ -14,6 +15,7 @@ export enum PlatformId {
   FACEBOOK = "facebook",
   INSTAGRAM = "instagram",
   TWITTER = "twitter",
+  REDDIT = "reddit",
   ASYOUTUBE = "asyoutube",
   ASINSTAGRAM = "asinstagram",
   ASFACEBOOK = "asfacebook",

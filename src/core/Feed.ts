@@ -98,8 +98,8 @@ export default class Feed {
    */
   async setupPlatform(platformId: PlatformId): Promise<unknown> {
     Logger.trace("Feed", "setupPlatform", platformId);
-    const results = await this.setupPlatforms([platformId]);
-    return results[platformId];
+    const platform = this.getPlatform(platformId);
+    return await platform.setup();
   }
 
   /**
@@ -112,8 +112,8 @@ export default class Feed {
   ): Promise<{ [id: string]: unknown }> {
     Logger.trace("Feed", "setupPlatforms", platformsIds);
     const results = {};
-    for (const platform of this.getPlatforms(platformsIds)) {
-      results[platform.id] = await platform.setup();
+    for (const platformId of platformsIds) {
+      results[platformId] = await this.setupPlatform(platformId);
     }
     return results;
   }
@@ -125,7 +125,7 @@ export default class Feed {
    */
   getPlatform(platformId: PlatformId): Platform {
     Logger.trace("Feed", "getPlatform", platformId);
-    const platform = this.getPlatforms([platformId])[0];
+    const platform = this.platforms[platformId];
     if (!platform) {
       throw new Error("Unknown platform: " + platformId);
     }
@@ -140,11 +140,9 @@ export default class Feed {
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
     Logger.trace("Feed", "getPlatforms", platformIds);
     return (
-      platformIds
-        ?.map((platformId) => this.platforms[platformId])
-        .filter(function (p) {
-          return p !== undefined;
-        }) ?? Object.values(this.platforms)
+      platformIds ?
+        platformIds.map((platformId) => this.getPlatform[platformId])
+        : Object.values(this.platforms)
     );
   }
 

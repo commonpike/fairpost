@@ -1,5 +1,5 @@
 
-<img src="https://github.com/commonpike/fairpost/raw/develop/public/fairpost-icon.png" width="64" height="64">
+<img src="https://github.com/commonpike/fairpost/raw/master/public/fairpost-icon.png" width="64" height="64">
 
 # Fairpost
 
