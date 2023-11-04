@@ -139,11 +139,9 @@ export default class Feed {
    */
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
     Logger.trace("Feed", "getPlatforms", platformIds);
-    return (
-      platformIds ?
-        platformIds.map((platformId) => this.getPlatform[platformId])
-        : Object.values(this.platforms)
-    );
+    return platformIds
+      ? platformIds.map((platformId) => this.getPlatform[platformId])
+      : Object.values(this.platforms);
   }
 
   /**

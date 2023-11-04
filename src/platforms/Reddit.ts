@@ -1,12 +1,12 @@
-import Storage from "../core/Storage";
-import Logger from "../core/Logger";
+//import Storage from "../core/Storage";
+//import Logger from "../core/Logger";
 import RedditAuth from "../auth/RedditAuth";
 import { PlatformId } from ".";
 import Platform from "../core/Platform";
-import Folder from "../core/Folder";
-import Post, { PostStatus } from "../core/Post";
-import * as fs from "fs";
-import * as sharp from "sharp"; 
+//import Folder from "../core/Folder";
+//import Post, { PostStatus } from "../core/Post";
+//import * as fs from "fs";
+//import * as sharp from "sharp";
 
 /**
  * Reddit: support for reddit platform
@@ -28,6 +28,4 @@ export default class Reddit extends Platform {
   async test() {
     return false;
   }
-
-  
 }

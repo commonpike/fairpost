@@ -1,107 +1,125 @@
-
 import OAuth2Client from "./OAuth2Client";
 import Logger from "../core/Logger";
 import Storage from "../core/Storage";
 
 export default class RedditAuth extends OAuth2Client {
+  API_VERSION = "v1";
+  accessToken = "";
 
-    API_VERSION = 'v1';
+  async setup() {
+    const code = await this.requestCode();
+    const tokens = await this.exchangeCode(code);
+    this.accessToken = tokens["access_token"];
+    Storage.set("auth", "REDDIT_ACCESS_TOKEN", this.accessToken);
+    Storage.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
+  }
 
-    async setup() {
-        const code = await this.requestCode();
-        const tokens = await this.exchangeCode(code);
-        Storage.set("auth", "REDDIT_ACCESS_TOKEN", tokens['access_token']);
+  public async getAccessToken(): Promise<string> {
+    if (this.accessToken) {
+      return this.accessToken;
+    }
+    const result = await this.post("access_token", {
+      grant_type: "refresh_token",
+      refresh_token: Storage.get("settings", "REDDIT_REFRESH_TOKEN"),
+    });
+
+    if (!result["access_token"]) {
+      const msg = "Remote response did not return a access_token";
+      Logger.error(msg, result);
+      throw new Error(msg);
+    }
+    this.accessToken = result["access_token"];
+    return this.accessToken;
+  }
+
+  protected async requestCode(): Promise<string> {
+    const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
+    const state = String(Math.random()).substring(2);
+
+    // create auth url
+    const url = new URL("https://www.reddit.com");
+    url.pathname = "api/" + this.API_VERSION + "/authorize";
+    const query = {
+      client_id: clientId,
+      redirect_uri: this.getRedirectUri(),
+      state: state,
+      response_type: "code",
+      duration: "permanent",
+      scope: ["identity", "submit"].join(),
+    };
+    url.search = new URLSearchParams(query).toString();
+
+    const result = await this.requestRemotePermissions("Reddit", url.href);
+    if (result["error"]) {
+      const msg = result["error_reason"] + " - " + result["error_description"];
+      Logger.error(msg, result);
+      throw new Error(msg);
+    }
+    if (result["state"] !== state) {
+      const msg = "Response state does not match request state";
+      Logger.error(msg, result);
+      throw new Error(msg);
+    }
+    if (!result["code"]) {
+      const msg = "Remote response did not return a code";
+      Logger.error(msg, result);
+      throw new Error(msg);
+    }
+    return result["code"] as string;
+  }
+
+  protected async exchangeCode(code: string): Promise<{
+    access_token: string;
+    token_type: "bearer";
+    expires_in: number;
+    scope: string;
+    refresh_token: string;
+  }> {
+    const redirectUri = this.getRedirectUri();
+
+    const result = await this.post("access_token", {
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: redirectUri,
+    });
+
+    if (!result["access_token"]) {
+      const msg = "Remote response did not return a access_token";
+      Logger.error(msg, result);
+      throw new Error(msg);
     }
 
-    protected async requestCode(): Promise<string> {
-
-        const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
-        const state = String(Math.random()).substring(2);
-
-        // create auth url
-        const url = new URL("https://www.reddit.com");
-        url.pathname = "api/"+this.API_VERSION + "/authorize";
-        const query = {
-            client_id: clientId,
-            redirect_uri: this.getRedirectUri(),
-            state: state,
-            response_type: "code",
-            duration: "permanent",
-            scope: [
-                "identity",
-                "submit"
-            ].join(),
-        };
-        url.search = new URLSearchParams(query).toString();
-
-        const result = await this.requestRemotePermissions("Reddit", url.href);
-        if (result["error"]) {
-            const msg = result["error_reason"] + " - " + result["error_description"];
-            Logger.error(msg, result);
-            throw new Error(msg);
-        }
-        if (result["state"] !== state) {
-            const msg = "Response state does not match request state";
-            Logger.error(msg, result);
-            throw new Error(msg);
-        }
-        if (!result["code"]) {
-            const msg = "Remote response did not return a code";
-            Logger.error(msg, result);
-            throw new Error(msg);
-        }
-        return result["code"] as string;
-    }
-
-    protected async exchangeCode(
-        code: string
-        ): Promise<{
-            access_token: string;
-            token_type: "bearer";
-            expires_in: number;
-            scope: string;
-            refresh_token: string;
-          }> {
-        const redirectUri = this.getRedirectUri();
-
-        const result = await this.get("access_token", {
-            code: code,
-            redirect_uri: redirectUri,
-        });
-
-        if (!result["access_token"]) {
-            const msg = "Remote response did not return a access_token";
-            Logger.error(msg, result);
-            throw new Error(msg);
-        }
-
-        return result["access_token"];
-    }
-    // API implementation -------------------
+    return result["access_token"];
+  }
+  // API implementation -------------------
 
   /**
-   * Do a GET request on the graph.
+   * Do a FormData POST request on the graph.
    * @param endpoint - the path to call
-   * @param query - query string as object
+   * @param body - body as object
    */
 
-  private async get(
+  private async post(
     endpoint: string,
-    query: { [key: string]: string } = {},
+    body: { [key: string]: string },
   ): Promise<object> {
+    const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
+    const clientSecret = Storage.get("settings", "REDDIT_CLIENT_SECRET");
+
     const url = new URL("https://www.reddit.com");
-    url.pathname = "api/"+this.API_VERSION + "/" + endpoint;
-    url.search = new URLSearchParams(query).toString();
-    const clientId = Storage.get('settings','REDDIT_CLIENT_ID');
-    const clientSecret = Storage.get('settings','REDDIT_CLIENT_SECRET');
-    Logger.trace("GET", url.href);
+    url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
+    Logger.trace("POST", url.href);
+
     return await fetch(url, {
-      method: "GET",
+      method: "POST",
       headers: {
         Accept: "application/json",
-        Authorization: Buffer.from(clientId + ":" + clientSecret).toString('base64')
-
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: Buffer.from(clientId + ":" + clientSecret).toString(
+          "base64",
+        ),
       },
+      body: new URLSearchParams(body),
     })
       .then((res) => this.handleApiResponse(res))
       .catch((err) => this.handleApiError(err));
@@ -114,7 +132,7 @@ export default class RedditAuth extends OAuth2Client {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("FacebookAuth.handleApiResponse", response);
+      Logger.error("RedditAuth.handleApiResponse", response);
       throw new Error(response.status + ":" + response.statusText);
     }
     const data = await response.json();
@@ -129,10 +147,10 @@ export default class RedditAuth extends OAuth2Client {
         data.error.error_subcode +
         ") " +
         data.error.message;
-      Logger.error("FacebookAuth.handleApiResponse", error);
+      Logger.error("RedditAuth.handleApiResponse", error);
       throw new Error(error);
     }
-    Logger.trace("FacebookAuth.handleApiResponse", "success");
+    Logger.trace("RedditAuth.handleApiResponse", "success");
     return data;
   }
 
@@ -141,7 +159,7 @@ export default class RedditAuth extends OAuth2Client {
    * @param error - the error returned from fetch
    */
   private handleApiError(error: Error): never {
-    Logger.error("FacebookAuth.handleApiError", error);
+    Logger.error("RedditAuth.handleApiError", error);
     throw error;
   }
 }
