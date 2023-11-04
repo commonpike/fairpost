@@ -1,17 +1,23 @@
+
+<img src="https://github.com/commonpike/fairpost/raw/develop/public/fairpost-icon.png" width="64" height="64">
+
 # Fairpost
 
 Fairpost helps you manage your social
 feeds from the command line, using Node.
 
-Each post is a folder, containing at least one 
-text file (the post body) and optionally images
-or a video. 
+Your Feed is just a folder on disk, and all subfolders are Posts, 
+containing at least one text file (the post body) and 
+optionally images or video. 
+Fairpost is *opinionated*, meaning, it will decide
+how a folder with contents can best be presented
+as a post on each platform. 
 
-To smoothly maintain your feed, you can run 
-fairpost every day. Fairpost will prepare and 
-schedule new content to be published on all your 
-platforms on a regular basis, while
-you can just focus on creating new content.
+Commonly, you would call this script every day or week. 
+Fairpost will then automatically **prepare** the folders,
+**schedule** the next post using a certain interval and 
+**publish** any post when it is due. All you have to do is 
+add folders with content.
 
 Or, if you prefer, you can manually publish one
 specific post on all supported and enabled 
@@ -37,7 +43,13 @@ cp .env.dist .env && nano .env
 ./fairpost.js help
 ```
  
-## Prepare
+## Enable platforms
+
+Read how to enable various media platforms in the [docs](docs).
+
+
+## Feed planning
+### Prepare
 ```
 fairpost.js prepare-posts
 ```
@@ -52,7 +64,7 @@ is youtube). Finally, it will add a json file
 describing the post for that platform in the 
 folder.
 
-## Schedule
+### Schedule
 ```
 fairpost.js schedule-next-post
 ```
@@ -64,7 +76,7 @@ By default the date will be `FAIRPOST_FEED_INTERVAL` days
 after the last post for that platform, or `now`, whichever 
 is latest.
 
-## Publish
+### Publish
 ```
 fairpost.js publish-due-posts
 ```
@@ -73,21 +85,15 @@ This will publish any scheduled posts that are past their due date.
 
 ## Other commands
 
-Other commands accept `--arguments`
-that may help you, for example, to immediately publish
+Other commands and `--arguments`
+may help you to, for example, immediately publish
 a certain post to a certain platform if you like.
 
-But more commonly, you would call this script
-every day. 
-The script will then automatically prepare the posts,
-schedule the next post using a certain interval, 
-publish any post when it is due, and schedule the 
-next post automatically. All you have to do is 
-add folders with content.
 
 
 
-## Cli
+
+### Cli
 
 ```
 # basic commands:
@@ -133,8 +139,13 @@ To add support for a new platform, add a class to `src/platforms`
 extending `src/classes/Platform`. You want to override at least the
 method `preparePost(folder)` and  `publishPost(post,dryrun)`.
 
-Then import your class and add a platformId for your platform 
-in `src/platforms/index.ts` and enable your platform in your `.env`.
+Then import your class and add a `platformId` for your platform 
+in `src/platforms/index.ts` and enable your platformId in your `.env`.
+
+Similarly, you can copy one platform, rename it and edit it to your
+likings, give it a different `platformId` and enable that.
+
+Oh, and send me a PR if you create anything useful :-) 
 
 
 
