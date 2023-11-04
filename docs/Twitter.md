@@ -3,8 +3,6 @@
 The Twitter platform is using 
 https://github.com/PLhery/node-twitter-api-v2
 
-
-
 ## Setting up the Twitter platform
 
 The Twitter api was being rebuild when Elon Musk
@@ -18,11 +16,10 @@ keys will not be needed anymore.
 - go to https://developer.twitter.com/
 - create a few developer account
 - you get a project and an app, rename those
-- regenerate Api Key and secret, and store those in .env 
 - set up User authentication settings
   - read and write
   - fairpost is a bot
-  - redirect url http://localhost:8000
+  - redirect url with host/port from your .env (http://localhost:8000)
   - website https://github.com/commonpike/fairpost
 - From the Oauth 01 settings
   - generate Api Key and secret
@@ -42,7 +39,7 @@ keys will not be needed anymore.
 
 ### Get an OAuth2 Access Token for your twitter account
 
-This token should last forever. 
+This token should last forever (?)
 
  - call `./fairpost.js setup-platform --platform=twitter`
  - follow instructions from the command line
