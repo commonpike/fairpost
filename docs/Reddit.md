@@ -1,8 +1,8 @@
 # Platform: Reddit
 
-## Setting up the Twitter platform
+## Setting up the Reddit platform
 
-### Create a new App in your twitter account
+### Create a new App in your Reddit account
 
 - go to https://www.reddit.com/prefs/apps
 - create an app ('script')
@@ -15,7 +15,7 @@
 ### Enable the platform
  - Add 'reddit' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
 
-### Get an OAuth2 Access Token for your twitter account
+### Get an OAuth2 Access Token for your Reddit account
 
 This token should last forever (?)
 
@@ -63,5 +63,7 @@ https://www.reddit.com/r/redditdev/comments/9li6le/reddit_api_how_do_i_authentic
 
 
 https://www.reddit.com/r/redditdev/comments/x53h1y/having_trouble_submitting_an_image_post/
+
 https://github.com/rvelasq/scriptable-selig
+
 https://github.com/rvelasq/scriptable-selig/blob/master/Selig.js#L855
