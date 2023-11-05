@@ -14,6 +14,15 @@ export default class RedditAuth extends OAuth2Client {
     Storage.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
   }
 
+  /**
+   * Get Reddit Access token
+   *
+   * Reddits access token expire in 24 hours. Instead
+   * of using an access token from the Storage, the Reddit
+   * platform gets its token from here, which refreshes
+   * it if needed using the refresh_token
+   * @returns The access token
+   */
   public async getAccessToken(): Promise<string> {
     if (this.accessToken) {
       return this.accessToken;
@@ -33,6 +42,7 @@ export default class RedditAuth extends OAuth2Client {
   }
 
   protected async requestCode(): Promise<string> {
+    Logger.trace("RedditAuth", "requestCode");
     const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
     const state = String(Math.random()).substring(2);
 
@@ -75,13 +85,20 @@ export default class RedditAuth extends OAuth2Client {
     scope: string;
     refresh_token: string;
   }> {
+    Logger.trace("RedditAuth", "exchangeCode", code);
     const redirectUri = this.getRedirectUri();
 
-    const result = await this.post("access_token", {
+    const result = (await this.post("access_token", {
       grant_type: "authorization_code",
       code: code,
       redirect_uri: redirectUri,
-    });
+    })) as {
+      access_token: string;
+      token_type: "bearer";
+      expires_in: number;
+      scope: string;
+      refresh_token: string;
+    };
 
     if (!result["access_token"]) {
       const msg = "Remote response did not return a access_token";
@@ -89,7 +106,7 @@ export default class RedditAuth extends OAuth2Client {
       throw new Error(msg);
     }
 
-    return result["access_token"];
+    return result;
   }
   // API implementation -------------------
 
@@ -103,21 +120,21 @@ export default class RedditAuth extends OAuth2Client {
     endpoint: string,
     body: { [key: string]: string },
   ): Promise<object> {
-    const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
-    const clientSecret = Storage.get("settings", "REDDIT_CLIENT_SECRET");
-
     const url = new URL("https://www.reddit.com");
     url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     Logger.trace("POST", url.href);
+
+    const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
+    const clientSecret = Storage.get("settings", "REDDIT_CLIENT_SECRET");
+    const userpass = clientId + ":" + clientSecret;
+    const userpassb64 = Buffer.from(userpass).toString("base64");
 
     return await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: Buffer.from(clientId + ":" + clientSecret).toString(
-          "base64",
-        ),
+        Authorization: "Basic " + userpassb64,
       },
       body: new URLSearchParams(body),
     })
@@ -132,7 +149,7 @@ export default class RedditAuth extends OAuth2Client {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("RedditAuth.handleApiResponse", response);
+      Logger.error("RedditAuth.handleApiResponse", "not ok");
       throw new Error(response.status + ":" + response.statusText);
     }
     const data = await response.json();

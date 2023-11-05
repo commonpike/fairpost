@@ -140,7 +140,7 @@ export default class Feed {
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
     Logger.trace("Feed", "getPlatforms", platformIds);
     return platformIds
-      ? platformIds.map((platformId) => this.getPlatform[platformId])
+      ? platformIds.map((platformId) => this.getPlatform(platformId))
       : Object.values(this.platforms);
   }
 
@@ -151,8 +151,7 @@ export default class Feed {
    */
   async testPlatform(platformId: PlatformId): Promise<unknown> {
     Logger.trace("Feed", "testPlatform", platformId);
-    const results = await this.testPlatforms([platformId]);
-    return results[platformId];
+    return await this.getPlatform(platformId).test();
   }
 
   /**
@@ -165,8 +164,8 @@ export default class Feed {
   ): Promise<{ [id: string]: unknown }> {
     Logger.trace("Feed", "testPlatforms", platformsIds);
     const results = {};
-    for (const platform of this.getPlatforms(platformsIds)) {
-      results[platform.id] = await platform.test();
+    for (const platformId of platformsIds) {
+      results[platformId] = await this.testPlatform(platformId);
     }
     return results;
   }
