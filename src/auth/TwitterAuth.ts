@@ -21,7 +21,7 @@ export default class TwitterAuth extends OAuth2Client {
       clientSecret: Storage.get("settings", "TWITTER_CLIENT_SECRET"),
     });
     const { url, codeVerifier, state } = client.generateOAuth2AuthLink(
-      this.getRedirectUri(),
+      this.getCallbackUrl(),
       {
         scope: ["users.read", "tweet.read", "tweet.write", "offline.access"],
       },
@@ -47,7 +47,7 @@ export default class TwitterAuth extends OAuth2Client {
     const tokens = await client.loginWithOAuth2({
       code: result["code"] as string,
       codeVerifier: codeVerifier,
-      redirectUri: this.getRedirectUri(),
+      redirectUri: this.getCallbackUrl(),
     });
     if (!tokens["accessToken"]) {
       throw new Error("An accessToken was not returned");

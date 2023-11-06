@@ -6,6 +6,7 @@
 
 - go to https://www.reddit.com/prefs/apps
 - create an app ('script')
+  - redirect url with host/port from your .env (http://localhost:8000/callback)
 - note the code and secret in your app box
   - save as `FAIRPOST_REDDIT_CLIENT_ID` in .env
   - save as `FAIRPOST_REDDIT_CLIENT_SECRET` in .env
@@ -67,3 +68,6 @@ https://www.reddit.com/r/redditdev/comments/x53h1y/having_trouble_submitting_an_
 https://github.com/rvelasq/scriptable-selig
 
 https://github.com/rvelasq/scriptable-selig/blob/master/Selig.js#L855
+
+
+https://github.com/Pyprohly/reddit-api-doc-notes/blob/main/docs/api-reference/submission.rst#upload-media

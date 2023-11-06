@@ -34,7 +34,7 @@ export default class FacebookAuth extends OAuth2Client {
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: this.getRedirectUri(),
+      redirect_uri: this.getCallbackUrl(),
       state: state,
       response_type: "code",
       scope: [
@@ -72,7 +72,7 @@ export default class FacebookAuth extends OAuth2Client {
     clientId: string,
     clientSecret: string,
   ): Promise<string> {
-    const redirectUri = this.getRedirectUri();
+    const redirectUri = this.getCallbackUrl();
 
     const result = await this.get("oauth/access_token", {
       client_id: clientId,

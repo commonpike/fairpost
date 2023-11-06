@@ -20,14 +20,15 @@ class DeferredResponseQuery {
  * requesting remote permissions on a service
  */
 export default class OAuth2Client {
-  protected getClientUrl(): string {
-    const clientHost = Storage.get("settings", "CLIENT_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "CLIENT_PORT"));
+
+  protected getRequestUrl(): string {
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     return `http://${clientHost}:${clientPort}`;
   }
 
-  protected getRedirectUri(): string {
-    return this.getClientUrl() + "/return";
+  protected getCallbackUrl(): string {
+    return this.getRequestUrl() + "/return";
   }
 
   /**
@@ -48,25 +49,25 @@ export default class OAuth2Client {
     serviceName: string,
     serviceLink: string,
   ): Promise<{ [key: string]: string | string[] }> {
-    const clientHost = Storage.get("settings", "CLIENT_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "CLIENT_PORT"));
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     const server = http.createServer();
     const deferred = new DeferredResponseQuery();
 
     server.listen(clientPort, clientHost, () => {
-      console.log(`Open a web browser and go to ${this.getClientUrl()}`);
+      console.log(`Open a web browser and go to ${this.getRequestUrl()}`);
     });
     const requestListener = async function (
       request: http.IncomingMessage,
       response: http.ServerResponse,
     ) {
       const parsed = url.parse(request.url ?? "/", true);
-      if (parsed.pathname === "/return") {
+      if (parsed.pathname === "/callback") {
         let result = "";
         for (const key in parsed.query) {
           result += key + " : " + String(parsed.query[key]) + "\n";
         }
-        let body = fs.readFileSync("public/auth/return.html", "utf8");
+        let body = fs.readFileSync("public/auth/callback.html", "utf8");
         body = body.replace(/{{serviceName}}/g, serviceName);
         body = body.replace(/{{result}}/g, result ?? "UNKNOWN");
         response.setHeader("Content-Type", "text/html");
@@ -76,7 +77,7 @@ export default class OAuth2Client {
         server.close();
         deferred.resolve(parsed.query);
       } else {
-        let body = fs.readFileSync("public/auth/index.html", "utf8");
+        let body = fs.readFileSync("public/auth/request.html", "utf8");
         body = body.replace(/{{serviceLink}}/g, serviceLink);
         body = body.replace(/{{serviceName}}/g, serviceName);
         response.setHeader("Content-Type", "text/html");

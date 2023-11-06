@@ -51,7 +51,7 @@ export default class RedditAuth extends OAuth2Client {
     url.pathname = "api/" + this.API_VERSION + "/authorize";
     const query = {
       client_id: clientId,
-      redirect_uri: this.getRedirectUri(),
+      redirect_uri: this.getCallbackUrl(),
       state: state,
       response_type: "code",
       duration: "permanent",
@@ -86,7 +86,7 @@ export default class RedditAuth extends OAuth2Client {
     refresh_token: string;
   }> {
     Logger.trace("RedditAuth", "exchangeCode", code);
-    const redirectUri = this.getRedirectUri();
+    const redirectUri = this.getCallbackUrl();
 
     const result = (await this.post("access_token", {
       grant_type: "authorization_code",
