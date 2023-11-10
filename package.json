@@ -4,7 +4,7 @@
   "description": "Feeds data to social media platforms based on folders in a dir",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "test": "npm run lint",
     "prettier": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "lint": "eslint . --ext .ts",
@@ -18,15 +18,18 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.0.3",
+    "fast-xml-parser": "^4.3.2",
     "log4js": "^6.9.1",
     "node-fetch": "^2.6.7",
-    "sharp": "0.31.1"
+    "sharp": "0.31.1",
+    "twitter-api-v2": "^1.15.2"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5",
     "eslint": "^8.51.0",
     "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-jsdoc": "^46.8.2",
     "eslint-plugin-prettier": "^5.0.1",
     "prettier": "^3.0.3",
     "ts-node": "^10.9.1",

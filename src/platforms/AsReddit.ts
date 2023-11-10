@@ -1,15 +1,19 @@
 import Ayrshare from "./Ayrshare";
 import { PlatformId } from ".";
-import Folder from "../Folder";
-import Post from "../Post";
+import Storage from "../core/Storage";
+import Folder from "../core/Folder";
+import Post from "../core/Post";
 
+/**
+ * AsReddit: support for reddit platform through Ayrshare
+ */
 export default class AsReddit extends Ayrshare {
   id = PlatformId.ASREDDIT;
   SUBREDDIT: string;
 
   constructor() {
     super();
-    this.SUBREDDIT = process.env.FAIRPOST_AYRSHARE_SUBREDDIT;
+    this.SUBREDDIT = Storage.get("settings", "AYRSHARE_SUBREDDIT");
   }
 
   async preparePost(folder: Folder): Promise<Post | undefined> {

@@ -4,11 +4,10 @@
 */
 
 import * as path from "path";
-import Logger from "./src/Logger";
-import Feed from "./src/Feed";
-import { PostStatus } from "./src/Post";
+import Logger from "./src/core/Logger";
+import Feed from "./src/core/Feed";
+import { PostStatus } from "./src/core/Post";
 import { PlatformId } from "./src/platforms";
-import Facebook from "./src/platforms/Facebook";
 
 // arguments
 const COMMAND = process.argv[2] ?? "help";
@@ -34,7 +33,6 @@ function getOption(key: string): boolean | string | null {
   return value.replace(`--${key}=`, "");
 }
 
-/* main */
 async function main() {
   let result: unknown;
   let report = "";
@@ -49,19 +47,31 @@ async function main() {
     switch (COMMAND) {
       case "get-feed": {
         result = feed;
-        report = "Feed: " + feed.id;
+        report = feed.report();
+        break;
+      }
+      case "setup-platform": {
+        await feed.setupPlatform(PLATFORM);
+        result = "Success"; // or error
+        report = "Result: \n" + JSON.stringify(result, null, "\t");
+        break;
+      }
+      case "setup-platforms": {
+        await feed.setupPlatforms(PLATFORMS);
+        result = "Success"; // or error
+        report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "get-platform": {
         const platform = feed.getPlatform(PLATFORM);
-        report += "Platform: " + platform.id + "\n";
+        report += platform.report() + "\n";
         result = platform;
         break;
       }
       case "get-platforms": {
         const platforms = feed.getPlatforms(PLATFORMS);
         platforms.forEach((platform) => {
-          report += "Platform: " + platform.id + "\n";
+          report += platform.report() + "\n";
         });
         result = platforms;
         break;
@@ -78,14 +88,14 @@ async function main() {
       }
       case "get-folder": {
         const folder = feed.getFolder(FOLDER);
-        report += "Folder: " + folder.id + "\n";
+        report += folder.report() + "\n";
         result = folder;
         break;
       }
       case "get-folders": {
         const folders = feed.getFolders(FOLDERS);
         folders.forEach((folder) => {
-          report += "Folder: " + folder.id + "\n";
+          report += folder.report() + "\n";
         });
         result = folders;
         break;
@@ -195,21 +205,15 @@ async function main() {
         result = dueposts;
         break;
       }
-      /* platform specific tools */
-      case "facebook-get-page-token": {
-        const userToken = getOption("user-token") as string;
-        const appUserId = getOption("app-user-id") as string;
-        const facebook = new Facebook();
-        result = await facebook.getPageToken(appUserId, userToken);
-        report = "Page Token: " + result;
-        break;
-      }
+
       default: {
         const cmd = path.basename(process.argv[1]);
         result = [
           "# basic commands:",
           `${cmd} help`,
           `${cmd} get-feed [--config=xxx]`,
+          `${cmd} setup-platform --platform=xxx`,
+          `${cmd} setup-platforms [--platforms=xxx,xxx]`,
           `${cmd} test-platform --platform=xxx`,
           `${cmd} test-platforms [--platforms=xxx,xxx]`,
           `${cmd} get-platform --platform=xxx`,
@@ -221,14 +225,12 @@ async function main() {
           `${cmd} prepare-post --folder=xxx --platform=xxx`,
           `${cmd} schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx `,
           `${cmd} schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx`,
-          `${cmd} publish-post --folders=xxx --platforms=xxx [--dry-run]`,
+          `${cmd} publish-post --folder=xxx --platform=xxx [--dry-run]`,
           `${cmd} publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,
           "\n# feed planning:",
           `${cmd} prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,
           `${cmd} schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
           `${cmd} publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
-          "\n# platform tools:",
-          `${cmd} facebook-get-page-token --app-user-id=xxx --user-token=xxx`,
         ];
         (result as string[]).forEach((line) => (report += "\n" + line));
       }

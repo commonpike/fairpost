@@ -1,6 +1,14 @@
 import * as fs from "fs";
+import * as path from "path";
 import Logger from "./Logger";
 
+/**
+ * Folder - a folder within a feed
+ *
+ * A folder represents one post on all enabled
+ * and applicable platforms. It is also just
+ * a folder on a filesystem.
+ */
 export default class Folder {
   id: string;
   path: string;
@@ -16,7 +24,38 @@ export default class Folder {
     this.path = path;
   }
 
-  getFiles() {
+  /**
+   * Return a small report for this feed
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("Folder", "report");
+    const files = this.getFiles();
+    let report = "";
+    report += "\nFolder: " + this.id;
+    report += "\n - path: " + this.path;
+    report +=
+      "\n - files: " +
+      Object.keys(files)
+        .map((k) => files[k].join())
+        .join();
+    return report;
+  }
+
+  /**
+   * Get the files in this folder
+   *
+   * reads info from disk once, then caches that
+   * @returns grouped filenames relative to folder
+   */
+
+  getFiles(): {
+    text: string[];
+    image: string[];
+    video: string[];
+    other: string[];
+  } {
     Logger.trace("Folder", "getFiles");
     if (this.files != undefined) {
       return {
@@ -60,5 +99,18 @@ export default class Folder {
       video: [...this.files.video],
       other: [...this.files.other],
     };
+  }
+
+  public static guessMimeType(filename: string) {
+    const extension = path.extname(filename);
+    const mimeTypes = {
+      ".png": "image/png",
+      ".mov": "video/quicktime",
+      ".mp4": "video/mp4",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".gif": "image/gif",
+    };
+    return mimeTypes[extension] ?? "application/unknown";
   }
 }

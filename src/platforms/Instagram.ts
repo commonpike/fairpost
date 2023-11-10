@@ -1,13 +1,22 @@
-import Logger from "../Logger";
-import Platform from "../Platform";
+import Storage from "../core/Storage";
+import Logger from "../core/Logger";
+import Platform from "../core/Platform";
+import InstagramAuth from "../auth/InstagramAuth";
 import { PlatformId } from ".";
-import Folder from "../Folder";
-import Post from "../Post";
-import { PostStatus } from "../Post";
+import Folder from "../core/Folder";
+import Post from "../core/Post";
+import { PostStatus } from "../core/Post";
 import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
 
+/**
+ * Instagram: support for instagram platform.
+ *
+ * Uses simple graph api calls to publish.
+ * Uses fb specific tools to get a long lived page token,
+ * also uses facebook calls to upload files
+ */
 export default class Instagram extends Platform {
   id: PlatformId = PlatformId.INSTAGRAM;
   GRAPH_API_VERSION: string = "v18.0";
@@ -16,6 +25,18 @@ export default class Instagram extends Platform {
     super();
   }
 
+  /** @inheritdoc */
+  async setup() {
+    const auth = new InstagramAuth();
+    await auth.setup();
+  }
+
+  /** @inheritdoc */
+  async test() {
+    return this.get("me");
+  }
+
+  /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post | undefined> {
     const post = await super.preparePost(folder);
     if (post && post.files) {
@@ -62,6 +83,7 @@ export default class Instagram extends Platform {
     return post;
   }
 
+  /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Instagram.publishPost", post, dryrun);
 
@@ -108,10 +130,16 @@ export default class Instagram extends Platform {
     return !error;
   }
 
-  async test() {
-    return this.get();
-  }
-
+  /**
+   * Publish a single photo
+   *
+   * Upload a photo to facebook, use the largest derivate
+   * to put in a single container and publish that
+   * @param file - path to the photo to post
+   * @param caption - text body of the post
+   * @param dryrun - wether to actually post it
+   * @returns id of the published container
+   */
   private async publishPhoto(
     file,
     caption: string = "",
@@ -144,6 +172,16 @@ export default class Instagram extends Platform {
     return { id: "-99" };
   }
 
+  /**
+   * Publish a single video
+   *
+   * Upload a video to facebook, use the  derivate
+   * to put in a single container and publish that
+   * @param file - path to the photo to post
+   * @param caption - text body of the post
+   * @param dryrun - wether to actually post it
+   * @returns id of the published container
+   */
   private async publishVideo(
     file,
     caption: string = "",
@@ -176,6 +214,15 @@ export default class Instagram extends Platform {
     return { id: "-99" };
   }
 
+  /**
+   * Publish a caroussel
+   *
+   * Upload a videos and photos to facebook, use the derivates
+   * to put in a single container and publish that
+   * @param post - the post to publish
+   * @param dryrun - wether to actually post it
+   * @returns id of the published container
+   */
   private async publishCaroussel(
     post: Post,
     dryrun: boolean = false,
@@ -243,14 +290,10 @@ export default class Instagram extends Platform {
     return { id: "-99" };
   }
 
-  /*
-   * POST an image to the page/photos endpoint using multipart/form-data
-   *
-   * arguments:
-   * file: path to the file to post
-   *
-   * returns:
-   * id of the uploaded photo to use in post attachments
+  /**
+   * POST an image to the facebook page/photos endpoint
+   * @param file - path to the file to post
+   * @returns id of the uploaded photo to use in post attachments
    */
   private async fbUploadPhoto(file: string = ""): Promise<{ id: string }> {
     Logger.trace("Reading file", file);
@@ -271,6 +314,11 @@ export default class Instagram extends Platform {
     return result;
   }
 
+  /**
+   * Get a link to an uploaded facebook photo
+   * @param id - id of the uploaded photo
+   * @returns link to the largest derivate of that photo to use in post attachments
+   */
   private async fbGetPhotoLink(id: string): Promise<string> {
     // get photo derivatives
     const photoData = (await this.get(id, {
@@ -298,16 +346,12 @@ export default class Instagram extends Platform {
     return largestPhoto["source"];
   }
 
-  /*
-   * POST a video to the page/videos endpoint using multipart/form-data
-   *
-   * arguments:
-   * file: path to the video to post
-   * published: wether to publish it or not
-   *
-   * returns:
-   * { id: string }
+  /**
+   * POST an video to the facebook page/videos endpoint
+   * @param file - path to the file to post
+   * @returns id of the uploaded video to use in post attachments
    */
+
   private async fbUploadVideo(file: string): Promise<{ id: string }> {
     Logger.trace("Reading file", file);
     const rawData = fs.readFileSync(file);
@@ -328,6 +372,12 @@ export default class Instagram extends Platform {
     return result;
   }
 
+  /**
+   * Get a link to an uploaded facebook video
+   * @param id - id of the uploaded video
+   * @returns link to the video to use in post attachments
+   */
+
   private async fbGetVideoLink(id: string): Promise<string> {
     const videoData = (await this.get(id, {
       fields: "permalink_url,source",
@@ -343,12 +393,11 @@ export default class Instagram extends Platform {
 
   // API implementation -------------------
 
-  /*
+  /**
    * Do a GET request on the graph.
-   *
-   * arguments:
-   * endpoint: the path to call
-   * query: query string as object
+   * @param endpoint - the path to call
+   * @param query - querystring as object
+   * @returns parsed response
    */
 
   private async get(
@@ -357,24 +406,24 @@ export default class Instagram extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_INSTAGRAM_USER_ID,
+      Storage.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
+      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
+    const accessToken = Storage.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN");
     Logger.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
-      headers: process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN
+      headers: accessToken
         ? {
             Accept: "application/json",
-            Authorization:
-              "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+            Authorization: "Bearer " + accessToken,
           }
         : {
             Accept: "application/json",
@@ -384,12 +433,11 @@ export default class Instagram extends Platform {
       .catch((err) => this.handleApiError(err));
   }
 
-  /*
+  /**
    * Do a Json POST request on the graph.
-   *
-   * arguments:
-   * endpoint: the path to call
-   * body: body as object
+   * @param endpoin - the path to call
+   * @param body - body as object
+   * @returns the parsed response as object
    */
 
   private async postJson(
@@ -398,11 +446,11 @@ export default class Instagram extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_INSTAGRAM_USER_ID,
+      Storage.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
+      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -414,7 +462,7 @@ export default class Instagram extends Platform {
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization:
-          "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+          "Bearer " + Storage.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: JSON.stringify(body),
     })
@@ -422,12 +470,11 @@ export default class Instagram extends Platform {
       .catch((err) => this.handleApiError(err));
   }
 
-  /*
+  /**
    * Do a FormData POST request on the graph.
-   *
-   * arguments:
-   * endpoint: the path to call
-   * body: body as object
+   * @param endpoint - the path to call
+   * @param body - body as object
+   * @returns the parsed response as object
    */
 
   private async postFormData(
@@ -436,11 +483,11 @@ export default class Instagram extends Platform {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      process.env.FAIRPOST_INSTAGRAM_USER_ID,
+      Storage.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      process.env.FAIRPOST_INSTAGRAM_PAGE_ID,
+      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -452,7 +499,7 @@ export default class Instagram extends Platform {
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + process.env.FAIRPOST_INSTAGRAM_PAGE_ACCESS_TOKEN,
+          "Bearer " + Storage.get("settings", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })
@@ -460,9 +507,10 @@ export default class Instagram extends Platform {
       .catch((err) => this.handleApiError(err));
   }
 
-  /*
+  /**
    * Handle api response
-   *
+   * @param response - the api response from fetch
+   * @returns the parsed response
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
@@ -488,11 +536,11 @@ export default class Instagram extends Platform {
     return data;
   }
 
-  /*
+  /**
    * Handle api error
-   *
+   * @param error - the api error returned from fetch
    */
-  private handleApiError(error: Error): Promise<object> {
+  private handleApiError(error: Error): never {
     Logger.error("Facebook.handleApiError", error);
     throw error;
   }

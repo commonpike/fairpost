@@ -1,13 +1,19 @@
-import Logger from "../Logger";
+import Logger from "../core/Logger";
+import Storage from "../core/Storage";
 import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
 import { PlatformId } from ".";
-import Platform from "../Platform";
-import Folder from "../Folder";
-import Post from "../Post";
-import { PostStatus } from "../Post";
+import Platform from "../core/Platform";
+import Folder from "../core/Folder";
+import Post from "../core/Post";
+import { PostStatus } from "../core/Post";
 
+/**
+ * Ayrshare base class to extend all ayrshare platforms on
+ *
+ * publish is handled here; prepeare is handled in subclasses.
+ */
 export default abstract class Ayrshare extends Platform {
   requiresApproval: boolean = false;
 
@@ -28,6 +34,7 @@ export default abstract class Ayrshare extends Platform {
     super();
   }
 
+  /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post | undefined> {
     return super.preparePost(folder);
   }
@@ -86,7 +93,7 @@ export default abstract class Ayrshare extends Platform {
   }
 
   async uploadMedia(media: string[]): Promise<string[]> {
-    const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
+    const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
     const urls = [] as string[];
     for (const file of media) {
       const buffer = fs.readFileSync(file);
@@ -137,7 +144,7 @@ export default abstract class Ayrshare extends Platform {
     platformOptions: object,
     uploads: string[],
   ): Promise<object> {
-    const APIKEY = process.env.FAIRPOST_AYRSHARE_API_KEY;
+    const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
     const scheduleDate = post.scheduled;
     //scheduleDate.setDate(scheduleDate.getDate()+100);
 
@@ -190,9 +197,10 @@ export default abstract class Ayrshare extends Platform {
     return response;
   }
 
-  /*
+  /**
    * Handle api response
-   *
+   * @param response - the api response
+   * @returns parsed data from response
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
@@ -226,11 +234,11 @@ export default abstract class Ayrshare extends Platform {
     return data;
   }
 
-  /*
+  /**
    * Handle api error
-   *
+   * @param error - the error thrown from the api
    */
-  private handleApiError(error: Error): Promise<object> {
+  private handleApiError(error: Error) {
     Logger.error("Ayrshare.handleApiError", error);
     throw error;
   }
