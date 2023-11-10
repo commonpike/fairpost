@@ -1,9 +1,10 @@
-import Logger from "../Logger";
-import Platform from "../Platform";
+import Logger from "../core/Logger";
+import Platform from "../core/Platform";
 import { PlatformId } from ".";
-import Folder from "../Folder";
-import Post from "../Post";
-import { PostStatus } from "../Post";
+import Folder from "../core/Folder";
+import Post from "../core/Post";
+import LinkedInAuth from "../auth/LinkedInAuth";
+import { PostStatus } from "../core/Post";
 import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
@@ -12,8 +13,21 @@ export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;
   GRAPH_API_VERSION: string = "v18.0";
 
+  auth: LinkedInAuth;
+
   constructor() {
     super();
+    this.auth = new LinkedInAuth();
+  }
+
+  /** @inheritdoc */
+  async setup() {
+    return await this.auth.setup();
+  }
+
+  /** @inheritdoc */
+  async test() {
+    super.test();
   }
 
   async preparePost(folder: Folder): Promise<Post> {
@@ -30,9 +44,6 @@ export default class LinkedIn extends Platform {
     return super.publishPost(post, dryrun);
   }
 
-  async test() {
-    return await this.getAccessToken();
-  }
 
   // LinkedIn -------------------
 
