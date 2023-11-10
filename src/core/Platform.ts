@@ -68,6 +68,10 @@ export default class Platform {
    * If the post exists and is published, ignore.
    * If the post exists and is failed, set it back to
    * unscheduled.
+   *
+   * Do not throw errors. Instead, catch and log them,
+   * and set the post.valid to false
+   *
    * @param folder - the folder for which to prepare a post for this platform
    * @returns the prepared post
    */
@@ -121,11 +125,15 @@ export default class Platform {
   /**
    * publishPost
    *
-   * publish the post for this platform, sync.
-   * set the posted date to now.
-   * add the result to post.results
-   * on success, set the status to published and return true,
-   * else set the status to failed and return false
+   * - publish the post for this platform, sync.
+   * - set the posted date to now.
+   * - add the result to post.results
+   * - on success, set the status to published and return true,
+   * - else set the status to failed and return false
+   *
+   * do not throw errors, instead catch and log them, and
+   * set the post to failed.
+   *
    * @returns {Promise} succes status
    */
 
