@@ -23,6 +23,10 @@ This token last for 24 hours and should be refreshed.
  - call `./fairpost.js setup-platform --platform=reddit`
  - follow instructions from the command line
 
+
+### Test the platform
+ - call `./fairpost.js test-platform --platform=reddit`
+   
 # Random documentation
 
 https://www.reddit.com/r/test/
