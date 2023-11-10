@@ -3,28 +3,45 @@ import Logger from "./Logger";
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import { PlatformId } from "./platforms";
+import { PlatformId } from "../platforms";
 
+/**
+ * Platform base class to extend all platforms on
+ *
+ * When extending, implement at least
+ * preparePost() and publishPost()
+ */
 export default class Platform {
   active: boolean = false;
   id: PlatformId = PlatformId.UNKNOWN;
   defaultBody: string = "Fairpost feed";
 
-  /*
+  /**
+   * Return a small report for this feed
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("Platform", "report");
+    let report = "";
+    report += "\nPlatform: " + this.id;
+    report += "\n - active: " + this.active;
+    return report;
+  }
+
+  /**
    * getPostFileName
-   *
-   * Return the intended name for a post of this
+   * @returns the intended name for a post of this
    * platform to be saved in this folder.
    */
-  getPostFileName() {
+  getPostFileName(): string {
     return "_" + this.id + ".json";
   }
 
-  /*
+  /**
    * getPost
-   *
-   * Return the post for this platform for the
-   * given folder, if it exists.
+   * @param folder - the folder to get the post for this platform from
+   * @returns {Post} the post for this platform for the given folder, if it exists.
    */
 
   getPost(folder: Folder): Post | undefined {
@@ -41,7 +58,7 @@ export default class Platform {
     return;
   }
 
-  /*
+  /**
    * preparePost
    *
    * Prepare the post for this platform for the
@@ -51,13 +68,19 @@ export default class Platform {
    * If the post exists and is published, ignore.
    * If the post exists and is failed, set it back to
    * unscheduled.
+   *
+   * Do not throw errors. Instead, catch and log them,
+   * and set the post.valid to false
+   *
+   * @param folder - the folder for which to prepare a post for this platform
+   * @returns the prepared post
    */
   async preparePost(folder: Folder): Promise<Post> {
     Logger.trace("Platform", "preparePost");
 
     const post = this.getPost(folder) ?? new Post(folder, this);
     if (post.status === PostStatus.PUBLISHED) {
-      return;
+      return post;
     }
     if (post.status === PostStatus.FAILED) {
       post.status = PostStatus.UNSCHEDULED;
@@ -99,14 +122,19 @@ export default class Platform {
     return post;
   }
 
-  /*
+  /**
    * publishPost
    *
-   * publish the post for this platform, sync.
-   * set the posted date to now.
-   * add the result to post.results
-   * on success, set the status to published and return true,
-   * else set the status to failed and return false
+   * - publish the post for this platform, sync.
+   * - set the posted date to now.
+   * - add the result to post.results
+   * - on success, set the status to published and return true,
+   * - else set the status to failed and return false
+   *
+   * do not throw errors, instead catch and log them, and
+   * set the post to failed.
+   *
+   * @returns {Promise} succes status
    */
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
@@ -123,14 +151,31 @@ export default class Platform {
     return false;
   }
 
-  /*
+  /**
+   * setup
+   *
+   * Set the platform up. Get the required keys and tokens.
+   * This may involve starting a webserver and/or communicating
+   * via the CLI.
+   * @returns - any object
+   */
+  async setup() {
+    throw new Error(
+      "No setup implemented for " +
+        this.id +
+        ". Read the docs in the docs folder.",
+    );
+  }
+
+  /**
    * test
    *
    * Test the platform installation. This should not post
    * anything, but test access tokens et al. It can return
    * anything.
+   * @returns - any object
    */
   async test(): Promise<unknown> {
-    return "No tests";
+    return "No tests implemented for " + this.id;
   }
 }

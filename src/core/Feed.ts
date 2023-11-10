@@ -2,13 +2,22 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import Logger from "./Logger";
+import Storage from "./Storage";
 import Platform from "./Platform";
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import * as platforms from "./platforms";
-import { PlatformId } from "./platforms";
+import * as platforms from "../platforms";
+import { PlatformId } from "../platforms";
 
+/**
+ * Feed - the core handler of fairpost
+ *
+ * You start a feed with a config, by default .env, which
+ * defines the feed folder and platform settings. From the feed,
+ * you are able to get platforms, folders and posts, and
+ * manage and publish those.
+ */
 export default class Feed {
   id: string = "";
   path: string = "";
@@ -18,77 +27,153 @@ export default class Feed {
   folders: Folder[] = [];
   interval: number;
 
+  /**
+   * The constructor reads the dotenv file, then reads all
+   * the classes in the platform folder and assumes their filenames
+   * are the names of their constructor.
+   * From platforms/index.ts, if the platform is exported there,
+   * it constructs it and if that platform is enabled
+   * in the feed config, the platform is added to the feed.
+   * @param configPath - path to file for dotenv to parse
+   */
+
   constructor(configPath?: string) {
     if (configPath) {
       const configPathResolved = path.resolve(
-        __dirname + "/../../" + configPath,
+        __dirname + "/../../../" + configPath,
       );
       dotenv.config({ path: configPathResolved });
     } else {
       dotenv.config();
     }
-    if (process.env.FAIRPOST_FEED_PATH) {
-      this.path = process.env.FAIRPOST_FEED_PATH;
-      this.id = this.path;
-    } else {
-      throw new Error("Problem reading .env config file");
-    }
-    this.interval = Number(process.env.FAIRPOST_FEED_INTERVAL ?? 7);
 
-    const activePlatformIds = process.env.FAIRPOST_FEED_PLATFORMS.split(",");
-    const platformClasses = fs.readdirSync(
-      path.resolve(__dirname + "/platforms"),
+    this.path = Storage.get("settings", "FEED_PATH");
+    this.id = this.path;
+
+    this.interval = Number(Storage.get("settings", "FEED_INTERVAL", "7"));
+    const activePlatformIds = Storage.get("settings", "FEED_PLATFORMS").split(
+      ",",
     );
+
+    const platformClasses = fs.readdirSync(
+      path.resolve(__dirname + "/../platforms"),
+    );
+
     platformClasses.forEach((file) => {
       const constructor = file.replace(".ts", "").replace(".js", "");
       // nb import * as platforms loaded the constructors
       if (platforms[constructor] !== undefined) {
         const platform = new platforms[constructor]();
-        platform.active = activePlatformIds.includes(platform.id);
-        if (platform.active) {
+        if (activePlatformIds.includes(platform.id)) {
+          platform.active = true;
           this.platforms[platform.id] = platform;
         }
       }
     });
   }
 
+  /**
+   * Return a small report for this feed
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("Feed", "report");
+    let report = "";
+    report += "\nFeed: " + this.id;
+    report += "\n - path: " + this.path;
+    report += "\n - platforms: " + Object.keys(this.platforms).join();
+    report +=
+      "\n - folders: " +
+      this.getFolders()
+        .map((f) => f.path)
+        .join();
+    return report;
+  }
+
+  /**
+   * Set up one platform
+   * @param platformId - the slug of the platform
+   * @returns the setup result
+   */
+  async setupPlatform(platformId: PlatformId): Promise<unknown> {
+    Logger.trace("Feed", "setupPlatform", platformId);
+    const platform = this.getPlatform(platformId);
+    return await platform.setup();
+  }
+
+  /**
+   * Set up more platforms
+   * @param platformsIds - the slugs of the platforms
+   * @returns the setup results indexed by platform ids
+   */
+  async setupPlatforms(
+    platformsIds?: PlatformId[],
+  ): Promise<{ [id: string]: unknown }> {
+    Logger.trace("Feed", "setupPlatforms", platformsIds);
+    const results = {};
+    for (const platformId of platformsIds) {
+      results[platformId] = await this.setupPlatform(platformId);
+    }
+    return results;
+  }
+
+  /**
+   * Get one platform
+   * @param platformId - the slug of the platform
+   * @returns platform given by id
+   */
   getPlatform(platformId: PlatformId): Platform {
     Logger.trace("Feed", "getPlatform", platformId);
-    const platform = this.getPlatforms([platformId])[0];
+    const platform = this.platforms[platformId];
     if (!platform) {
       throw new Error("Unknown platform: " + platformId);
     }
     return platform;
   }
 
+  /**
+   * Get multiple platforms
+   * @param platformIds - the slug of the platform
+   * @returns platforms given by ids
+   */
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
     Logger.trace("Feed", "getPlatforms", platformIds);
-    return (
-      platformIds
-        ?.map((platformId) => this.platforms[platformId])
-        .filter(function (p) {
-          return p !== undefined;
-        }) ?? Object.values(this.platforms)
-    );
+    return platformIds
+      ? platformIds.map((platformId) => this.getPlatform(platformId))
+      : Object.values(this.platforms);
   }
 
+  /**
+   * Test one platform
+   * @param platformId - the slug of the platform
+   * @returns the test result
+   */
   async testPlatform(platformId: PlatformId): Promise<unknown> {
     Logger.trace("Feed", "testPlatform", platformId);
-    const results = await this.testPlatforms([platformId]);
-    return results[platformId];
+    return await this.getPlatform(platformId).test();
   }
 
+  /**
+   * Test more platforms
+   * @param platformsIds - the slugs of the platforms
+   * @returns the test results indexed by platform ids
+   */
   async testPlatforms(
     platformsIds?: PlatformId[],
   ): Promise<{ [id: string]: unknown }> {
     Logger.trace("Feed", "testPlatforms", platformsIds);
     const results = {};
-    for (const platform of this.getPlatforms(platformsIds)) {
-      results[platform.id] = await platform.test();
+    for (const platformId of platformsIds) {
+      results[platformId] = await this.testPlatform(platformId);
     }
     return results;
   }
 
+  /**
+   * Get all folders
+   * @returns all folder in the feed
+   */
   getAllFolders(): Folder[] {
     Logger.trace("Feed", "getAllFolders");
     if (this.folders.length) {
@@ -110,11 +195,21 @@ export default class Feed {
     return this.folders;
   }
 
+  /**
+   * Get one folder
+   * @param path - path to a single folder
+   * @returns the given folder object
+   */
   getFolder(path: string): Folder | undefined {
     Logger.trace("Feed", "getFolder", path);
     return this.getFolders([path])[0];
   }
 
+  /**
+   * Get multiple folders
+   * @param paths - paths to multiple folders
+   * @returns the given folder objects
+   */
   getFolders(paths?: string[]): Folder[] {
     Logger.trace("Feed", "getFolders", paths);
     return (
@@ -123,11 +218,25 @@ export default class Feed {
     );
   }
 
+  /**
+   * Get one post
+   * @param path - path to a single folder
+   * @param platformId - the platform for the post
+   * @returns the given post, or undefined if not prepared
+   */
   getPost(path: string, platformId: PlatformId): Post | undefined {
     Logger.trace("Feed", "getPost");
     return this.getPosts({ folders: [path], platforms: [platformId] })[0];
   }
 
+  /**
+   * Get multiple posts
+   * @param filters - object to filter posts by
+   * @param filters.folders - paths to folders to filter on
+   * @param filters.platforms - slugs to platforms to filter on
+   * @param filters.status - post status to filter on
+   * @returns multiple posts
+   */
   getPosts(filters?: {
     folders?: string[];
     platforms?: PlatformId[];
@@ -151,6 +260,12 @@ export default class Feed {
     return posts;
   }
 
+  /**
+   * Prepare single post
+   * @param path - path to a single folder
+   * @param platformId - the platform for the post
+   * @returns the given post, or undefined if failed
+   */
   async preparePost(
     path: string,
     platformId: PlatformId,
@@ -160,6 +275,12 @@ export default class Feed {
       await this.preparePosts({ folders: [path], platforms: [platformId] })
     )[0];
   }
+
+  /**
+   * Prepare multiple posts
+   * @param filters - object to filter posts by
+   * @returns multiple posts
+   */
 
   async preparePosts(filters?: {
     folders?: string[];
@@ -183,6 +304,13 @@ export default class Feed {
     return posts;
   }
 
+  /**
+   * Schedule single post
+   * @param path - path to a single folder
+   * @param platformId - the platform for the post
+   * @param date - Date to schedule post on
+   * @returns the given post
+   */
   schedulePost(path: string, platformId: PlatformId, date: Date): Post {
     Logger.trace("Feed", "schedulePost", path, platformId, date);
     const post = this.getPost(path, platformId);
@@ -196,6 +324,16 @@ export default class Feed {
     return post;
   }
 
+  /**
+   * Schedule multiple posts
+   *
+   * Note - this is for consistence only, it is actually unused
+   * @param filters - object to filter posts by
+   * @param filters.folders - paths to folders to filter on
+   * @param filters.platforms - slugs to platforms to filter on
+   * @param date - date to schedule posts on
+   * @returns multiple posts
+   */
   schedulePosts(
     filters: {
       folders?: string[];
@@ -223,6 +361,16 @@ export default class Feed {
     return posts;
   }
 
+  /**
+   * Publish single post
+   *
+   * Will publish the post regardless of its status
+   * @param path - path to a single folder
+   * @param platformId - the platform for the post
+   * @param dryrun - wether or not to really publish
+   * @returns the given post
+   */
+
   async publishPost(
     path: string,
     platformId: PlatformId,
@@ -234,7 +382,7 @@ export default class Feed {
     const folder = this.getFolder(path);
     const post = platform.getPost(folder);
     if (post.valid) {
-      post.schedule(now);
+      if (!dryrun) post.schedule(now);
       Logger.info("Posting", platformId, path);
       await platform.publishPost(post, dryrun);
     } else {
@@ -243,6 +391,16 @@ export default class Feed {
     return post;
   }
 
+  /**
+   * Publish multiple posts
+   *
+   * Note - this is for consistence only, it is actually unused
+   * @param filters - object to filter posts by
+   * @param filters.folders - paths to folders to filter on
+   * @param filters.platforms - slugs to platforms to filter on
+   * @param dryrun - wether to really publish
+   * @returns multiple posts
+   */
   async publishPosts(
     filters?: {
       folders?: string[];
@@ -271,10 +429,15 @@ export default class Feed {
     return posts;
   }
 
-  /*
+  /* --------------------
         feed planning 
-    */
+  ----------------------- */
 
+  /**
+   * Get last published post for a platform
+   * @param platformId - the platform for the post
+   * @returns the given post or none
+   */
   getLastPost(platformId: PlatformId): Post | void {
     Logger.trace("Feed", "getLastPost");
     let lastPost: Post = undefined;
@@ -290,6 +453,14 @@ export default class Feed {
     return lastPost;
   }
 
+  /**
+   * Get the next date for a post to be publshed on a platform
+   *
+   * This would be FAIRPOST_INTERVAL days after the date
+   * of the last post for that platform, or now.
+   * @param platformId - the platform for the post
+   * @returns the next date
+   */
   getNextPostDate(platformId: PlatformId): Date {
     Logger.trace("Feed", "getNextPostDate");
     let nextDate = null;
@@ -303,6 +474,18 @@ export default class Feed {
     return nextDate;
   }
 
+  /**
+   * Schedule the first unscheduled post for multiple platforms
+   *
+   * for each platform, within given folders are all folders,
+   * finds the next post date and the first unscheduled post,
+   * and schedules that post on that date
+   * @param date - use date instead of the next post date
+   * @param filters - limit the process to certain platforms or folders
+   * @param filters.folders - paths to folders to filter on
+   * @param filters.platforms - slugs of platforms to filter on
+   * @returns the scheduled posts
+   */
   scheduleNextPosts(
     date?: Date,
     filters?: {
@@ -328,6 +511,18 @@ export default class Feed {
     return posts;
   }
 
+  /**
+   * Publish scheduled posts, one for each platform
+   *
+   * for each platform, within given folders or all folders,
+   * find the first post that is scheduled in the past and
+   * publish that.
+   * @param filters - limit the process to certain platforms or folders
+   * @param filters.folders - paths to folder to filter on
+   * @param filters.platforms - slugs of platforms to filter on
+   * @param dryrun - wether to really publish posts
+   * @returns the published posts
+   */
   async publishDuePosts(
     filters?: {
       folders?: string[];

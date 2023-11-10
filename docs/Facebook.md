@@ -9,7 +9,6 @@ using the plain graph api - no extensions installed.
 ### Create a new App in your facebook account
  - go to https://developers.facebook.com/
  - create an app that can manage pages 
- - for instagram, you'll need to attach a business account (...) that is connected to a facebook page
  - under 'settings', find your app ID 
    - save this as `FAIRPOST_FACEBOOK_APP_ID` in your .env
  - under 'settings', find your app secret
@@ -18,29 +17,22 @@ using the plain graph api - no extensions installed.
 ### Find the page id of the page you want the app to manage
   - go to https://business.facebook.com/
   - find your page (currently under 'settings > business assets')
-  - note the page id 
-    - save this as `FAIRPOST_FACEBOOK_PAGE_ID` in your .env
+  - save the page id as `FAIRPOST_FACEBOOK_PAGE_ID` in your .env
+
+### Enable the platform
+ - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
 
 ### Get a (long lived) Page Access Token for the page you want the app to manage
 
-This token should last forever. It involves get a long-lived user token and then requesting the 'accounts' for your 'app scoped user id'; but this app provides a tool to help you do that: 
+This token should last forever. It involves getting a user access token,
+exchaning it for  a long-lived user token and 
+then requesting the 'accounts' for your 'app scoped user id'; 
+but this app provides a tool to help you do that: 
 
- - go to https://developers.facebook.com/tools/explorer/
- - select your app 
- - add permissions
-   - pages_manage_engagement
-   - pages_manage_posts
-   - pages_read_engagement
-   - pages_read_user_engagement
-   - publish_video
-   - business_management
- - request a (short lived) user access token
- - call `./fairpost.js facebook-get-page-token --user-token={your token}`
-   - note the token returned 
-   - save this as `FAIRPOST_FACEBOOK_PAGE_ACCESS_TOKEN` in your .env
+ - call `./fairpost.js setup-platform --platform=facebook`
+ - follow instructions from the command line
 
-### Enable and test the facebook platform
- - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
+### Test the platform
  - call `./fairpost.js test-platform --platform=facebook`
 
 # Limitations 
@@ -78,3 +70,5 @@ https://developers.facebook.com/docs/graph-api/guides/upload/
 
 https://www.npmjs.com/package/formdata-node
 https://medium.com/deno-the-complete-reference/sending-form-data-using-fetch-in-node-js-8cedd0b2af85
+
+https://developers.facebook.com/docs/facebook-login/guides/advanced/manual-flow

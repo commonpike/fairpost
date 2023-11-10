@@ -3,6 +3,14 @@ import Logger from "./Logger";
 import Folder from "./Folder";
 import Platform from "./Platform";
 
+/**
+ * Post - a post within a folder
+ *
+ * A post belongs to one platform and one folder;
+ * it is *prepared* and later *published* by the platform.
+ * The post serializes to a json file in the folder,
+ * where it can be read later for further processing.
+ */
 export default class Post {
   id: string;
   folder: Folder;
@@ -34,11 +42,25 @@ export default class Post {
     }
   }
 
-  /*
-   * save
-   *
-   * Save this post for this platform for the
-   * given folder.
+  /**
+   * Return a small report for this post
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("Post", "report");
+    let report = "";
+    report += "\nPost: " + this.id;
+    report += "\n - valid: " + this.valid;
+    report += "\n - status: " + this.status;
+    report += "\n - scheduled: " + this.scheduled;
+    report += "\n - published: " + this.published;
+    report += "\n - link: " + this.link;
+    return report;
+  }
+
+  /**
+   * Save this post to disk
    */
 
   save(): void {
@@ -52,22 +74,18 @@ export default class Post {
     );
   }
 
+  /**
+   * Schedule this post and save it
+   *
+   * this just sets the 'scheduled' date
+   * @param date - the date to schedule it on
+   */
+
   schedule(date: Date): void {
     Logger.trace("Post", "schedule");
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
-  }
-
-  report(): string {
-    Logger.trace("Post", "report");
-    let report = "";
-    report += "\nPost: " + this.id;
-    report += "\n - valid: " + this.valid;
-    report += "\n - status: " + this.status;
-    report += "\n - scheduled: " + this.scheduled;
-    report += "\n - published: " + this.published;
-    return report;
   }
 }
 
