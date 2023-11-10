@@ -124,8 +124,8 @@ export default class Facebook extends Platform {
 
     if (!dryrun) {
       if (!error) {
-        (post.link = "https://facebook.com/" + response.id),
-          (post.status = PostStatus.PUBLISHED);
+        post.link = "https://facebook.com/" + response.id;
+        post.status = PostStatus.PUBLISHED;
         post.published = new Date();
       } else {
         post.status = PostStatus.FAILED;

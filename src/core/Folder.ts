@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as path from "path";
 import Logger from "./Logger";
 
 /**
@@ -98,5 +99,18 @@ export default class Folder {
       video: [...this.files.video],
       other: [...this.files.other],
     };
+  }
+
+  public static guessMimeType(filename: string) {
+    const extension = path.extname(filename);
+    const mimeTypes = {
+      ".png": "image/png",
+      ".mov": "video/quicktime",
+      ".mp4": "video/mp4",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".gif": "image/gif",
+    };
+    return mimeTypes[extension] ?? "application/unknown";
   }
 }

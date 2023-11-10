@@ -20,7 +20,6 @@ class DeferredResponseQuery {
  * requesting remote permissions on a service
  */
 export default class OAuth2Client {
-
   protected getRequestUrl(): string {
     const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
     const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
@@ -28,7 +27,7 @@ export default class OAuth2Client {
   }
 
   protected getCallbackUrl(): string {
-    return this.getRequestUrl() + "/return";
+    return this.getRequestUrl() + "/callback";
   }
 
   /**

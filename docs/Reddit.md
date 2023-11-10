@@ -25,6 +25,8 @@ This token last for 24 hours and should be refreshed.
 
 # Random documentation
 
+https://www.reddit.com/r/test/
+
 https://www.reddit.com/prefs/apps
 
 https://www.reddit.com/wiki/api/#wiki_read_the_full_api_terms_and_sign_up_for_usage
@@ -71,3 +73,18 @@ https://github.com/rvelasq/scriptable-selig/blob/master/Selig.js#L855
 
 
 https://github.com/Pyprohly/reddit-api-doc-notes/blob/main/docs/api-reference/submission.rst#upload-media
+
+upload video
+https://www.reddit.com/r/redditdev/comments/9x3a6c/comment/e9p9cet/?utm_source=share&utm_medium=web2x&context=3
+https://oauth.reddit.com/api/v2/image_upload_s3.json
+similar to upload emoji
+https://www.reddit.com/dev/api/#POST_api_widget_image_upload_s3
+
+
+https://github.com/praw-dev/praw/blob/master/praw/models/reddit/subreddit.py#L1699
+"upload_image":            "r/{subreddit}/api/upload_sr_img",
+data["img_type"] = "jpg"
+files={"file": image}
+
+
+https://www.npmjs.com/package/reddit-api-image-upload
