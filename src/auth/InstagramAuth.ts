@@ -32,7 +32,7 @@ export default class InstagramAuth extends FacebookAuth {
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: this.getRedirectUri(),
+      redirect_uri: this.getCallbackUrl(),
       state: state,
       response_type: "code",
       scope: [

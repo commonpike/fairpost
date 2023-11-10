@@ -19,7 +19,7 @@ keys will not be needed anymore.
 - set up User authentication settings
   - read and write
   - fairpost is a bot
-  - redirect url with host/port from your .env (http://localhost:8000)
+  - redirect url with host/port from your .env (http://localhost:8000/callback)
   - website https://github.com/commonpike/fairpost
 - From the Oauth 01 settings
   - generate Api Key and secret
