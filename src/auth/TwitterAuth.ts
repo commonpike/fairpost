@@ -8,6 +8,7 @@ export default class TwitterAuth extends OAuth2Client {
   async setup() {
     const tokens = await this.requestAccessToken();
     Storage.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
+    Storage.set("auth", "TWITTER_REFRESH_TOKEN", tokens["refreshToken"]);
   }
 
   protected async requestAccessToken(): Promise<{
