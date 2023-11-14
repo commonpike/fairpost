@@ -96,12 +96,16 @@ export default class Twitter extends Platform {
 
     if (!dryrun) {
       Logger.trace("Tweeting " + post.id + "...");
-      result = await client2.v2.tweet({
-        text: post.body,
-        media: { media_ids: mediaIds },
-      });
-      if (result.errors) {
-        error = new Error(result.errors.join());
+      try {
+        result = await client2.v2.tweet({
+          text: post.body,
+          media: { media_ids: mediaIds },
+        });
+        if (result.errors) {
+          error = new Error(result.errors.join());
+        }
+      } catch (e) {
+        error = e;
       }
     } else {
       result = {

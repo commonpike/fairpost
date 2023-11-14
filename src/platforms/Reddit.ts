@@ -8,6 +8,7 @@ import Post, { PostStatus } from "../core/Post";
 import * as fs from "fs";
 import * as path from "path";
 import { XMLParser } from "fast-xml-parser";
+import * as sharp from "sharp";
 
 /**
  * Reddit: support for reddit platform
@@ -49,7 +50,24 @@ export default class Reddit extends Platform {
         post.files.video.length = 1;
         post.files.image = [];
       } else if (post.files.image.length > 1) {
-        post.files.image.length = 1;
+        // <MaxSizeAllowed>20971520</MaxSizeAllowed>
+        const image = post.files.image[0];
+        const metadata = await sharp(post.folder.path + "/" + image).metadata();
+        if (metadata.width > 3000) {
+          Logger.trace("Resizing " + image + " for reddit ..");
+          const extension = image.split(".")?.pop();
+          const basename = path.basename(
+            image,
+            extension ? "." + extension : "",
+          );
+          const outfile = "_reddit-" + basename + ".jpg";
+          await sharp(post.folder.path + "/" + image)
+            .resize({
+              width: 3000,
+            })
+            .toFile(post.folder.path + "/" + outfile);
+          post.files.image = [outfile];
+        }
       }
       post.save();
     }

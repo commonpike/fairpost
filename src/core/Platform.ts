@@ -71,7 +71,6 @@ export default class Platform {
    *
    * Do not throw errors. Instead, catch and log them,
    * and set the post.valid to false
-   *
    * @param folder - the folder for which to prepare a post for this platform
    * @returns the prepared post
    */
@@ -133,7 +132,6 @@ export default class Platform {
    *
    * do not throw errors, instead catch and log them, and
    * set the post to failed.
-   *
    * @returns {Promise} succes status
    */
 
