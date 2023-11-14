@@ -90,7 +90,7 @@ export default class LinkedInAuth extends OAuth2Client {
       grant_type: "authorization_code",
       code: code,
       client_id: Storage.get("settings", "LINKEDIN_CLIENT_ID"),
-      cient_secret: Storage.get("settings", "LINKEDIN_CLIENT_SECRET"),
+      client_secret: Storage.get("settings", "LINKEDIN_CLIENT_SECRET"),
       redirect_uri: redirectUri,
     })) as {
       access_token: string;
@@ -132,9 +132,7 @@ export default class LinkedInAuth extends OAuth2Client {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams(body),
-    })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
+    }).then((res) => this.handleApiResponse(res));
   }
 
   /**
@@ -145,7 +143,8 @@ export default class LinkedInAuth extends OAuth2Client {
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
       Logger.error("LinkedInAuth.handleApiResponse", "not ok");
-      throw new Error(response.status + ":" + response.statusText);
+      Logger.error("LinkedInAuth.handleApiResponse", await response.json());
+      throw new Error(response.url+":"+response.status + ", " + response.statusText);
     }
     const data = await response.json();
     if (data.error) {
@@ -166,12 +165,4 @@ export default class LinkedInAuth extends OAuth2Client {
     return data;
   }
 
-  /**
-   * Handle api error
-   * @param error - the error returned from fetch
-   */
-  private handleApiError(error: Error): never {
-    Logger.error("LinkedInAuth.handleApiError", error);
-    throw error;
-  }
 }

@@ -79,20 +79,32 @@ https://github.com/linkedin-developers/linkedin-api-js-client/blob/master/exampl
 ### single image 
 https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/posts-api?view=li-lms-2023-10&tabs=http#single-post-creation-sample-request
 
+get a lease
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/images-api?view=li-lms-2023-10&tabs=http#sample-request
+
+upload image
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/vector-asset-api?view=li-lms-2023-10&tabs=http#upload-the-image
+
+create a post 
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/posts-api?view=li-lms-2023-10&tabs=http#single-post-creation-sample-request
+
 ### multiple images 
 
 https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/multiimage-post-api?view=li-lms-2023-10&tabs=http#create-multiimage-content
 
-### upload image 
-https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/images-api?view=li-lms-2023-10&tabs=http#initialize-image-upload
+get a lease
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/images-api?view=li-lms-2023-10&tabs=http#sample-request
 
-and PUT
-
+upload image
 https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/vector-asset-api?view=li-lms-2023-10&tabs=http#upload-the-image
+
+create post 
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/multiimage-post-api?view=li-lms-2023-10&tabs=http#sample-request
+
 
 ## video
 
-https://jcergolj.me.uk/publish-linkedin-post-with-video/
+https://jcergolj.me.uk/publish-linkedin-post-with-video/ (lgc)
 
 
 
