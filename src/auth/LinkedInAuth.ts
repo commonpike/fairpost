@@ -15,14 +15,23 @@ export default class LinkedInAuth extends OAuth2Client {
   }
 
   /**
-   * Get LinkedIn Access token
-   *
+   * Get Linkedin Access token
    * @returns The access token
    */
   public async getAccessToken(): Promise<string> {
     if (this.accessToken) {
       return this.accessToken;
     }
+    this.accessToken = Storage.get("auth", "LINKEDIN_ACCESS_TOKEN");
+    // check if it works here
+    return this.accessToken;
+  }
+
+  /**
+   * Refresh LinkedIn Access token
+   * @returns The access token
+   */
+  public async refreshAccessToken(): Promise<string> {
     const result = await this.post("access_token", {
       grant_type: "refresh_token",
       refresh_token: Storage.get("settings", "LINKEDIN_REFRESH_TOKEN"),
@@ -36,6 +45,7 @@ export default class LinkedInAuth extends OAuth2Client {
       throw new Error(msg);
     }
     this.accessToken = result["access_token"];
+    // now store it
     return this.accessToken;
   }
 
@@ -53,7 +63,11 @@ export default class LinkedInAuth extends OAuth2Client {
       state: state,
       response_type: "code",
       duration: "permanent",
-      scope: ["r_basicprofile","w_member_social","w_organization_social"].join(' '),
+      scope: [
+        "r_basicprofile",
+        "w_member_social",
+        "w_organization_social",
+      ].join(" "),
     };
     url.search = new URLSearchParams(query).toString();
 
@@ -144,7 +158,9 @@ export default class LinkedInAuth extends OAuth2Client {
     if (!response.ok) {
       Logger.error("LinkedInAuth.handleApiResponse", "not ok");
       Logger.error("LinkedInAuth.handleApiResponse", await response.json());
-      throw new Error(response.url+":"+response.status + ", " + response.statusText);
+      throw new Error(
+        response.url + ":" + response.status + ", " + response.statusText,
+      );
     }
     const data = await response.json();
     if (data.error) {
@@ -164,5 +180,4 @@ export default class LinkedInAuth extends OAuth2Client {
     Logger.trace("LinkedInAuth.handleApiResponse", "success");
     return data;
   }
-
 }
