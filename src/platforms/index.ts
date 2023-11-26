@@ -3,13 +3,13 @@ export { default as Instagram } from "./Instagram";
 export { default as Twitter } from "./Twitter";
 export { default as Reddit } from "./Reddit";
 export { default as LinkedIn } from "./LinkedIn";
-export { default as AsYouTube } from "./AsYouTube";
-export { default as AsInstagram } from "./AsInstagram";
-export { default as AsTwitter } from "./AsTwitter";
-export { default as AsFacebook } from "./AsFacebook";
-export { default as AsTikTok } from "./AsTikTok";
-export { default as AsLinkedIn } from "./AsLinkedIn";
-export { default as AsReddit } from "./AsReddit";
+export { default as AsYouTube } from "./Ayrshare/AsYouTube";
+export { default as AsInstagram } from "./Ayrshare/AsInstagram";
+export { default as AsTwitter } from "./Ayrshare/AsTwitter";
+export { default as AsFacebook } from "./Ayrshare/AsFacebook";
+export { default as AsTikTok } from "./Ayrshare/AsTikTok";
+export { default as AsLinkedIn } from "./Ayrshare/AsLinkedIn";
+export { default as AsReddit } from "./Ayrshare/AsReddit";
 
 export enum PlatformId {
   UNKNOWN = "unknown",

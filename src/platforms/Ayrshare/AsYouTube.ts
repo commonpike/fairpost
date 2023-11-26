@@ -1,7 +1,7 @@
-import Ayrshare from "./Ayrshare";
-import { PlatformId } from ".";
-import Folder from "../core/Folder";
-import Post from "../core/Post";
+import Ayrshare from "../Ayrshare";
+import { PlatformId } from "..";
+import Folder from "../../core/Folder";
+import Post from "../../core/Post";
 
 /**
  * AsYouTube: support for youtube platform through Ayrshare
