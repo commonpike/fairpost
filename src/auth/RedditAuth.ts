@@ -14,6 +14,10 @@ export default class RedditAuth extends OAuth2Client {
     Storage.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
   }
 
+  public async getAccessToken(): Promise<string> {
+    return await this.refreshAccessToken();
+  }
+
   /**
    * Get Reddit Access token
    *
@@ -23,7 +27,7 @@ export default class RedditAuth extends OAuth2Client {
    * it if needed using the refresh_token
    * @returns The access token
    */
-  public async getAccessToken(): Promise<string> {
+  public async refreshAccessToken(): Promise<string> {
     if (this.accessToken) {
       return this.accessToken;
     }
