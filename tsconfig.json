@@ -6,7 +6,6 @@
     "outDir": "build"
   },
   "include": [
-    "index.ts",
-    "fairpost.ts"
+    "src/**/*"
   ]
 }

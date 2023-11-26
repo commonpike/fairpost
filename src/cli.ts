@@ -4,10 +4,10 @@
 */
 
 import * as path from "path";
-import Logger from "./src/core/Logger";
-import Feed from "./src/core/Feed";
-import { PostStatus } from "./src/core/Post";
-import { PlatformId } from "./src/platforms";
+import Logger from "./core/Logger";
+import Feed from "./core/Feed";
+import { PostStatus } from "./core/Post";
+import { PlatformId } from "./platforms";
 
 // arguments
 const COMMAND = process.argv[2] ?? "help";

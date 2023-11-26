@@ -40,7 +40,7 @@ export default class Feed {
   constructor(configPath?: string) {
     if (configPath) {
       const configPathResolved = path.resolve(
-        __dirname + "/../../../" + configPath,
+        __dirname + "/../../" + configPath,
       );
       dotenv.config({ path: configPathResolved });
     } else {
