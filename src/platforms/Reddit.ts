@@ -296,7 +296,7 @@ export default class Reddit extends Platform {
   // API implementation -------------------
 
   /**
-   * Do a GET request on the graph.
+   * Do a GET request on the api.
    * @param endpoint - the path to call
    * @param query - query string as object
    */
@@ -356,7 +356,7 @@ export default class Reddit extends Platform {
   }
 
   /**
-   * Do a FormData POST request on the graph.
+   * Do a FormData POST request on the api.
    * @param endpoint - the path to call
    * @param body - body as object
    */

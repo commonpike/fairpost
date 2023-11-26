@@ -115,7 +115,7 @@ export default class RedditAuth extends OAuth2Client {
   // API implementation -------------------
 
   /**
-   * Do a url-encoded POST request on the graph.
+   * Do a url-encoded POST request on the api.
    * @param endpoint - the path to call
    * @param body - body as object
    */
