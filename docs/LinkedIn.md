@@ -1,12 +1,14 @@
 # Platform: LinkedIn
 
-...
+The LinkedIn platform posts to your companies feed.
 
 ## Setting up the LinkedIn platform
 
 
 ### Create a new App in your linkedin account
 - create an company your account can manage
+- find your company id (like , 93841222)
+  - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your .env
 - create an app to manage the company page \
 https://www.linkedin.com/developers/apps/new
 - add 'share on linkedin' product on your app
@@ -19,7 +21,7 @@ https://www.linkedin.com/developers/apps/new
   - copy ClientID and ClientSecret \
     and save those as `FAIRPOST_LINKEDIN_CLIENT_ID` and `FAIRPOST_LINKEDIN_CLIENT_SECRET` \
     in your `.env`
-  - add redirect url for your app as in .env (http://localhost:8000/callback)
+  - add redirect url for your app as set in your .env (http://localhost:8000/callback)
 
 
 ### Enable the platform
@@ -70,9 +72,16 @@ https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-re
 LinkedIn supports programmatic refresh tokens for all approved Marketing Developer Platform (MDP) partners.
 By default, access tokens are valid for 60 days and programmatic refresh tokens are valid for a year.
 
+## post api (legacy, detailed)
+
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/ugc-post-api?view=li-lms-unversioned&tabs=http
+
 ## restliClient
 
 https://github.com/linkedin-developers/linkedin-api-js-client/blob/master/examples/create-posts.ts
+
+## simple text post 
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/posts-api?view=li-lms-2023-11&tabs=http#create-a-post
 
 ## image
 
@@ -106,7 +115,16 @@ https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-mana
 
 https://jcergolj.me.uk/publish-linkedin-post-with-video/ (lgc)
 
+get a lease 
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#initialize-video-upload
+OR
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/vector-asset-api?view=li-lms-2023-10&tabs=http#register-an-upload-for-video
 
+upload video
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#upload-the-video
+
+finalize upload 
+https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#finalize-video-upload
 
 
 
