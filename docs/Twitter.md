@@ -24,12 +24,12 @@ keys will not be needed anymore.
 - From the Oauth 01 settings
   - generate Api Key and secret
   - save these in .env as 
-    - `FAIRPOST_TWITTER_O1_API_KEY`
-    - `FAIRPOST_TWITTER_O1_API_KEY_SECRET`
+    - `FAIRPOST_TWITTER_OA1_API_KEY`
+    - `FAIRPOST_TWITTER_OA1_API_KEY_SECRET`
   - generate access token and secret, make sure it is read and write
   - save these in .env as as 
-    - `FAIRPOST_TWITTER_O1_ACCESS_TOKEN`
-    - `FAIRPOST_TWITTER_O1_ACCESS_TOKEN_SECRET`
+    - `FAIRPOST_TWITTER_OA1_ACCESS_TOKEN`
+    - `FAIRPOST_TWITTER_OA1_ACCESS_TOKEN_SECRET`
 - From the OAuth 2 settings
   - save `FAIRPOST_TWITTER_CLIENT_ID` in .env
   - save `FAIRPOST_TWITTER_CLIENT_SECRET` in .env

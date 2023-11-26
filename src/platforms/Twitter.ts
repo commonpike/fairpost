@@ -28,10 +28,10 @@ export default class Twitter extends Platform {
   /** @inheritdoc */
   async test() {
     const client1 = new TwitterApi({
-      appKey: Storage.get("settings", "TWITTER_O1_API_KEY"),
-      appSecret: Storage.get("settings", "TWITTER_O1_API_KEY_SECRET"),
-      accessToken: Storage.get("settings", "TWITTER_O1_ACCESS_TOKEN"),
-      accessSecret: Storage.get("settings", "TWITTER_O1_ACCESS_SECRET"),
+      appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
+      appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
     return {
@@ -71,10 +71,10 @@ export default class Twitter extends Platform {
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     const client1 = new TwitterApi({
-      appKey: Storage.get("settings", "TWITTER_O1_API_KEY"),
-      appSecret: Storage.get("settings", "TWITTER_O1_API_KEY_SECRET"),
-      accessToken: Storage.get("settings", "TWITTER_O1_ACCESS_TOKEN"),
-      accessSecret: Storage.get("settings", "TWITTER_O1_ACCESS_SECRET"),
+      appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
+      appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
 
     let error = undefined;
