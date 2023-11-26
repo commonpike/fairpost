@@ -17,6 +17,8 @@ api requires files in posts to have an url.
 ### Create a new App in your facebook account
  - create an Instagram business account
  - connect a Facebook page to your Instagram business account
+ - find that pages id and 
+   - save this as `FAIRPOST_INSTAGRAM_PAGE_ID` in your .env
  - go to https://developers.facebook.com/
  - create an app that can manage pages 
  - include the "Instagram Graph API" product as a new product 
