@@ -3,6 +3,7 @@
     Fairpost cli handler     
 */
 
+import "./bootstrap-cli";
 import * as path from "path";
 import Logger from "./core/Logger";
 import Feed from "./core/Feed";
@@ -13,7 +14,6 @@ import { PlatformId } from "./platforms";
 const COMMAND = process.argv[2] ?? "help";
 
 // options
-const CONFIG = (getOption("config") as string) ?? ".env";
 const DRY_RUN = !!getOption("dry-run") ?? false;
 const REPORT = (getOption("report") as string) ?? "text";
 const PLATFORMS =
@@ -33,11 +33,12 @@ function getOption(key: string): boolean | string | null {
   return value.replace(`--${key}=`, "");
 }
 
+
 async function main() {
   let result: unknown;
   let report = "";
 
-  const feed = new Feed(CONFIG);
+  const feed = new Feed();
   Logger.trace(
     "Fairpost " + feed.id + " " + COMMAND,
     DRY_RUN ? " dry-run" : "",

@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as dotenv from "dotenv";
 import Logger from "./Logger";
 import Storage from "./Storage";
 import Platform from "./Platform";
@@ -37,16 +36,8 @@ export default class Feed {
    * @param configPath - path to file for dotenv to parse
    */
 
-  constructor(configPath?: string) {
-    if (configPath) {
-      const configPathResolved = path.resolve(
-        __dirname + "/../../" + configPath,
-      );
-      dotenv.config({ path: configPathResolved });
-    } else {
-      dotenv.config();
-    }
-
+  constructor() {
+    
     this.path = Storage.get("settings", "FEED_PATH");
     this.id = this.path;
 

@@ -130,6 +130,9 @@ fairpost.js [command] [arguments] --config=.env-test
 # Set the cli output format to pure json
 fairpost.js [command] [arguments] --report=json
 
+# Output trace logging on the command line (overriding .env)
+fairpost.js [command] [arguments] --verbose
+
 ```
 
 
