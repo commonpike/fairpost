@@ -122,7 +122,7 @@ export default class Twitter extends Platform {
     });
 
     if (error) {
-      Logger.error("Facebook.publishPost", this.id, "failed", result);
+      Logger.error("Twitter.publishPost", this.id, "failed", error, result);
     }
 
     if (!dryrun) {

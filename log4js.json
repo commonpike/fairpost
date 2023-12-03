@@ -1,8 +1,8 @@
 {
   "appenders": {
-    "app": { "type": "file", "filename" : "var/log/fairpost.log" }
+    "log": { "type": "file", "filename" : "var/log/fairpost.log" }
   },
   "categories": {
-    "default": { "appenders": ["app"], "level": "trace" }
+    "default": { "appenders": ["log"], "level": "info" }
   }
 }
