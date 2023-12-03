@@ -1,6 +1,7 @@
 import * as fs from "fs";
-import Logger from "./Logger";
+
 import Folder from "./Folder";
+import Logger from "../services/Logger";
 import Platform from "./Platform";
 
 /**

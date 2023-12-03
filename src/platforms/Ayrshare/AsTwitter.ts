@@ -1,10 +1,11 @@
-import Logger from "../../core/Logger";
-import Ayrshare from "../Ayrshare";
-import { PlatformId } from "..";
-import Folder from "../../core/Folder";
-import Post from "../../core/Post";
 import * as fs from "fs";
 import * as sharp from "sharp";
+
+import Ayrshare from "../Ayrshare";
+import Folder from "../../models/Folder";
+import Logger from "../../services/Logger";
+import { PlatformId } from "..";
+import Post from "../../models/Post";
 
 /**
  * AsTwitter: support for twitter platform through Ayrshare

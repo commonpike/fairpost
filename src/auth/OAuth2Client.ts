@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as http from "http";
 import * as url from "url";
-import Storage from "../core/Storage";
+import Storage from "../services/Storage";
 
 class DeferredResponseQuery {
   promise: Promise<{ [key: string]: string | string[] }>;

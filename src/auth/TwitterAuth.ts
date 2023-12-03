@@ -1,8 +1,8 @@
 import { TwitterApi } from "twitter-api-v2";
 
 import OAuth2Client from "./OAuth2Client";
-import Logger from "../core/Logger";
-import Storage from "../core/Storage";
+import Logger from "../services/Logger";
+import Storage from "../services/Storage";
 
 export default class TwitterAuth extends OAuth2Client {
   async setup() {

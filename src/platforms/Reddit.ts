@@ -1,14 +1,16 @@
-import Storage from "../core/Storage";
-import Logger from "../core/Logger";
-import RedditAuth from "../auth/RedditAuth";
-import { PlatformId } from ".";
-import Platform from "../core/Platform";
-import Folder from "../core/Folder";
-import Post, { PostStatus } from "../core/Post";
 import * as fs from "fs";
 import * as path from "path";
-import { XMLParser } from "fast-xml-parser";
 import * as sharp from "sharp";
+
+import Post, { PostStatus } from "../models/Post";
+
+import Folder from "../models/Folder";
+import Logger from "../services/Logger";
+import Platform from "../models/Platform";
+import { PlatformId } from ".";
+import RedditAuth from "../auth/RedditAuth";
+import Storage from "../services/Storage";
+import { XMLParser } from "fast-xml-parser";
 
 /**
  * Reddit: support for reddit platform
