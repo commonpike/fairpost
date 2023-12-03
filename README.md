@@ -3,8 +3,9 @@
 
 # Fairpost
 
-Fairpost helps you manage your social
-feeds from the command line, using Node.
+Fairpost helps you manage your social media feeds from a single 
+entry point, using Node. It supports Facebook, Instagram, 
+Reddit, Twitter and LinkedIn.
 
 Your Feed is just a folder on disk, and all subfolders are Posts, 
 containing at least one text file (the post body) and 
@@ -14,7 +15,7 @@ how a folder with contents can best be presented
 as a post on each platform. 
 
 Commonly, you would call this script every day or week. 
-Fairpost will then automatically **prepare** the folders,
+Fairpost can then automatically **prepare** the folders,
 **schedule** the next post using a certain interval and 
 **publish** any post when it is due. All you have to do is 
 add folders with content.
@@ -45,7 +46,7 @@ cp .env.dist .env && nano .env
  
 ## Enable platforms
 
-Read how to enable various media platforms in the [docs](docs).
+Read how to enable various social media platforms in the [docs](docs).
 
 
 ## Feed planning
@@ -127,10 +128,10 @@ fairpost.js publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-r
 # Select which config file to use
 fairpost.js [command] [arguments] --config=.env-test
 
-# Set the cli output format to pure json
+# Set the cli report format to pure json
 fairpost.js [command] [arguments] --report=json
 
-# Output trace logging on the command line (overriding .env)
+# Enable trace logging output to the console (overriding .env)
 fairpost.js [command] [arguments] --verbose
 
 ```
