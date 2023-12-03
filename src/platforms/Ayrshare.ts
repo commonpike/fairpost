@@ -1,13 +1,14 @@
-import Logger from "../services/Logger";
-import Storage from "../services/Storage";
 import * as fs from "fs";
 import * as path from "path";
-import { randomUUID } from "crypto";
-import { PlatformId } from ".";
-import Platform from "../models/Platform";
+
 import Folder from "../models/Folder";
+import Logger from "../services/Logger";
+import Platform from "../models/Platform";
+import { PlatformId } from ".";
 import Post from "../models/Post";
 import { PostStatus } from "../models/Post";
+import Storage from "../services/Storage";
+import { randomUUID } from "crypto";
 
 /**
  * Ayrshare base class to extend all ayrshare platforms on

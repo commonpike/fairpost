@@ -3,12 +3,14 @@
     Fairpost cli handler     
 */
 
-import * as path from "path";
 import "./bootstrap-cli";
+
+import * as path from "path";
+
 import Fairpost from "./services/Fairpost";
 import Logger from "./services/Logger";
-import { PostStatus } from "./models/Post";
 import { PlatformId } from "./platforms";
+import { PostStatus } from "./models/Post";
 
 // arguments
 const COMMAND = process.argv[2] ?? "help";

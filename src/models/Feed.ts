@@ -1,11 +1,12 @@
 import * as fs from "fs";
-import Logger from "../services/Logger";
-import Storage from "../services/Storage";
-import Platform from "./Platform";
+
 import Folder from "./Folder";
+import Logger from "../services/Logger";
+import Platform from "./Platform";
+import { PlatformId } from "../platforms";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import { PlatformId } from "../platforms";
+import Storage from "../services/Storage";
 
 /**
  * Feed - the core handler of fairpost

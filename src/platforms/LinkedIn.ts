@@ -1,14 +1,15 @@
-import Logger from "../services/Logger";
-import Storage from "../services/Storage";
-import Platform from "../models/Platform";
-import { PlatformId } from ".";
-import Folder from "../models/Folder";
-import Post from "../models/Post";
-import LinkedInAuth from "../auth/LinkedInAuth";
-import { PostStatus } from "../models/Post";
 import * as fs from "fs";
 //import * as path from "path";
 import * as sharp from "sharp";
+
+import Folder from "../models/Folder";
+import LinkedInAuth from "../auth/LinkedInAuth";
+import Logger from "../services/Logger";
+import Platform from "../models/Platform";
+import { PlatformId } from ".";
+import Post from "../models/Post";
+import { PostStatus } from "../models/Post";
+import Storage from "../services/Storage";
 
 export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;

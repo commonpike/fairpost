@@ -1,9 +1,10 @@
-import Ayrshare from "../Ayrshare";
-import { PlatformId } from "..";
-import Folder from "../../models/Folder";
-import Post from "../../models/Post";
 import * as fs from "fs";
 import * as sharp from "sharp";
+
+import Ayrshare from "../Ayrshare";
+import Folder from "../../models/Folder";
+import { PlatformId } from "..";
+import Post from "../../models/Post";
 
 /**
  * AsFacebook: support for facebook platform through Ayrshare

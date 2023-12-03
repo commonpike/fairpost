@@ -1,9 +1,10 @@
-import Logger from "../../services/Logger";
-import Ayrshare from "../Ayrshare";
-import { PlatformId } from "..";
-import Folder from "../../models/Folder";
-import Post from "../../models/Post";
 import * as sharp from "sharp";
+
+import Ayrshare from "../Ayrshare";
+import Folder from "../../models/Folder";
+import Logger from "../../services/Logger";
+import { PlatformId } from "..";
+import Post from "../../models/Post";
 
 /**
  * AsInstagram: support for instagram platform through Ayrshare

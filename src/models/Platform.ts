@@ -1,9 +1,10 @@
 import * as fs from "fs";
-import Logger from "../services/Logger";
+
 import Folder from "./Folder";
+import Logger from "../services/Logger";
+import { PlatformId } from "../platforms";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import { PlatformId } from "../platforms";
 
 /**
  * Platform base class to extend all platforms on

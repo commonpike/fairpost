@@ -1,10 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as platforms from "../platforms";
+
 import Feed from "../models/Feed";
+import Logger from "./Logger";
 import Platform from "../models/Platform";
 import Storage from "./Storage";
-import Logger from "./Logger";
-import * as platforms from "../platforms";
 
 /**
  * Fairpost - singleton service for fairpost app

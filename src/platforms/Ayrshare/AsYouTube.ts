@@ -1,6 +1,6 @@
 import Ayrshare from "../Ayrshare";
-import { PlatformId } from "..";
 import Folder from "../../models/Folder";
+import { PlatformId } from "..";
 import Post from "../../models/Post";
 
 /**
