@@ -1,11 +1,11 @@
-import Logger from "../core/Logger";
-import Storage from "../core/Storage";
-import Platform from "../core/Platform";
+import Logger from "../services/Logger";
+import Storage from "../services/Storage";
+import Platform from "../models/Platform";
 import { PlatformId } from ".";
-import Folder from "../core/Folder";
-import Post from "../core/Post";
+import Folder from "../models/Folder";
+import Post from "../models/Post";
 import LinkedInAuth from "../auth/LinkedInAuth";
-import { PostStatus } from "../core/Post";
+import { PostStatus } from "../models/Post";
 import * as fs from "fs";
 //import * as path from "path";
 import * as sharp from "sharp";

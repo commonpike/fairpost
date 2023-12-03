@@ -1,10 +1,10 @@
-import Storage from "../core/Storage";
-import Logger from "../core/Logger";
-import Platform from "../core/Platform";
+import Storage from "../services/Storage";
+import Logger from "../services/Logger";
+import Platform from "../models/Platform";
 import { PlatformId } from ".";
-import Folder from "../core/Folder";
-import Post from "../core/Post";
-import { PostStatus } from "../core/Post";
+import Folder from "../models/Folder";
+import Post from "../models/Post";
+import { PostStatus } from "../models/Post";
 import FacebookAuth from "../auth/FacebookAuth";
 import * as fs from "fs";
 import * as path from "path";

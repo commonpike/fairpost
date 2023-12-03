@@ -1,6 +1,6 @@
 import OAuth2Client from "./OAuth2Client";
-import Logger from "../core/Logger";
-import Storage from "../core/Storage";
+import Logger from "../services/Logger";
+import Storage from "../services/Storage";
 
 export default class RedditAuth extends OAuth2Client {
   API_VERSION = "v1";

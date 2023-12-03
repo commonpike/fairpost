@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import Logger from "./Logger";
+import Logger from "../services/Logger";
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";

@@ -1,6 +1,6 @@
 import * as fs from "fs";
-import Logger from "./Logger";
-import Storage from "./Storage";
+import Logger from "../services/Logger";
+import Storage from "../services/Storage";
 import Platform from "./Platform";
 import Folder from "./Folder";
 import Post from "./Post";

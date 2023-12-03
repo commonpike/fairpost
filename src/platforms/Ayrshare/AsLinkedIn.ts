@@ -1,8 +1,8 @@
-import Logger from "../../core/Logger";
+import Logger from "../../services/Logger";
 import Ayrshare from "../Ayrshare";
 import { PlatformId } from "..";
-import Folder from "../../core/Folder";
-import Post from "../../core/Post";
+import Folder from "../../models/Folder";
+import Post from "../../models/Post";
 import * as fs from "fs";
 import * as sharp from "sharp";
 

@@ -1,10 +1,10 @@
-import Storage from "../core/Storage";
-import Logger from "../core/Logger";
+import Storage from "../services/Storage";
+import Logger from "../services/Logger";
 import RedditAuth from "../auth/RedditAuth";
 import { PlatformId } from ".";
-import Platform from "../core/Platform";
-import Folder from "../core/Folder";
-import Post, { PostStatus } from "../core/Post";
+import Platform from "../models/Platform";
+import Folder from "../models/Folder";
+import Post, { PostStatus } from "../models/Post";
 import * as fs from "fs";
 import * as path from "path";
 import { XMLParser } from "fast-xml-parser";

@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
-import Feed from "./Feed";
-import Platform from "./Platform";
+import Feed from "../models/Feed";
+import Platform from "../models/Platform";
 import Storage from "./Storage";
 import Logger from "./Logger";
 import * as platforms from "../platforms";
@@ -9,8 +9,8 @@ import * as platforms from "../platforms";
 /**
  * Fairpost - singleton service for fairpost app
  *
- * - provides getFeed()
- *   all the fairpost logic comes from a feed
+ * - provides the feed, that contains
+ *   all the fairpost logic
  */
 
 class Fairpost {
@@ -56,8 +56,14 @@ class Fairpost {
     return new Feed(this.platforms.filter((p) => p.active));
   }
 
-  public fatal(msg: string) {
+  public error(msg: string) {
+    Logger.error(msg);
+    throw new Error(msg);
+  }
+
+  public fatal(msg: string, code = 1) {
     Logger.fatal(msg);
+    process.exitCode = code;
     throw new Error(msg);
   }
 }

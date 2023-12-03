@@ -1,11 +1,11 @@
 import { TwitterApi } from "twitter-api-v2";
-import Storage from "../core/Storage";
-import Logger from "../core/Logger";
+import Storage from "../services/Storage";
+import Logger from "../services/Logger";
 import TwitterAuth from "../auth/TwitterAuth";
 import { PlatformId } from ".";
-import Platform from "../core/Platform";
-import Folder from "../core/Folder";
-import Post, { PostStatus } from "../core/Post";
+import Platform from "../models/Platform";
+import Folder from "../models/Folder";
+import Post, { PostStatus } from "../models/Post";
 import * as fs from "fs";
 import * as sharp from "sharp";
 

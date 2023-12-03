@@ -1,8 +1,8 @@
 import Ayrshare from "../Ayrshare";
 import { PlatformId } from "..";
-import Storage from "../../core/Storage";
-import Folder from "../../core/Folder";
-import Post from "../../core/Post";
+import Storage from "../../services/Storage";
+import Folder from "../../models/Folder";
+import Post from "../../models/Post";
 
 /**
  * AsReddit: support for reddit platform through Ayrshare

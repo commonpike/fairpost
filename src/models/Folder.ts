@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import Logger from "./Logger";
+import Logger from "../services/Logger";
 
 /**
  * Folder - a folder within a feed
