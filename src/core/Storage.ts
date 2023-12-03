@@ -1,5 +1,5 @@
 /**
- * Store - minimalist storage manager
+ * Store - minimalist storage manager - singleton
  *
  * - sets and gets key / value pairs.
  * - uses two 'stores':
@@ -8,12 +8,24 @@
  *     stored and encrypted somewhere else
  *
  */
-export default class Storage {
-  public static get(
-    store: "settings" | "auth",
-    key: string,
-    def?: string,
-  ): string {
+
+class Storage {
+  static instance: Storage;
+
+  constructor() {
+    if (Storage.instance) {
+      throw new Error("Storage: call getInstance() instead");
+    }
+  }
+
+  static getInstance(): Storage {
+    if (!Storage.instance) {
+      Storage.instance = new Storage();
+    }
+    return Storage.instance;
+  }
+
+  public get(store: "settings" | "auth", key: string, def?: string): string {
     let value = "" as string;
     const storage =
       store === "settings"
@@ -33,7 +45,7 @@ export default class Storage {
     return value;
   }
 
-  public static set(store: "settings" | "auth", key: string, value: string) {
+  public set(store: "settings" | "auth", key: string, value: string) {
     const storage =
       store === "settings"
         ? process.env.FAIRPOST_STORAGE_SETTINGS
@@ -53,3 +65,5 @@ export default class Storage {
     }
   }
 }
+
+export default Storage.getInstance();
