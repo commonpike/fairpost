@@ -1,12 +1,10 @@
 import * as fs from "fs";
-import * as path from "path";
 import Logger from "./Logger";
 import Storage from "./Storage";
 import Platform from "./Platform";
 import Folder from "./Folder";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import * as platforms from "../platforms";
 import { PlatformId } from "../platforms";
 
 /**
@@ -36,30 +34,11 @@ export default class Feed {
    * @param configPath - path to file for dotenv to parse
    */
 
-  constructor() {
+  constructor(platforms: Platform[]) {
+    platforms.forEach((p) => (this.platforms[p.id] = p));
     this.path = Storage.get("settings", "FEED_PATH");
     this.id = this.path;
-
     this.interval = Number(Storage.get("settings", "FEED_INTERVAL", "7"));
-    const activePlatformIds = Storage.get("settings", "FEED_PLATFORMS").split(
-      ",",
-    );
-
-    const platformClasses = fs.readdirSync(
-      path.resolve(__dirname + "/../platforms"),
-    );
-
-    platformClasses.forEach((file) => {
-      const constructor = file.replace(".ts", "").replace(".js", "");
-      // nb import * as platforms loaded the constructors
-      if (platforms[constructor] !== undefined) {
-        const platform = new platforms[constructor]();
-        if (activePlatformIds.includes(platform.id)) {
-          platform.active = true;
-          this.platforms[platform.id] = platform;
-        }
-      }
-    });
   }
 
   /**
