@@ -52,18 +52,15 @@ export default class InstagramAuth extends FacebookAuth {
 
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     return result["code"] as string;
   }

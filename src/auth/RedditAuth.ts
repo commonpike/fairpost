@@ -1,5 +1,5 @@
-import OAuth2Client from "./OAuth2Client";
 import Logger from "../services/Logger";
+import OAuth2Client from "./OAuth2Client";
 import Storage from "../services/Storage";
 
 export default class RedditAuth extends OAuth2Client {
@@ -38,8 +38,7 @@ export default class RedditAuth extends OAuth2Client {
 
     if (!result["access_token"]) {
       const msg = "Remote response did not return a access_token";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     this.accessToken = result["access_token"];
     return this.accessToken;
@@ -66,18 +65,15 @@ export default class RedditAuth extends OAuth2Client {
     const result = await this.requestRemotePermissions("Reddit", url.href);
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -106,8 +102,7 @@ export default class RedditAuth extends OAuth2Client {
 
     if (!result["access_token"]) {
       const msg = "Remote response did not return a access_token";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
 
     return result;
@@ -153,8 +148,11 @@ export default class RedditAuth extends OAuth2Client {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("RedditAuth.handleApiResponse", "not ok");
-      throw new Error(response.status + ":" + response.statusText);
+      throw Logger.error(
+        "RedditAuth.handleApiResponse",
+        "not ok",
+        response.status + ":" + response.statusText,
+      );
     }
     const data = await response.json();
     if (data.error) {
@@ -168,8 +166,7 @@ export default class RedditAuth extends OAuth2Client {
         data.error.error_subcode +
         ") " +
         data.error.message;
-      Logger.error("RedditAuth.handleApiResponse", error);
-      throw new Error(error);
+      throw Logger.error("RedditAuth.handleApiResponse", error);
     }
     Logger.trace("RedditAuth.handleApiResponse", "success");
     return data;
@@ -180,7 +177,6 @@ export default class RedditAuth extends OAuth2Client {
    * @param error - the error returned from fetch
    */
   private handleApiError(error: Error): never {
-    Logger.error("RedditAuth.handleApiError", error);
-    throw error;
+    throw Logger.error("RedditAuth.handleApiError", error);
   }
 }

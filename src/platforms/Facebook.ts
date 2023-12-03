@@ -120,7 +120,7 @@ export default class Facebook extends Platform {
     });
 
     if (error) {
-      Logger.error("Facebook.publishPost", this.id, "failed", response);
+      Logger.warn("Facebook.publishPost", this.id, "failed", response);
     }
 
     if (!dryrun) {
@@ -160,7 +160,7 @@ export default class Facebook extends Platform {
     };
 
     if (!result["id"]) {
-      throw new Error("No id returned when uploading photo");
+      throw Logger.error("No id returned when uploading photo");
     }
     return result;
   }
@@ -196,7 +196,7 @@ export default class Facebook extends Platform {
     };
 
     if (!result["id"]) {
-      throw new Error("No id returned when uploading video");
+      throw Logger.error("No id returned when uploading video");
     }
     return result;
   }
@@ -305,8 +305,11 @@ export default class Facebook extends Platform {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("Facebook.handleApiResponse", response);
-      throw new Error(response.status + ":" + response.statusText);
+      throw Logger.error(
+        "Facebook.handleApiResponse",
+        response,
+        response.status + ":" + response.statusText,
+      );
     }
     const data = await response.json();
     if (data.error) {
@@ -320,8 +323,7 @@ export default class Facebook extends Platform {
         data.error.error_subcode +
         ") " +
         data.error.message;
-      Logger.error("Facebook.handleApiResponse", error);
-      throw new Error(error);
+      throw Logger.error("Facebook.handleApiResponse", error);
     }
     Logger.trace("Facebook.handleApiResponse", "success");
     return data;
@@ -332,7 +334,6 @@ export default class Facebook extends Platform {
    * @param error - the error returned from fetch
    */
   private handleApiError(error: Error): never {
-    Logger.error("Facebook.handleApiError", error);
-    throw error;
+    throw Logger.error("Facebook.handleApiError", error);
   }
 }

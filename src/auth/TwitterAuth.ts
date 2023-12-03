@@ -1,8 +1,7 @@
-import { TwitterApi } from "twitter-api-v2";
-
-import OAuth2Client from "./OAuth2Client";
 import Logger from "../services/Logger";
+import OAuth2Client from "./OAuth2Client";
 import Storage from "../services/Storage";
+import { TwitterApi } from "twitter-api-v2";
 
 export default class TwitterAuth extends OAuth2Client {
   async setup() {
@@ -31,18 +30,15 @@ export default class TwitterAuth extends OAuth2Client {
     const result = await this.requestRemotePermissions("Twitter", url);
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
 
     const tokens = await client.loginWithOAuth2({
@@ -51,7 +47,7 @@ export default class TwitterAuth extends OAuth2Client {
       redirectUri: this.getCallbackUrl(),
     });
     if (!tokens["accessToken"]) {
-      throw new Error("An accessToken was not returned");
+      throw Logger.error("An accessToken was not returned");
     }
 
     return tokens;

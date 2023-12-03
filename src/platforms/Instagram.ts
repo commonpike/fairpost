@@ -120,7 +120,7 @@ export default class Instagram extends Platform {
     });
 
     if (error) {
-      Logger.error("Instagram.publishPost", this.id, "failed", response);
+      Logger.warn("Instagram.publishPost", this.id, "failed", response);
     } else if (!dryrun) {
       // post.link = ""; // todo : get instagram shortcode
       post.status = PostStatus.PUBLISHED;
@@ -153,8 +153,7 @@ export default class Instagram extends Platform {
       caption: caption,
     })) as { id: string };
     if (!container?.id) {
-      Logger.error("No id returned for container for " + file, container);
-      throw new Error("No id returned for container for " + file);
+      throw Logger.error("No id returned for container for " + file, container);
     }
 
     if (!dryrun) {
@@ -164,8 +163,7 @@ export default class Instagram extends Platform {
         creation_id: container.id,
       })) as { id: string };
       if (!response?.id) {
-        Logger.error("No id returned for igMedia for " + file, response);
-        throw new Error("No id returned for igMedia for " + file);
+        throw Logger.error("No id returned for igMedia for " + file, response);
       }
       return response;
     }
@@ -195,8 +193,7 @@ export default class Instagram extends Platform {
       caption: caption,
     })) as { id: string };
     if (!container?.id) {
-      Logger.error("No id returned for container for " + file, container);
-      throw new Error("No id returned for container for " + file);
+      throw Logger.error("No id returned for container for " + file, container);
     }
 
     if (!dryrun) {
@@ -206,8 +203,7 @@ export default class Instagram extends Platform {
         creation_id: container.id,
       })) as { id: string };
       if (!response?.id) {
-        Logger.error("No id returned for igMedia for " + file, response);
-        throw new Error("No id returned for igMedia for " + file);
+        throw Logger.error("No id returned for igMedia for " + file, response);
       }
       return response;
     }
@@ -269,8 +265,7 @@ export default class Instagram extends Platform {
       id: string;
     };
     if (!container["id"]) {
-      Logger.error("No id returned for carroussel container ", container);
-      throw new Error("No id returned for carroussel container ");
+      throw Logger.error("No id returned for carroussel container ", container);
     }
 
     // publish carousel
@@ -281,8 +276,10 @@ export default class Instagram extends Platform {
         id: string;
       };
       if (!response["id"]) {
-        Logger.error("No id returned for igMedia for carroussel", response);
-        throw new Error("No id returned for igMedia for carroussel");
+        throw Logger.error(
+          "No id returned for igMedia for carroussel",
+          response,
+        );
       }
 
       return response;
@@ -310,7 +307,7 @@ export default class Instagram extends Platform {
     };
 
     if (!result["id"]) {
-      throw new Error("No id returned after uploading photo " + file);
+      throw Logger.error("No id returned after uploading photo " + file);
     }
     return result;
   }
@@ -334,7 +331,7 @@ export default class Instagram extends Platform {
       picture: string;
     };
     if (!photoData.images?.length) {
-      throw new Error("No derivates found for photo " + id);
+      throw Logger.error("No derivates found for photo " + id);
     }
 
     // find largest derivative
@@ -342,7 +339,7 @@ export default class Instagram extends Platform {
       return prev && prev.width > current.width ? prev : current;
     });
     if (!largestPhoto["source"]) {
-      throw new Error("Largest derivate for photo " + id + " has no source");
+      throw Logger.error("Largest derivate for photo " + id + " has no source");
     }
     return largestPhoto["source"];
   }
@@ -368,7 +365,7 @@ export default class Instagram extends Platform {
     };
 
     if (!result["id"]) {
-      throw new Error("No id returned when uploading video");
+      throw Logger.error("No id returned when uploading video");
     }
     return result;
   }
@@ -387,7 +384,7 @@ export default class Instagram extends Platform {
       source: string;
     };
     if (!videoData.source) {
-      throw new Error("No source url found for video " + id);
+      throw Logger.error("No source url found for video " + id);
     }
     return videoData["source"];
   }
@@ -515,8 +512,7 @@ export default class Instagram extends Platform {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("Ayrshare.handleApiResponse", response);
-      throw new Error(response.status + ":" + response.statusText);
+      throw Logger.error("Ayrshare.handleApiResponse", response);
     }
     const data = await response.json();
     if (data.error) {
@@ -530,8 +526,7 @@ export default class Instagram extends Platform {
         data.error.error_subcode +
         ") " +
         data.error.message;
-      Logger.error("Facebook.handleApiResponse", error);
-      throw new Error(error);
+      throw Logger.error("Facebook.handleApiResponse", error);
     }
     Logger.trace("Facebook.handleApiResponse", "success");
     return data;
@@ -542,7 +537,6 @@ export default class Instagram extends Platform {
    * @param error - the api error returned from fetch
    */
   private handleApiError(error: Error): never {
-    Logger.error("Facebook.handleApiError", error);
-    throw error;
+    throw Logger.error("Facebook.handleApiError", error);
   }
 }

@@ -97,7 +97,7 @@ export default class Feed {
     Logger.trace("Feed", "getPlatform", platformId);
     const platform = this.platforms[platformId];
     if (!platform) {
-      throw new Error("Unknown platform: " + platformId);
+      throw Logger.error("Unknown platform: " + platformId);
     }
     return platform;
   }
@@ -285,10 +285,10 @@ export default class Feed {
     Logger.trace("Feed", "schedulePost", path, platformId, date);
     const post = this.getPost(path, platformId);
     if (!post.valid) {
-      throw new Error("Post is not valid");
+      throw Logger.error("Post is not valid");
     }
     if (post.status !== PostStatus.UNSCHEDULED) {
-      throw new Error("Post is not unscheduled");
+      throw Logger.error("Post is not unscheduled");
     }
     post.schedule(date);
     return post;
@@ -319,10 +319,10 @@ export default class Feed {
       for (const folder of folders) {
         const post = platform.getPost(folder);
         if (!post.valid) {
-          throw new Error("Post is not valid");
+          throw Logger.error("Post is not valid");
         }
         if (post.status !== PostStatus.UNSCHEDULED) {
-          throw new Error("Post is not unscheduled");
+          throw Logger.error("Post is not unscheduled");
         }
         post.schedule(date);
         posts.push(post);
@@ -356,7 +356,7 @@ export default class Feed {
       Logger.info("Posting", platformId, path);
       await platform.publishPost(post, dryrun);
     } else {
-      throw new Error("Post is not valid");
+      throw Logger.error("Post is not valid");
     }
     return post;
   }

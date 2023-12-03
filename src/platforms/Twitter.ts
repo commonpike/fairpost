@@ -89,7 +89,8 @@ export default class Twitter extends Platform {
         try {
           mediaIds.push(await client1.v1.uploadMedia(path));
         } catch (e) {
-          throw new Error(e);
+          Logger.warn("Twitter.publishPost uploadMedia failed", e);
+          error = e;
         }
       }
     }
@@ -97,17 +98,19 @@ export default class Twitter extends Platform {
     const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
 
     if (!dryrun) {
-      Logger.trace("Tweeting " + post.id + "...");
-      try {
-        result = await client2.v2.tweet({
-          text: post.body,
-          media: { media_ids: mediaIds },
-        });
-        if (result.errors) {
-          error = new Error(result.errors.join());
+      if (!error) {
+        Logger.trace("Tweeting " + post.id + "...");
+        try {
+          result = await client2.v2.tweet({
+            text: post.body,
+            media: { media_ids: mediaIds },
+          });
+          if (result.errors) {
+            error = new Error(result.errors.join());
+          }
+        } catch (e) {
+          error = e;
         }
-      } catch (e) {
-        error = e;
       }
     } else {
       result = {
@@ -124,7 +127,7 @@ export default class Twitter extends Platform {
     });
 
     if (error) {
-      Logger.error("Twitter.publishPost", this.id, "failed", error, result);
+      Logger.warn("Twitter.publishPost", this.id, "failed", error, result);
     }
 
     if (!dryrun) {

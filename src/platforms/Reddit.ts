@@ -111,7 +111,7 @@ export default class Reddit extends Platform {
     });
 
     if (error) {
-      Logger.error("Reddit.publishPost", this.id, "failed", response);
+      Logger.warn("Reddit.publishPost", this.id, "failed", response);
     } else if (!dryrun) {
       // post.link = ""; // todo : await reddit websockets
       post.status = PostStatus.PUBLISHED;
@@ -238,8 +238,7 @@ export default class Reddit extends Platform {
     };
     if (!lease.args?.action || !lease.args?.fields) {
       const msg = "Reddit.getUploadLease: bad answer";
-      Logger.error(msg, lease);
-      throw new Error(msg);
+      throw Logger.error(msg, lease);
     }
 
     return {
@@ -284,14 +283,12 @@ export default class Reddit extends Platform {
       const encodedURL = xml.PostResponse.Location;
       if (!encodedURL) {
         const msg = "Reddit.uploadFile: No URL returned";
-        Logger.error(msg, xml);
-        throw new Error(msg);
+        throw Logger.error(msg, xml);
       }
       return decodeURIComponent(encodedURL);
     } catch (e) {
       const msg = "Reddit.uploadFile: cant parse xml";
-      Logger.error(msg, response);
-      throw e;
+      throw Logger.error(msg, response, e);
     }
   }
 
@@ -394,8 +391,11 @@ export default class Reddit extends Platform {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("Reddit.handleApiResponse", "not ok");
-      throw new Error(response.status + ":" + response.statusText);
+      throw Logger.error(
+        "Reddit.handleApiResponse",
+        "not ok",
+        response.status + ":" + response.statusText,
+      );
     }
     const data = await response.json();
     if (data.json?.errors?.length) {
@@ -405,8 +405,7 @@ export default class Reddit extends Platform {
         data.json.errors[0] +
         "-" +
         data.json.errors.slice(1).join();
-      Logger.error("Reddit.handleApiResponse", error);
-      throw new Error(error);
+      throw Logger.error("Reddit.handleApiResponse", error);
     }
     Logger.trace("Reddit.handleApiResponse", "success");
     return data;
@@ -417,7 +416,6 @@ export default class Reddit extends Platform {
    * @param error - the error returned from fetch
    */
   private handleApiError(error: Error): never {
-    Logger.error("Reddit.handleApiError", error);
-    throw error;
+    throw Logger.error("Reddit.handleApiError", error);
   }
 }

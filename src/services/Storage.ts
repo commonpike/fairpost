@@ -1,5 +1,7 @@
+import Logger from "./Logger";
+
 /**
- * Store - minimalist storage manager - singleton
+ * Storage - minimalist singleton service
  *
  * - sets and gets key / value pairs.
  * - uses two 'stores':
@@ -34,11 +36,11 @@ class Storage {
     if (storage === "env") {
       value = process.env["FAIRPOST_" + key] ?? "";
     } else {
-      throw new Error("Storage " + storage + " not implemented");
+      throw Logger.error("Storage " + storage + " not implemented");
     }
     if (!value) {
       if (!def) {
-        throw new Error("Value " + key + " not found in store " + store);
+        throw Logger.error("Value " + key + " not found in store " + store);
       }
       value = def;
     }
@@ -58,10 +60,10 @@ class Storage {
         console.log("FAIRPOST_" + key + "=" + value);
         console.log();
       } else {
-        throw new Error("UI " + ui + " not implemented");
+        throw Logger.error("UI " + ui + " not implemented");
       }
     } else {
-      throw new Error("Storage " + storage + " not implemented");
+      throw Logger.error("Storage " + storage + " not implemented");
     }
   }
 }
