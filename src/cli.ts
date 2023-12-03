@@ -3,10 +3,10 @@
     Fairpost cli handler     
 */
 
-import "./bootstrap-cli";
 import * as path from "path";
+import "./bootstrap-cli";
+import Fairpost from "./core/Fairpost";
 import Logger from "./core/Logger";
-import Feed from "./core/Feed";
 import { PostStatus } from "./core/Post";
 import { PlatformId } from "./platforms";
 
@@ -37,7 +37,7 @@ async function main() {
   let result: unknown;
   let report = "";
 
-  const feed = new Feed();
+  const feed = Fairpost.getFeed();
   Logger.trace(
     "Fairpost " + feed.id + " " + COMMAND,
     DRY_RUN ? " dry-run" : "",
