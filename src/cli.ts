@@ -33,7 +33,6 @@ function getOption(key: string): boolean | string | null {
   return value.replace(`--${key}=`, "");
 }
 
-
 async function main() {
   let result: unknown;
   let report = "";

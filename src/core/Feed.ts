@@ -37,7 +37,6 @@ export default class Feed {
    */
 
   constructor() {
-    
     this.path = Storage.get("settings", "FEED_PATH");
     this.id = this.path;
 
