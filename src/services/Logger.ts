@@ -1,3 +1,13 @@
+/**
+ * Logger - minimalist singleton service
+ *
+ * - wraps log4js
+ * - allows overrides from env
+ * - returns Errors on error() and fatal()
+ * - sets exitCode on fatal()
+ *
+ */
+
 import * as log4js from "log4js";
 
 class Logger {
@@ -43,19 +53,23 @@ class Logger {
     this.logger.trace(args);
   }
   debug(...args) {
-    this.logger.trace(args);
+    this.logger.debug(args);
   }
   info(...args) {
-    this.logger.trace(args);
+    this.logger.info(args);
   }
   warn(...args) {
-    this.logger.trace(args);
+    this.logger.warn(args);
   }
-  error(...args) {
-    this.logger.trace(args);
+  error(...args): Error {
+    this.logger.error(args);
+    return new Error(args.filter((arg) => typeof arg === "string").join("; "));
   }
-  fatal(...args) {
-    this.logger.trace(args);
+  fatal(...args): Error {
+    this.logger.fatal(args);
+    const code = parseInt(args[0]);
+    process.exitCode = code || 1;
+    return new Error(args.filter((arg) => typeof arg === "string").join("; "));
   }
 }
 export default Logger.getInstance();

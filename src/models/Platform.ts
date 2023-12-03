@@ -159,7 +159,7 @@ export default class Platform {
    * @returns - any object
    */
   async setup() {
-    throw new Error(
+    throw Logger.error(
       "No setup implemented for " +
         this.id +
         ". Read the docs in the docs folder.",

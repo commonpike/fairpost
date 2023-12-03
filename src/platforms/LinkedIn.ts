@@ -138,7 +138,7 @@ export default class LinkedIn extends Platform {
     });
 
     if (error) {
-      Logger.error("Facebook.publishPost", this.id, "failed", response);
+      Logger.warn("Facebook.publishPost", this.id, "failed", response);
     }
 
     if (!dryrun) {
@@ -268,7 +268,7 @@ export default class LinkedIn extends Platform {
       };
     };
     if (!response.value) {
-      throw new Error("LinkedIn.getImageUploadLease: Bad response");
+      throw Logger.error("LinkedIn.getImageUploadLease: Bad response");
     }
     return response;
   }
@@ -319,7 +319,7 @@ export default class LinkedIn extends Platform {
       };
     };
     if (!response.value) {
-      throw new Error("LinkedIn.getVideoUploadLease: Bad response");
+      throw Logger.error("LinkedIn.getVideoUploadLease: Bad response");
     }
     return response;
   }
@@ -413,8 +413,8 @@ export default class LinkedIn extends Platform {
       data["text"] = text;
     }
     if (!response.ok) {
-      Logger.error("Linkedin.handleApiResponse", response);
-      console.log(response.headers);
+      Logger.warn("Linkedin.handleApiResponse", response);
+      Logger.warn(response.headers);
       const linkedInErrorResponse =
         response.headers["x-linkedin-error-response"];
 
@@ -431,7 +431,7 @@ export default class LinkedIn extends Platform {
         " - " +
         linkedInErrorResponse;
 
-      throw new Error(error);
+      throw Logger.error(error);
     }
     data["headers"] = {};
     for (const [name, value] of response.headers) {
@@ -446,7 +446,6 @@ export default class LinkedIn extends Platform {
    *
    */
   private handleApiError(error: Error): Promise<object> {
-    Logger.error("Linkedin.handleApiError", error);
-    throw error;
+    throw Logger.error("Linkedin.handleApiError", error);
   }
 }

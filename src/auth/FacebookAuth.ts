@@ -1,5 +1,5 @@
-import OAuth2Client from "./OAuth2Client";
 import Logger from "../services/Logger";
+import OAuth2Client from "./OAuth2Client";
 import Storage from "../services/Storage";
 
 export default class FacebookAuth extends OAuth2Client {
@@ -51,18 +51,15 @@ export default class FacebookAuth extends OAuth2Client {
     const result = await this.requestRemotePermissions("Facebook", url.href);
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -83,8 +80,7 @@ export default class FacebookAuth extends OAuth2Client {
 
     if (!result["access_token"]) {
       const msg = "Remote response did not return a access_token";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
 
     return result["access_token"];
@@ -129,9 +125,9 @@ export default class FacebookAuth extends OAuth2Client {
     ];
 
     if (!llPageAccessToken) {
-      console.error(data);
-      throw new Error(
+      throw Logger.error(
         "No llPageAccessToken for page " + pageId + "  in response.",
+        data,
       );
     }
 
@@ -160,8 +156,10 @@ export default class FacebookAuth extends OAuth2Client {
       access_token: string;
     };
     if (!data["access_token"]) {
-      console.error(data);
-      throw new Error("No llUserAccessToken access_token in response.");
+      throw Logger.error(
+        "No llUserAccessToken access_token in response.",
+        data,
+      );
     }
 
     return data["access_token"];
@@ -182,8 +180,7 @@ export default class FacebookAuth extends OAuth2Client {
       name: string;
     };
     if (!data["id"]) {
-      console.error(data);
-      throw new Error("Can not get app scoped user id.");
+      throw Logger.error("Can not get app scoped user id.", data);
     }
     return data["id"];
   }
@@ -221,8 +218,11 @@ export default class FacebookAuth extends OAuth2Client {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("FacebookAuth.handleApiResponse", response);
-      throw new Error(response.status + ":" + response.statusText);
+      throw Logger.error(
+        "FacebookAuth.handleApiResponse",
+        response.status + ":" + response.statusText,
+        response,
+      );
     }
     const data = await response.json();
     if (data.error) {
@@ -236,8 +236,7 @@ export default class FacebookAuth extends OAuth2Client {
         data.error.error_subcode +
         ") " +
         data.error.message;
-      Logger.error("FacebookAuth.handleApiResponse", error);
-      throw new Error(error);
+      throw Logger.error("FacebookAuth.handleApiResponse", error);
     }
     Logger.trace("FacebookAuth.handleApiResponse", "success");
     return data;
@@ -248,7 +247,6 @@ export default class FacebookAuth extends OAuth2Client {
    * @param error - the error returned from fetch
    */
   private handleApiError(error: Error): never {
-    Logger.error("FacebookAuth.handleApiError", error);
-    throw error;
+    throw Logger.error("FacebookAuth.handleApiError", error);
   }
 }

@@ -1,5 +1,5 @@
-import OAuth2Client from "./OAuth2Client";
 import Logger from "../services/Logger";
+import OAuth2Client from "./OAuth2Client";
 import Storage from "../services/Storage";
 
 export default class LinkedInAuth extends OAuth2Client {
@@ -41,8 +41,7 @@ export default class LinkedInAuth extends OAuth2Client {
 
     if (!result["access_token"]) {
       const msg = "Remote response did not return a access_token";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     this.accessToken = result["access_token"];
     // now store it
@@ -74,18 +73,15 @@ export default class LinkedInAuth extends OAuth2Client {
     const result = await this.requestRemotePermissions("LinkedIn", url.href);
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -117,8 +113,7 @@ export default class LinkedInAuth extends OAuth2Client {
 
     if (!result["access_token"]) {
       const msg = "Remote response did not return a access_token";
-      Logger.error(msg, result);
-      throw new Error(msg);
+      throw Logger.error(msg, result);
     }
 
     return result;
@@ -156,10 +151,11 @@ export default class LinkedInAuth extends OAuth2Client {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("LinkedInAuth.handleApiResponse", "not ok");
-      Logger.error("LinkedInAuth.handleApiResponse", await response.json());
-      throw new Error(
+      Logger.warn("LinkedInAuth.handleApiResponse", "not ok");
+      throw Logger.error(
+        "LinkedInAuth.handleApiResponse",
         response.url + ":" + response.status + ", " + response.statusText,
+        await response.json(),
       );
     }
     const data = await response.json();
@@ -174,8 +170,7 @@ export default class LinkedInAuth extends OAuth2Client {
         data.error.error_subcode +
         ") " +
         data.error.message;
-      Logger.error("LinkedInAuth.handleApiResponse", error);
-      throw new Error(error);
+      throw Logger.error("LinkedInAuth.handleApiResponse", error);
     }
     Logger.trace("LinkedInAuth.handleApiResponse", "success");
     return data;

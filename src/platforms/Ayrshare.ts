@@ -76,7 +76,7 @@ export default abstract class Ayrshare extends Platform {
     });
 
     if (error) {
-      Logger.error("Ayrshare.publishPost", this.id, "failed", response);
+      Logger.warn("Ayrshare.publishPost", this.id, "failed", response);
     }
 
     if (!dryrun) {
@@ -131,8 +131,7 @@ export default abstract class Ayrshare extends Platform {
         },
         body: buffer,
       }).catch((error) => {
-        Logger.error(error);
-        throw new Error("Failed uploading " + file);
+        throw Logger.error("Failed uploading " + file, error);
       });
 
       urls.push(data.accessUrl.replace(/ /g, "%20"));
@@ -151,7 +150,7 @@ export default abstract class Ayrshare extends Platform {
 
     const postPlatform = this.platforms[this.id];
     if (!postPlatform) {
-      throw new Error(
+      throw Logger.error(
         "No ayrshare platform associated with platform " + this.id,
       );
     }
@@ -192,8 +191,7 @@ export default abstract class Ayrshare extends Platform {
       response["status"] !== "scheduled"
     ) {
       const error = "Bad result status: " + response["status"];
-      Logger.error(error);
-      throw new Error(error);
+      throw Logger.error(error);
     }
     return response;
   }
@@ -205,8 +203,11 @@ export default abstract class Ayrshare extends Platform {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      Logger.error("Ayrshare.handleApiResponse", response);
-      throw new Error(response.status + ":" + response.statusText);
+      throw Logger.error(
+        "Ayrshare.handleApiResponse",
+        response,
+        response.status + ":" + response.statusText,
+      );
     }
     const data = await response.json();
     if (data.status === "error") {
@@ -228,8 +229,7 @@ export default abstract class Ayrshare extends Platform {
             err.message;
         },
       );
-      Logger.error("Ayrshare.handleApiResponse", error);
-      throw new Error(error);
+      throw Logger.error("Ayrshare.handleApiResponse", error);
     }
     Logger.trace("Ayrshare.handleApiResponse", "success");
     return data;
@@ -240,7 +240,6 @@ export default abstract class Ayrshare extends Platform {
    * @param error - the error thrown from the api
    */
   private handleApiError(error: Error) {
-    Logger.error("Ayrshare.handleApiError", error);
-    throw error;
+    throw Logger.error("Ayrshare.handleApiError", error);
   }
 }

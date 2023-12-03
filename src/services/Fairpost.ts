@@ -3,7 +3,6 @@ import * as path from "path";
 import * as platforms from "../platforms";
 
 import Feed from "../models/Feed";
-import Logger from "./Logger";
 import Platform from "../models/Platform";
 import Storage from "./Storage";
 
@@ -55,17 +54,6 @@ class Fairpost {
 
   public getFeed() {
     return new Feed(this.platforms.filter((p) => p.active));
-  }
-
-  public error(msg: string) {
-    Logger.error(msg);
-    throw new Error(msg);
-  }
-
-  public fatal(msg: string, code = 1) {
-    Logger.fatal(msg);
-    process.exitCode = code;
-    throw new Error(msg);
   }
 }
 
