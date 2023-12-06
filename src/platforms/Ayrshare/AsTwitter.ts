@@ -27,18 +27,17 @@ export default class AsTwitter extends Ayrshare {
         post.files.image.length = 4;
       }
       // twitter: max 5mb images
-      for (const image of post.files.image) {
-        const size =
-          fs.statSync(post.folder.path + "/" + image).size / (1024 * 1024);
+      for (const src of post.files.image) {
+        const dst = this.assetsFolder() + "/twitter-" + src;
+        const size = fs.statSync(post.getFullPath(src)).size / (1024 * 1024);
         if (size >= 5) {
-          Logger.trace("Resizing " + image + " for twitter ..");
-          await sharp(post.folder.path + "/" + image)
+          Logger.trace("Resizing " + src + " for twitter ..");
+          await sharp(post.getFullPath(src))
             .resize({
               width: 1200,
             })
-            .toFile(post.folder.path + "/_twitter-" + image);
-          post.files.image.push("_twitter-" + image);
-          post.files.image = post.files.image.filter((file) => file !== image);
+            .toFile(post.getFullPath(dst));
+          post.useAlternativeFile(src, dst);
         }
       }
       post.save();

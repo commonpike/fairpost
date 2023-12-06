@@ -55,23 +55,19 @@ export default class Instagram extends Platform {
       }
 
       // instagram : scale images, jpeg only
-      for (const image of post.files.image) {
-        const metadata = await sharp(post.folder.path + "/" + image).metadata();
+      for (const src of post.files.image) {
+        const metadata = await sharp(post.getFullPath(src)).metadata();
         if (metadata.width > 1440) {
-          Logger.trace("Resizing " + image + " for instagram ..");
-          const extension = image.split(".")?.pop();
-          const basename = path.basename(
-            image,
-            extension ? "." + extension : "",
-          );
-          const outfile = "_instagram-" + basename + ".JPEG";
-          await sharp(post.folder.path + "/" + image)
+          Logger.trace("Resizing " + src + " for instagram ..");
+          const extension = src.split(".")?.pop();
+          const basename = path.basename(src, extension ? "." + extension : "");
+          const dst = this.assetsFolder() + "/instagram-" + basename + ".JPEG";
+          await sharp(post.getFullPath(src))
             .resize({
               width: 1440,
             })
-            .toFile(post.folder.path + "/" + outfile);
-          post.files.image.push(outfile);
-          post.files.image = post.files.image.filter((file) => file !== image);
+            .toFile(post.getFullPath(dst));
+          post.useAlternativeFile(src, dst);
         }
       }
 

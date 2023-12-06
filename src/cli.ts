@@ -96,6 +96,7 @@ async function main() {
       }
       case "get-folders": {
         const folders = feed.getFolders(FOLDERS);
+        report += folders.length + " Folders" + "\n";
         folders.forEach((folder) => {
           report += folder.report() + "\n";
         });
@@ -114,6 +115,7 @@ async function main() {
           platforms: PLATFORMS,
           status: STATUS,
         });
+        report += allposts.length + " Posts" + "\n";
         allposts.forEach((post) => {
           report += post.report();
         });

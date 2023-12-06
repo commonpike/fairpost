@@ -189,7 +189,7 @@ export default class Feed {
   }
 
   /**
-   * Get one post
+   * Get one (prepared) post
    * @param path - path to a single folder
    * @param platformId - the platform for the post
    * @returns the given post, or undefined if not prepared
@@ -200,7 +200,7 @@ export default class Feed {
   }
 
   /**
-   * Get multiple posts
+   * Get multiple (prepared) posts
    * @param filters - object to filter posts by
    * @param filters.folders - paths to folders to filter on
    * @param filters.platforms - slugs to platforms to filter on

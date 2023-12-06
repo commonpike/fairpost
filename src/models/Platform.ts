@@ -16,6 +16,7 @@ export default class Platform {
   active: boolean = false;
   id: PlatformId = PlatformId.UNKNOWN;
   defaultBody: string = "Fairpost feed";
+  postFile: string = "post.json";
 
   /**
    * Return a small report for this feed
@@ -31,12 +32,22 @@ export default class Platform {
   }
 
   /**
-   * getPostFileName
-   * @returns the intended name for a post of this
-   * platform to be saved in this folder.
+   * getAssetsFolderName
+   * @returns the relative path to a folder used
+   * to store assets for a post of this platform
    */
-  getPostFileName(): string {
-    return "_" + this.id + ".json";
+  assetsFolder(): string {
+    return "_" + this.id;
+  }
+
+  /**
+   * getPostFilePath
+   * @param folder the folder for the new or existing post
+   * @returns the full path to the post file used
+   * to store data for a post of this platform
+   */
+  getPostFilePath(folder: Folder): string {
+    return folder.path + "/" + this.assetsFolder() + "/" + this.postFile;
   }
 
   /**
@@ -48,10 +59,9 @@ export default class Platform {
   getPost(folder: Folder): Post | undefined {
     Logger.trace("Platform", "getPost");
 
-    if (fs.existsSync(folder.path + "/" + this.getPostFileName())) {
-      const data = JSON.parse(
-        fs.readFileSync(folder.path + "/" + this.getPostFileName(), "utf8"),
-      );
+    const postFilePath = this.getPostFilePath(folder);
+    if (fs.existsSync(postFilePath)) {
+      const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
       if (data) {
         return new Post(folder, this, data);
       }
