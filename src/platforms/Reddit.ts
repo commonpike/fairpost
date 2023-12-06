@@ -48,27 +48,24 @@ export default class Reddit extends Platform {
     if (post) {
       // reddit: max 1 image or video
       // TODO: extract video thumbnail
-      if (false && post.files.video.length >= 1) { // eslint-disable-line
+      if (post.files.video.length >= 1) { // eslint-disable-line
         post.files.video.length = 1;
         post.files.image = [];
       } else if (post.files.image.length > 1) {
         // <MaxSizeAllowed>20971520</MaxSizeAllowed>
-        const image = post.files.image[0];
-        const metadata = await sharp(post.folder.path + "/" + image).metadata();
+        const src = post.files.image[0];
+        const metadata = await sharp(post.getFullPath(src)).metadata();
         if (metadata.width > 3000) {
-          Logger.trace("Resizing " + image + " for reddit ..");
-          const extension = image.split(".")?.pop();
-          const basename = path.basename(
-            image,
-            extension ? "." + extension : "",
-          );
-          const outfile = "_reddit-" + basename + ".jpg";
-          await sharp(post.folder.path + "/" + image)
+          Logger.trace("Resizing " + src + " for reddit ..");
+          const extension = src.split(".")?.pop();
+          const basename = path.basename(src, extension ? "." + extension : "");
+          const dst = this.assetsFolder() + "/reddit-" + basename + ".jpg";
+          await sharp(post.getFullPath(src))
             .resize({
               width: 3000,
             })
-            .toFile(post.folder.path + "/" + outfile);
-          post.files.image = [outfile];
+            .toFile(post.getFullPath(dst));
+          post.files.image = [dst];
         }
       }
       post.save();

@@ -20,18 +20,17 @@ export default class AsFacebook extends Ayrshare {
     const post = await super.preparePost(folder);
     if (post) {
       // facebook : max 10mb images
-      for (const image of post.files.image) {
-        const size =
-          fs.statSync(post.folder.path + "/" + image).size / (1024 * 1024);
+      for (const src of post.files.image) {
+        const dst = this.assetsFolder() + "/facebook-" + src;
+        const size = fs.statSync(post.getFullPath(src)).size / (1024 * 1024);
         if (size >= 10) {
-          console.log("Resizing " + image + " for facebook ..");
-          await sharp(post.folder.path + "/" + image)
+          console.log("Resizing " + src + " for facebook ..");
+          await sharp(post.getFullPath(src))
             .resize({
               width: 1200,
             })
-            .toFile(post.folder.path + "/_facebook-" + image);
-          post.files.image.push("_facebook-" + image);
-          post.files.image = post.files.image.filter((file) => file !== image);
+            .toFile(post.getFullPath(dst));
+          post.useAlternativeFile(src, dst);
         }
       }
       post.save();

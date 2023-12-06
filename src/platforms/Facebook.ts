@@ -47,18 +47,17 @@ export default class Facebook extends Platform {
         post.files.image = [];
       }
       // facebook : max 4mb images
-      for (const image of post.files.image) {
-        const size =
-          fs.statSync(post.folder.path + "/" + image).size / (1024 * 1024);
+      for (const src of post.files.image) {
+        const dst = this.assetsFolder() + "/facebook-" + src;
+        const size = fs.statSync(post.getFullPath(src)).size / (1024 * 1024);
         if (size >= 4) {
-          Logger.trace("Resizing " + image + " for facebook ..");
-          await sharp(post.folder.path + "/" + image)
+          Logger.trace("Resizing " + src + " for facebook ..");
+          await sharp(post.getFullPath(src))
             .resize({
               width: 1200,
             })
-            .toFile(post.folder.path + "/_facebook-" + image);
-          post.files.image.push("_facebook-" + image);
-          post.files.image = post.files.image.filter((file) => file !== image);
+            .toFile(post.getFullPath(dst));
+          post.useAlternativeFile(src, dst);
         }
       }
       post.save();

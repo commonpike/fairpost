@@ -41,6 +41,10 @@ export default class Post {
       this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
       this.published = this.published ? new Date(this.published) : undefined;
     }
+    const assetsPath = this.getFullPath(platform.assetsFolder());
+    if (!fs.existsSync(assetsPath)) {
+      fs.mkdirSync(assetsPath, { recursive: true });
+    }
   }
 
   /**
@@ -70,7 +74,7 @@ export default class Post {
     delete data.folder;
     delete data.platform;
     fs.writeFileSync(
-      this.folder.path + "/" + this.platform.getPostFileName(),
+      this.platform.getPostFilePath(this.folder),
       JSON.stringify(data, null, "\t"),
     );
   }
@@ -87,6 +91,29 @@ export default class Post {
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
+  }
+
+  /**
+   * @param filename relative path in this post.folder
+   * @returns the full path to that file
+   */
+  getFullPath(filename: string): string {
+    return this.folder.path + "/" + filename;
+  }
+
+  /**
+   * Replace a file in the post with an alternative
+   * @param src relative path in this post.folder
+   * @param dst relative path in this post.folder
+   */
+  useAlternativeFile(src: string, dst: string) {
+    for (const type in this.files) {
+      if (this.files[type].includes(src)) {
+        // be simple for now
+        this.files[type].push(dst);
+        this.files[type] = this.files[type].filter((file) => file !== src);
+      }
+    }
   }
 }
 
