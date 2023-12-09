@@ -63,13 +63,17 @@ class Logger {
   }
   error(...args): Error {
     this.logger.error(args);
-    return new Error(args.filter((arg) => typeof arg === "string").join("; "));
+    return new Error(
+      "Error: " + args.filter((arg) => typeof arg === "string").join("; "),
+    );
   }
   fatal(...args): Error {
     this.logger.fatal(args);
     const code = parseInt(args[0]);
     process.exitCode = code || 1;
-    return new Error(args.filter((arg) => typeof arg === "string").join("; "));
+    return new Error(
+      "Fatal: " + args.filter((arg) => typeof arg === "string").join("; "),
+    );
   }
 }
 export default Logger.getInstance();

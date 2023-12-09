@@ -1,4 +1,4 @@
-import Ayrshare from "../Ayrshare";
+import Ayrshare from "./Ayrshare";
 import Folder from "../../models/Folder";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -13,7 +13,7 @@ export default class AsReddit extends Ayrshare {
 
   constructor() {
     super();
-    this.SUBREDDIT = Storage.get("settings", "AYRSHARE_SUBREDDIT");
+    this.SUBREDDIT = Storage.get("settings", "AYRSHARE_SUBREDDIT", "");
   }
 
   async preparePost(folder: Folder): Promise<Post | undefined> {

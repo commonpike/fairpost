@@ -1,9 +1,9 @@
-import Logger from "../services/Logger";
-import OAuth2Client from "./OAuth2Client";
-import Storage from "../services/Storage";
+import Logger from "../../services/Logger";
+import OAuth2Service from "../../services/OAuth2Service";
+import Storage from "../../services/Storage";
 import { TwitterApi } from "twitter-api-v2";
 
-export default class TwitterAuth extends OAuth2Client {
+export default class TwitterAuth extends OAuth2Service {
   async setup() {
     const tokens = await this.requestAccessToken();
     Storage.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
@@ -21,13 +21,13 @@ export default class TwitterAuth extends OAuth2Client {
       clientSecret: Storage.get("settings", "TWITTER_CLIENT_SECRET"),
     });
     const { url, codeVerifier, state } = client.generateOAuth2AuthLink(
-      this.getCallbackUrl(),
+      OAuth2Service.getCallbackUrl(),
       {
         scope: ["users.read", "tweet.read", "tweet.write", "offline.access"],
       },
     );
 
-    const result = await this.requestRemotePermissions("Twitter", url);
+    const result = await OAuth2Service.requestRemotePermissions("Twitter", url);
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
       throw Logger.error(msg, result);
@@ -44,7 +44,7 @@ export default class TwitterAuth extends OAuth2Client {
     const tokens = await client.loginWithOAuth2({
       code: result["code"] as string,
       codeVerifier: codeVerifier,
-      redirectUri: this.getCallbackUrl(),
+      redirectUri: OAuth2Service.getCallbackUrl(),
     });
     if (!tokens["accessToken"]) {
       throw Logger.error("An accessToken was not returned");

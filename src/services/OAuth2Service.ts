@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as http from "http";
 import * as url from "url";
-import Storage from "../services/Storage";
+import Storage from "./Storage";
 
 class DeferredResponseQuery {
   promise: Promise<{ [key: string]: string | string[] }>;
@@ -16,17 +16,17 @@ class DeferredResponseQuery {
 }
 
 /**
- * OAuth2Client: abstract handler to launch a webserver for
+ * OAuth2Service: Static service to launch a webserver for
  * requesting remote permissions on a service
  */
-export default class OAuth2Client {
-  protected getRequestUrl(): string {
+export default class OAuth2Service {
+  public static getRequestUrl(): string {
     const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
     const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     return `http://${clientHost}:${clientPort}`;
   }
 
-  protected getCallbackUrl(): string {
+  public static getCallbackUrl(): string {
     return this.getRequestUrl() + "/callback";
   }
 
@@ -44,7 +44,7 @@ export default class OAuth2Client {
    * @returns a flat object of returned query
    */
 
-  protected async requestRemotePermissions(
+  public static async requestRemotePermissions(
     serviceName: string,
     serviceLink: string,
   ): Promise<{ [key: string]: string | string[] }> {

@@ -40,7 +40,9 @@ class Storage {
     }
     if (!value) {
       if (def === undefined) {
-        throw Logger.error("Value " + key + " not found in store " + store);
+        throw Logger.error(
+          "Value " + key + " not found in store '" + store + "'",
+        );
       }
       value = def;
     }

@@ -1,8 +1,8 @@
-import Logger from "../services/Logger";
-import OAuth2Client from "./OAuth2Client";
-import Storage from "../services/Storage";
+import Logger from "../../services/Logger";
+import OAuth2Service from "../../services/OAuth2Service";
+import Storage from "../../services/Storage";
 
-export default class FacebookAuth extends OAuth2Client {
+export default class FacebookAuth {
   GRAPH_API_VERSION: string = "v18.0";
 
   async setup() {
@@ -34,7 +34,7 @@ export default class FacebookAuth extends OAuth2Client {
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: this.getCallbackUrl(),
+      redirect_uri: OAuth2Service.getCallbackUrl(),
       state: state,
       response_type: "code",
       scope: [
@@ -48,7 +48,10 @@ export default class FacebookAuth extends OAuth2Client {
     };
     url.search = new URLSearchParams(query).toString();
 
-    const result = await this.requestRemotePermissions("Facebook", url.href);
+    const result = await OAuth2Service.requestRemotePermissions(
+      "Facebook",
+      url.href,
+    );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
       throw Logger.error(msg, result);
@@ -69,7 +72,7 @@ export default class FacebookAuth extends OAuth2Client {
     clientId: string,
     clientSecret: string,
   ): Promise<string> {
-    const redirectUri = this.getCallbackUrl();
+    const redirectUri = OAuth2Service.getCallbackUrl();
 
     const result = await this.get("oauth/access_token", {
       client_id: clientId,

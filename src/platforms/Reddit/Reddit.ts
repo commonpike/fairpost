@@ -2,14 +2,15 @@ import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
 
-import Post, { PostStatus } from "../models/Post";
+import Post, { PostStatus } from "../../models/Post";
 
-import Folder from "../models/Folder";
-import Logger from "../services/Logger";
-import Platform from "../models/Platform";
-import { PlatformId } from ".";
-import RedditAuth from "../auth/RedditAuth";
-import Storage from "../services/Storage";
+import Folder from "../../models/Folder";
+import Logger from "../../services/Logger";
+import Platform from "../../models/Platform";
+import { PlatformId } from "..";
+import RedditApi from "./RedditApi";
+import RedditAuth from "./RedditAuth";
+import Storage from "../../services/Storage";
 import { XMLParser } from "fast-xml-parser";
 
 /**
@@ -19,12 +20,13 @@ export default class Reddit extends Platform {
   id = PlatformId.REDDIT;
 
   SUBREDDIT: string;
-  API_VERSION = "v1";
+  api: RedditApi;
   auth: RedditAuth;
 
   constructor() {
     super();
     this.SUBREDDIT = Storage.get("settings", "REDDIT_SUBREDDIT", "");
+    this.api = new RedditApi();
     this.auth = new RedditAuth();
   }
 
@@ -35,7 +37,7 @@ export default class Reddit extends Platform {
 
   /** @inheritdoc */
   async test() {
-    const me = await this.get("me");
+    const me = await this.api.get("me");
     if (!me) return false;
     return {
       id: me["id"],
@@ -74,7 +76,7 @@ export default class Reddit extends Platform {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Reddit.publishPost", post, dryrun);
+    Logger.trace("Reddit.publishPost", post.id, dryrun);
 
     let response = dryrun ? { dryrun: true } : {};
     let error = undefined;
@@ -126,7 +128,7 @@ export default class Reddit extends Platform {
   ): Promise<object> {
     Logger.trace("Reddit.publishText");
     if (!dryrun) {
-      return (await this.post("submit", {
+      return (await this.api.post("submit", {
         sr: this.SUBREDDIT,
         kind: "self",
         title: title,
@@ -157,7 +159,7 @@ export default class Reddit extends Platform {
     const lease = await this.getUploadLease(file);
     const imageUrl = await this.uploadFile(lease, file);
     if (!dryrun) {
-      return (await this.post("submit", {
+      return (await this.api.post("submit", {
         sr: this.SUBREDDIT,
         kind: "image",
         title: title,
@@ -188,7 +190,7 @@ export default class Reddit extends Platform {
     const lease = await this.getUploadLease(file);
     const videoUrl = await this.uploadFile(lease, file);
     if (!dryrun) {
-      return (await this.post("submit", {
+      return (await this.api.post("submit", {
         sr: this.SUBREDDIT,
         kind: "video",
         title: title,
@@ -224,7 +226,7 @@ export default class Reddit extends Platform {
     form.append("filepath", filename);
     form.append("mimetype", mimetype);
 
-    const lease = (await this.postFormData("media/asset.json", form)) as {
+    const lease = (await this.api.postFormData("media/asset.json", form)) as {
       args: {
         action: string;
         fields: {
@@ -287,132 +289,5 @@ export default class Reddit extends Platform {
       const msg = "Reddit.uploadFile: cant parse xml";
       throw Logger.error(msg, response, e);
     }
-  }
-
-  // API implementation -------------------
-
-  /**
-   * Do a GET request on the api.
-   * @param endpoint - the path to call
-   * @param query - query string as object
-   */
-
-  private async get(
-    endpoint: string,
-    query: { [key: string]: string } = {},
-  ): Promise<object> {
-    const url = new URL("https://oauth.reddit.com");
-    url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
-    url.search = new URLSearchParams(query).toString();
-
-    const accessToken = await this.auth.getAccessToken();
-
-    Logger.trace("GET", url.href);
-    return await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
-      },
-    })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Do a url-encoded POST request on the api.
-   * @param endpoint - the path to call
-   * @param body - body as object
-   */
-
-  private async post(
-    endpoint: string,
-    body: { [key: string]: string },
-  ): Promise<object> {
-    const url = new URL("https://oauth.reddit.com");
-    //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
-    url.pathname = "api/" + endpoint;
-
-    const accessToken = await this.auth.getAccessToken();
-    Logger.trace("POST", url.href);
-
-    return await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
-      },
-      body: new URLSearchParams(body),
-    })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Do a FormData POST request on the api.
-   * @param endpoint - the path to call
-   * @param body - body as object
-   */
-
-  private async postFormData(
-    endpoint: string,
-    body: FormData,
-  ): Promise<object> {
-    const url = new URL("https://oauth.reddit.com");
-    //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
-    url.pathname = "api/" + endpoint;
-
-    const accessToken = await this.auth.getAccessToken();
-    Logger.trace("POST", url.href);
-
-    return await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
-      },
-      body: body,
-    })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Handle api response
-   * @param response - api response from fetch
-   * @returns parsed object from response
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      throw Logger.error(
-        "Reddit.handleApiResponse",
-        "not ok",
-        response.status + ":" + response.statusText,
-      );
-    }
-    const data = await response.json();
-    if (data.json?.errors?.length) {
-      const error =
-        response.status +
-        ":" +
-        data.json.errors[0] +
-        "-" +
-        data.json.errors.slice(1).join();
-      throw Logger.error("Reddit.handleApiResponse", error);
-    }
-    Logger.trace("Reddit.handleApiResponse", "success");
-    return data;
-  }
-
-  /**
-   * Handle api error
-   * @param error - the error returned from fetch
-   */
-  private handleApiError(error: Error): never {
-    throw Logger.error("Reddit.handleApiError", error);
   }
 }
