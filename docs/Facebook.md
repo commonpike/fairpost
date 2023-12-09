@@ -13,7 +13,8 @@ using the plain graph api - no extensions installed.
    - save this as `FAIRPOST_FACEBOOK_APP_ID` in your .env
  - under 'settings', find your app secret
    - save this as `FAIRPOST_FACEBOOK_APP_SECRET` in your .env
-
+ - before you use the app, set the App Mode to 'Live'
+   - use https://github.com/commonpike/fairpost/blob/master/public/privacy-policy.md for the privacy policy url
 ### Find the page id of the page you want the app to manage
   - go to https://business.facebook.com/
   - find your page (currently under 'settings > business assets')
