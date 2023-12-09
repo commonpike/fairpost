@@ -1,8 +1,8 @@
 import Logger from "../../services/Logger";
-import OAuth2Client from "../../auth/OAuth2Client";
+import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
 
-export default class RedditAuth extends OAuth2Client {
+export default class RedditAuth {
   API_VERSION = "v1";
   accessToken = "";
 
@@ -25,6 +25,8 @@ export default class RedditAuth extends OAuth2Client {
    * of using an access token from the Storage, the Reddit
    * platform gets its token from here, which refreshes
    * it if needed using the refresh_token
+   *
+   * ~~ TODO the api cant access these
    * @returns The access token
    */
   public async refreshAccessToken(): Promise<string> {
@@ -54,7 +56,7 @@ export default class RedditAuth extends OAuth2Client {
     url.pathname = "api/" + this.API_VERSION + "/authorize";
     const query = {
       client_id: clientId,
-      redirect_uri: this.getCallbackUrl(),
+      redirect_uri: OAuth2Service.getCallbackUrl(),
       state: state,
       response_type: "code",
       duration: "permanent",
@@ -62,7 +64,10 @@ export default class RedditAuth extends OAuth2Client {
     };
     url.search = new URLSearchParams(query).toString();
 
-    const result = await this.requestRemotePermissions("Reddit", url.href);
+    const result = await OAuth2Service.requestRemotePermissions(
+      "Reddit",
+      url.href,
+    );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
       throw Logger.error(msg, result);
@@ -86,7 +91,7 @@ export default class RedditAuth extends OAuth2Client {
     refresh_token: string;
   }> {
     Logger.trace("RedditAuth", "exchangeCode", code);
-    const redirectUri = this.getCallbackUrl();
+    const redirectUri = OAuth2Service.getCallbackUrl();
 
     const result = (await this.post("access_token", {
       grant_type: "authorization_code",

@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
 
+import FacebookApi from "./FacebookApi";
 import FacebookAuth from "./FacebookAuth";
 import Folder from "../../models/Folder";
 import Logger from "../../services/Logger";
@@ -20,21 +21,23 @@ import Storage from "../../services/Storage";
  */
 export default class Facebook extends Platform {
   id: PlatformId = PlatformId.FACEBOOK;
-  GRAPH_API_VERSION: string = "v18.0";
+  api: FacebookApi;
+  auth: FacebookAuth;
 
   constructor() {
     super();
+    this.auth = new FacebookAuth();
+    this.api = new FacebookApi();
   }
 
   /** @inheritdoc */
   async setup() {
-    const auth = new FacebookAuth();
-    await auth.setup();
+    await this.auth.setup();
   }
 
   /** @inheritdoc */
   async test() {
-    return this.get("me");
+    return this.api.get("me");
   }
 
   /** @inheritdoc */
@@ -99,7 +102,7 @@ export default class Facebook extends Platform {
           }
         }
         if (!dryrun) {
-          response = (await this.postJson("%PAGE%/feed", {
+          response = (await this.api.postJson("%PAGE%/feed", {
             message: post.body,
             published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
             attached_media: attachments,
@@ -154,7 +157,7 @@ export default class Facebook extends Platform {
     body.set("published", published ? "true" : "false");
     body.set("source", blob, path.basename(file));
 
-    const result = (await this.postFormData("%PAGE%/photos", body)) as {
+    const result = (await this.api.postFormData("%PAGE%/photos", body)) as {
       id: "string";
     };
 
@@ -190,7 +193,7 @@ export default class Facebook extends Platform {
     body.set("published", Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"));
     body.set("source", blob, path.basename(file));
 
-    const result = (await this.postFormData("%PAGE%/videos", body)) as {
+    const result = (await this.api.postFormData("%PAGE%/videos", body)) as {
       id: string;
     };
 
@@ -198,141 +201,5 @@ export default class Facebook extends Platform {
       throw Logger.error("No id returned when uploading video");
     }
     return result;
-  }
-
-  // API implementation -------------------
-
-  /**
-   * Do a GET request on the graph.
-   * @param endpoint - the path to call
-   * @param query - query string as object
-   */
-
-  private async get(
-    endpoint: string = "%PAGE%",
-    query: { [key: string]: string } = {},
-  ): Promise<object> {
-    endpoint = endpoint.replace(
-      "%PAGE%",
-      Storage.get("settings", "FACEBOOK_PAGE_ID"),
-    );
-
-    const url = new URL("https://graph.facebook.com");
-    url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    url.search = new URLSearchParams(query).toString();
-    Logger.trace("GET", url.href);
-    return await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization:
-          "Bearer " + Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
-      },
-    })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Do a Json POST request on the graph.
-   * @param endpoint - the path to call
-   * @param body - body as object
-   */
-
-  private async postJson(
-    endpoint: string = "%PAGE%",
-    body = {},
-  ): Promise<object> {
-    endpoint = endpoint.replace(
-      "%PAGE%",
-      Storage.get("settings", "FACEBOOK_PAGE_ID"),
-    );
-
-    const url = new URL("https://graph.facebook.com");
-    url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    Logger.trace("POST", url.href);
-    return await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization:
-          "Bearer " + Storage.get("settings", "FACEBOOK_PAGE_ACCESS_TOKEN"),
-      },
-      body: JSON.stringify(body),
-    })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Do a FormData POST request on the graph.
-   * @param endpoint - the path to call
-   * @param body - body as object
-   */
-
-  private async postFormData(
-    endpoint: string,
-    body: FormData,
-  ): Promise<object> {
-    endpoint = endpoint.replace(
-      "%PAGE%",
-      Storage.get("settings", "FACEBOOK_PAGE_ID"),
-    );
-
-    const url = new URL("https://graph.facebook.com");
-    url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    Logger.trace("POST", url.href);
-
-    return await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization:
-          "Bearer " + Storage.get("settings", "FACEBOOK_PAGE_ACCESS_TOKEN"),
-      },
-      body: body,
-    })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Handle api response
-   * @param response - api response from fetch
-   * @returns parsed object from response
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      throw Logger.error(
-        "Facebook.handleApiResponse",
-        response,
-        response.status + ":" + response.statusText,
-      );
-    }
-    const data = await response.json();
-    if (data.error) {
-      const error =
-        response.status +
-        ":" +
-        data.error.type +
-        "(" +
-        data.error.code +
-        "/" +
-        data.error.error_subcode +
-        ") " +
-        data.error.message;
-      throw Logger.error("Facebook.handleApiResponse", error);
-    }
-    Logger.trace("Facebook.handleApiResponse", "success");
-    return data;
-  }
-
-  /**
-   * Handle api error
-   * @param error - the error returned from fetch
-   */
-  private handleApiError(error: Error): never {
-    throw Logger.error("Facebook.handleApiError", error);
   }
 }

@@ -1,5 +1,6 @@
 import FacebookAuth from "../Facebook/FacebookAuth";
 import Logger from "../../services/Logger";
+import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
 
 export default class InstagramAuth extends FacebookAuth {
@@ -32,7 +33,7 @@ export default class InstagramAuth extends FacebookAuth {
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: this.getCallbackUrl(),
+      redirect_uri: OAuth2Service.getCallbackUrl(),
       state: state,
       response_type: "code",
       scope: [
@@ -48,7 +49,10 @@ export default class InstagramAuth extends FacebookAuth {
     };
     url.search = new URLSearchParams(query).toString();
 
-    const result = await this.requestRemotePermissions("Instagram", url.href);
+    const result = await OAuth2Service.requestRemotePermissions(
+      "Instagram",
+      url.href,
+    );
 
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];

@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as sharp from "sharp";
 
 import Folder from "../../models/Folder";
+import LinkedInApi from "./LinkedInApi";
 import LinkedInAuth from "./LinkedInAuth";
 import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
@@ -13,10 +14,9 @@ import Storage from "../../services/Storage";
 
 export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;
+  api: LinkedInApi;
   auth: LinkedInAuth;
 
-  LGC_API_VERSION = "v2";
-  API_VERSION = "202304";
   POST_AUTHOR = "";
   POST_VISIBILITY = "PUBLIC"; // CONNECTIONS|PUBLIC|LOGGEDIN|CONTAINER
   POST_DISTRIBUTION = {
@@ -28,6 +28,7 @@ export default class LinkedIn extends Platform {
 
   constructor() {
     super();
+    this.api = new LinkedInApi();
     this.auth = new LinkedInAuth();
     this.POST_AUTHOR =
       "urn:li:organization:" +
@@ -158,7 +159,7 @@ export default class LinkedIn extends Platform {
   // Platform API Specific
 
   private async getProfile() {
-    const me = await this.get("me");
+    const me = await this.api.get("me");
     if (!me) return false;
     return {
       id: me["id"],
@@ -177,7 +178,7 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.postJson("posts", body);
+    return await this.api.postJson("posts", body);
   }
   private async publishImage(title: string, content: string, image: string) {
     const leash = await this.getImageLeash();
@@ -196,7 +197,7 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.postJson("posts", body);
+    return await this.api.postJson("posts", body);
   }
 
   private async publishImages(content: string, images: string[]) {
@@ -225,7 +226,7 @@ export default class LinkedIn extends Platform {
         },
       },
     };
-    return await this.postJson("posts", body);
+    return await this.api.postJson("posts", body);
   }
 
   // untested
@@ -246,7 +247,7 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.postJson("posts", body);
+    return await this.api.postJson("posts", body);
   }
 
   private async getImageLeash(): Promise<{
@@ -256,11 +257,14 @@ export default class LinkedIn extends Platform {
       image: string;
     };
   }> {
-    const response = (await this.postJson("images?action=initializeUpload", {
-      initializeUploadRequest: {
-        owner: this.POST_AUTHOR,
+    const response = (await this.api.postJson(
+      "images?action=initializeUpload",
+      {
+        initializeUploadRequest: {
+          owner: this.POST_AUTHOR,
+        },
       },
-    })) as {
+    )) as {
       value: {
         uploadUrlExpiresAt: number;
         uploadUrl: string;
@@ -282,7 +286,7 @@ export default class LinkedIn extends Platform {
         Authorization: "Bearer " + (await this.auth.getAccessToken()),
       },
       body: rawData,
-    }).then((res) => this.handleApiResponse(res));
+    }).then((res) => this.api.handleApiResponse(res));
   }
 
   // untested
@@ -299,14 +303,17 @@ export default class LinkedIn extends Platform {
     };
   }> {
     const stats = fs.statSync(file);
-    const response = (await this.postJson("images?videos=initializeUpload", {
-      initializeUploadRequest: {
-        owner: this.POST_AUTHOR,
-        fileSizeBytes: stats.size,
-        uploadCaptions: false,
-        uploadThumbnail: false,
+    const response = (await this.api.postJson(
+      "images?videos=initializeUpload",
+      {
+        initializeUploadRequest: {
+          owner: this.POST_AUTHOR,
+          fileSizeBytes: stats.size,
+          uploadCaptions: false,
+          uploadThumbnail: false,
+        },
       },
-    })) as {
+    )) as {
       value: {
         uploadUrlsExpireAt: number;
         video: string;
@@ -334,118 +341,6 @@ export default class LinkedIn extends Platform {
         "Content-Type": "application/octet-stream",
       },
       body: rawData,
-    }).then((res) => this.handleApiResponse(res));
-  }
-
-  // API implementation -------------------
-
-  /**
-   * Do a GET request on the api.
-   * @param endpoint - the path to call
-   * @param query - query string as object
-   */
-
-  private async get(
-    endpoint: string,
-    query: { [key: string]: string } = {},
-  ): Promise<object> {
-    // nb this is the legacy format
-    const url = new URL("https://api.linkedin.com");
-    url.pathname = this.LGC_API_VERSION + "/" + endpoint;
-    url.search = new URLSearchParams(query).toString();
-
-    const accessToken = await this.auth.getAccessToken();
-
-    Logger.trace("GET", url.href);
-    return await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Connection: "Keep-Alive",
-        Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
-      },
-    })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Do a json POST request on the api.
-   * @param endpoint - the path to call
-   * @param body - body as object
-   */
-
-  private async postJson(endpoint: string, body = {}): Promise<object> {
-    const url = new URL("https://api.linkedin.com");
-
-    const [pathname, search] = endpoint.split("?");
-    url.pathname = "rest/" + pathname;
-    if (search) {
-      url.search = search;
-    }
-    const accessToken = await this.auth.getAccessToken();
-    Logger.trace("POST", url.href);
-
-    return await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "Linkedin-Version": this.API_VERSION,
-        Authorization: "Bearer " + accessToken,
-      },
-      body: JSON.stringify(body),
-    }).then((res) => this.handleApiResponse(res));
-    //.catch((err) => this.handleApiError(err));
-  }
-
-  /*
-   * Handle api response
-   *
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    const text = await response.text();
-    let data = {} as { [key: string]: unknown };
-    try {
-      data = JSON.parse(text);
-    } catch (err) {
-      data["text"] = text;
-    }
-    if (!response.ok) {
-      Logger.warn("Linkedin.handleApiResponse", response);
-      Logger.warn(response.headers);
-      const linkedInErrorResponse =
-        response.headers["x-linkedin-error-response"];
-
-      const error =
-        response.status +
-        ":" +
-        response.statusText +
-        " (" +
-        data.status +
-        "/" +
-        data.serviceErrorCode +
-        ") " +
-        data.message +
-        " - " +
-        linkedInErrorResponse;
-
-      throw Logger.error(error);
-    }
-    data["headers"] = {};
-    for (const [name, value] of response.headers) {
-      data["headers"][name] = value;
-    }
-    Logger.trace("Linkedin.handleApiResponse", "success");
-    return data;
-  }
-
-  /*
-   * Handle api error
-   *
-   */
-  private handleApiError(error: Error): Promise<object> {
-    throw Logger.error("Linkedin.handleApiError", error);
+    }).then((res) => this.api.handleApiResponse(res));
   }
 }
