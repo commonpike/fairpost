@@ -2,14 +2,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
 
-import Post, { PostStatus } from "../models/Post";
+import Post, { PostStatus } from "../../models/Post";
 
-import Folder from "../models/Folder";
-import Logger from "../services/Logger";
-import Platform from "../models/Platform";
-import { PlatformId } from ".";
-import RedditAuth from "../auth/RedditAuth";
-import Storage from "../services/Storage";
+import Folder from "../../models/Folder";
+import Logger from "../../services/Logger";
+import Platform from "../../models/Platform";
+import { PlatformId } from "..";
+import RedditAuth from "./RedditAuth";
+import Storage from "../../services/Storage";
 import { XMLParser } from "fast-xml-parser";
 
 /**

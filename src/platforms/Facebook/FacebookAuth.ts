@@ -1,6 +1,6 @@
-import Logger from "../services/Logger";
-import OAuth2Client from "./OAuth2Client";
-import Storage from "../services/Storage";
+import Logger from "../../services/Logger";
+import OAuth2Client from "../../auth/OAuth2Client";
+import Storage from "../../services/Storage";
 
 export default class FacebookAuth extends OAuth2Client {
   GRAPH_API_VERSION: string = "v18.0";

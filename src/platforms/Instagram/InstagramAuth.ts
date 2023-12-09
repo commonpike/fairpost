@@ -1,6 +1,6 @@
-import FacebookAuth from "./FacebookAuth";
-import Logger from "../services/Logger";
-import Storage from "../services/Storage";
+import FacebookAuth from "../Facebook/FacebookAuth";
+import Logger from "../../services/Logger";
+import Storage from "../../services/Storage";
 
 export default class InstagramAuth extends FacebookAuth {
   async setup() {

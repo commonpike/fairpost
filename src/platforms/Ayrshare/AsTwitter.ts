@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as sharp from "sharp";
 
-import Ayrshare from "../Ayrshare";
+import Ayrshare from "./Ayrshare";
 import Folder from "../../models/Folder";
 import Logger from "../../services/Logger";
 import { PlatformId } from "..";
