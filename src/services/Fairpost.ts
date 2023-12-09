@@ -33,9 +33,11 @@ class Fairpost {
   }
 
   public loadPlatforms() {
-    const activePlatformIds = Storage.get("settings", "FEED_PLATFORMS").split(
-      ",",
-    );
+    const activePlatformIds = Storage.get(
+      "settings",
+      "FEED_PLATFORMS",
+      "",
+    ).split(",");
 
     const platformClasses = fs.readdirSync(
       path.resolve(__dirname + "/../platforms"),

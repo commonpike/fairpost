@@ -24,7 +24,7 @@ export default class Reddit extends Platform {
 
   constructor() {
     super();
-    this.SUBREDDIT = Storage.get("settings", "REDDIT_SUBREDDIT");
+    this.SUBREDDIT = Storage.get("settings", "REDDIT_SUBREDDIT", "");
     this.auth = new RedditAuth();
   }
 
