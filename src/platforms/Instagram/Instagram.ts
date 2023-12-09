@@ -84,7 +84,7 @@ export default class Instagram extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Instagram.publishPost", post, dryrun);
+    Logger.trace("Instagram.publishPost", post.id, dryrun);
 
     let response = dryrun ? { id: "-99" } : ({} as { id: string });
     let error = undefined;

@@ -74,7 +74,7 @@ export default class LinkedIn extends Platform {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("LinkedIn.publishPost", post, dryrun);
+    Logger.trace("LinkedIn.publishPost", post.id, dryrun);
 
     let response = dryrun
       ? { id: "-99" }

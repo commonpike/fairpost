@@ -70,7 +70,7 @@ export default class Facebook extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Facebook.publishPost", post, dryrun);
+    Logger.trace("Facebook.publishPost", post.id, dryrun);
 
     let response = dryrun
       ? { id: "-99" }

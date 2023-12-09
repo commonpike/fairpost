@@ -76,7 +76,7 @@ export default class Reddit extends Platform {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Reddit.publishPost", post, dryrun);
+    Logger.trace("Reddit.publishPost", post.id, dryrun);
 
     let response = dryrun ? { dryrun: true } : {};
     let error = undefined;

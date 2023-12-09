@@ -71,6 +71,7 @@ export default class Twitter extends Platform {
   }
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
+    Logger.trace("Twitter.publishPost", post.id, dryrun);
     const client1 = new TwitterApi({
       appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
       appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
