@@ -1,10 +1,12 @@
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
 
+/**
+ * InstagramApi: support for instagram platform.
+ */
+
 export default class InstagramApi {
   GRAPH_API_VERSION = "v18.0";
-
-  // API implementation -------------------
 
   /**
    * Do a GET request on the graph.

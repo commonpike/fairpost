@@ -1,6 +1,10 @@
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
 
+/**
+ * RedditApi: support for reddit platform.
+ */
+
 export default class RedditApi {
   API_VERSION = "v1";
 

@@ -1,6 +1,10 @@
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
 
+/**
+ * FacebookApi: support for facebook platform.
+ */
+
 export default class FacebookApi {
   GRAPH_API_VERSION = "v18.0";
 

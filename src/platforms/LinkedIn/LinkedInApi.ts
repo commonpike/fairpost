@@ -1,6 +1,10 @@
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
 
+/**
+ * LinkedInApi: support for linkedin platform.
+ */
+
 export default class LinkedInApi {
   LGC_API_VERSION = "v2";
   API_VERSION = "202304";
