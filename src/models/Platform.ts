@@ -32,6 +32,46 @@ export default class Platform {
   }
 
   /**
+   * setup
+   *
+   * Set the platform up. Get the required keys and tokens.
+   * This may involve starting a webserver and/or communicating
+   * via the CLI.
+   * @returns - any object
+   */
+  async setup() {
+    throw Logger.error(
+      "No setup implemented for " +
+        this.id +
+        ". Read the docs in the docs folder.",
+    );
+  }
+
+  /**
+   * test
+   *
+   * Test the platform installation. This should not post
+   * anything, but test access tokens et al. It can return
+   * anything.
+   * @returns - any object
+   */
+  async test(): Promise<unknown> {
+    return "No tests implemented for " + this.id;
+  }
+
+  /**
+   * refresh
+   *
+   * Refresh the platform installation. This usually refreshes
+   * access tokens if required. It can throw errors
+   * @returns - true if refreshed
+   */
+  async refresh(): Promise<boolean> {
+    Logger.trace("Refresh not implemented for " + this.id);
+    return false;
+  }
+
+  /**
    * getAssetsFolderName
    * @returns the relative path to a folder used
    * to store assets for a post of this platform
@@ -158,33 +198,5 @@ export default class Platform {
     post.status = PostStatus.FAILED;
     post.save();
     return false;
-  }
-
-  /**
-   * setup
-   *
-   * Set the platform up. Get the required keys and tokens.
-   * This may involve starting a webserver and/or communicating
-   * via the CLI.
-   * @returns - any object
-   */
-  async setup() {
-    throw Logger.error(
-      "No setup implemented for " +
-        this.id +
-        ". Read the docs in the docs folder.",
-    );
-  }
-
-  /**
-   * test
-   *
-   * Test the platform installation. This should not post
-   * anything, but test access tokens et al. It can return
-   * anything.
-   * @returns - any object
-   */
-  async test(): Promise<unknown> {
-    return "No tests implemented for " + this.id;
   }
 }

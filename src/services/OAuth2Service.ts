@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as http from "http";
 import * as url from "url";
+
 import Storage from "./Storage";
 
 class DeferredResponseQuery {
@@ -39,8 +40,6 @@ export default class OAuth2Service {
    * resolves the query passed.
    * @param serviceName - the name of the remote platform
    * @param serviceLink - the uri to the remote platform
-   * @param clientHost - the host name to serve the local page on
-   * @param clientPort - the port to serve the local page on
    * @returns a flat object of returned query
    */
 

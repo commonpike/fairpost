@@ -82,7 +82,8 @@ export default class Feed {
   ): Promise<{ [id: string]: unknown }> {
     Logger.trace("Feed", "setupPlatforms", platformsIds);
     const results = {};
-    for (const platformId of platformsIds) {
+    for (const platformId of platformsIds ??
+      (Object.keys(this.platforms) as PlatformId[])) {
       results[platformId] = await this.setupPlatform(platformId);
     }
     return results;
@@ -125,7 +126,7 @@ export default class Feed {
   }
 
   /**
-   * Test more platforms
+   * Test multiple platforms
    * @param platformsIds - the slugs of the platforms
    * @returns the test results indexed by platform ids
    */
@@ -134,8 +135,36 @@ export default class Feed {
   ): Promise<{ [id: string]: unknown }> {
     Logger.trace("Feed", "testPlatforms", platformsIds);
     const results = {};
-    for (const platformId of platformsIds) {
+    for (const platformId of platformsIds ??
+      (Object.keys(this.platforms) as PlatformId[])) {
       results[platformId] = await this.testPlatform(platformId);
+    }
+    return results;
+  }
+
+  /**
+   * Refresh one platform
+   * @param platformId - the slug of the platform
+   * @returns the refresh result
+   */
+  async refreshPlatform(platformId: PlatformId): Promise<boolean> {
+    Logger.trace("Feed", "refreshPlatform", platformId);
+    return await this.getPlatform(platformId).refresh();
+  }
+
+  /**
+   * Refresh multiple platforms
+   * @param platformsIds - the slugs of the platforms
+   * @returns the refresh results indexed by platform ids
+   */
+  async refreshPlatforms(
+    platformsIds?: PlatformId[],
+  ): Promise<{ [id: string]: boolean }> {
+    Logger.trace("Feed", "refreshPlatforms", platformsIds);
+    const results = {};
+    for (const platformId of platformsIds ??
+      (Object.keys(this.platforms) as PlatformId[])) {
+      results[platformId] = await this.refreshPlatform(platformId);
     }
     return results;
   }
