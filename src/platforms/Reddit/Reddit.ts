@@ -45,6 +45,12 @@ export default class Reddit extends Platform {
     };
   }
 
+  /** @inheritdoc */
+  async refresh(): Promise<boolean> {
+    await this.auth.refreshAccessToken();
+    return true;
+  }
+
   async preparePost(folder: Folder): Promise<Post | undefined> {
     const post = await super.preparePost(folder);
     if (post) {

@@ -89,6 +89,16 @@ async function main() {
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
+      case "refresh-platform": {
+        result = await feed.refreshPlatform(PLATFORM);
+        report = "Result: \n" + JSON.stringify(result, null, "\t");
+        break;
+      }
+      case "refresh-platforms": {
+        result = await feed.refreshPlatforms(PLATFORMS);
+        report = "Result: \n" + JSON.stringify(result, null, "\t");
+        break;
+      }
       case "get-folder": {
         const folder = feed.getFolder(FOLDER);
         report += folder.report() + "\n";
@@ -221,6 +231,8 @@ async function main() {
           `${cmd} setup-platforms [--platforms=xxx,xxx]`,
           `${cmd} test-platform --platform=xxx`,
           `${cmd} test-platforms [--platforms=xxx,xxx]`,
+          `${cmd} refresh-platform --platform=xxx`,
+          `${cmd} refresh-platforms [--platforms=xxx,xxx]`,
           `${cmd} get-platform --platform=xxx`,
           `${cmd} get-platforms [--platforms=xxx,xxx]`,
           `${cmd} get-folder --folder=xxx`,

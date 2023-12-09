@@ -14,19 +14,11 @@ export default class RedditAuth {
     Storage.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
   }
 
-  public async getAccessToken(): Promise<string> {
-    return await this.refreshAccessToken();
-  }
-
   /**
-   * Get Reddit Access token
+   * Refresh Reddit Access token
    *
-   * Reddits access token expire in 24 hours. Instead
-   * of using an access token from the Storage, the Reddit
-   * platform gets its token from here, which refreshes
-   * it if needed using the refresh_token
-   *
-   * ~~ TODO the api cant access these
+   * Reddits access token expire in 24 hours.
+   * Refresh this regularly.
    * @returns The access token
    */
   public async refreshAccessToken(): Promise<string> {
@@ -35,15 +27,18 @@ export default class RedditAuth {
     }
     const result = await this.post("access_token", {
       grant_type: "refresh_token",
-      refresh_token: Storage.get("settings", "REDDIT_REFRESH_TOKEN"),
+      refresh_token: Storage.get("auth", "REDDIT_REFRESH_TOKEN"),
     });
 
     if (!result["access_token"]) {
       const msg = "Remote response did not return a access_token";
       throw Logger.error(msg, result);
     }
-    this.accessToken = result["access_token"];
-    return this.accessToken;
+    const accessToken = result["access_token"];
+    if (!accessToken) {
+      throw new Error("RedditAuth: refresh failed - no access token");
+    }
+    Storage.set("auth", "REDDIT_ACCESS_TOKEN", accessToken);
   }
 
   protected async requestCode(): Promise<string> {
