@@ -1,6 +1,4 @@
-import * as fs from "fs";
-import * as path from "path";
-import * as platforms from "../platforms";
+import * as platformClasses from "../platforms";
 
 import Feed from "../models/Feed";
 import Platform from "../models/Platform";
@@ -39,15 +37,9 @@ class Fairpost {
       "",
     ).split(",");
 
-    const platformClasses = fs.readdirSync(
-      path.resolve(__dirname + "/../platforms"),
-    );
-
-    platformClasses.forEach((file) => {
-      const constructor = file.replace(".ts", "").replace(".js", "");
-      // nb import * as platforms loaded the constructors
-      if (platforms[constructor] !== undefined) {
-        const platform = new platforms[constructor]();
+    Object.values(platformClasses).forEach((platformClass) => {
+      if (typeof platformClass === "function") {
+        const platform = new platformClass();
         platform.active = activePlatformIds.includes(platform.id);
         this.platforms.push(platform);
       }

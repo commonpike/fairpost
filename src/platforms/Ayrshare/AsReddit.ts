@@ -13,7 +13,7 @@ export default class AsReddit extends Ayrshare {
 
   constructor() {
     super();
-    this.SUBREDDIT = Storage.get("settings", "AYRSHARE_SUBREDDIT");
+    this.SUBREDDIT = Storage.get("settings", "AYRSHARE_SUBREDDIT", "");
   }
 
   async preparePost(folder: Folder): Promise<Post | undefined> {
