@@ -39,7 +39,7 @@ class Storage {
       throw Logger.error("Storage " + storage + " not implemented");
     }
     if (!value) {
-      if (!def) {
+      if (def === undefined) {
         throw Logger.error("Value " + key + " not found in store " + store);
       }
       value = def;

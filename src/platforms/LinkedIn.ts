@@ -30,7 +30,8 @@ export default class LinkedIn extends Platform {
     super();
     this.auth = new LinkedInAuth();
     this.POST_AUTHOR =
-      "urn:li:organization:" + Storage.get("settings", "LINKEDIN_COMPANY_ID");
+      "urn:li:organization:" +
+      Storage.get("settings", "LINKEDIN_COMPANY_ID", "");
   }
 
   /** @inheritdoc */

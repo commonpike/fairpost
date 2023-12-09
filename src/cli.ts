@@ -72,6 +72,7 @@ async function main() {
       }
       case "get-platforms": {
         const platforms = feed.getPlatforms(PLATFORMS);
+        report += platforms.length + " Platforms\n------\n";
         platforms.forEach((platform) => {
           report += platform.report() + "\n";
         });
@@ -96,7 +97,7 @@ async function main() {
       }
       case "get-folders": {
         const folders = feed.getFolders(FOLDERS);
-        report += folders.length + " Folders" + "\n";
+        report += folders.length + " Folders\n------\n";
         folders.forEach((folder) => {
           report += folder.report() + "\n";
         });
@@ -115,7 +116,7 @@ async function main() {
           platforms: PLATFORMS,
           status: STATUS,
         });
-        report += allposts.length + " Posts" + "\n";
+        report += allposts.length + " Posts\n------\n";
         allposts.forEach((post) => {
           report += post.report();
         });
