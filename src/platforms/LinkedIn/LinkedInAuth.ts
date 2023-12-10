@@ -1,54 +1,46 @@
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
+import { strict as assert } from "assert";
 
 export default class LinkedInAuth {
   API_VERSION = "v2";
   accessToken = "";
 
+  /**
+   * Set up LinkedIn platform
+   */
   async setup() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
-    this.accessToken = tokens["access_token"];
-    Storage.set("auth", "LINKEDIN_ACCESS_TOKEN", this.accessToken);
-    Storage.set("auth", "LINKEDIN_REFRESH_TOKEN", tokens["refresh_token"]);
+    this.store(tokens);
   }
 
   /**
-   * Get Linkedin Access token
-   * @returns The access token
+   * Refresh LinkedIn  tokens
    */
-  public async getAccessToken(): Promise<string> {
-    if (this.accessToken) {
-      return this.accessToken;
-    }
-    this.accessToken = Storage.get("auth", "LINKEDIN_ACCESS_TOKEN");
-    // check if it works here
-    return this.accessToken;
-  }
-
-  /**
-   * Refresh LinkedIn Access token
-   * @returns The access token
-   */
-  public async refreshAccessToken(): Promise<string> {
-    const result = await this.post("access_token", {
+  async refresh() {
+    const tokens = (await this.post("accessToken", {
       grant_type: "refresh_token",
-      refresh_token: Storage.get("settings", "LINKEDIN_REFRESH_TOKEN"),
+      refresh_token: Storage.get("auth", "LINKEDIN_REFRESH_TOKEN"),
       client_id: Storage.get("settings", "LINKEDIN_CLIENT_ID"),
-      cient_secret: Storage.get("settings", "LINKEDIN_CLIENT_SECRET"),
-    });
+      client_secret: Storage.get("settings", "LINKEDIN_CLIENT_SECRET"),
+    })) as TokenResponse;
 
-    if (!result["access_token"]) {
-      const msg = "Remote response did not return a access_token";
-      throw Logger.error(msg, result);
+    if (!isTokenResponse(tokens)) {
+      throw Logger.error(
+        "LinkedInAuth.refresh: response is not a TokenResponse",
+        tokens,
+      );
     }
-    this.accessToken = result["access_token"];
-    // now store it
-    return this.accessToken;
+    this.store(tokens);
   }
 
-  protected async requestCode(): Promise<string> {
+  /**
+   * Request remote code using OAuth2Service
+   * @returns - code
+   */
+  private async requestCode(): Promise<string> {
     Logger.trace("LinkedInAuth", "requestCode");
     const clientId = Storage.get("settings", "LINKEDIN_CLIENT_ID");
     const state = String(Math.random()).substring(2);
@@ -89,38 +81,50 @@ export default class LinkedInAuth {
     return result["code"] as string;
   }
 
-  protected async exchangeCode(code: string): Promise<{
-    access_token: string;
-    token_type: "bearer";
-    expires_in: number;
-    scope: string;
-    refresh_token: string;
-  }> {
-    Logger.trace("RedditAuth", "exchangeCode", code);
+  /**
+   * Exchange remote code for tokens
+   * @param code - the code to exchange
+   * @returns - TokenResponse
+   */
+  private async exchangeCode(code: string): Promise<TokenResponse> {
+    Logger.trace("LinkedInAuth", "exchangeCode", code);
     const redirectUri = OAuth2Service.getCallbackUrl();
 
-    const result = (await this.post("accessToken", {
+    const tokens = (await this.post("accessToken", {
       grant_type: "authorization_code",
       code: code,
       client_id: Storage.get("settings", "LINKEDIN_CLIENT_ID"),
       client_secret: Storage.get("settings", "LINKEDIN_CLIENT_SECRET"),
       redirect_uri: redirectUri,
-    })) as {
-      access_token: string;
-      token_type: "bearer";
-      expires_in: number;
-      scope: string;
-      refresh_token: string;
-      refresh_token_expires_in: string;
-    };
+    })) as TokenResponse;
 
-    if (!result["access_token"]) {
-      const msg = "Remote response did not return a access_token";
-      throw Logger.error(msg, result);
+    if (!isTokenResponse(tokens)) {
+      throw Logger.error("Invalid TokenResponse", tokens);
     }
 
-    return result;
+    return tokens;
   }
+
+  /**
+   * Save all tokens in auth store
+   * @param tokens - the tokens to store
+   */
+  private store(tokens: TokenResponse) {
+    Storage.set("auth", "LINKEDIN_ACCESS_TOKEN", tokens["access_token"]);
+    const accessExpiry = new Date(
+      new Date().getTime() + tokens["expires_in"] * 1000,
+    ).toISOString();
+    Storage.set("auth", "LINKEDIN_ACCESS_EXPIRY", accessExpiry);
+
+    Storage.set("auth", "LINKEDIN_REFRESH_TOKEN", tokens["refresh_token"]);
+    const refreshExpiry = new Date(
+      new Date().getTime() + tokens["refresh_token_expires_in"] * 1000,
+    ).toISOString();
+    Storage.set("auth", "LINKEDIN_REFRESH_EXPIRY", refreshExpiry);
+
+    Storage.set("auth", "LINKEDIN_SCOPE", tokens["scope"]);
+  }
+
   // API implementation -------------------
 
   /**
@@ -158,7 +162,7 @@ export default class LinkedInAuth {
       throw Logger.error(
         "LinkedInAuth.handleApiResponse",
         response.url + ":" + response.status + ", " + response.statusText,
-        await response.json(),
+        await response.text(),
       );
     }
     const data = await response.json();
@@ -178,4 +182,26 @@ export default class LinkedInAuth {
     Logger.trace("LinkedInAuth.handleApiResponse", "success");
     return data;
   }
+}
+
+interface TokenResponse {
+  access_token: string;
+  token_type: "bearer";
+  expires_in: number;
+  scope: string;
+  refresh_token: string;
+  refresh_token_expires_in: number;
+}
+
+function isTokenResponse(tokens: TokenResponse) {
+  try {
+    assert("access_token" in tokens);
+    assert("expires_in" in tokens);
+    assert("scope" in tokens);
+    assert("refresh_token" in tokens);
+    assert("refresh_token_expires_in" in tokens);
+  } catch (e) {
+    return false;
+  }
+  return true;
 }

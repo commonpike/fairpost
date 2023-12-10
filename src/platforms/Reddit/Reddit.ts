@@ -47,7 +47,7 @@ export default class Reddit extends Platform {
 
   /** @inheritdoc */
   async refresh(): Promise<boolean> {
-    await this.auth.refreshAccessToken();
+    await this.auth.refresh();
     return true;
   }
 

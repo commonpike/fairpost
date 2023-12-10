@@ -45,6 +45,12 @@ export default class LinkedIn extends Platform {
     return this.getProfile();
   }
 
+  /** @inheritdoc */
+  async refresh(): Promise<boolean> {
+    await this.auth.refresh();
+    return true;
+  }
+
   async preparePost(folder: Folder): Promise<Post> {
     const post = await super.preparePost(folder);
     if (post) {
@@ -280,10 +286,11 @@ export default class LinkedIn extends Platform {
   private async uploadImage(leashUrl: string, file: string) {
     const rawData = fs.readFileSync(file);
     Logger.trace("PUT", leashUrl);
+    const accessToken = Storage.get("auth", "LINKEDIN_ACCESS_TOKEN");
     return await fetch(leashUrl, {
       method: "PUT",
       headers: {
-        Authorization: "Bearer " + (await this.auth.getAccessToken()),
+        Authorization: "Bearer " + accessToken,
       },
       body: rawData,
     }).then((res) => this.api.handleApiResponse(res));

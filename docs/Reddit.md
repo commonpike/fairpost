@@ -18,7 +18,7 @@
 
 ### Get an OAuth2 Access Token for your Reddit account
 
-This token last for 24 hours and should be refreshed.
+This token only lasts for 24 hours and should be refreshed.
 
  - call `./fairpost.js setup-platform --platform=reddit`
  - follow instructions from the command line

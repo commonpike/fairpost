@@ -90,8 +90,14 @@ Other commands and `--arguments`
 may help you to, for example, immediately publish
 a certain post to a certain platform if you like.
 
+### Refresh tokens
 
-
+Access and refresh tokens for various platforms may
+expire sooner or later. Before you do anything, try
+`fairpost.js refresh-platforms`. Eventually, even
+refresh tokens may expire, and you will have to run
+`fairpost.js setup-platform --platform=bla` again
+to get a new pair of tokens.
 
 
 ### Cli
