@@ -1,17 +1,15 @@
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
+import { strict as assert } from "assert";
 
 export default class RedditAuth {
   API_VERSION = "v1";
-  accessToken = "";
 
   async setup() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
-    this.accessToken = tokens["access_token"];
-    Storage.set("auth", "REDDIT_ACCESS_TOKEN", this.accessToken);
-    Storage.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
+    this.store(tokens);
   }
 
   /**
@@ -19,28 +17,26 @@ export default class RedditAuth {
    *
    * Reddits access token expire in 24 hours.
    * Refresh this regularly.
-   * @returns The access token
    */
-  public async refreshAccessToken(): Promise<string> {
-    if (this.accessToken) {
-      return this.accessToken;
-    }
-    const result = await this.post("access_token", {
+  public async refresh() {
+    const tokens = (await this.post("access_token", {
       grant_type: "refresh_token",
       refresh_token: Storage.get("auth", "REDDIT_REFRESH_TOKEN"),
-    });
+    })) as TokenResponse;
 
-    if (!result["access_token"]) {
-      const msg = "Remote response did not return a access_token";
-      throw Logger.error(msg, result);
+    if (!isTokenResponse(tokens)) {
+      throw Logger.error(
+        "RedditAuth.refresh: response is not a TokenResponse",
+        tokens,
+      );
     }
-    const accessToken = result["access_token"];
-    if (!accessToken) {
-      throw new Error("RedditAuth: refresh failed - no access token");
-    }
-    Storage.set("auth", "REDDIT_ACCESS_TOKEN", accessToken);
+    this.store(tokens);
   }
 
+  /**
+   * Request remote code using OAuth2Service
+   * @returns - code
+   */
   protected async requestCode(): Promise<string> {
     Logger.trace("RedditAuth", "requestCode");
     const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
@@ -78,17 +74,16 @@ export default class RedditAuth {
     return result["code"] as string;
   }
 
-  protected async exchangeCode(code: string): Promise<{
-    access_token: string;
-    token_type: "bearer";
-    expires_in: number;
-    scope: string;
-    refresh_token: string;
-  }> {
+  /**
+   * Exchange remote code for tokens
+   * @param code - the code to exchange
+   * @returns - TokenResponse
+   */
+  protected async exchangeCode(code: string): Promise<TokenResponse> {
     Logger.trace("RedditAuth", "exchangeCode", code);
     const redirectUri = OAuth2Service.getCallbackUrl();
 
-    const result = (await this.post("access_token", {
+    const tokens = (await this.post("access_token", {
       grant_type: "authorization_code",
       code: code,
       redirect_uri: redirectUri,
@@ -100,13 +95,30 @@ export default class RedditAuth {
       refresh_token: string;
     };
 
-    if (!result["access_token"]) {
-      const msg = "Remote response did not return a access_token";
-      throw Logger.error(msg, result);
+    if (!isTokenResponse(tokens)) {
+      throw Logger.error(
+        "RedditAuth.exchangeCode: response is not a TokenResponse",
+        tokens,
+      );
     }
 
-    return result;
+    return tokens;
   }
+
+  /**
+   * Save all tokens in auth store
+   * @param tokens - the tokens to store
+   */
+  private store(tokens: TokenResponse) {
+    Storage.set("auth", "REDDIT_ACCESS_TOKEN", tokens["access_token"]);
+    const accessExpiry = new Date(
+      new Date().getTime() + tokens["expires_in"] * 1000,
+    ).toISOString();
+    Storage.set("auth", "REDDIT_ACCESS_EXPIRY", accessExpiry);
+    Storage.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
+    Storage.set("auth", "REDDIT_SCOPE", tokens["scope"]);
+  }
+
   // API implementation -------------------
 
   /**
@@ -179,4 +191,24 @@ export default class RedditAuth {
   private handleApiError(error: Error): never {
     throw Logger.error("RedditAuth.handleApiError", error);
   }
+}
+
+interface TokenResponse {
+  access_token: string;
+  token_type: "bearer";
+  expires_in: number;
+  scope: string;
+  refresh_token: string;
+}
+
+function isTokenResponse(tokens: TokenResponse) {
+  try {
+    assert("access_token" in tokens);
+    assert("expires_in" in tokens);
+    assert("scope" in tokens);
+    assert("refresh_token" in tokens);
+  } catch (e) {
+    return false;
+  }
+  return true;
 }

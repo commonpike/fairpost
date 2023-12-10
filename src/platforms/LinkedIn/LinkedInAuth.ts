@@ -28,7 +28,10 @@ export default class LinkedInAuth {
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw Logger.error("Invalid TokenResponse", tokens);
+      throw Logger.error(
+        "LinkedInAuth.refresh: response is not a TokenResponse",
+        tokens,
+      );
     }
     this.store(tokens);
   }
