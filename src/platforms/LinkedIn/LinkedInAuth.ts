@@ -87,7 +87,7 @@ export default class LinkedInAuth {
    * @returns - TokenResponse
    */
   private async exchangeCode(code: string): Promise<TokenResponse> {
-    Logger.trace("RedditAuth", "exchangeCode", code);
+    Logger.trace("LinkedInAuth", "exchangeCode", code);
     const redirectUri = OAuth2Service.getCallbackUrl();
 
     const tokens = (await this.post("accessToken", {
