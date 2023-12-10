@@ -16,30 +16,39 @@ import TwitterAuth from "./TwitterAuth";
  */
 export default class Twitter extends Platform {
   id = PlatformId.TWITTER;
+  auth: TwitterAuth;
 
   constructor() {
     super();
+    this.auth = new TwitterAuth();
   }
 
   /** @inheritdoc */
   async setup() {
-    const auth = new TwitterAuth();
-    return await auth.setup();
+    return await this.auth.setup();
   }
 
   /** @inheritdoc */
   async test() {
+    Logger.trace("Twitter.test: get oauth1 api");
     const client1 = new TwitterApi({
       appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
       appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
       accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
       accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
+    Logger.trace("Twitter.test: get oauth2 api");
     const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
     return {
       oauth1: await client1.v1.verifyCredentials(),
       oauth2: await client2.v2.me(),
     };
+  }
+
+  /** @inheritdoc */
+  async refresh(): Promise<boolean> {
+    await this.auth.refresh();
+    return true;
   }
 
   async preparePost(folder: Folder): Promise<Post> {
