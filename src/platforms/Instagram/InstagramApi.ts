@@ -126,7 +126,7 @@ export default class InstagramApi {
    */
   private async handleApiResponse(response: Response): Promise<object> {
     if (!response.ok) {
-      throw Logger.error("Ayrshare.handleApiResponse", response);
+      throw Logger.error("Instagram.handleApiResponse", response);
     }
     const data = await response.json();
     if (data.error) {
@@ -140,9 +140,9 @@ export default class InstagramApi {
         data.error.error_subcode +
         ") " +
         data.error.message;
-      throw Logger.error("Facebook.handleApiResponse", error);
+      throw Logger.error("Instagram.handleApiResponse", error);
     }
-    Logger.trace("Facebook.handleApiResponse", "success");
+    Logger.trace("Instagram.handleApiResponse", "success");
     return data;
   }
 
@@ -151,6 +151,6 @@ export default class InstagramApi {
    * @param error - the api error returned from fetch
    */
   private handleApiError(error: Error): never {
-    throw Logger.error("Facebook.handleApiError", error);
+    throw Logger.error("Instagram.handleApiError", error);
   }
 }

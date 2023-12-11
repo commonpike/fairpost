@@ -212,7 +212,7 @@ export default abstract class Ayrshare extends Platform {
     const data = await response.json();
     if (data.status === "error") {
       let error = response.status + ":";
-      data.status.errors.forEach(
+      data.errors.forEach(
         (err: {
           action: string;
           platform: string;
