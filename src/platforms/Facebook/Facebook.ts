@@ -42,6 +42,7 @@ export default class Facebook extends Platform {
 
   /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post | undefined> {
+    Logger.trace("Facebook.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
       // facebook: video post can only contain 1 video
@@ -157,7 +158,7 @@ export default class Facebook extends Platform {
     body.set("published", published ? "true" : "false");
     body.set("source", blob, path.basename(file));
 
-    const result = (await this.api.postFormData("%PAGE%/photos", body)) as {
+    const result = (await this.api.postForm("%PAGE%/photos", body)) as {
       id: "string";
     };
 
@@ -193,7 +194,7 @@ export default class Facebook extends Platform {
     body.set("published", Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"));
     body.set("source", blob, path.basename(file));
 
-    const result = (await this.api.postFormData("%PAGE%/videos", body)) as {
+    const result = (await this.api.postForm("%PAGE%/videos", body)) as {
       id: string;
     };
 

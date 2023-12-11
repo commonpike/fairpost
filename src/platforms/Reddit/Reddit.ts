@@ -52,6 +52,7 @@ export default class Reddit extends Platform {
   }
 
   async preparePost(folder: Folder): Promise<Post | undefined> {
+    Logger.trace("Reddit.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
       // reddit: max 1 image or video

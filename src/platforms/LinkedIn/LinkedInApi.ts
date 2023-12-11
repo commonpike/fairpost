@@ -1,3 +1,10 @@
+import {
+  ApiResponseError,
+  handleApiError,
+  handleEmptyResponse,
+  handleJsonResponse,
+} from "../../utilities";
+
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
 
@@ -36,8 +43,9 @@ export default class LinkedInApi {
         "User-Agent": Storage.get("settings", "USER_AGENT"),
       },
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
+      .then((res) => handleJsonResponse(res, true))
+      .catch((err) => this.handleLinkedInError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
@@ -46,7 +54,11 @@ export default class LinkedInApi {
    * @param body - body as object
    */
 
-  public async postJson(endpoint: string, body = {}): Promise<object> {
+  public async postJson(
+    endpoint: string,
+    body = {},
+    expectEmptyResponse = false,
+  ): Promise<object> {
     const url = new URL("https://api.linkedin.com");
 
     const [pathname, search] = endpoint.split("?");
@@ -66,56 +78,37 @@ export default class LinkedInApi {
         Authorization: "Bearer " + accessToken,
       },
       body: JSON.stringify(body),
-    }).then((res) => this.handleApiResponse(res));
-    //.catch((err) => this.handleApiError(err));
+    })
+      .then((res) =>
+        expectEmptyResponse
+          ? handleEmptyResponse(res, true)
+          : handleJsonResponse(res, true),
+      )
+      .catch((err) => this.handleLinkedInError(err))
+      .catch((err) => handleApiError(err));
   }
 
-  /*
-   * Handle api response
-   *
-   */
-  public async handleApiResponse(response: Response): Promise<object> {
-    const text = await response.text();
-    let data = {} as { [key: string]: unknown };
-    try {
-      data = JSON.parse(text);
-    } catch (err) {
-      data["text"] = text;
-    }
-    if (!response.ok) {
-      Logger.warn("Linkedin.handleApiResponse", response);
-      Logger.warn(response.headers);
-      const linkedInErrorResponse =
-        response.headers["x-linkedin-error-response"];
-
-      const error =
-        response.status +
-        ":" +
-        response.statusText +
-        " (" +
-        data.status +
-        "/" +
-        data.serviceErrorCode +
-        ") " +
-        data.message +
-        " - " +
-        linkedInErrorResponse;
-
-      throw Logger.error(error);
-    }
-    data["headers"] = {};
-    for (const [name, value] of response.headers) {
-      data["headers"][name] = value;
-    }
-    Logger.trace("Linkedin.handleApiResponse", "success");
-    return data;
-  }
-
-  /*
+  /**
    * Handle api error
    *
+   * Improve error message and rethrow it.
+   * @param error - ApiResponseError
    */
-  public handleApiError(error: Error): Promise<object> {
-    throw Logger.error("Linkedin.handleApiError", error);
+  public async handleLinkedInError(error: ApiResponseError): Promise<never> {
+    if (error.responseData) {
+      error.message +=
+        " (" +
+        error.responseData.status +
+        "/" +
+        error.responseData.serviceErrorCode +
+        ") " +
+        error.responseData.message;
+    }
+    if (error.response?.headers?.["x-linkedin-error-response"]) {
+      error.message +=
+        " - " + error.response?.headers["x-linkedin-error-response"];
+    }
+
+    throw error;
   }
 }

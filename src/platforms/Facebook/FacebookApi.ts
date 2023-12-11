@@ -1,3 +1,9 @@
+import {
+  ApiResponseError,
+  handleApiError,
+  handleJsonResponse,
+} from "../../utilities";
+
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
 
@@ -35,8 +41,9 @@ export default class FacebookApi {
           "Bearer " + Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleFacebookError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
@@ -67,8 +74,9 @@ export default class FacebookApi {
       },
       body: JSON.stringify(body),
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleFacebookError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
@@ -77,7 +85,7 @@ export default class FacebookApi {
    * @param body - body as object
    */
 
-  public async postFormData(endpoint: string, body: FormData): Promise<object> {
+  public async postForm(endpoint: string, body: FormData): Promise<object> {
     endpoint = endpoint.replace(
       "%PAGE%",
       Storage.get("settings", "FACEBOOK_PAGE_ID"),
@@ -96,46 +104,31 @@ export default class FacebookApi {
       },
       body: body,
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Handle api response
-   * @param response - api response from fetch
-   * @returns parsed object from response
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      throw Logger.error(
-        "Facebook.handleApiResponse",
-        response,
-        response.status + ":" + response.statusText,
-      );
-    }
-    const data = await response.json();
-    if (data.error) {
-      const error =
-        response.status +
-        ":" +
-        data.error.type +
-        "(" +
-        data.error.code +
-        "/" +
-        data.error.error_subcode +
-        ") " +
-        data.error.message;
-      throw Logger.error("Facebook.handleApiResponse", error);
-    }
-    Logger.trace("Facebook.handleApiResponse", "success");
-    return data;
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleFacebookError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
    * Handle api error
-   * @param error - the error returned from fetch
+   *
+   * Improve error message and rethrow it.
+   * @param error - ApiResponseError
    */
-  private handleApiError(error: Error): never {
-    throw Logger.error("Facebook.handleApiError", error);
+  private async handleFacebookError(error: ApiResponseError): Promise<never> {
+    if (error.responseData) {
+      if (error.responseData.error) {
+        error.message +=
+          ": " +
+          error.responseData.error.type +
+          " (" +
+          error.responseData.error.code +
+          "/" +
+          (error.responseData.error.error_subcode || "0") +
+          "): " +
+          error.responseData.error.message;
+      }
+    }
+    throw error;
   }
 }

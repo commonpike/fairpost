@@ -1,3 +1,9 @@
+import {
+  ApiResponseError,
+  handleApiError,
+  handleJsonResponse,
+} from "../../utilities";
+
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
 
@@ -44,8 +50,9 @@ export default class InstagramApi {
             Accept: "application/json",
           },
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleInstagramError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
@@ -81,8 +88,9 @@ export default class InstagramApi {
       },
       body: JSON.stringify(body),
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleInstagramError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
@@ -115,42 +123,31 @@ export default class InstagramApi {
       },
       body: body,
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Handle api response
-   * @param response - the api response from fetch
-   * @returns the parsed response
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      throw Logger.error("Instagram.handleApiResponse", response);
-    }
-    const data = await response.json();
-    if (data.error) {
-      const error =
-        response.status +
-        ":" +
-        data.error.type +
-        "(" +
-        data.error.code +
-        "/" +
-        data.error.error_subcode +
-        ") " +
-        data.error.message;
-      throw Logger.error("Instagram.handleApiResponse", error);
-    }
-    Logger.trace("Instagram.handleApiResponse", "success");
-    return data;
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleInstagramError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
    * Handle api error
-   * @param error - the api error returned from fetch
+   *
+   * Improve error message and rethrow it.
+   * @param error - ApiResponseError
    */
-  private handleApiError(error: Error): never {
-    throw Logger.error("Instagram.handleApiError", error);
+  private async handleInstagramError(error: ApiResponseError): Promise<never> {
+    if (error.responseData) {
+      if (error.responseData.error) {
+        error.message +=
+          ": " +
+          error.responseData.error.type +
+          " (" +
+          error.responseData.error.code +
+          "/" +
+          (error.responseData.error.error_subcode || "0") +
+          "): " +
+          error.responseData.error.message;
+      }
+    }
+    throw error;
   }
 }

@@ -41,6 +41,7 @@ export default class Instagram extends Platform {
 
   /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post | undefined> {
+    Logger.trace("Instagram.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
       // instagram: 1 video for reel

@@ -2,6 +2,8 @@ import * as fs from "fs";
 //import * as path from "path";
 import * as sharp from "sharp";
 
+import { handleApiError, handleEmptyResponse } from "../../utilities";
+
 import Folder from "../../models/Folder";
 import LinkedInApi from "./LinkedInApi";
 import LinkedInAuth from "./LinkedInAuth";
@@ -52,6 +54,7 @@ export default class LinkedIn extends Platform {
   }
 
   async preparePost(folder: Folder): Promise<Post> {
+    Logger.trace("LinkedIn.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
       // linkedin: prefer video, max 1 video
@@ -132,8 +135,10 @@ export default class LinkedIn extends Platform {
       }
     }
 
-    if (response.headers["x-restli-id"]) {
+    if (response.headers?.["x-restli-id"]) {
       response.id = response.headers["x-restli-id"];
+    } else if (response.headers?.["x-linkedin-id"]) {
+      response.id = response.headers["x-linkedin-id"];
     }
 
     post.results.push({
@@ -176,6 +181,7 @@ export default class LinkedIn extends Platform {
   }
 
   private async publishText(content: string) {
+    Logger.trace("LinkedIn.publishText");
     const body = {
       author: this.POST_AUTHOR,
       commentary: content,
@@ -184,11 +190,14 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.api.postJson("posts", body);
+    return await this.api.postJson("posts", body, true);
   }
   private async publishImage(title: string, content: string, image: string) {
+    Logger.trace("LinkedIn.publishImage");
     const leash = await this.getImageLeash();
     await this.uploadImage(leash.value.uploadUrl, image);
+    // TODO: save headers[etag] ..
+    // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#sample-response-4
     const body = {
       author: this.POST_AUTHOR,
       commentary: content,
@@ -203,14 +212,17 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.api.postJson("posts", body);
+    return await this.api.postJson("posts", body, true);
   }
 
   private async publishImages(content: string, images: string[]) {
+    Logger.trace("LinkedIn.publishImages");
     const imageIds = [];
     for (const image of images) {
       const leash = await this.getImageLeash();
       await this.uploadImage(leash.value.uploadUrl, image);
+      // TODO: save headers[etag] ..
+      // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#sample-response-4
       imageIds.push(leash.value.image);
     }
 
@@ -232,13 +244,16 @@ export default class LinkedIn extends Platform {
         },
       },
     };
-    return await this.api.postJson("posts", body);
+    return await this.api.postJson("posts", body, true);
   }
 
   // untested
   private async publishVideo(title: string, content: string, video: string) {
+    Logger.trace("LinkedIn.publishVideo");
     const leash = await this.getVideoLeash(video);
     await this.uploadVideo(leash.value.uploadInstructions[0].uploadUrl, video);
+    // TODO: save headers[etag] ..
+    // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#sample-response-4
     const body = {
       author: this.POST_AUTHOR,
       commentary: content,
@@ -253,7 +268,7 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.api.postJson("posts", body);
+    return await this.api.postJson("posts", body, true);
   }
 
   private async getImageLeash(): Promise<{
@@ -263,6 +278,7 @@ export default class LinkedIn extends Platform {
       image: string;
     };
   }> {
+    Logger.trace("LinkedIn.getImageLeash");
     const response = (await this.api.postJson(
       "images?action=initializeUpload",
       {
@@ -284,6 +300,7 @@ export default class LinkedIn extends Platform {
   }
 
   private async uploadImage(leashUrl: string, file: string) {
+    Logger.trace("LinkedIn.uploadImage");
     const rawData = fs.readFileSync(file);
     Logger.trace("PUT", leashUrl);
     const accessToken = Storage.get("auth", "LINKEDIN_ACCESS_TOKEN");
@@ -293,7 +310,10 @@ export default class LinkedIn extends Platform {
         Authorization: "Bearer " + accessToken,
       },
       body: rawData,
-    }).then((res) => this.api.handleApiResponse(res));
+    })
+      .then((res) => handleEmptyResponse(res))
+      .catch((err) => this.api.handleLinkedInError(err))
+      .catch((err) => handleApiError(err));
   }
 
   // untested
@@ -309,9 +329,10 @@ export default class LinkedIn extends Platform {
       uploadToken: string;
     };
   }> {
+    Logger.trace("LinkedIn.getVideoLeash");
     const stats = fs.statSync(file);
     const response = (await this.api.postJson(
-      "images?videos=initializeUpload",
+      "videos?action=initializeUpload",
       {
         initializeUploadRequest: {
           owner: this.POST_AUTHOR,
@@ -340,6 +361,7 @@ export default class LinkedIn extends Platform {
 
   // untested
   private async uploadVideo(leashUrl: string, file: string) {
+    Logger.trace("LinkedIn.uploadVideo");
     const rawData = fs.readFileSync(file);
     Logger.trace("PUT", leashUrl);
     return await fetch(leashUrl, {
@@ -348,6 +370,9 @@ export default class LinkedIn extends Platform {
         "Content-Type": "application/octet-stream",
       },
       body: rawData,
-    }).then((res) => this.api.handleApiResponse(res));
+    })
+      .then((res) => handleEmptyResponse(res))
+      .catch((err) => this.api.handleLinkedInError(err))
+      .catch((err) => handleApiError(err));
   }
 }
