@@ -1,3 +1,9 @@
+import {
+  ApiResponseError,
+  handleApiError,
+  handleJsonResponse,
+} from "../../utilities";
+
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
@@ -148,39 +154,22 @@ export default class LinkedInAuth {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams(body),
-    }).then((res) => this.handleApiResponse(res));
+    })
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleLinkedInError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
-   * Handle api response
-   * @param response - api response from fetch
-   * @returns parsed object from response
+   * Handle api error
+   *
+   * Improve error message and rethrow it.
+   * @param error - ApiResponseError
    */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      Logger.warn("LinkedInAuth.handleApiResponse", "not ok");
-      throw Logger.error(
-        "LinkedInAuth.handleApiResponse",
-        response.url + ":" + response.status + ", " + response.statusText,
-        await response.text(),
-      );
-    }
-    const data = await response.json();
-    if (data.error) {
-      const error =
-        response.status +
-        ":" +
-        data.error.type +
-        "(" +
-        data.error.code +
-        "/" +
-        data.error.error_subcode +
-        ") " +
-        data.error.message;
-      throw Logger.error("LinkedInAuth.handleApiResponse", error);
-    }
-    Logger.trace("LinkedInAuth.handleApiResponse", "success");
-    return data;
+  public async handleLinkedInError(error: ApiResponseError): Promise<never> {
+    // it appears the linkedin oauth error
+    // is standard - http code 4xx, carrying a message
+    throw error;
   }
 }
 

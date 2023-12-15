@@ -1,6 +1,13 @@
+import {
+  ApiResponseError,
+  handleApiError,
+  handleJsonResponse,
+} from "../../utilities";
+
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
+import { strict as assert } from "assert";
 
 export default class FacebookAuth {
   GRAPH_API_VERSION: string = "v18.0";
@@ -74,19 +81,21 @@ export default class FacebookAuth {
   ): Promise<string> {
     const redirectUri = OAuth2Service.getCallbackUrl();
 
-    const result = await this.get("oauth/access_token", {
+    const tokens = (await this.get("oauth/access_token", {
       client_id: clientId,
       client_secret: clientSecret,
       code: code,
       redirect_uri: redirectUri,
-    });
+    })) as TokenResponse;
 
-    if (!result["access_token"]) {
-      const msg = "Remote response did not return a access_token";
-      throw Logger.error(msg, result);
+    if (!isTokenResponse(tokens)) {
+      throw Logger.error(
+        "FacebookAuth.exchangeCode: response is not a TokenResponse",
+        tokens,
+      );
     }
 
-    return result["access_token"];
+    return tokens["access_token"];
   }
 
   /**
@@ -155,17 +164,18 @@ export default class FacebookAuth {
       client_secret: appSecret,
       fb_exchange_token: userAccessToken,
     };
-    const data = (await this.get("oauth/access_token", query)) as {
-      access_token: string;
-    };
-    if (!data["access_token"]) {
+    const tokens = (await this.get(
+      "oauth/access_token",
+      query,
+    )) as TokenResponse;
+
+    if (!isTokenResponse(tokens)) {
       throw Logger.error(
-        "No llUserAccessToken access_token in response.",
-        data,
+        "FacebookAuth.getLLUserAccessToken: response is not a TokenResponse",
+        tokens,
       );
     }
-
-    return data["access_token"];
+    return tokens["access_token"];
   }
 
   /**
@@ -210,46 +220,44 @@ export default class FacebookAuth {
         Accept: "application/json",
       },
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Handle api response
-   * @param response - api response from fetch
-   * @returns parsed object from response
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      throw Logger.error(
-        "FacebookAuth.handleApiResponse",
-        response.status + ":" + response.statusText,
-        response,
-      );
-    }
-    const data = await response.json();
-    if (data.error) {
-      const error =
-        response.status +
-        ":" +
-        data.error.type +
-        "(" +
-        data.error.code +
-        "/" +
-        data.error.error_subcode +
-        ") " +
-        data.error.message;
-      throw Logger.error("FacebookAuth.handleApiResponse", error);
-    }
-    Logger.trace("FacebookAuth.handleApiResponse", "success");
-    return data;
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleFacebookError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
    * Handle api error
-   * @param error - the error returned from fetch
+   *
+   * Improve error message and rethrow it.
+   * @param error - ApiResponseError
    */
-  private handleApiError(error: Error): never {
-    throw Logger.error("FacebookAuth.handleApiError", error);
+  private async handleFacebookError(error: ApiResponseError): Promise<never> {
+    if (error.responseData) {
+      if (error.responseData.error) {
+        error.message +=
+          ": " +
+          error.responseData.error.type +
+          " (" +
+          error.responseData.error.code +
+          "/" +
+          (error.responseData.error.error_subcode || "0") +
+          "): " +
+          error.responseData.error.message;
+      }
+    }
+    throw error;
   }
+}
+
+interface TokenResponse {
+  access_token: string;
+}
+
+function isTokenResponse(tokens: TokenResponse) {
+  try {
+    assert("access_token" in tokens);
+  } catch (e) {
+    return false;
+  }
+  return true;
 }
