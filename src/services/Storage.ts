@@ -108,7 +108,7 @@ class Storage {
 
   private loadJson() {
     const jsonFile =
-      process.env.FAIRPOST_STORAGE_JSONPATH || "var/run/storage.json";
+      process.env.FAIRPOST_STORAGE_JSONPATH || "var/lib/storage.json";
     if (fs.existsSync(jsonFile)) {
       const jsonData = JSON.parse(fs.readFileSync(jsonFile, "utf8"));
       if (jsonData) {
@@ -121,7 +121,7 @@ class Storage {
 
   private saveJson() {
     const jsonFile =
-      process.env.FAIRPOST_STORAGE_JSONPATH || "var/run/storage.json";
+      process.env.FAIRPOST_STORAGE_JSONPATH || "var/lib/storage.json";
     if (!fs.existsSync(jsonFile)) {
       fs.mkdirSync(path.dirname(jsonFile), { recursive: true });
     }

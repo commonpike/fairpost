@@ -1,6 +1,12 @@
 import * as fs from "fs";
 import * as path from "path";
 
+import {
+  ApiResponseError,
+  handleApiError,
+  handleJsonResponse,
+} from "../../utilities";
+
 import Folder from "../../models/Folder";
 import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
@@ -33,6 +39,21 @@ export default abstract class Ayrshare extends Platform {
 
   constructor() {
     super();
+  }
+
+  /** @inheritdoc */
+  async test() {
+    const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
+    return await fetch("https://app.ayrshare.com/api/user", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${APIKEY}`,
+      },
+    })
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleAyrshareError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /** @inheritdoc */
@@ -114,8 +135,9 @@ export default abstract class Ayrshare extends Platform {
           },
         },
       )
-        .then((res) => this.handleApiResponse(res))
-        .catch((err) => this.handleApiError(err))) as {
+        .then((res) => handleJsonResponse(res))
+        .catch((err) => this.handleAyrshareError(err))
+        .catch((err) => handleApiError(err))) as {
         uploadUrl: string;
         contentType: string;
         accessUrl: string;
@@ -180,8 +202,9 @@ export default abstract class Ayrshare extends Platform {
       },
       body: body,
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err))) as {
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleAyrshareError(err))
+      .catch((err) => handleApiError(err))) as {
       id: string;
       status?: string;
     };
@@ -197,49 +220,43 @@ export default abstract class Ayrshare extends Platform {
   }
 
   /**
-   * Handle api response
-   * @param response - the api response
-   * @returns parsed data from response
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      throw Logger.error(
-        "Ayrshare.handleApiResponse",
-        response,
-        response.status + ":" + response.statusText,
-      );
-    }
-    const data = await response.json();
-    if (data.status === "error") {
-      let error = response.status + ":";
-      data.status.errors.forEach(
-        (err: {
-          action: string;
-          platform: string;
-          code: number;
-          message: string;
-        }) => {
-          error +=
-            err.action +
-            "(" +
-            err.code +
-            "/" +
-            err.platform +
-            ") " +
-            err.message;
-        },
-      );
-      throw Logger.error("Ayrshare.handleApiResponse", error);
-    }
-    Logger.trace("Ayrshare.handleApiResponse", "success");
-    return data;
-  }
-
-  /**
    * Handle api error
-   * @param error - the error thrown from the api
+   *
+   * Improve error message and rethrow it.
+   * @param error - ApiResponseError
    */
-  private handleApiError(error: Error) {
-    throw Logger.error("Ayrshare.handleApiError", error);
+  private async handleAyrshareError(error: ApiResponseError): Promise<never> {
+    if (error.responseData) {
+      if (error.responseData.status === "error") {
+        error.message += ": ";
+        if (error.responseData.errors) {
+          error.responseData.errors.forEach(
+            (err: {
+              action: string;
+              platform: string;
+              code: number;
+              message: string;
+            }) => {
+              error.message +=
+                err.action +
+                "(" +
+                err.code +
+                "/" +
+                err.platform +
+                ") " +
+                err.message;
+            },
+          );
+        } else {
+          error.message +=
+            error.responseData.action +
+            "(" +
+            error.responseData.code +
+            ") " +
+            error.responseData.message;
+        }
+      }
+    }
+    throw error;
   }
 }

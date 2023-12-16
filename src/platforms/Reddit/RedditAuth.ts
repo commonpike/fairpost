@@ -1,3 +1,9 @@
+import {
+  ApiResponseError,
+  handleApiError,
+  handleJsonResponse,
+} from "../../utilities";
+
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
@@ -149,47 +155,21 @@ export default class RedditAuth {
       },
       body: new URLSearchParams(body),
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Handle api response
-   * @param response - api response from fetch
-   * @returns parsed object from response
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      throw Logger.error(
-        "RedditAuth.handleApiResponse",
-        "not ok",
-        response.status + ":" + response.statusText,
-      );
-    }
-    const data = await response.json();
-    if (data.error) {
-      const error =
-        response.status +
-        ":" +
-        data.error.type +
-        "(" +
-        data.error.code +
-        "/" +
-        data.error.error_subcode +
-        ") " +
-        data.error.message;
-      throw Logger.error("RedditAuth.handleApiResponse", error);
-    }
-    Logger.trace("RedditAuth.handleApiResponse", "success");
-    return data;
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleRedditError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
    * Handle api error
-   * @param error - the error returned from fetch
+   *
+   * Improve error message and rethrow it.
+   * @param error - ApiResponseError
    */
-  private handleApiError(error: Error): never {
-    throw Logger.error("RedditAuth.handleApiError", error);
+  private async handleRedditError(error: ApiResponseError): Promise<object> {
+    // it appears the reddit oauth error
+    // is standard - http code 4xx, carrying a message
+    throw error;
   }
 }
 

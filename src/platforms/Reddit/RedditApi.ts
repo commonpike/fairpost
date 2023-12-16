@@ -1,3 +1,9 @@
+import {
+  ApiResponseError,
+  handleApiError,
+  handleJsonResponse,
+} from "../../utilities";
+
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
 
@@ -33,8 +39,9 @@ export default class RedditApi {
         "User-Agent": Storage.get("settings", "USER_AGENT"),
       },
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleRedditError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
@@ -64,8 +71,9 @@ export default class RedditApi {
       },
       body: new URLSearchParams(body),
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleRedditError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
@@ -74,7 +82,7 @@ export default class RedditApi {
    * @param body - body as object
    */
 
-  public async postFormData(endpoint: string, body: FormData): Promise<object> {
+  public async postForm(endpoint: string, body: FormData): Promise<object> {
     const url = new URL("https://oauth.reddit.com");
     //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.pathname = "api/" + endpoint;
@@ -91,42 +99,32 @@ export default class RedditApi {
       },
       body: body,
     })
-      .then((res) => this.handleApiResponse(res))
-      .catch((err) => this.handleApiError(err));
-  }
-
-  /**
-   * Handle api response
-   * @param response - api response from fetch
-   * @returns parsed object from response
-   */
-  private async handleApiResponse(response: Response): Promise<object> {
-    if (!response.ok) {
-      throw Logger.error(
-        "Reddit.handleApiResponse",
-        "not ok",
-        response.status + ":" + response.statusText,
-      );
-    }
-    const data = await response.json();
-    if (data.json?.errors?.length) {
-      const error =
-        response.status +
-        ":" +
-        data.json.errors[0] +
-        "-" +
-        data.json.errors.slice(1).join();
-      throw Logger.error("Reddit.handleApiResponse", error);
-    }
-    Logger.trace("Reddit.handleApiResponse", "success");
-    return data;
+      .then((res) => handleJsonResponse(res))
+      .catch((err) => this.handleRedditError(err))
+      .catch((err) => handleApiError(err));
   }
 
   /**
    * Handle api error
-   * @param error - the error returned from fetch
+   *
+   * Improve error message and rethrow it.
+   * @param error - ApiResponseError
    */
-  private handleApiError(error: Error): never {
-    throw Logger.error("Reddit.handleApiError", error);
+  private async handleRedditError(error: ApiResponseError): Promise<object> {
+    if (error.responseData) {
+      if (error.responseData.json?.errors?.length) {
+        error.message +=
+          ":" +
+          error.responseData.json.errors[0] +
+          "-" +
+          error.responseData.json.errors.slice(1).join();
+      }
+    } else {
+      if (error instanceof SyntaxError) {
+        // response.json() Unexpected token < in JSON
+        error.message += "- perhaps refresh your tokens";
+      }
+    }
+    throw error;
   }
 }

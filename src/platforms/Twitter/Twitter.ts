@@ -52,6 +52,7 @@ export default class Twitter extends Platform {
   }
 
   async preparePost(folder: Folder): Promise<Post> {
+    Logger.trace("Twitter.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
       // twitter: no video
