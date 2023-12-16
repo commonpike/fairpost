@@ -70,7 +70,7 @@ export default class FacebookApi {
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization:
-          "Bearer " + Storage.get("settings", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+          "Bearer " + Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
       body: JSON.stringify(body),
     })
@@ -100,7 +100,7 @@ export default class FacebookApi {
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + Storage.get("settings", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+          "Bearer " + Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })

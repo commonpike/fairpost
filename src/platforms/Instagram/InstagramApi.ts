@@ -119,7 +119,7 @@ export default class InstagramApi {
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + Storage.get("settings", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
+          "Bearer " + Storage.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })
