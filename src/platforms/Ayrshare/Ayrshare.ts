@@ -12,7 +12,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import { PostStatus } from "../../models/Post";
 import Storage from "../../services/Storage";
 import { randomUUID } from "crypto";
 
@@ -61,19 +60,25 @@ export default abstract class Ayrshare extends Platform {
     return super.preparePost(folder);
   }
 
+  /**
+   * Publish a post for one platform on Ayrshare
+   * @param post - the post to publish
+   * @param platformOptions - ayrshare options dependant on platform
+   * @param dryrun - wether to actually post it
+   * @returns boolean for success
+   */
   async publishAyrshare(
     post: Post,
     platformOptions: object,
     dryrun: boolean = false,
   ): Promise<boolean> {
     let error = undefined;
-    let response = dryrun
-      ? { postIds: [] }
-      : ({} as {
-          postIds?: {
-            postUrl: string;
-          }[];
-        });
+    let response = { id: "-99", postIds: [] } as {
+      id: string;
+      postIds?: {
+        postUrl: string;
+      }[];
+    };
 
     const media = [...post.files.image, ...post.files.video].map(
       (f) => post.folder.path + "/" + f,
@@ -88,32 +93,24 @@ export default abstract class Ayrshare extends Platform {
       error = e;
     }
 
-    post.results.push({
-      date: new Date(),
-      dryrun: dryrun,
-      success: !error,
-      error: error,
-      response: response,
-    });
-
-    if (error) {
-      Logger.warn("Ayrshare.publishPost", this.id, "failed", response);
-    }
-
-    if (!dryrun) {
-      if (!error) {
-        post.link = response.postIds?.find((e) => !!e)?.postUrl ?? "";
-        post.status = PostStatus.PUBLISHED;
-        post.published = new Date();
-      } else {
-        post.status = PostStatus.FAILED;
-      }
-    }
-
-    post.save();
-    return !error;
+    return post.processResult(
+      response.id,
+      response.postIds?.find((e) => !!e)?.postUrl ?? "#unknown",
+      {
+        date: new Date(),
+        dryrun: dryrun,
+        success: !error,
+        error: error,
+        response: response,
+      },
+    );
   }
 
+  /**
+   * Upload media to ayrshare for publishing later. Uses a leash.
+   * @param media - array of path to files
+   * @returns array of links to uploaded media
+   */
   async uploadMedia(media: string[]): Promise<string[]> {
     const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
     const urls = [] as string[];
@@ -122,7 +119,7 @@ export default abstract class Ayrshare extends Platform {
       const ext = path.extname(file);
       const basename = path.basename(file, ext);
       const uname = basename + "-" + randomUUID() + ext;
-      Logger.trace("fetching uploadid...", file);
+      Logger.trace("Ayrshare.uploadMedia: fetching uploadid...", file);
       const data = (await fetch(
         "https://app.ayrshare.com/api/media/uploadUrl?fileName=" +
           uname +
@@ -143,7 +140,7 @@ export default abstract class Ayrshare extends Platform {
         accessUrl: string;
       };
 
-      Logger.trace("uploading..", uname, data);
+      Logger.trace("Ayrshare.uploadMedia: uploading..", uname, data);
 
       await fetch(data.uploadUrl, {
         method: "PUT",
@@ -161,19 +158,31 @@ export default abstract class Ayrshare extends Platform {
     return urls;
   }
 
+  /**
+   * Publish a post for one platform on Ayrshare
+   * @param post - the post to publish
+   * @param platformOptions - ayrshare options dependant on platform
+   * @param uploads - array of urls to uploaded files
+   * @returns object conatining ayrshare id and post url
+   */
   async postAyrshare(
     post: Post,
     platformOptions: object,
     uploads: string[],
-  ): Promise<object> {
+  ): Promise<{
+    id: string;
+    postIds?: {
+      postUrl: string;
+    }[];
+  }> {
     const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
     const scheduleDate = post.scheduled;
-    //scheduleDate.setDate(scheduleDate.getDate()+100);
 
     const postPlatform = this.platforms[this.id];
     if (!postPlatform) {
       throw Logger.error(
-        "No ayrshare platform associated with platform " + this.id,
+        "Ayrshare.postAyrshare: No ayrshare platform associated with platform " +
+          this.id,
       );
     }
     const body = JSON.stringify(
@@ -193,7 +202,7 @@ export default abstract class Ayrshare extends Platform {
             requiresApproval: this.requiresApproval,
           },
     );
-    Logger.trace("publishing...", postPlatform);
+    Logger.trace("Ayrshare.postAyrshare: publishing...", postPlatform);
     const response = (await fetch("https://app.ayrshare.com/api/post", {
       method: "POST",
       headers: {
@@ -213,7 +222,8 @@ export default abstract class Ayrshare extends Platform {
       response["status"] !== "success" &&
       response["status"] !== "scheduled"
     ) {
-      const error = "Bad result status: " + response["status"];
+      const error =
+        "Ayrshare.postAyrshare: Bad result status: " + response["status"];
       throw Logger.error(error);
     }
     return response;
