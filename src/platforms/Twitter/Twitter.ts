@@ -1,12 +1,11 @@
 import * as fs from "fs";
 import * as sharp from "sharp";
 
-import Post, { PostStatus } from "../../models/Post";
-
 import Folder from "../../models/Folder";
 import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
+import Post from "../../models/Post";
 import Storage from "../../services/Storage";
 import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth";
@@ -51,6 +50,7 @@ export default class Twitter extends Platform {
     return true;
   }
 
+  /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post> {
     Logger.trace("Twitter.preparePost", folder.id);
     const post = await super.preparePost(folder);
@@ -80,17 +80,101 @@ export default class Twitter extends Platform {
     return post;
   }
 
+  /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Twitter.publishPost", post.id, dryrun);
+
+    let response = { data: { id: "-99" } } as {
+      data: {
+        id: string;
+      };
+    };
+    let error = undefined;
+
+    if (post.files.image.length) {
+      try {
+        response = await this.publishImagesPost(post, dryrun);
+      } catch (e) {
+        error = e;
+      }
+    } else {
+      try {
+        response = await this.publishTextPost(post, dryrun);
+      } catch (e) {
+        error = e;
+      }
+    }
+
+    return post.processResult(
+      response.data.id,
+      "https://twitter.com/user/status/" + response.data.id,
+      {
+        date: new Date(),
+        dryrun: dryrun,
+        success: !error,
+        error: error,
+        response: response,
+      },
+    );
+  }
+
+  /**
+   * tweet body using oauth2 client
+   * @param post - the post
+   * @param dryrun - wether to really execure
+   * @returns object, incl. id of the created post
+   */
+  private async publishTextPost(
+    post: Post,
+    dryrun: boolean = false,
+  ): Promise<{
+    data: {
+      id: string;
+    };
+  }> {
+    Logger.trace("Twitter.publishTextPost", post.id, dryrun);
+    if (!dryrun) {
+      const client2 = new TwitterApi(
+        Storage.get("auth", "TWITTER_ACCESS_TOKEN"),
+      );
+      const result = await client2.v2.tweet({
+        text: post.body,
+      });
+      if (result.errors) {
+        throw Logger.error(result.errors.join());
+      }
+      return result;
+    }
+    return {
+      data: {
+        id: "-99",
+      },
+    };
+  }
+
+  /**
+   * Upload a images to twitter using oauth1 client
+   * and create a post with body & media using oauth2 client
+   * @param post - the post to publish
+   * @param dryrun - wether to actually post it
+   * @returns object incl id of the created post
+   */
+  private async publishImagesPost(
+    post: Post,
+    dryrun: boolean = false,
+  ): Promise<{
+    data: {
+      id: string;
+    };
+  }> {
+    Logger.trace("Twitter.publishImagesPost", post.id, dryrun);
+
     const client1 = new TwitterApi({
       appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
       appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
       accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
       accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
-
-    let error = undefined;
-    let result = undefined;
     const mediaIds = [];
     if (post.files.image.length) {
       for (const image of post.files.image) {
@@ -99,58 +183,28 @@ export default class Twitter extends Platform {
         try {
           mediaIds.push(await client1.v1.uploadMedia(path));
         } catch (e) {
-          Logger.warn("Twitter.publishPost uploadMedia failed", e);
-          error = e;
+          throw Logger.error("Twitter.publishPost uploadMedia failed", e);
         }
       }
     }
-
     const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
 
     if (!dryrun) {
-      if (!error) {
-        Logger.trace("Tweeting " + post.id + "...");
-        try {
-          result = await client2.v2.tweet({
-            text: post.body,
-            media: { media_ids: mediaIds },
-          });
-          if (result.errors) {
-            error = new Error(result.errors.join());
-          }
-        } catch (e) {
-          error = e;
-        }
+      Logger.trace("Tweeting " + post.id + "...");
+      const result = await client2.v2.tweet({
+        text: post.body,
+        media: { media_ids: mediaIds },
+      });
+      if (result.errors) {
+        throw Logger.error(result.errors.join());
       }
-    } else {
-      result = {
-        id: "99",
-      };
+      return result;
     }
 
-    post.results.push({
-      date: new Date(),
-      dryrun: dryrun,
-      success: !error,
-      error: error,
-      response: result,
-    });
-
-    if (error) {
-      Logger.warn("Twitter.publishPost", this.id, "failed", error, result);
-    }
-
-    if (!dryrun) {
-      if (!error) {
-        post.link = "https://twitter.com/user/status/" + result.data.id;
-        post.status = PostStatus.PUBLISHED;
-        post.published = new Date();
-      } else {
-        post.status = PostStatus.FAILED;
-      }
-    }
-
-    post.save();
-    return !error;
+    return {
+      data: {
+        id: "-99",
+      },
+    };
   }
 }
