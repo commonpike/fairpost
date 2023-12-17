@@ -86,9 +86,10 @@ export default class LinkedIn extends Platform {
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("LinkedIn.publishPost", post.id, dryrun);
 
-    let response = dryrun
-      ? { id: "-99" }
-      : ({} as { id?: string; headers?: { [key: string]: string } });
+    let response = { id: "-99" } as {
+      id?: string;
+      headers?: { [key: string]: string };
+    };
     let error = undefined;
 
     if (post.files.video.length) {

@@ -2,12 +2,11 @@ import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
 
-import Post, { PostStatus } from "../../models/Post";
-
 import Folder from "../../models/Folder";
 import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
+import Post from "../../models/Post";
 import RedditApi from "./RedditApi";
 import RedditAuth from "./RedditAuth";
 import Storage from "../../services/Storage";
@@ -51,6 +50,7 @@ export default class Reddit extends Platform {
     return true;
   }
 
+  /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post | undefined> {
     Logger.trace("Reddit.preparePost", folder.id);
     const post = await super.preparePost(folder);
@@ -82,58 +82,56 @@ export default class Reddit extends Platform {
     return post;
   }
 
+  /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Reddit.publishPost", post.id, dryrun);
 
-    let response = dryrun ? { dryrun: true } : {};
+    let response = {};
     let error = undefined;
 
-    try {
-      if (post.files.video.length) {
-        response = await this.publishVideo(
-          post.title,
-          post.folder.path + "/" + post.files.video[0],
-          dryrun,
-        );
-      } else if (post.files.image.length) {
-        response = await this.publishImage(
-          post.title,
-          post.folder.path + "/" + post.files.image[0],
-          dryrun,
-        );
-      } else {
-        response = await this.publishText(post.title, post.body, dryrun);
+    if (post.files.video.length) {
+      try {
+        response = await this.publishVideoPost(post, dryrun);
+      } catch (e) {
+        error = e;
       }
-    } catch (e) {
-      error = e;
+    } else if (post.files.image.length) {
+      try {
+        response = await this.publishImagePost(post, dryrun);
+      } catch (e) {
+        error = e;
+      }
+    } else {
+      try {
+        response = await this.publishTextPost(post, dryrun);
+      } catch (e) {
+        error = e;
+      }
     }
 
-    post.results.push({
-      date: new Date(),
-      dryrun: dryrun,
-      success: !error,
-      error: error,
-      response: response,
-    });
-
-    if (error) {
-      Logger.warn("Reddit.publishPost", this.id, "failed", response);
-    } else if (!dryrun) {
-      // post.link = ""; // todo : await reddit websockets
-      post.status = PostStatus.PUBLISHED;
-      post.published = new Date();
-    }
-
-    post.save();
-    return !error;
+    return post.processResult(
+      "#unknown", // todo: listen to websocket for id
+      "#unknown", // todo: listen to websocket for link
+      {
+        date: new Date(),
+        dryrun: dryrun,
+        success: !error,
+        error: error,
+        response: response,
+      },
+    );
   }
 
-  private async publishText(
-    title: string,
-    body: string,
-    dryrun = false,
-  ): Promise<object> {
-    Logger.trace("Reddit.publishText");
+  /**
+   * POST self-post to the submit endpoint using json
+   * @param post
+   * @param dryrun
+   * @returns result
+   */
+  private async publishTextPost(post: Post, dryrun = false): Promise<object> {
+    Logger.trace("Reddit.publishTextPost");
+    const title = post.title;
+    const body = post.body;
     if (!dryrun) {
       return (await this.api.post("submit", {
         sr: this.SUBREDDIT,
@@ -157,14 +155,18 @@ export default class Reddit extends Platform {
     };
   }
 
-  private async publishImage(
-    title: string,
-    file: string,
-    dryrun = false,
-  ): Promise<object> {
-    Logger.trace("Reddit.publishImage");
-    const lease = await this.getUploadLease(file);
-    const imageUrl = await this.uploadFile(lease, file);
+  /**
+   * POST image post to the submit endpoint using json
+   * @param post
+   * @param dryrun
+   * @returns result
+   */
+  private async publishImagePost(post: Post, dryrun = false): Promise<object> {
+    Logger.trace("Reddit.publishImagePost");
+    const title = post.title;
+    const file = post.folder.path + "/" + post.files.image[0];
+    const leash = await this.getUploadLeash(file);
+    const imageUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
       return (await this.api.post("submit", {
         sr: this.SUBREDDIT,
@@ -188,14 +190,18 @@ export default class Reddit extends Platform {
     };
   }
 
-  private async publishVideo(
-    title: string,
-    file: string,
-    dryrun = false,
-  ): Promise<object> {
-    Logger.trace("Reddit.publishVideo");
-    const lease = await this.getUploadLease(file);
-    const videoUrl = await this.uploadFile(lease, file);
+  /**
+   * POST video post to the submit endpoint using json
+   * @param post
+   * @param dryrun
+   * @returns result
+   */
+  private async publishVideoPost(post: Post, dryrun = false): Promise<object> {
+    Logger.trace("Reddit.publishVideoPost");
+    const title = post.title;
+    const file = post.folder.path + "/" + post.files.video[0];
+    const leash = await this.getUploadLeash(file);
+    const videoUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
       return (await this.api.post("submit", {
         sr: this.SUBREDDIT,
@@ -220,7 +226,14 @@ export default class Reddit extends Platform {
     };
   }
 
-  private async getUploadLease(file: string): Promise<{
+  /**
+   * POST to media/asset.json to get a leash with a lot of fields,
+   *
+   * All these fields should be reposted on the upload
+   * @param file - path to the file to upload
+   * @returns leash - args with action and fields
+   */
+  private async getUploadLeash(file: string): Promise<{
     action: string;
     fields: {
       [name: string]: string;
@@ -233,7 +246,7 @@ export default class Reddit extends Platform {
     form.append("filepath", filename);
     form.append("mimetype", mimetype);
 
-    const lease = (await this.api.postForm("media/asset.json", form)) as {
+    const leash = (await this.api.postForm("media/asset.json", form)) as {
       args: {
         action: string;
         fields: {
@@ -242,22 +255,30 @@ export default class Reddit extends Platform {
         }[];
       };
     };
-    if (!lease.args?.action || !lease.args?.fields) {
-      const msg = "Reddit.getUploadLease: bad answer";
-      throw Logger.error(msg, lease);
+    if (!leash.args?.action || !leash.args?.fields) {
+      const msg = "Reddit.getUploadLeash: bad answer";
+      throw Logger.error(msg, leash);
     }
 
     return {
-      action: "https:" + lease.args.action,
+      action: "https:" + leash.args.action,
       fields: Object.assign(
         {},
-        ...lease.args.fields.map((f) => ({ [f.name]: f.value })),
+        ...leash.args.fields.map((f) => ({ [f.name]: f.value })),
       ),
     };
   }
 
+  /**
+   * POST file as formdata using a leash
+   * @param leash
+   * @param leash.action - url to post to
+   * @param leash.fields - fields to post
+   * @param file - path to the file to upload
+   * @returns url to uploaded file
+   */
   private async uploadFile(
-    lease: {
+    leash: {
       action: string;
       fields: {
         [name: string]: string;
@@ -269,13 +290,13 @@ export default class Reddit extends Platform {
     const filename = path.basename(file);
 
     const form = new FormData();
-    for (const fieldname in lease.fields) {
-      form.append(fieldname, lease.fields[fieldname]);
+    for (const fieldname in leash.fields) {
+      form.append(fieldname, leash.fields[fieldname]);
     }
     form.append("file", new Blob([buffer]), filename);
-    Logger.trace("POST", lease.action);
+    Logger.trace("POST", leash.action);
 
-    const responseRaw = await fetch(lease.action, {
+    const responseRaw = await fetch(leash.action, {
       method: "POST",
       headers: {
         Accept: "application/json",
