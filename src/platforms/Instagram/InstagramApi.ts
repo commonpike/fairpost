@@ -100,7 +100,7 @@ export default class InstagramApi {
    * @returns the parsed response as object
    */
 
-  public async postFormData(endpoint: string, body: FormData): Promise<object> {
+  public async postForm(endpoint: string, body: FormData): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
       Storage.get("settings", "INSTAGRAM_USER_ID"),

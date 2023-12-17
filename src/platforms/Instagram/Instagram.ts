@@ -289,7 +289,7 @@ export default class Instagram extends Platform {
     body.set("published", "false");
     body.set("source", blob, path.basename(file));
 
-    const result = (await this.api.postFormData("%PAGE%/photos", body)) as {
+    const result = (await this.api.postForm("%PAGE%/photos", body)) as {
       id: "string";
     };
 
@@ -347,7 +347,7 @@ export default class Instagram extends Platform {
     body.set("published", "false");
     body.set("source", blob, path.basename(file));
 
-    const result = (await this.api.postFormData("%PAGE%/videos", body)) as {
+    const result = (await this.api.postForm("%PAGE%/videos", body)) as {
       id: string;
     };
 
