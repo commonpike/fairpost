@@ -31,6 +31,7 @@ export default class Post {
     other: string[];
   };
   link?: string;
+  remoteId?: string;
 
   constructor(folder: Folder, platform: Platform, data?: object) {
     this.folder = folder;
@@ -114,6 +115,44 @@ export default class Post {
         this.files[type] = this.files[type].filter((file) => file !== src);
       }
     }
+  }
+
+  /**
+   * Process a post result. Push the result to results[],
+   * and if not dryrun, fix dates and statusses and
+   * note remote id and link
+   * @param remoteId - the remote id of the post
+   * @param link - the remote link of the post
+   * @param result - the postresult
+   * @returns boolean if success
+   */
+
+  processResult(remoteId: string, link: string, result: PostResult): boolean {
+    this.results.push(result);
+
+    if (result.error) {
+      Logger.warn(
+        "Post.processResult",
+        this.id,
+        "failed",
+        result.error,
+        result.response,
+      );
+    }
+
+    if (!result.dryrun) {
+      if (!result.error) {
+        this.remoteId = remoteId;
+        this.link = link;
+        this.status = PostStatus.PUBLISHED;
+        this.published = new Date();
+      } else {
+        this.status = PostStatus.FAILED;
+      }
+    }
+
+    this.save();
+    return result.success;
   }
 }
 

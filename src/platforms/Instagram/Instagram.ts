@@ -9,7 +9,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import { PostStatus } from "../../models/Post";
 
 /**
  * Instagram: support for instagram platform.
@@ -87,47 +86,36 @@ export default class Instagram extends Platform {
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Instagram.publishPost", post.id, dryrun);
 
-    let response = dryrun ? { id: "-99" } : ({} as { id: string });
+    let response = { id: "-99" } as { id: string };
     let error = undefined;
 
-    try {
-      if (post.files.video.length === 1 && !post.files.image.length) {
-        response = await this.publishVideo(
-          post.files.video[0],
-          post.body,
-          dryrun,
-        );
-      } else if (post.files.image.length === 1 && !post.files.video.length) {
-        response = await this.publishPhoto(
-          post.files.image[0],
-          post.body,
-          dryrun,
-        );
-      } else {
-        response = await this.publishCaroussel(post, dryrun);
+    if (post.files.video.length === 1 && !post.files.image.length) {
+      try {
+        response = await this.publishVideoPost(post, dryrun);
+      } catch (e) {
+        error = e;
       }
-    } catch (e) {
-      error = e;
+    } else if (post.files.image.length === 1 && !post.files.video.length) {
+      try {
+        response = await this.publishImagePost(post, dryrun);
+      } catch (e) {
+        error = e;
+      }
+    } else {
+      try {
+        response = await this.publishMixedPost(post, dryrun);
+      } catch (e) {
+        error = e;
+      }
     }
 
-    post.results.push({
+    return post.processResult(response.id, "#unknown", {
       date: new Date(),
       dryrun: dryrun,
       success: !error,
       error: error,
       response: response,
     });
-
-    if (error) {
-      Logger.warn("Instagram.publishPost", this.id, "failed", response);
-    } else if (!dryrun) {
-      // post.link = ""; // todo : get instagram shortcode
-      post.status = PostStatus.PUBLISHED;
-      post.published = new Date();
-    }
-
-    post.save();
-    return !error;
   }
 
   /**
@@ -135,18 +123,18 @@ export default class Instagram extends Platform {
    *
    * Upload a photo to facebook, use the largest derivate
    * to put in a single container and publish that
-   * @param file - path to the photo to post
-   * @param caption - text body of the post
+   * @param post - the post
    * @param dryrun - wether to actually post it
    * @returns id of the published container
    */
-  private async publishPhoto(
-    file,
-    caption: string = "",
+  private async publishImagePost(
+    post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const photoId = (await this.fbUploadPhoto(file))["id"];
-    const photoLink = await this.fbGetPhotoLink(photoId);
+    const file = post.files.image[0];
+    const caption = post.body;
+    const photoId = (await this.uploadImage(file))["id"];
+    const photoLink = await this.getImageLink(photoId);
     const container = (await this.api.postJson("%USER%/media", {
       image_url: photoLink,
       caption: caption,
@@ -175,18 +163,18 @@ export default class Instagram extends Platform {
    *
    * Upload a video to facebook, use the  derivate
    * to put in a single container and publish that
-   * @param file - path to the photo to post
-   * @param caption - text body of the post
+   * @param post
    * @param dryrun - wether to actually post it
    * @returns id of the published container
    */
-  private async publishVideo(
-    file,
-    caption: string = "",
+  private async publishVideoPost(
+    post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const videoId = (await this.fbUploadVideo(file))["id"];
-    const videoLink = await this.fbGetVideoLink(videoId);
+    const file = post.files.video[0];
+    const caption = post.body;
+    const videoId = (await this.uploadVideo(file))["id"];
+    const videoLink = await this.getVideoLink(videoId);
     const container = (await this.api.postJson("%USER%/media", {
       video_url: videoLink,
       caption: caption,
@@ -219,17 +207,17 @@ export default class Instagram extends Platform {
    * @param dryrun - wether to actually post it
    * @returns id of the published container
    */
-  private async publishCaroussel(
+  private async publishMixedPost(
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
     const uploadIds = [] as string[];
 
     for (const video of post.files.video) {
-      const videoId = (
-        await this.fbUploadVideo(post.folder.path + "/" + video)
-      )["id"];
-      const videoLink = await this.fbGetVideoLink(videoId);
+      const videoId = (await this.uploadVideo(post.folder.path + "/" + video))[
+        "id"
+      ];
+      const videoLink = await this.getVideoLink(videoId);
       uploadIds.push(
         (
           await this.api.postJson("%USER%/media", {
@@ -241,10 +229,10 @@ export default class Instagram extends Platform {
     }
 
     for (const image of post.files.image) {
-      const photoId = (
-        await this.fbUploadPhoto(post.folder.path + "/" + image)
-      )["id"];
-      const photoLink = await this.fbGetPhotoLink(photoId);
+      const photoId = (await this.uploadImage(post.folder.path + "/" + image))[
+        "id"
+      ];
+      const photoLink = await this.getImageLink(photoId);
       uploadIds.push(
         (
           await this.api.postJson("%USER%/media", {
@@ -292,7 +280,7 @@ export default class Instagram extends Platform {
    * @param file - path to the file to post
    * @returns id of the uploaded photo to use in post attachments
    */
-  private async fbUploadPhoto(file: string = ""): Promise<{ id: string }> {
+  private async uploadImage(file: string = ""): Promise<{ id: string }> {
     Logger.trace("Reading file", file);
     const rawData = fs.readFileSync(file);
     const blob = new Blob([rawData]);
@@ -301,7 +289,7 @@ export default class Instagram extends Platform {
     body.set("published", "false");
     body.set("source", blob, path.basename(file));
 
-    const result = (await this.api.postFormData("%PAGE%/photos", body)) as {
+    const result = (await this.api.postForm("%PAGE%/photos", body)) as {
       id: "string";
     };
 
@@ -316,7 +304,7 @@ export default class Instagram extends Platform {
    * @param id - id of the uploaded photo
    * @returns link to the largest derivate of that photo to use in post attachments
    */
-  private async fbGetPhotoLink(id: string): Promise<string> {
+  private async getImageLink(id: string): Promise<string> {
     // get photo derivatives
     const photoData = (await this.api.get(id, {
       fields: "link,images,picture",
@@ -349,7 +337,7 @@ export default class Instagram extends Platform {
    * @returns id of the uploaded video to use in post attachments
    */
 
-  private async fbUploadVideo(file: string): Promise<{ id: string }> {
+  private async uploadVideo(file: string): Promise<{ id: string }> {
     Logger.trace("Reading file", file);
     const rawData = fs.readFileSync(file);
     const blob = new Blob([rawData]);
@@ -359,7 +347,7 @@ export default class Instagram extends Platform {
     body.set("published", "false");
     body.set("source", blob, path.basename(file));
 
-    const result = (await this.api.postFormData("%PAGE%/videos", body)) as {
+    const result = (await this.api.postForm("%PAGE%/videos", body)) as {
       id: string;
     };
 
@@ -375,7 +363,7 @@ export default class Instagram extends Platform {
    * @returns link to the video to use in post attachments
    */
 
-  private async fbGetVideoLink(id: string): Promise<string> {
+  private async getVideoLink(id: string): Promise<string> {
     const videoData = (await this.api.get(id, {
       fields: "permalink_url,source",
     })) as {

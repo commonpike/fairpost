@@ -9,7 +9,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import { PostStatus } from "../../models/Post";
 import Storage from "../../services/Storage";
 
 /**
@@ -73,71 +72,128 @@ export default class Facebook extends Platform {
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Facebook.publishPost", post.id, dryrun);
 
-    let response = dryrun
-      ? { id: "-99" }
-      : ({} as { id?: string; error?: string });
+    let response = { id: "-99" } as { id: string };
     let error = undefined;
 
     if (post.files.video.length) {
-      if (!dryrun) {
-        try {
-          response = await this.publishVideo(
-            post.folder.path + "/" + post.files.video[0],
-            post.title,
-            post.body,
-          );
-        } catch (e) {
-          error = e;
-        }
+      try {
+        response = await this.publishVideoPost(post, dryrun);
+      } catch (e) {
+        error = e;
+      }
+    } else if (post.files.image.length) {
+      try {
+        response = await this.publishImagesPost(post, dryrun);
+      } catch (e) {
+        error = e;
       }
     } else {
       try {
-        const attachments = [];
-        if (post.files.image.length) {
-          for (const image of post.files.image) {
-            attachments.push({
-              media_fbid: (
-                await this.uploadPhoto(post.folder.path + "/" + image)
-              )["id"],
-            });
-          }
-        }
-        if (!dryrun) {
-          response = (await this.api.postJson("%PAGE%/feed", {
-            message: post.body,
-            published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
-            attached_media: attachments,
-          })) as { id: string };
-        }
+        response = await this.publishTextPost(post, dryrun);
       } catch (e) {
         error = e;
       }
     }
 
-    post.results.push({
-      date: new Date(),
-      dryrun: dryrun,
-      success: !error,
-      error: error,
-      response: response,
-    });
+    return post.processResult(
+      response.id,
+      "https://facebook.com/" + response.id,
+      {
+        date: new Date(),
+        dryrun: dryrun,
+        success: !error,
+        response: response,
+        error: error,
+      },
+    );
+  }
 
-    if (error) {
-      Logger.warn("Facebook.publishPost", this.id, "failed", response);
+  /**
+   * POST body to the page/feed endpoint using json
+   * @param post - the post
+   * @param dryrun - wether to really execure
+   * @returns object, incl. id of the created post
+   */
+  private async publishTextPost(
+    post: Post,
+    dryrun: boolean = false,
+  ): Promise<{ id: string }> {
+    if (!dryrun) {
+      return (await this.api.postJson("%PAGE%/feed", {
+        message: post.body,
+        published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+      })) as { id: string };
+    }
+    return { id: "-99" };
+  }
+
+  /**
+   * POST images to the page/feed endpoint using json
+   * @param post - the post
+   * @param dryrun - wether to really execure
+   * @returns object, incl. id of the created post
+   */
+  private async publishImagesPost(
+    post: Post,
+    dryrun: boolean = false,
+  ): Promise<{ id: string }> {
+    const attachments = [];
+    for (const image of post.files.image) {
+      attachments.push({
+        media_fbid: (await this.uploadImage(post.folder.path + "/" + image))[
+          "id"
+        ],
+      });
     }
 
     if (!dryrun) {
-      if (!error) {
-        post.link = "https://facebook.com/" + response.id;
-        post.status = PostStatus.PUBLISHED;
-        post.published = new Date();
-      } else {
-        post.status = PostStatus.FAILED;
-      }
+      return (await this.api.postJson("%PAGE%/feed", {
+        message: post.body,
+        published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        attached_media: attachments,
+      })) as { id: string };
     }
+    return { id: "-99" };
+  }
 
-    post.save();
-    return !error;
+  /**
+   * POST a video to the page/videos endpoint using multipart/form-data
+   *
+   * Videos will always become a single facebook post
+   * when using the api.
+   * Uses sync posting. may take a while or timeout.
+   * @param post - the post
+   * @param dryrun - wether to really execure
+   * @returns object, incl. id of the uploaded video
+   */
+  private async publishVideoPost(
+    post: Post,
+    dryrun: boolean = false,
+  ): Promise<{ id: string }> {
+    const file = post.folder.path + "/" + post.files.video[0];
+    const title = post.title;
+    const description = post.body;
+
+    Logger.trace("Reading file", file);
+    const rawData = fs.readFileSync(file);
+    const blob = new Blob([rawData]);
+
+    const body = new FormData();
+    body.set("title", title);
+    body.set("description", description);
+    body.set("published", Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"));
+    body.set("source", blob, path.basename(file));
+
+    if (!dryrun) {
+      const result = (await this.api.postForm("%PAGE%/videos", body)) as {
+        id: string;
+      };
+      if (!result["id"]) {
+        throw Logger.error("No id returned when uploading video");
+      }
+      return result;
+    }
+    return { id: "-99" };
   }
 
   /**
@@ -146,7 +202,7 @@ export default class Facebook extends Platform {
    * @param published - wether the photo should be published as a single facebook post
    * @returns id of the uploaded photo to use in post attachments
    */
-  private async uploadPhoto(
+  private async uploadImage(
     file: string = "",
     published = false,
   ): Promise<{ id: string }> {
@@ -164,42 +220,6 @@ export default class Facebook extends Platform {
 
     if (!result["id"]) {
       throw Logger.error("No id returned when uploading photo");
-    }
-    return result;
-  }
-
-  /**
-   * POST a video to the page/videos endpoint using multipart/form-data
-   *
-   * Videos will always become a single facebook post
-   * when using the api.
-   * Uses sync posting. may take a while or timeout.
-   * @param file - path to the video to post
-   * @param title - title of the post
-   * @param description - body text of the post
-   * @returns id of the uploaded video
-   */
-  private async publishVideo(
-    file: string,
-    title: string,
-    description: string,
-  ): Promise<{ id: string }> {
-    Logger.trace("Reading file", file);
-    const rawData = fs.readFileSync(file);
-    const blob = new Blob([rawData]);
-
-    const body = new FormData();
-    body.set("title", title);
-    body.set("description", description);
-    body.set("published", Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"));
-    body.set("source", blob, path.basename(file));
-
-    const result = (await this.api.postForm("%PAGE%/videos", body)) as {
-      id: string;
-    };
-
-    if (!result["id"]) {
-      throw Logger.error("No id returned when uploading video");
     }
     return result;
   }

@@ -11,7 +11,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import { PostStatus } from "../../models/Post";
 import Storage from "../../services/Storage";
 
 export default class LinkedIn extends Platform {
@@ -53,6 +52,7 @@ export default class LinkedIn extends Platform {
     return true;
   }
 
+  /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post> {
     Logger.trace("LinkedIn.preparePost", folder.id);
     const post = await super.preparePost(folder);
@@ -82,93 +82,61 @@ export default class LinkedIn extends Platform {
     return post;
   }
 
+  /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("LinkedIn.publishPost", post.id, dryrun);
 
-    let response = dryrun
-      ? { id: "-99" }
-      : ({} as { id?: string; headers?: { [key: string]: string } });
+    let response = { id: "-99" } as {
+      id?: string;
+      headers?: { [key: string]: string };
+    };
     let error = undefined;
 
     if (post.files.video.length) {
-      if (!dryrun) {
-        try {
-          response = await this.publishVideo(
-            post.title,
-            post.body,
-            post.folder.path + "/" + post.files.video[0],
-          );
-        } catch (e) {
-          error = e;
-        }
+      try {
+        response = await this.publishVideoPost(post, dryrun);
+      } catch (e) {
+        error = e;
       }
     } else if (post.files.image.length > 1) {
-      if (!dryrun) {
-        try {
-          response = await this.publishImages(
-            post.title + "\n\n" + post.body,
-            post.files.image.map((image) => post.folder.path + "/" + image),
-          );
-        } catch (e) {
-          error = e;
-        }
+      try {
+        response = await this.publishImagesPost(post, dryrun);
+      } catch (e) {
+        error = e;
       }
     } else if (post.files.image.length === 1) {
-      if (!dryrun) {
-        try {
-          response = await this.publishImage(
-            post.title,
-            post.body,
-            post.folder.path + "/" + post.files.image[0],
-          );
-        } catch (e) {
-          error = e;
-        }
+      try {
+        response = await this.publishImagePost(post, dryrun);
+      } catch (e) {
+        error = e;
       }
     } else {
       try {
-        if (!dryrun) {
-          response = await this.publishText(post.title + "\n\n" + post.body);
-        }
+        response = await this.publishTextPost(post, dryrun);
       } catch (e) {
         error = e;
       }
     }
 
-    if (response.headers?.["x-restli-id"]) {
-      response.id = response.headers["x-restli-id"];
-    } else if (response.headers?.["x-linkedin-id"]) {
-      response.id = response.headers["x-linkedin-id"];
-    }
-
-    post.results.push({
-      date: new Date(),
-      dryrun: dryrun,
-      success: !error,
-      error: error,
-      response: response,
-    });
-
-    if (error) {
-      Logger.warn("Facebook.publishPost", this.id, "failed", response);
-    }
-
-    if (!dryrun) {
-      if (!error) {
-        post.link = "https://www.linkedin.com/feed/update/" + response.id;
-        post.status = PostStatus.PUBLISHED;
-        post.published = new Date();
-      } else {
-        post.status = PostStatus.FAILED;
-      }
-    }
-
-    post.save();
-    return !error;
+    return post.processResult(
+      response.id,
+      "https://www.linkedin.com/feed/update/" + response.id,
+      {
+        date: new Date(),
+        dryrun: dryrun,
+        success: !error,
+        error: error,
+        response: response,
+      },
+    );
   }
 
   // Platform API Specific
 
+  /**
+   * GET part of the profile
+   * @returns object, incl. some ids and names
+   */
   private async getProfile() {
     const me = await this.api.get("me");
     if (!me) return false;
@@ -180,8 +148,15 @@ export default class LinkedIn extends Platform {
     };
   }
 
-  private async publishText(content: string) {
-    Logger.trace("LinkedIn.publishText");
+  /**
+   * POST title & body to the posts endpoint using json
+   * @param post
+   * @param dryrun
+   * @returns object, incl. id of the created post
+   */
+  private async publishTextPost(post: Post, dryrun: boolean = false) {
+    Logger.trace("LinkedIn.publishTextPost");
+    const content = post.title + "\n\n" + post.body;
     const body = {
       author: this.POST_AUTHOR,
       commentary: content,
@@ -190,10 +165,25 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.api.postJson("posts", body, true);
+    if (!dryrun) {
+      return await this.api.postJson("posts", body, true);
+    }
+    return { id: "-99" };
   }
-  private async publishImage(title: string, content: string, image: string) {
-    Logger.trace("LinkedIn.publishImage");
+
+  /**
+   * POST title & body & image to the posts endpoint using json
+   *
+   * uploads image using a leash
+   * @param post
+   * @param dryrun
+   * @returns object, incl. id of the created post
+   */
+  private async publishImagePost(post: Post, dryrun: boolean = false) {
+    Logger.trace("LinkedIn.publishImagePost");
+    const title = post.title;
+    const content = post.body;
+    const image = post.folder.path + "/" + post.files.image[0];
     const leash = await this.getImageLeash();
     await this.uploadImage(leash.value.uploadUrl, image);
     // TODO: save headers[etag] ..
@@ -212,11 +202,27 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.api.postJson("posts", body, true);
+    if (!dryrun) {
+      return await this.api.postJson("posts", body, true);
+    }
+    return { id: "-99" };
   }
 
-  private async publishImages(content: string, images: string[]) {
-    Logger.trace("LinkedIn.publishImages");
+  /**
+   * POST title & body to the posts endpoint using json
+   *
+   * uploads images using a leash
+   * @param post
+   * @param dryrun
+   * @returns object, incl. id of the created post
+   */
+
+  private async publishImagesPost(post: Post, dryrun: boolean = false) {
+    Logger.trace("LinkedIn.publishImagesPost");
+    const content = post.title + "\n\n" + post.body;
+    const images = post.files.image.map(
+      (image) => post.folder.path + "/" + image,
+    );
     const imageIds = [];
     for (const image of images) {
       const leash = await this.getImageLeash();
@@ -244,12 +250,27 @@ export default class LinkedIn extends Platform {
         },
       },
     };
-    return await this.api.postJson("posts", body, true);
+    if (!dryrun) {
+      return await this.api.postJson("posts", body, true);
+    }
+    return { id: "-99" };
   }
 
-  // untested
-  private async publishVideo(title: string, content: string, video: string) {
-    Logger.trace("LinkedIn.publishVideo");
+  /**
+   * POST title & body & video to the posts endpoint using json
+   *
+   * untested.
+   * @param post
+   * @param dryrun
+   * @returns object, incl. id of the created post
+   */
+  private async publishVideoPost(post: Post, dryrun: boolean = false) {
+    Logger.trace("LinkedIn.publishVideoPost");
+
+    const title = post.title;
+    const content = post.body;
+    const video = post.folder.path + "/" + post.files.video[0];
+
     const leash = await this.getVideoLeash(video);
     await this.uploadVideo(leash.value.uploadInstructions[0].uploadUrl, video);
     // TODO: save headers[etag] ..
@@ -268,8 +289,16 @@ export default class LinkedIn extends Platform {
       lifecycleState: "PUBLISHED",
       isReshareDisabledByAuthor: this.POST_NORESHARE,
     };
-    return await this.api.postJson("posts", body, true);
+    if (!dryrun) {
+      return await this.api.postJson("posts", body, true);
+    }
+    return { id: "-99" };
   }
+
+  /**
+   * Get a leash to upload an image
+   * @returns object, incl. uploadUrl
+   */
 
   private async getImageLeash(): Promise<{
     value: {
@@ -299,6 +328,12 @@ export default class LinkedIn extends Platform {
     return response;
   }
 
+  /**
+   * Upload an image file to an url
+   * @param leashUrl
+   * @param file
+   * @returns empty
+   */
   private async uploadImage(leashUrl: string, file: string) {
     Logger.trace("LinkedIn.uploadImage");
     const rawData = fs.readFileSync(file);
@@ -316,7 +351,13 @@ export default class LinkedIn extends Platform {
       .catch((err) => handleApiError(err));
   }
 
-  // untested
+  /**
+   * Get a leash to upload an video
+   *
+   * untested
+   * @param file
+   * @returns object, incl. uploadUrl
+   */
   private async getVideoLeash(file: string): Promise<{
     value: {
       uploadUrlsExpireAt: number;
@@ -359,7 +400,14 @@ export default class LinkedIn extends Platform {
     return response;
   }
 
-  // untested
+  /**
+   * Upload a video file to an url
+   *
+   * untested
+   * @param leashUrl
+   * @param file
+   * @returns empty
+   */
   private async uploadVideo(leashUrl: string, file: string) {
     Logger.trace("LinkedIn.uploadVideo");
     const rawData = fs.readFileSync(file);

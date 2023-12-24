@@ -84,6 +84,16 @@ export default class LinkedInApi {
           ? handleEmptyResponse(res, true)
           : handleJsonResponse(res, true),
       )
+      .then((res) => {
+        if (!res["id"] && "headers" in res) {
+          if (res.headers?.["x-restli-id"]) {
+            res["id"] = res.headers["x-restli-id"];
+          } else if (res.headers?.["x-linkedin-id"]) {
+            res["id"] = res.headers["x-linkedin-id"];
+          }
+        }
+        return res;
+      })
       .catch((err) => this.handleLinkedInError(err))
       .catch((err) => handleApiError(err));
   }

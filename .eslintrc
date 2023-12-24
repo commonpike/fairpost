@@ -15,6 +15,7 @@
     ],
     "rules": {
       "prettier/prettier": 2, // Means error
-      "jsdoc/require-jsdoc": 0
+      "jsdoc/require-jsdoc": 0,
+      "jsdoc/require-param-description" : 0
     }
 }
