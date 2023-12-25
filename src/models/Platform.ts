@@ -151,7 +151,11 @@ export default class Platform {
 
     post.purgeFiles();
     const files = await folder.getFiles();
-    files.forEach((file) => post.putFile(file));
+    files.forEach((file) => {
+      if (!post.ignoreFiles.includes(file.name)) {
+        post.putFile(file);
+      }
+    });
     post.reorderFiles();
 
     const textFiles = post.getFiles("text");
