@@ -18,6 +18,7 @@ export default class Post {
   folder: Folder;
   platform: Platform;
   valid: boolean = false;
+  skip: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
@@ -163,7 +164,7 @@ export default class Post {
         Logger.info(
           "Post",
           "purgeFiles",
-          "purging non-existant file",
+          "purging non-existent file",
           file.name,
         );
         this.removeFile(file.name);
