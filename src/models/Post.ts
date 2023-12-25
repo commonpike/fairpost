@@ -26,6 +26,7 @@ export default class Post {
   body?: string;
   tags?: string;
   files?: FileInfo[];
+  ignoreFiles?: string[];
   link?: string;
   remoteId?: string;
 
@@ -37,6 +38,7 @@ export default class Post {
       Object.assign(this, data);
       this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
       this.published = this.published ? new Date(this.published) : undefined;
+      this.ignoreFiles = this.ignoreFiles ?? [];
     }
     const assetsPath = this.getFilePath(platform.assetsFolder());
     if (!fs.existsSync(assetsPath)) {
@@ -144,19 +146,70 @@ export default class Post {
   }
 
   /**
+   * Remove all the files that do not exist (anymore)
+   */
+  purgeFiles() {
+    this.getFiles().forEach((file) => {
+      if (file.original && !fs.existsSync(this.getFilePath(file.original))) {
+        Logger.info(
+          "Post",
+          "purgeFiles",
+          "purging non-existant derivate",
+          file.name,
+        );
+        this.removeFile(file.name);
+      }
+      if (!fs.existsSync(this.getFilePath(file.name))) {
+        Logger.info(
+          "Post",
+          "purgeFiles",
+          "purging non-existant file",
+          file.name,
+        );
+        this.removeFile(file.name);
+      }
+    });
+  }
+
+  /**
+   * reindex file ordering to remove doubles
+   */
+  reorderFiles() {
+    this.files
+      .sort((a, b) => a.order - b.order)
+      .forEach((file, index) => {
+        file.order = index;
+      });
+  }
+
+  /**
    * @param name the name of the file
-   * @returns the files info
+   * @returns wether the file exists
    */
   hasFile(name: string): boolean {
     return this.getFile(name) !== undefined;
   }
 
   /**
-   * @param name the name of the file
-   * @returns the files info
+   * @param name - the name of the file
+   * @returns the files info if any
    */
   getFile(name: string): FileInfo | undefined {
     return this.files.find((file) => file.name === name);
+  }
+
+  /**
+   * @param file - the fileinfo to add or replace
+   */
+  putFile(file: FileInfo) {
+    const oldFile = this.files.find(
+      (oldfile) => oldfile.name === file.name || oldfile.original === file.name,
+    );
+    if (oldFile) {
+      file.order = oldFile.order;
+      this.removeFile(oldFile.name);
+    }
+    this.files.push(file);
   }
 
   /**
@@ -175,7 +228,9 @@ export default class Post {
     const index = this.files.findIndex((file) => file.name === search);
     if (index > -1) {
       const oldFile = this.getFile(search);
-      this.files[index] = await this.folder.getFile(replace, oldFile.order);
+      const newFile = await this.folder.getFile(replace, oldFile.order);
+      newFile.original = oldFile.name;
+      this.files[index] = newFile;
     }
     return this.files[index];
   }

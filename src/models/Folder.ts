@@ -113,6 +113,7 @@ export default class Folder {
 
 export interface FileInfo {
   name: string;
+  original?: string;
   basename: string;
   extension: string;
   group: string;
