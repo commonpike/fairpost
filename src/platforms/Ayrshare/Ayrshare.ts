@@ -80,9 +80,9 @@ export default abstract class Ayrshare extends Platform {
       }[];
     };
 
-    const media = [...post.files.image, ...post.files.video].map(
-      (f) => post.folder.path + "/" + f,
-    );
+    const media = post
+      .getFiles("image", "video")
+      .map((f) => post.getFilePath(f.name));
 
     try {
       const uploads = media.length ? await this.uploadMedia(media) : [];

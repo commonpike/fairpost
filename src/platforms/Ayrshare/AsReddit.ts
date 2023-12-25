@@ -20,10 +20,8 @@ export default class AsReddit extends Ayrshare {
     const post = await super.preparePost(folder);
     if (post) {
       // reddit: max 1 image, no video
-      post.files.video = [];
-      if (post.files.image.length > 1) {
-        post.files.image.length = 1;
-      }
+      post.removeFiles("video");
+      post.limitFiles("image", 1);
       post.save();
     }
     return post;

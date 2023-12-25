@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import * as sharp from "sharp";
 
 import Ayrshare from "./Ayrshare";
@@ -21,23 +20,21 @@ export default class AsTwitter extends Ayrshare {
     const post = await super.preparePost(folder);
     if (post) {
       // twitter: no video
-      post.files.video = [];
+      post.removeFiles("video");
       // twitter: max 4 images
-      if (post.files.image.length > 4) {
-        post.files.image.length = 4;
-      }
+      post.limitFiles("video", 4);
       // twitter: max 5mb images
-      for (const src of post.files.image) {
+      for (const file of post.getFiles("image")) {
+        const src = file.name;
         const dst = this.assetsFolder() + "/twitter-" + src;
-        const size = fs.statSync(post.getFullPath(src)).size / (1024 * 1024);
-        if (size >= 5) {
+        if (file.size / (1024 * 1024) >= 5) {
           Logger.trace("Resizing " + src + " for twitter ..");
-          await sharp(post.getFullPath(src))
+          await sharp(post.getFilePath(src))
             .resize({
               width: 1200,
             })
-            .toFile(post.getFullPath(dst));
-          post.useAlternativeFile(src, dst);
+            .toFile(post.getFilePath(dst));
+          await post.replaceFile(src, dst);
         }
       }
       post.save();

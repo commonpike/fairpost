@@ -44,37 +44,37 @@ export default class Instagram extends Platform {
     const post = await super.preparePost(folder);
     if (post && post.files) {
       // instagram: 1 video for reel
-      if (post.files.video.length) {
-        if (post.files.video.length > 10) {
+      const numVideos = post.getFiles("video").length;
+      if (numVideos) {
+        if (numVideos > 10) {
           Logger.trace("Removing > 10 videos for instagram caroussel..");
-          post.files.video.length = 10;
+          post.limitFiles("video", 10);
         }
-        const remaining = 10 - post.files.video.length;
-        if (post.files.image.length > remaining) {
+        const remaining = 10 - post.getFiles("video").length;
+        if (post.getFiles("image").length > remaining) {
           Logger.trace("Removing some images for instagram caroussel..");
-          post.files.image.length = remaining;
+          post.limitFiles("images", remaining);
         }
       }
 
       // instagram : scale images, jpeg only
-      for (const src of post.files.image) {
-        const metadata = await sharp(post.getFullPath(src)).metadata();
-        if (metadata.width > 1440) {
+      for (const file of post.getFiles("image")) {
+        if (file.width > 1440) {
+          const src = file.name;
+          const dst =
+            this.assetsFolder() + "/instagram-" + file.basename + ".JPEG";
           Logger.trace("Resizing " + src + " for instagram ..");
-          const extension = src.split(".")?.pop();
-          const basename = path.basename(src, extension ? "." + extension : "");
-          const dst = this.assetsFolder() + "/instagram-" + basename + ".JPEG";
-          await sharp(post.getFullPath(src))
+          await sharp(post.getFilePath(src))
             .resize({
               width: 1440,
             })
-            .toFile(post.getFullPath(dst));
-          post.useAlternativeFile(src, dst);
+            .toFile(post.getFilePath(dst));
+          await post.replaceFile(src, dst);
         }
       }
 
       // instagram: require media
-      if (post.files.image.length + post.files.video.length === 0) {
+      if (post.getFiles("image").length + post.getFiles("video").length === 0) {
         post.valid = false;
       }
       post.save();
@@ -89,13 +89,13 @@ export default class Instagram extends Platform {
     let response = { id: "-99" } as { id: string };
     let error = undefined;
 
-    if (post.files.video.length === 1 && !post.files.image.length) {
+    if (post.getFiles("video").length === 1 && !post.hasFiles("image")) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e;
       }
-    } else if (post.files.image.length === 1 && !post.files.video.length) {
+    } else if (post.getFiles("image").length === 1 && !post.hasFiles("video")) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
@@ -131,7 +131,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const file = post.files.image[0];
+    const file = post.getFilePath(post.getFiles("image")[0].name);
     const caption = post.body;
     const photoId = (await this.uploadImage(file))["id"];
     const photoLink = await this.getImageLink(photoId);
@@ -171,7 +171,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const file = post.files.video[0];
+    const file = post.getFilePath(post.getFiles("video")[0].name);
     const caption = post.body;
     const videoId = (await this.uploadVideo(file))["id"];
     const videoLink = await this.getVideoLink(videoId);
@@ -213,34 +213,35 @@ export default class Instagram extends Platform {
   ): Promise<{ id: string }> {
     const uploadIds = [] as string[];
 
-    for (const video of post.files.video) {
-      const videoId = (await this.uploadVideo(post.folder.path + "/" + video))[
-        "id"
-      ];
-      const videoLink = await this.getVideoLink(videoId);
-      uploadIds.push(
-        (
-          await this.api.postJson("%USER%/media", {
-            is_carousel_item: true,
-            video_url: videoLink,
-          })
-        )["id"],
-      );
-    }
-
-    for (const image of post.files.image) {
-      const photoId = (await this.uploadImage(post.folder.path + "/" + image))[
-        "id"
-      ];
-      const photoLink = await this.getImageLink(photoId);
-      uploadIds.push(
-        (
-          await this.api.postJson("%USER%/media", {
-            is_carousel_item: true,
-            image_url: photoLink,
-          })
-        )["id"],
-      );
+    for (const file of post.getFiles("video", "image")) {
+      if (file.group === "video") {
+        const videoId = (await this.uploadVideo(post.getFilePath(file.name)))[
+          "id"
+        ];
+        const videoLink = await this.getVideoLink(videoId);
+        uploadIds.push(
+          (
+            await this.api.postJson("%USER%/media", {
+              is_carousel_item: true,
+              video_url: videoLink,
+            })
+          )["id"],
+        );
+      }
+      if (file.group === "image") {
+        const photoId = (await this.uploadImage(post.getFilePath(file.name)))[
+          "id"
+        ];
+        const photoLink = await this.getImageLink(photoId);
+        uploadIds.push(
+          (
+            await this.api.postJson("%USER%/media", {
+              is_carousel_item: true,
+              image_url: photoLink,
+            })
+          )["id"],
+        );
+      }
     }
 
     // create carousel

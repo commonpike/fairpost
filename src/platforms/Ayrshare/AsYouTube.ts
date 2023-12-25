@@ -17,11 +17,9 @@ export default class AsYouTube extends Ayrshare {
     const post = await super.preparePost(folder);
     if (post) {
       // youtube: only 1 video
-      post.files.image = [];
-      if (post.files.video.length > 1) {
-        post.files.video.length = 1;
-      }
-      if (!post.files.video.length) {
+      post.removeFiles("image");
+      post.limitFiles("video", 1);
+      if (!post.hasFiles("video")) {
         post.valid = false;
       }
       post.save();

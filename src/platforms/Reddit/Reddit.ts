@@ -57,24 +57,24 @@ export default class Reddit extends Platform {
     if (post) {
       // reddit: max 1 image or video
       // TODO: extract video thumbnail
-      if (post.files.video.length >= 1) { // eslint-disable-line
-        post.files.video.length = 1;
-        post.files.image = [];
-      } else if (post.files.image.length > 1) {
+      if (post.hasFiles('video')) { // eslint-disable-line
+        post.limitFiles("video", 1);
+        post.removeFiles("image");
+      }
+      if (post.hasFiles("image")) {
+        post.limitFiles("image", 1);
         // <MaxSizeAllowed>20971520</MaxSizeAllowed>
-        const src = post.files.image[0];
-        const metadata = await sharp(post.getFullPath(src)).metadata();
-        if (metadata.width > 3000) {
+        const file = post.getFiles("image")[0];
+        const src = file.name;
+        if (file.width > 3000) {
           Logger.trace("Resizing " + src + " for reddit ..");
-          const extension = src.split(".")?.pop();
-          const basename = path.basename(src, extension ? "." + extension : "");
-          const dst = this.assetsFolder() + "/reddit-" + basename + ".jpg";
-          await sharp(post.getFullPath(src))
+          const dst = this.assetsFolder() + "/reddit-" + file.basename + ".jpg";
+          await sharp(post.getFilePath(src))
             .resize({
               width: 3000,
             })
-            .toFile(post.getFullPath(dst));
-          post.files.image = [dst];
+            .toFile(post.getFilePath(dst));
+          await post.replaceFile(src, dst);
         }
       }
       post.save();
@@ -89,13 +89,13 @@ export default class Reddit extends Platform {
     let response = {};
     let error = undefined;
 
-    if (post.files.video.length) {
+    if (post.hasFiles("video")) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e;
       }
-    } else if (post.files.image.length) {
+    } else if (post.hasFiles("image")) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
@@ -164,7 +164,7 @@ export default class Reddit extends Platform {
   private async publishImagePost(post: Post, dryrun = false): Promise<object> {
     Logger.trace("Reddit.publishImagePost");
     const title = post.title;
-    const file = post.folder.path + "/" + post.files.image[0];
+    const file = post.getFilePath(post.getFiles("image")[0].name);
     const leash = await this.getUploadLeash(file);
     const imageUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
@@ -199,7 +199,7 @@ export default class Reddit extends Platform {
   private async publishVideoPost(post: Post, dryrun = false): Promise<object> {
     Logger.trace("Reddit.publishVideoPost");
     const title = post.title;
-    const file = post.folder.path + "/" + post.files.video[0];
+    const file = post.getFilePath(post.getFiles("video")[0].name);
     const leash = await this.getUploadLeash(file);
     const videoUrl = await this.uploadFile(leash, file);
     if (!dryrun) {

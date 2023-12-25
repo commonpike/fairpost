@@ -139,24 +139,25 @@ export default class Platform {
     // some default logic. override this
     // in your own platform if you need.
 
-    post.files = folder.getFiles();
+    post.files = await folder.getFiles();
+    const textFiles = post.getFiles("text");
 
-    if (post.files.text?.includes("body.txt")) {
+    if (post.hasFile("body.txt")) {
       post.body = fs.readFileSync(post.folder.path + "/body.txt", "utf8");
-    } else if (post.files.text.length === 1) {
-      const bodyFile = post.files.text[0];
+    } else if (textFiles.length === 1) {
+      const bodyFile = textFiles[0].name;
       post.body = fs.readFileSync(post.folder.path + "/" + bodyFile, "utf8");
     } else {
       post.body = this.defaultBody;
     }
 
-    if (post.files.text?.includes("title.txt")) {
+    if (post.hasFile("title.txt")) {
       post.title = fs.readFileSync(post.folder.path + "/title.txt", "utf8");
     } else {
       post.title = post.body.split("\n", 1)[0];
     }
 
-    if (post.files.text?.includes("tags.txt")) {
+    if (post.hasFile("tags.txt")) {
       post.tags = fs.readFileSync(post.folder.path + "/tags.txt", "utf8");
     }
 

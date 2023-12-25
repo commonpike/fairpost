@@ -1,6 +1,7 @@
 import * as fs from "fs";
 
-import Folder from "./Folder";
+import Folder, { FileInfo } from "./Folder";
+
 import Logger from "../services/Logger";
 import Platform from "./Platform";
 
@@ -24,12 +25,7 @@ export default class Post {
   title: string = "";
   body?: string;
   tags?: string;
-  files?: {
-    text: string[];
-    image: string[];
-    video: string[];
-    other: string[];
-  };
+  files?: FileInfo[];
   link?: string;
   remoteId?: string;
 
@@ -42,7 +38,7 @@ export default class Post {
       this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
       this.published = this.published ? new Date(this.published) : undefined;
     }
-    const assetsPath = this.getFullPath(platform.assetsFolder());
+    const assetsPath = this.getFilePath(platform.assetsFolder());
     if (!fs.existsSync(assetsPath)) {
       fs.mkdirSync(assetsPath, { recursive: true });
     }
@@ -95,26 +91,101 @@ export default class Post {
   }
 
   /**
-   * @param filename relative path in this post.folder
-   * @returns the full path to that file
+   * @returns the files grouped by their group property
    */
-  getFullPath(filename: string): string {
-    return this.folder.path + "/" + filename;
+  getGroupedFiles(): { [group: string]: FileInfo[] } {
+    return this.files.reduce(function (collector, file) {
+      (collector[file["group"]] = collector[file["group"]] || []).push(file);
+      return collector;
+    }, {});
   }
 
   /**
-   * Replace a file in the post with an alternative
-   * @param src relative path in this post.folder
-   * @param dst relative path in this post.folder
+   * @param groups - names of groups to return files from
+   * @returns the files within those groups, sorted by order
    */
-  useAlternativeFile(src: string, dst: string) {
-    for (const type in this.files) {
-      if (this.files[type].includes(src)) {
-        // be simple for now
-        this.files[type].push(dst);
-        this.files[type] = this.files[type].filter((file) => file !== src);
-      }
+  getFiles(...groups: string[]): FileInfo[] {
+    if (!groups.length) {
+      return this.files.sort((a, b) => a.order - b.order);
     }
+    return this.files
+      .filter((file) => groups.includes(file.group))
+      .sort((a, b) => a.order - b.order);
+  }
+
+  /**
+   * @param groups - names of groups to require files from
+   * @returns boolean if files in post
+   */
+  hasFiles(...groups: string[]): boolean {
+    if (!groups.length) {
+      return !!this.files.length;
+    }
+    return !!this.files.filter((file) => groups.includes(file.group)).length;
+  }
+
+  /**
+   * @param group - the name of the group for which to remove the files
+   */
+  removeFiles(group: string) {
+    this.files = this.files.filter((file) => file.group !== group);
+  }
+
+  /**
+   * @param group - the name of the group for which to remove some files
+   * @param size - the number of files to leave in the group
+   */
+  limitFiles(group: string, size: number) {
+    this.getFiles(group).forEach((file, index) => {
+      if (index > size) {
+        this.removeFile(file.name);
+      }
+    });
+  }
+
+  /**
+   * @param name the name of the file
+   * @returns the files info
+   */
+  hasFile(name: string): boolean {
+    return this.getFile(name) !== undefined;
+  }
+
+  /**
+   * @param name the name of the file
+   * @returns the files info
+   */
+  getFile(name: string): FileInfo | undefined {
+    return this.files.find((file) => file.name === name);
+  }
+
+  /**
+   * @param name the name of the file to remove
+   */
+  removeFile(name: string) {
+    this.files = this.files.filter((file) => file.name !== name);
+  }
+
+  /**
+   * @param search - the name of the file to replace
+   * @param replace - the name of the file to replace it with
+   * @returns the info of the replaced file
+   */
+  async replaceFile(search: string, replace: string): Promise<FileInfo> {
+    const index = this.files.findIndex((file) => file.name === search);
+    if (index > -1) {
+      const oldFile = this.getFile(search);
+      this.files[index] = await this.folder.getFile(replace, oldFile.order);
+    }
+    return this.files[index];
+  }
+
+  /**
+   * @param name relative path in this post.folder
+   * @returns the full path to that file
+   */
+  getFilePath(name: string): string {
+    return this.folder.path + "/" + name;
   }
 
   /**

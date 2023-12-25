@@ -1,4 +1,3 @@
-import * as path from "path";
 import * as sharp from "sharp";
 
 import Ayrshare from "./Ayrshare";
@@ -20,38 +19,34 @@ export default class AsInstagram extends Ayrshare {
   async preparePost(folder: Folder): Promise<Post | undefined> {
     const post = await super.preparePost(folder);
     if (post && post.files) {
-      // instagram: 1 video for reel
-      if (post.files.video.length) {
-        if (post.files.video.length > 10) {
-          Logger.trace("Removing > 10 videos for instagram caroussel..");
-          post.files.video.length = 10;
-        }
-        const remaining = 10 - post.files.video.length;
-        if (post.files.image.length > remaining) {
-          Logger.trace("Removing some images for instagram caroussel..");
-          post.files.image.length = remaining;
-        }
+      if (post.getFiles("video").length > 10) {
+        Logger.trace("Removing > 10 videos for instagram caroussel..");
+        post.limitFiles("video", 10);
+      }
+      const remaining = 10 - post.getFiles("video").length;
+      if (post.getFiles("image").length > remaining) {
+        Logger.trace("Removing some images for instagram caroussel..");
+        post.limitFiles("image", remaining);
       }
 
       // instagram : scale images, jpeg only
-      for (const src of post.files.image) {
-        const metadata = await sharp(post.getFullPath(src)).metadata();
-        if (metadata.width > 1440) {
+      for (const file of post.getFiles("image")) {
+        const src = file.name;
+        if (file.width > 1440) {
           Logger.trace("Resizing " + src + " for instagram ..");
-          const extension = src.split(".")?.pop();
-          const basename = path.basename(src, extension ? "." + extension : "");
-          const dst = this.assetsFolder() + "/instagram-" + basename + ".JPEG";
-          await sharp(post.getFullPath(src))
+          const dst =
+            this.assetsFolder() + "/instagram-" + file.basename + ".JPEG";
+          await sharp(post.getFilePath(src))
             .resize({
               width: 1440,
             })
-            .toFile(post.getFullPath(dst));
-          post.useAlternativeFile(src, dst);
+            .toFile(post.getFilePath(dst));
+          await post.replaceFile(src, dst);
         }
       }
 
       // instagram: require media
-      if (post.files.image.length + post.files.video.length === 0) {
+      if (!post.hasFiles("image", "video")) {
         post.valid = false;
       }
       post.save();
@@ -63,7 +58,7 @@ export default class AsInstagram extends Ayrshare {
     return super.publishAyrshare(
       post,
       {
-        isVideo: post.files.video.length !== 0,
+        isVideo: post.hasFiles("video"),
         instagramOptions: {
           // "autoResize": true -- only enterprise plans
         },
