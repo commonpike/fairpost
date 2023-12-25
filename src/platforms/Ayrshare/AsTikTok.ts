@@ -17,11 +17,11 @@ export default class AsTikTok extends Ayrshare {
     const post = await super.preparePost(folder);
     if (post) {
       // tiktok: one video
-      post.files.image = [];
-      if (!post.files.video.length) {
+      post.removeFiles("image");
+      if (!post.hasFiles("video")) {
         post.valid = false;
       } else {
-        post.files.video.length = 1;
+        post.limitFiles("video", 1);
       }
       post.save();
     }

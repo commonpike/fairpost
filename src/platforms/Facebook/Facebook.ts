@@ -45,22 +45,23 @@ export default class Facebook extends Platform {
     const post = await super.preparePost(folder);
     if (post && post.files) {
       // facebook: video post can only contain 1 video
-      if (post.files.video.length) {
-        post.files.video.length = 1;
-        post.files.image = [];
+      if (post.hasFiles("video")) {
+        Logger.warn("have video");
+        post.limitFiles("video", 1);
+        post.removeFiles("image");
       }
       // facebook : max 4mb images
-      for (const src of post.files.image) {
-        const dst = this.assetsFolder() + "/facebook-" + src;
-        const size = fs.statSync(post.getFullPath(src)).size / (1024 * 1024);
-        if (size >= 4) {
-          Logger.trace("Resizing " + src + " for facebook ..");
-          await sharp(post.getFullPath(src))
+      for (const file of post.getFiles("image")) {
+        if (file.size / (1024 * 1024) >= 4) {
+          Logger.trace("Resizing " + file.name + " for facebook ..");
+          const src = file.name;
+          const dst = this.assetsFolder() + "/facebook-" + file.name;
+          await sharp(post.getFilePath(src))
             .resize({
               width: 1200,
             })
-            .toFile(post.getFullPath(dst));
-          post.useAlternativeFile(src, dst);
+            .toFile(post.getFilePath(dst));
+          await post.replaceFile(src, dst);
         }
       }
       post.save();
@@ -75,13 +76,13 @@ export default class Facebook extends Platform {
     let response = { id: "-99" } as { id: string };
     let error = undefined;
 
-    if (post.files.video.length) {
+    if (post.hasFiles("video")) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e;
       }
-    } else if (post.files.image.length) {
+    } else if (post.hasFiles("image")) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
@@ -130,7 +131,7 @@ export default class Facebook extends Platform {
   /**
    * POST images to the page/feed endpoint using json
    * @param post - the post
-   * @param dryrun - wether to really execure
+   * @param dryrun - wether to really execute
    * @returns object, incl. id of the created post
    */
   private async publishImagesPost(
@@ -138,9 +139,9 @@ export default class Facebook extends Platform {
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
     const attachments = [];
-    for (const image of post.files.image) {
+    for (const image of post.getFiles("image")) {
       attachments.push({
-        media_fbid: (await this.uploadImage(post.folder.path + "/" + image))[
+        media_fbid: (await this.uploadImage(post.getFilePath(image.name)))[
           "id"
         ],
       });
@@ -170,7 +171,7 @@ export default class Facebook extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const file = post.folder.path + "/" + post.files.video[0];
+    const file = post.getFilePath(post.getFiles("video")[0].name);
     const title = post.title;
     const description = post.body;
 

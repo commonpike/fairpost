@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as sharp from "sharp";
 
 import Logger from "../services/Logger";
 
@@ -13,12 +14,7 @@ import Logger from "../services/Logger";
 export default class Folder {
   id: string;
   path: string;
-  files?: {
-    text: string[];
-    image: string[];
-    video: string[];
-    other: string[];
-  };
+  files?: FileInfo[];
 
   constructor(path: string) {
     this.id = path;
@@ -32,79 +28,78 @@ export default class Folder {
 
   report(): string {
     Logger.trace("Folder", "report");
-    const files = this.getFiles();
     let report = "";
     report += "\nFolder: " + this.id;
     report += "\n - path: " + this.path;
-    report +=
-      "\n - files: " +
-      Object.keys(files)
-        .map((k) => files[k].join())
-        .join();
+    report += "\n - files: " + this.getFileNames();
     return report;
+  }
+
+  /**
+   * Get the filenames in this folder
+   * @returns array of filenames relative to folder
+   */
+
+  getFileNames(): string[] {
+    Logger.trace("Folder", "getFileNames");
+    if (this.files !== undefined) {
+      return this.files.map((file) => file.name);
+    }
+    const files = fs.readdirSync(this.path).filter((file) => {
+      const regex = /^[^._]/;
+      return fs.statSync(this.path + "/" + file).isFile() && file.match(regex);
+    });
+    return files;
   }
 
   /**
    * Get the files in this folder
    *
    * reads info from disk once, then caches that
-   * @returns grouped filenames relative to folder
+   * @returns array of fileinfo for all files in this folder
    */
 
-  getFiles(): {
-    text: string[];
-    image: string[];
-    video: string[];
-    other: string[];
-  } {
+  async getFiles(): Promise<FileInfo[]> {
     Logger.trace("Folder", "getFiles");
-    if (this.files != undefined) {
-      return {
-        text: [...this.files.text],
-        image: [...this.files.image],
-        video: [...this.files.video],
-        other: [...this.files.other],
-      };
+    if (this.files !== undefined) {
+      return structuredClone(this.files);
     }
-    const files = fs.readdirSync(this.path).filter((file) => {
-      return (
-        fs.statSync(this.path + "/" + file).isFile() &&
-        !file.startsWith("_") &&
-        !file.startsWith(".")
-      );
-    });
-    this.files = {
-      text: [],
-      image: [],
-      video: [],
-      other: [],
-    };
-    this.files.text = files.filter((file) =>
-      ["txt"].includes(file.split(".")?.pop() ?? ""),
-    );
-    this.files.image = files.filter((file) =>
-      ["jpg", "jpeg", "png"].includes(file.split(".")?.pop() ?? ""),
-    );
-    this.files.video = files.filter((file) =>
-      ["mp4"].includes(file.split(".")?.pop() ?? ""),
-    );
-    this.files.other = files.filter(
-      (file) =>
-        !this.files.text?.includes(file) &&
-        !this.files.image?.includes(file) &&
-        !this.files.video?.includes(file),
-    );
-    return {
-      text: [...this.files.text],
-      image: [...this.files.image],
-      video: [...this.files.video],
-      other: [...this.files.other],
-    };
+    const fileNames = this.getFileNames();
+    this.files = [];
+    for (let index = 0; index < fileNames.length; index++) {
+      this.files.push(await this.getFile(fileNames[index], index));
+    }
+    return structuredClone(this.files);
+  }
+
+  public async getFile(name: string, order: number): Promise<FileInfo> {
+    Logger.trace("Folder", "getFile", name);
+    const filepath = this.path + "/" + name;
+    const mime = Folder.guessMimeType(name);
+    const group = mime !== "application/unknown" ? mime.split("/")[0] : "other";
+    const stats = fs.statSync(filepath);
+    const extension = path.extname(name);
+    const file = {
+      name: name,
+      basename: path.basename(name, extension || ""),
+      extension: extension.substring(1),
+      group: group,
+      mimetype: mime,
+      size: stats.size,
+      order: order,
+    } as FileInfo;
+    if (group === "image") {
+      const metadata = await sharp(filepath).metadata();
+      file.width = metadata.width;
+      file.height = metadata.height;
+    }
+    return file;
   }
 
   public static guessMimeType(filename: string) {
     const extension = path.extname(filename);
     const mimeTypes = {
+      ".txt": "text/plain",
       ".png": "image/png",
       ".mov": "video/quicktime",
       ".mp4": "video/mp4",
@@ -112,6 +107,18 @@ export default class Folder {
       ".jpeg": "image/jpeg",
       ".gif": "image/gif",
     };
-    return mimeTypes[extension] ?? "application/unknown";
+    return mimeTypes[extension.toLowerCase()] ?? "application/unknown";
   }
+}
+
+export interface FileInfo {
+  name: string;
+  basename: string;
+  extension: string;
+  group: string;
+  size: number;
+  mimetype: string;
+  order: number;
+  width?: number;
+  height?: number;
 }

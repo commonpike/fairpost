@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import * as sharp from "sharp";
 
 import Ayrshare from "./Ayrshare";
@@ -20,17 +19,17 @@ export default class AsFacebook extends Ayrshare {
     const post = await super.preparePost(folder);
     if (post) {
       // facebook : max 10mb images
-      for (const src of post.files.image) {
+      for (const file of post.getFiles("image")) {
+        const src = file.name;
         const dst = this.assetsFolder() + "/facebook-" + src;
-        const size = fs.statSync(post.getFullPath(src)).size / (1024 * 1024);
-        if (size >= 10) {
+        if (file.size / (1024 * 1024) >= 10) {
           console.log("Resizing " + src + " for facebook ..");
-          await sharp(post.getFullPath(src))
+          await sharp(post.getFilePath(src))
             .resize({
               width: 1200,
             })
-            .toFile(post.getFullPath(dst));
-          post.useAlternativeFile(src, dst);
+            .toFile(post.getFilePath(dst));
+          await post.replaceFile(src, dst);
         }
       }
       post.save();

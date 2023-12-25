@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import * as sharp from "sharp";
 
 import Folder from "../../models/Folder";
@@ -56,23 +55,21 @@ export default class Twitter extends Platform {
     const post = await super.preparePost(folder);
     if (post) {
       // twitter: no video
-      post.files.video = [];
+      post.removeFiles("video");
       // twitter: max 4 images
-      if (post.files.image.length > 4) {
-        post.files.image.length = 4;
-      }
+      post.limitFiles("image", 4);
       // twitter: max 5mb images
-      for (const src of post.files.image) {
+      for (const file of post.getFiles("image")) {
+        const src = file.name;
         const dst = this.assetsFolder() + "/twitter-" + src;
-        const size = fs.statSync(post.getFullPath(src)).size / (1024 * 1024);
-        if (size >= 5) {
+        if (file.size / (1024 * 1024) >= 5) {
           Logger.trace("Resizing " + src + " for twitter ..");
-          await sharp(post.getFullPath(src))
+          await sharp(post.getFilePath(src))
             .resize({
               width: 1200,
             })
-            .toFile(post.getFullPath(dst));
-          post.useAlternativeFile(src, dst);
+            .toFile(post.getFilePath(dst));
+          await post.replaceFile(src, dst);
         }
       }
       post.save();
@@ -91,7 +88,7 @@ export default class Twitter extends Platform {
     };
     let error = undefined;
 
-    if (post.files.image.length) {
+    if (post.hasFiles("image")) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
@@ -176,17 +173,17 @@ export default class Twitter extends Platform {
       accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const mediaIds = [];
-    if (post.files.image.length) {
-      for (const image of post.files.image) {
-        const path = post.folder.path + "/" + image;
-        Logger.trace("Uploading " + path + "...");
-        try {
-          mediaIds.push(await client1.v1.uploadMedia(path));
-        } catch (e) {
-          throw Logger.error("Twitter.publishPost uploadMedia failed", e);
-        }
+
+    for (const image of post.getFiles("image")) {
+      const path = post.getFilePath(image.name);
+      Logger.trace("Uploading " + path + "...");
+      try {
+        mediaIds.push(await client1.v1.uploadMedia(path));
+      } catch (e) {
+        throw Logger.error("Twitter.publishPost uploadMedia failed", e);
       }
     }
+
     const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
 
     if (!dryrun) {

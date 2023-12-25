@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import * as sharp from "sharp";
 
 import Ayrshare from "./Ayrshare";
@@ -21,27 +20,25 @@ export default class AsLinkedIn extends Ayrshare {
     const post = await super.preparePost(folder);
     if (post) {
       // linkedin: max 9 media
-      if (post.files.video.length > 9) {
-        post.files.video.length = 9;
+      if (post.getFiles("video").length > 9) {
+        post.limitFiles("video", 9);
       }
-      if (post.files.image.length + post.files.video.length > 9) {
-        post.files.image.length = Math.max(
-          0,
-          post.files.image.length - post.files.video.length,
-        );
+      const remaining = 9 - post.getFiles("video").length;
+      if (post.getFiles("image").length > remaining) {
+        post.limitFiles("image", remaining);
       }
       // linkedin: max 5mb images
-      for (const src of post.files.image) {
+      for (const file of post.getFiles("image")) {
+        const src = file.name;
         const dst = this.assetsFolder() + "/linkedin-" + src;
-        const size = fs.statSync(post.getFullPath(src)).size / (1024 * 1024);
-        if (size >= 5) {
+        if (file.size / (1024 * 1024) >= 5) {
           Logger.trace("Resizing " + src + " for linkedin ..");
-          await sharp(post.getFullPath(src))
+          await sharp(post.getFilePath(src))
             .resize({
               width: 1200,
             })
-            .toFile(post.getFullPath(dst));
-          post.useAlternativeFile(src, dst);
+            .toFile(post.getFilePath(dst));
+          await post.replaceFile(src, dst);
         }
       }
       post.save();
