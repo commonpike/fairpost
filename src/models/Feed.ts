@@ -511,9 +511,10 @@ export default class Feed {
       for (const folder of folders) {
         const post = platform.getPost(folder);
         if (
+          post &&
           post.valid &&
           !post.skip &&
-          post?.status === PostStatus.UNSCHEDULED
+          post.status === PostStatus.UNSCHEDULED
         ) {
           post.schedule(nextDate);
           posts.push(post);
@@ -551,7 +552,7 @@ export default class Feed {
     for (const platform of platforms) {
       for (const folder of folders) {
         const post = platform.getPost(folder);
-        if (post?.status === PostStatus.SCHEDULED) {
+        if (post && post.status === PostStatus.SCHEDULED) {
           if (post.skip) {
             Logger.warn(
               "Not publishing scheduled post marked skip. Unscheduling post.",
