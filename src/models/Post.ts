@@ -193,7 +193,7 @@ export default class Post {
           body += this.mentions ? this.mentions.join(" ") + "\n" : "";
           break;
         case "geo":
-          body += this.geo? this.geo + "\n" : "";
+          body += this.geo ? this.geo + "\n" : "";
           break;
       }
     }
