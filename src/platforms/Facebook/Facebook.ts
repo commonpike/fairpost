@@ -20,6 +20,9 @@ import Storage from "../../services/Storage";
  */
 export default class Facebook extends Platform {
   id: PlatformId = PlatformId.FACEBOOK;
+  assetsFolder = "_facebook";
+  postFileName = "post.json";
+
   api: FacebookApi;
   auth: FacebookAuth;
 
@@ -55,7 +58,7 @@ export default class Facebook extends Platform {
         if (file.size / (1024 * 1024) >= 4) {
           Logger.trace("Resizing " + file.name + " for facebook ..");
           const src = file.name;
-          const dst = this.assetsFolder() + "/facebook-" + file.name;
+          const dst = this.assetsFolder + "/facebook-" + file.name;
           await sharp(post.getFilePath(src))
             .resize({
               width: 1200,

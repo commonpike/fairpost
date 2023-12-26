@@ -20,12 +20,16 @@ const DRY_RUN = !!getOption("dry-run") ?? false;
 const REPORT = (getOption("report") as string) ?? "text";
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
-const PLATFORM = (getOption("platform") as string as PlatformId) ?? undefined;
 const FOLDERS = (getOption("folders") as string)?.split(",") ?? undefined;
-const FOLDER = (getOption("folder") as string) ?? undefined;
 const DATE = (getOption("date") as string) ?? undefined;
 const STATUS = (getOption("status") as PostStatus) ?? undefined;
 
+let PLATFORM = (getOption("platform") as string as PlatformId) ?? undefined;
+let FOLDER = (getOption("folder") as string) ?? undefined;
+const POST = (getOption("post") as string) ?? undefined;
+if (POST) {
+  [FOLDER, PLATFORM] = POST.split(":") as [string, PlatformId];
+}
 // utilities
 
 function getOption(key: string): boolean | string | null {
@@ -237,12 +241,12 @@ async function main() {
           `${cmd} get-platforms [--platforms=xxx,xxx]`,
           `${cmd} get-folder --folder=xxx`,
           `${cmd} get-folders [--folders=xxx,xxx]`,
-          `${cmd} get-post --folder=xxx --platform=xxx`,
+          `${cmd} get-post --post=xxx:xxx`,
           `${cmd} get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
-          `${cmd} prepare-post --folder=xxx --platform=xxx`,
-          `${cmd} schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx `,
+          `${cmd} prepare-post --post=xxx:xxx`,
+          `${cmd} schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
           `${cmd} schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx`,
-          `${cmd} publish-post --folder=xxx --platform=xxx [--dry-run]`,
+          `${cmd} publish-post --post=xxx:xxx [--dry-run]`,
           `${cmd} publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,
           "\n# feed planning:",
           `${cmd} prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]`,

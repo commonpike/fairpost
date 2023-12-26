@@ -17,7 +17,7 @@ export default class Folder {
   files?: FileInfo[];
 
   constructor(path: string) {
-    this.id = path;
+    this.id = path.replace(/^\//, "").split("/").slice(1).join("/");
     this.path = path;
   }
 

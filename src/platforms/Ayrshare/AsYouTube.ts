@@ -8,6 +8,8 @@ import Post from "../../models/Post";
  */
 export default class AsYouTube extends Ayrshare {
   id = PlatformId.ASYOUTUBE;
+  assetsFolder = "_asyoutube";
+  postFileName = "post.json";
 
   constructor() {
     super();

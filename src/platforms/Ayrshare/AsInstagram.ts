@@ -11,6 +11,8 @@ import Post from "../../models/Post";
  */
 export default class AsInstagram extends Ayrshare {
   id = PlatformId.ASINSTAGRAM;
+  assetsFolder = "_asinstagram";
+  postFileName = "post.json";
 
   constructor() {
     super();
@@ -35,7 +37,7 @@ export default class AsInstagram extends Ayrshare {
         if (file.width > 1440) {
           Logger.trace("Resizing " + src + " for instagram ..");
           const dst =
-            this.assetsFolder() + "/instagram-" + file.basename + ".JPEG";
+            this.assetsFolder + "/instagram-" + file.basename + ".JPEG";
           await sharp(post.getFilePath(src))
             .resize({
               width: 1440,

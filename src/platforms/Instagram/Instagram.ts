@@ -19,6 +19,9 @@ import Post from "../../models/Post";
  */
 export default class Instagram extends Platform {
   id: PlatformId = PlatformId.INSTAGRAM;
+  assetsFolder = "_instagram";
+  postFileName = "post.json";
+
   api: InstagramApi;
   auth: InstagramAuth;
 
@@ -62,7 +65,7 @@ export default class Instagram extends Platform {
         if (file.width > 1440) {
           const src = file.name;
           const dst =
-            this.assetsFolder() + "/instagram-" + file.basename + ".JPEG";
+            this.assetsFolder + "/instagram-" + file.basename + ".JPEG";
           Logger.trace("Resizing " + src + " for instagram ..");
           await sharp(post.getFilePath(src))
             .resize({

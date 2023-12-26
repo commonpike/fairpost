@@ -16,7 +16,8 @@ export default class Platform {
   active: boolean = false;
   id: PlatformId = PlatformId.UNKNOWN;
   defaultBody: string = "Fairpost feed";
-  postFile: string = "post.json";
+  assetsFolder: string = "_fairpost";
+  postFileName: string = "post.json";
 
   /**
    * Return a small report for this feed
@@ -72,22 +73,13 @@ export default class Platform {
   }
 
   /**
-   * getAssetsFolderName
-   * @returns the relative path to a folder used
-   * to store assets for a post of this platform
-   */
-  assetsFolder(): string {
-    return "_" + this.id;
-  }
-
-  /**
    * getPostFilePath
    * @param folder the folder for the new or existing post
    * @returns the full path to the post file used
    * to store data for a post of this platform
    */
   getPostFilePath(folder: Folder): string {
-    return folder.path + "/" + this.assetsFolder() + "/" + this.postFile;
+    return folder.path + "/" + this.assetsFolder + "/" + this.postFileName;
   }
 
   /**
@@ -152,7 +144,7 @@ export default class Platform {
     post.purgeFiles();
     const files = await folder.getFiles();
     files.forEach((file) => {
-      if (!post.ignoreFiles.includes(file.name)) {
+      if (!post.ignoreFiles?.includes(file.name)) {
         post.putFile(file);
       }
     });
