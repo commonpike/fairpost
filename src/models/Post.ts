@@ -4,6 +4,7 @@ import Folder, { FileInfo } from "./Folder";
 
 import Logger from "../services/Logger";
 import Platform from "./Platform";
+import { isSimilarArray } from "../utilities";
 
 /**
  * Post - a post within a folder
@@ -18,14 +19,18 @@ export default class Post {
   folder: Folder;
   platform: Platform;
   valid: boolean = false;
+  skip: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
   results: PostResult[] = [];
   title: string = "";
   body?: string;
-  tags?: string;
+  tags?: string[];
+  mentions?: string[];
+  geo?: string;
   files?: FileInfo[];
+  ignoreFiles?: string[];
   link?: string;
   remoteId?: string;
 
@@ -37,6 +42,7 @@ export default class Post {
       Object.assign(this, data);
       this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
       this.published = this.published ? new Date(this.published) : undefined;
+      this.ignoreFiles = this.ignoreFiles ?? [];
     }
     const assetsPath = this.getFilePath(platform.assetsFolder());
     if (!fs.existsSync(assetsPath)) {
@@ -88,6 +94,110 @@ export default class Post {
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
+  }
+
+  /**
+   * Check body for title, #tags, @mentions and %geo
+   * and store those in separate fields instead
+   */
+  decompileBody() {
+    const lines = this.body.split("\n");
+
+    // chop title
+    const title = lines.shift();
+    if (!this.title || this.title === title) {
+      this.title = title;
+      this.body = lines.join("\n");
+    }
+
+    // chop body tail for #tags, @mentions
+    // and %geo - any geo
+
+    const rxtag = /#\S+/g;
+    const rxtags = /^\s*((#\S+)\s*)+$/g;
+    const rxmention = /@\S+/g;
+    const rxmentions = /^\s*((@\S+)\s*)+$/g;
+    const rxgeo = /^%geo\s+(.*)/i;
+    let line = "";
+    while (lines.length) {
+      line = lines.pop();
+
+      if (!line.trim()) {
+        this.body = lines.join("\n");
+        continue;
+      }
+
+      if (line.match(rxtags)) {
+        const tags = line.match(rxtag);
+        if (!this.tags?.length || isSimilarArray(tags, this.tags)) {
+          this.tags = tags;
+          this.body = lines.join("\n");
+        }
+        continue;
+      }
+
+      if (line.match(rxmentions)) {
+        const mentions = line.match(rxmention);
+        if (!this.mentions?.length || isSimilarArray(mentions, this.mentions)) {
+          this.mentions = mentions;
+          this.body = lines.join("\n");
+        }
+        continue;
+      }
+
+      if (line.match(rxgeo)) {
+        const geo = line.match(rxgeo)[1] ?? "";
+        if (!this.geo || this.geo === geo) {
+          this.geo = geo;
+          this.body = lines.join("\n");
+        }
+        continue;
+      }
+
+      break;
+    }
+  }
+
+  /**
+   * Create a body containing the given arguments
+   * @param parts - any of 'title','body','tags','mentions','geo'
+   * prepending a ! to every part removes those parts from the default array instead.
+   * @returns compiled body
+   */
+  getCompiledBody(...parts: string[]): string {
+    const defaultParts = ["title", "body", "tags", "mentions", "geo"];
+    if (!parts.length) {
+      parts = defaultParts;
+    }
+    if (parts.every((part) => part.startsWith("!"))) {
+      let realParts = defaultParts;
+      parts.forEach((remove) => {
+        realParts = realParts.filter((part) => part != remove.substring(1));
+      });
+      parts = realParts;
+    }
+
+    let body = "";
+    for (const part of parts) {
+      switch (part) {
+        case "title":
+          body += this.title + "\n";
+          break;
+        case "body":
+          body += this.body + "\n\n";
+          break;
+        case "tags":
+          body += this.tags.join(" ") + "\n";
+          break;
+        case "mentions":
+          body += this.mentions.join(" ") + "\n";
+          break;
+        case "geo":
+          body += this.geo + "\n";
+          break;
+      }
+    }
+    return body.trim();
   }
 
   /**
@@ -144,19 +254,70 @@ export default class Post {
   }
 
   /**
+   * Remove all the files that do not exist (anymore)
+   */
+  purgeFiles() {
+    this.getFiles().forEach((file) => {
+      if (file.original && !fs.existsSync(this.getFilePath(file.original))) {
+        Logger.info(
+          "Post",
+          "purgeFiles",
+          "purging non-existant derivate",
+          file.name,
+        );
+        this.removeFile(file.name);
+      }
+      if (!fs.existsSync(this.getFilePath(file.name))) {
+        Logger.info(
+          "Post",
+          "purgeFiles",
+          "purging non-existent file",
+          file.name,
+        );
+        this.removeFile(file.name);
+      }
+    });
+  }
+
+  /**
+   * reindex file ordering to remove doubles
+   */
+  reorderFiles() {
+    this.files
+      .sort((a, b) => a.order - b.order)
+      .forEach((file, index) => {
+        file.order = index;
+      });
+  }
+
+  /**
    * @param name the name of the file
-   * @returns the files info
+   * @returns wether the file exists
    */
   hasFile(name: string): boolean {
     return this.getFile(name) !== undefined;
   }
 
   /**
-   * @param name the name of the file
-   * @returns the files info
+   * @param name - the name of the file
+   * @returns the files info if any
    */
   getFile(name: string): FileInfo | undefined {
     return this.files.find((file) => file.name === name);
+  }
+
+  /**
+   * @param file - the fileinfo to add or replace
+   */
+  putFile(file: FileInfo) {
+    const oldFile = this.files.find(
+      (oldfile) => oldfile.name === file.name || oldfile.original === file.name,
+    );
+    if (oldFile) {
+      file.order = oldFile.order;
+      this.removeFile(oldFile.name);
+    }
+    this.files.push(file);
   }
 
   /**
@@ -175,7 +336,9 @@ export default class Post {
     const index = this.files.findIndex((file) => file.name === search);
     if (index > -1) {
       const oldFile = this.getFile(search);
-      this.files[index] = await this.folder.getFile(replace, oldFile.order);
+      const newFile = await this.folder.getFile(replace, oldFile.order);
+      newFile.original = oldFile.name;
+      this.files[index] = newFile;
     }
     return this.files[index];
   }

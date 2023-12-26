@@ -132,7 +132,7 @@ export default class Instagram extends Platform {
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
     const file = post.getFilePath(post.getFiles("image")[0].name);
-    const caption = post.body;
+    const caption = post.getCompiledBody();
     const photoId = (await this.uploadImage(file))["id"];
     const photoLink = await this.getImageLink(photoId);
     const container = (await this.api.postJson("%USER%/media", {
@@ -172,7 +172,7 @@ export default class Instagram extends Platform {
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
     const file = post.getFilePath(post.getFiles("video")[0].name);
-    const caption = post.body;
+    const caption = post.getCompiledBody();
     const videoId = (await this.uploadVideo(file))["id"];
     const videoLink = await this.getVideoLink(videoId);
     const container = (await this.api.postJson("%USER%/media", {
@@ -247,7 +247,7 @@ export default class Instagram extends Platform {
     // create carousel
     const container = (await this.api.postJson("%USER%/media", {
       media_type: "CAROUSEL",
-      caption: post.body,
+      caption: post.getCompiledBody(),
       children: uploadIds.join(","),
     })) as {
       id: string;

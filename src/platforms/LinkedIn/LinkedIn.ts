@@ -156,10 +156,9 @@ export default class LinkedIn extends Platform {
    */
   private async publishTextPost(post: Post, dryrun: boolean = false) {
     Logger.trace("LinkedIn.publishTextPost");
-    const content = post.title + "\n\n" + post.body;
     const body = {
       author: this.POST_AUTHOR,
-      commentary: content,
+      commentary: post.getCompiledBody(),
       visibility: this.POST_VISIBILITY,
       distribution: this.POST_DISTRIBUTION,
       lifecycleState: "PUBLISHED",
@@ -182,7 +181,6 @@ export default class LinkedIn extends Platform {
   private async publishImagePost(post: Post, dryrun: boolean = false) {
     Logger.trace("LinkedIn.publishImagePost");
     const title = post.title;
-    const content = post.body;
     const image = post.getFilePath(post.getFiles("image")[0].name);
     const leash = await this.getImageLeash();
     await this.uploadImage(leash.value.uploadUrl, image);
@@ -190,7 +188,7 @@ export default class LinkedIn extends Platform {
     // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#sample-response-4
     const body = {
       author: this.POST_AUTHOR,
-      commentary: content,
+      commentary: post.getCompiledBody("!title"),
       visibility: this.POST_VISIBILITY,
       distribution: this.POST_DISTRIBUTION,
       content: {
@@ -219,7 +217,6 @@ export default class LinkedIn extends Platform {
 
   private async publishImagesPost(post: Post, dryrun: boolean = false) {
     Logger.trace("LinkedIn.publishImagesPost");
-    const content = post.title + "\n\n" + post.body;
     const images = post
       .getFiles("image")
       .map((image) => post.getFilePath(image.name));
@@ -234,7 +231,7 @@ export default class LinkedIn extends Platform {
 
     const body = {
       author: this.POST_AUTHOR,
-      commentary: content,
+      commentary: post.getCompiledBody(),
       visibility: this.POST_VISIBILITY,
       distribution: this.POST_DISTRIBUTION,
       lifecycleState: "PUBLISHED",
@@ -268,7 +265,6 @@ export default class LinkedIn extends Platform {
     Logger.trace("LinkedIn.publishVideoPost");
 
     const title = post.title;
-    const content = post.body;
     const video = post.getFilePath(post.getFiles("video")[0].name);
 
     const leash = await this.getVideoLeash(video);
@@ -277,7 +273,7 @@ export default class LinkedIn extends Platform {
     // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#sample-response-4
     const body = {
       author: this.POST_AUTHOR,
-      commentary: content,
+      commentary: post.getCompiledBody("!title"),
       visibility: this.POST_VISIBILITY,
       distribution: this.POST_DISTRIBUTION,
       content: {

@@ -316,6 +316,9 @@ export default class Feed {
     if (!post.valid) {
       throw Logger.error("Post is not valid");
     }
+    if (post.skip) {
+      throw Logger.error("Post is marked to be skipped");
+    }
     if (post.status !== PostStatus.UNSCHEDULED) {
       throw Logger.error("Post is not unscheduled");
     }
@@ -350,6 +353,9 @@ export default class Feed {
         if (!post.valid) {
           throw Logger.error("Post is not valid");
         }
+        if (post.skip) {
+          throw Logger.error("Post is marked to be skipped");
+        }
         if (post.status !== PostStatus.UNSCHEDULED) {
           throw Logger.error("Post is not unscheduled");
         }
@@ -363,7 +369,7 @@ export default class Feed {
   /**
    * Publish single post
    *
-   * Will publish the post regardless of its status
+   * Will publish the post regardless of its status or skip
    * @param path - path to a single folder
    * @param platformId - the platform for the post
    * @param dryrun - wether or not to really publish
@@ -380,13 +386,13 @@ export default class Feed {
     const platform = this.getPlatform(platformId);
     const folder = this.getFolder(path);
     const post = platform.getPost(folder);
-    if (post.valid) {
-      if (!dryrun) post.schedule(now);
-      Logger.info("Posting", platformId, path);
-      await platform.publishPost(post, dryrun);
-    } else {
+    if (!post.valid) {
       throw Logger.error("Post is not valid");
     }
+    if (!dryrun) post.schedule(now);
+    Logger.info("Posting", platformId, path);
+    await platform.publishPost(post, dryrun);
+
     return post;
   }
 
@@ -416,12 +422,16 @@ export default class Feed {
       for (const folder of folders) {
         const post = platform.getPost(folder);
         if (post.valid) {
-          post.schedule(now);
-          Logger.trace("Posting", platform.id, folder.id);
-          await platform.publishPost(post, dryrun);
-          posts.push(post);
+          if (!post.skip) {
+            post.schedule(now);
+            Logger.trace("Posting", post.id);
+            await platform.publishPost(post, dryrun);
+            posts.push(post);
+          } else {
+            Logger.warn("Skipping post marked skip", post.id);
+          }
         } else {
-          Logger.warn("Skipping invalid post", platform.id, folder.id);
+          Logger.warn("Skipping invalid post", post.id);
         }
       }
     }
@@ -500,7 +510,12 @@ export default class Feed {
       const nextDate = date ? date : this.getNextPostDate(platform.id);
       for (const folder of folders) {
         const post = platform.getPost(folder);
-        if (post.valid && post?.status === PostStatus.UNSCHEDULED) {
+        if (
+          post &&
+          post.valid &&
+          !post.skip &&
+          post.status === PostStatus.UNSCHEDULED
+        ) {
           post.schedule(nextDate);
           posts.push(post);
           break;
@@ -537,9 +552,18 @@ export default class Feed {
     for (const platform of platforms) {
       for (const folder of folders) {
         const post = platform.getPost(folder);
-        if (post?.status === PostStatus.SCHEDULED) {
+        if (post && post.status === PostStatus.SCHEDULED) {
+          if (post.skip) {
+            Logger.warn(
+              "Not publishing scheduled post marked skip. Unscheduling post.",
+              post.id,
+            );
+            post.status = PostStatus.UNSCHEDULED;
+            post.save();
+            continue;
+          }
           if (post.scheduled <= now) {
-            console.log("Posting", platform.id, folder.id);
+            console.log("Posting", post.id);
             await platform.publishPost(post, dryrun);
             posts.push(post);
             break;

@@ -121,7 +121,7 @@ export default class Facebook extends Platform {
   ): Promise<{ id: string }> {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
-        message: post.body,
+        message: post.getCompiledBody(),
         published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
       })) as { id: string };
     }
@@ -149,7 +149,7 @@ export default class Facebook extends Platform {
 
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
-        message: post.body,
+        message: post.getCompiledBody(),
         published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
         attached_media: attachments,
       })) as { id: string };
@@ -173,7 +173,7 @@ export default class Facebook extends Platform {
   ): Promise<{ id: string }> {
     const file = post.getFilePath(post.getFiles("video")[0].name);
     const title = post.title;
-    const description = post.body;
+    const description = post.getCompiledBody("!title");
 
     Logger.trace("Reading file", file);
     const rawData = fs.readFileSync(file);

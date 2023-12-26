@@ -122,6 +122,10 @@ export default class Platform {
    *
    * Do not throw errors. Instead, catch and log them,
    * and set the post.valid to false
+   *
+   * Presume the post may have already been prepared
+   * before, and manually adapted later. For example,
+   * post.skip may have manually been set to true.
    * @param folder - the folder for which to prepare a post for this platform
    * @returns the prepared post
    */
@@ -137,9 +141,23 @@ export default class Platform {
     }
 
     // some default logic. override this
-    // in your own platform if you need.
+    // in your own platform if you want;
+    // but more likely, call super.preparePost
+    // before adding your own logic.
 
-    post.files = await folder.getFiles();
+    // always update the files, they may have changed
+    // on disk; but also maintain some properties that may have
+    // been changed manually
+
+    post.purgeFiles();
+    const files = await folder.getFiles();
+    files.forEach((file) => {
+      if (!post.ignoreFiles.includes(file.name)) {
+        post.putFile(file);
+      }
+    });
+    post.reorderFiles();
+
     const textFiles = post.getFiles("text");
 
     if (post.hasFile("body.txt")) {
@@ -153,13 +171,25 @@ export default class Platform {
 
     if (post.hasFile("title.txt")) {
       post.title = fs.readFileSync(post.folder.path + "/title.txt", "utf8");
-    } else {
-      post.title = post.body.split("\n", 1)[0];
+    } else if (post.hasFile("subject.txt")) {
+      post.title = fs.readFileSync(post.folder.path + "/subject.txt", "utf8");
     }
 
     if (post.hasFile("tags.txt")) {
-      post.tags = fs.readFileSync(post.folder.path + "/tags.txt", "utf8");
+      post.tags = fs
+        .readFileSync(post.folder.path + "/tags.txt", "utf8")
+        .split(/\s/);
     }
+    if (post.hasFile("mentions.txt")) {
+      post.mentions = fs
+        .readFileSync(post.folder.path + "/mentions.txt", "utf8")
+        .split(/\s/);
+    }
+    if (post.hasFile("geo.txt")) {
+      post.geo = fs.readFileSync(post.folder.path + "/geo.txt", "utf8");
+    }
+
+    post.decompileBody();
 
     if (post.title) {
       post.valid = true;

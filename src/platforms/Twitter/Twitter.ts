@@ -135,7 +135,7 @@ export default class Twitter extends Platform {
         Storage.get("auth", "TWITTER_ACCESS_TOKEN"),
       );
       const result = await client2.v2.tweet({
-        text: post.body,
+        text: post.getCompiledBody(),
       });
       if (result.errors) {
         throw Logger.error(result.errors.join());
@@ -189,7 +189,7 @@ export default class Twitter extends Platform {
     if (!dryrun) {
       Logger.trace("Tweeting " + post.id + "...");
       const result = await client2.v2.tweet({
-        text: post.body,
+        text: post.getCompiledBody(),
         media: { media_ids: mediaIds },
       });
       if (result.errors) {

@@ -131,7 +131,7 @@ export default class Reddit extends Platform {
   private async publishTextPost(post: Post, dryrun = false): Promise<object> {
     Logger.trace("Reddit.publishTextPost");
     const title = post.title;
-    const body = post.body;
+    const body = post.getCompiledBody("!title");
     if (!dryrun) {
       return (await this.api.post("submit", {
         sr: this.SUBREDDIT,
