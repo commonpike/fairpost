@@ -98,7 +98,8 @@ export default class Post {
 
   /**
    * Check body for title, #tags, @mentions and %geo
-   * and store those in separate fields instead
+   * and store those in separate fields instead. 
+   * Does not save.
    */
   decompileBody() {
     const lines = this.body.split("\n");
@@ -159,7 +160,8 @@ export default class Post {
   }
 
   /**
-   * Create a body containing the given arguments
+   * Create a body containing the given arguments. 
+   * 
    * @param parts - any of 'title','body','tags','mentions','geo'
    * prepending a ! to every part removes those parts from the default array instead.
    * @returns compiled body
@@ -236,6 +238,7 @@ export default class Post {
 
   /**
    * @param group - the name of the group for which to remove the files
+   * Does not save.
    */
   removeFiles(group: string) {
     this.files = this.files.filter((file) => file.group !== group);
@@ -254,7 +257,8 @@ export default class Post {
   }
 
   /**
-   * Remove all the files that do not exist (anymore)
+   * Remove all the files that do not exist (anymore).
+   * Does not save.
    */
   purgeFiles() {
     this.getFiles().forEach((file) => {
@@ -280,7 +284,8 @@ export default class Post {
   }
 
   /**
-   * reindex file ordering to remove doubles
+   * reindex file ordering to remove doubles.
+   * Does not save.
    */
   reorderFiles() {
     this.files
@@ -307,7 +312,8 @@ export default class Post {
   }
 
   /**
-   * @param file - the fileinfo to add or replace
+   * @param file - the fileinfo to add or replace.
+   * Does not save.
    */
   putFile(file: FileInfo) {
     const oldFile = this.files.find(
@@ -321,13 +327,20 @@ export default class Post {
   }
 
   /**
-   * @param name the name of the file to remove
+   * @param name the name of the file to remove.
+   * Does not save.
    */
   removeFile(name: string) {
     this.files = this.files.filter((file) => file.name !== name);
   }
 
   /**
+   * Replace the file info of file `search` for new info
+   * gathered for file `replace`. Keeps the oldfile order
+   * and sets replace.original to search.name
+   * 
+   * Does not save.
+   * 
    * @param search - the name of the file to replace
    * @param replace - the name of the file to replace it with
    * @returns the info of the replaced file
