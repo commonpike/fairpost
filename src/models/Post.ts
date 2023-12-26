@@ -75,7 +75,8 @@ export default class Post {
 
   save(): void {
     Logger.trace("Post", "save");
-    const data = { ...this };
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+    const data = { ...this } as { [key: string]: any };
     delete data.folder;
     delete data.platform;
     fs.writeFileSync(
@@ -104,12 +105,12 @@ export default class Post {
    * Does not save.
    */
   decompileBody() {
-    const lines = this.body.split("\n");
+    const lines = this.body?.split("\n") ?? [];
 
     // chop title
     const title = lines.shift();
     if (!this.title || this.title === title) {
-      this.title = title;
+      this.title = title ?? "";
       this.body = lines.join("\n");
     }
 
@@ -123,7 +124,7 @@ export default class Post {
     const rxgeo = /^%geo\s+(.*)/i;
     let line = "";
     while (lines.length) {
-      line = lines.pop();
+      line = lines.pop() ?? "";
 
       if (!line.trim()) {
         this.body = lines.join("\n");
@@ -132,7 +133,7 @@ export default class Post {
 
       if (line.match(rxtags)) {
         const tags = line.match(rxtag);
-        if (!this.tags?.length || isSimilarArray(tags, this.tags)) {
+        if (tags && (!this.tags?.length || isSimilarArray(tags, this.tags))) {
           this.tags = tags;
           this.body = lines.join("\n");
         }
@@ -141,7 +142,10 @@ export default class Post {
 
       if (line.match(rxmentions)) {
         const mentions = line.match(rxmention);
-        if (!this.mentions?.length || isSimilarArray(mentions, this.mentions)) {
+        if (
+          mentions &&
+          (!this.mentions?.length || isSimilarArray(mentions, this.mentions))
+        ) {
           this.mentions = mentions;
           this.body = lines.join("\n");
         }
@@ -149,7 +153,7 @@ export default class Post {
       }
 
       if (line.match(rxgeo)) {
-        const geo = line.match(rxgeo)[1] ?? "";
+        const geo = line.match(rxgeo)?.[1] ?? "";
         if (!this.geo || this.geo === geo) {
           this.geo = geo;
           this.body = lines.join("\n");
@@ -207,10 +211,15 @@ export default class Post {
    * @returns the files grouped by their group property
    */
   getGroupedFiles(): { [group: string]: FileInfo[] } {
-    return this.files.reduce(function (collector, file) {
-      (collector[file["group"]] = collector[file["group"]] || []).push(file);
-      return collector;
-    }, {});
+    return (
+      this.files?.reduce(function (
+        collector: { [group: string]: FileInfo[] },
+        file: FileInfo,
+      ) {
+        (collector[file["group"]] = collector[file["group"]] || []).push(file);
+        return collector;
+      }, {}) ?? {}
+    );
   }
 
   /**
@@ -219,11 +228,13 @@ export default class Post {
    */
   getFiles(...groups: string[]): FileInfo[] {
     if (!groups.length) {
-      return this.files.sort((a, b) => a.order - b.order);
+      return this.files?.sort((a, b) => a.order - b.order) ?? [];
     }
-    return this.files
-      .filter((file) => groups.includes(file.group))
-      .sort((a, b) => a.order - b.order);
+    return (
+      this.files
+        ?.filter((file) => groups.includes(file.group))
+        .sort((a, b) => a.order - b.order) ?? []
+    );
   }
 
   /**
@@ -232,9 +243,11 @@ export default class Post {
    */
   hasFiles(...groups: string[]): boolean {
     if (!groups.length) {
-      return !!this.files.length;
+      return !!(this.files?.length ?? 0);
     }
-    return !!this.files.filter((file) => groups.includes(file.group)).length;
+    return !!(
+      this.files?.filter((file) => groups.includes(file.group)).length ?? 0
+    );
   }
 
   /**
@@ -242,7 +255,7 @@ export default class Post {
    * Does not save.
    */
   removeFiles(group: string) {
-    this.files = this.files.filter((file) => file.group !== group);
+    this.files = this.files?.filter((file) => file.group !== group);
   }
 
   /**
@@ -290,7 +303,7 @@ export default class Post {
    */
   reorderFiles() {
     this.files
-      .sort((a, b) => a.order - b.order)
+      ?.sort((a, b) => a.order - b.order)
       .forEach((file, index) => {
         file.order = index;
       });
@@ -309,7 +322,7 @@ export default class Post {
    * @returns the files info if any
    */
   getFile(name: string): FileInfo | undefined {
-    return this.files.find((file) => file.name === name);
+    return this.files?.find((file) => file.name === name);
   }
 
   /**
@@ -317,13 +330,14 @@ export default class Post {
    * Does not save.
    */
   putFile(file: FileInfo) {
-    const oldFile = this.files.find(
+    const oldFile = this.files?.find(
       (oldfile) => oldfile.name === file.name || oldfile.original === file.name,
     );
     if (oldFile) {
       file.order = oldFile.order;
       this.removeFile(oldFile.name);
     }
+    if (!this.files) this.files = [];
     this.files.push(file);
   }
 
@@ -332,7 +346,7 @@ export default class Post {
    * Does not save.
    */
   removeFile(name: string) {
-    this.files = this.files.filter((file) => file.name !== name);
+    this.files = this.files?.filter((file) => file.name !== name);
   }
 
   /**
@@ -345,15 +359,20 @@ export default class Post {
    * @param replace - the name of the file to replace it with
    * @returns the info of the replaced file
    */
-  async replaceFile(search: string, replace: string): Promise<FileInfo> {
-    const index = this.files.findIndex((file) => file.name === search);
+  async replaceFile(
+    search: string,
+    replace: string,
+  ): Promise<FileInfo | undefined> {
+    const index = this.files?.findIndex((file) => file.name === search) ?? -1;
     if (index > -1) {
       const oldFile = this.getFile(search);
-      const newFile = await this.folder.getFile(replace, oldFile.order);
-      newFile.original = oldFile.name;
-      this.files[index] = newFile;
+      if (this.files && oldFile) {
+        const newFile = await this.folder.getFile(replace, oldFile.order);
+        newFile.original = oldFile.name;
+        this.files[index] = newFile;
+        return this.files[index];
+      }
     }
-    return this.files[index];
   }
 
   /**
