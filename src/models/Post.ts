@@ -181,19 +181,19 @@ export default class Post {
     for (const part of parts) {
       switch (part) {
         case "title":
-          body += this.title + "\n";
+          body += this.title ? this.title + "\n" : "";
           break;
         case "body":
-          body += this.body + "\n\n";
+          body += this.body ? this.body + "\n\n" : "";
           break;
         case "tags":
-          body += this.tags.join(" ") + "\n";
+          body += this.tags ? this.tags.join(" ") + "\n" : "";
           break;
         case "mentions":
-          body += this.mentions.join(" ") + "\n";
+          body += this.mentions ? this.mentions.join(" ") + "\n" : "";
           break;
         case "geo":
-          body += this.geo + "\n";
+          body += this.geo? this.geo + "\n" : "";
           break;
       }
     }
