@@ -188,7 +188,7 @@ export default abstract class Ayrshare extends Platform {
     const body = JSON.stringify(
       uploads.length
         ? {
-            post: post.body, // required
+            post: post.getCompiledBody(), // required
             platforms: [postPlatform], // required
             mediaUrls: uploads,
             scheduleDate: scheduleDate,
@@ -196,7 +196,7 @@ export default abstract class Ayrshare extends Platform {
             ...platformOptions,
           }
         : {
-            post: post.body, // required
+            post: post.getCompiledBody(), // required
             platforms: [postPlatform], // required
             scheduleDate: scheduleDate,
             requiresApproval: this.requiresApproval,

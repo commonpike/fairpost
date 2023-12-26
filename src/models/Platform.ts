@@ -171,13 +171,25 @@ export default class Platform {
 
     if (post.hasFile("title.txt")) {
       post.title = fs.readFileSync(post.folder.path + "/title.txt", "utf8");
-    } else {
-      post.title = post.body.split("\n", 1)[0];
+    } else if (post.hasFile("subject.txt")) {
+      post.title = fs.readFileSync(post.folder.path + "/subject.txt", "utf8");
     }
 
     if (post.hasFile("tags.txt")) {
-      post.tags = fs.readFileSync(post.folder.path + "/tags.txt", "utf8");
+      post.tags = fs
+        .readFileSync(post.folder.path + "/tags.txt", "utf8")
+        .split(/\s/);
     }
+    if (post.hasFile("mentions.txt")) {
+      post.mentions = fs
+        .readFileSync(post.folder.path + "/mentions.txt", "utf8")
+        .split(/\s/);
+    }
+    if (post.hasFile("geo.txt")) {
+      post.geo = fs.readFileSync(post.folder.path + "/geo.txt", "utf8");
+    }
+
+    post.decompileBody();
 
     if (post.title) {
       post.valid = true;

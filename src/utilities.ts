@@ -1,5 +1,11 @@
 import Logger from "./services/Logger";
 
+export function isSimilarArray(a, b) {
+  a = Array.isArray(a) ? a : [];
+  b = Array.isArray(b) ? b : [];
+  return a.length === b.length && a.every((el) => b.includes(el));
+}
+
 export class ApiResponseError extends Error {
   response: Response;
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
