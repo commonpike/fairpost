@@ -15,6 +15,9 @@ import Storage from "../../services/Storage";
 
 export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;
+  assetsFolder = "_linkedin";
+  postFileName = "post.json";
+
   api: LinkedInApi;
   auth: LinkedInAuth;
 
@@ -66,7 +69,7 @@ export default class LinkedIn extends Platform {
       // linkedin: max 5mb images
       for (const file of post.getFiles("image")) {
         const src = file.name;
-        const dst = this.assetsFolder() + "/linkedin-" + src;
+        const dst = this.assetsFolder + "/linkedin-" + src;
         if (file.size / (1024 * 1024) >= 5) {
           Logger.trace("Resizing " + src + " for linkedin ..");
           await sharp(post.getFilePath(src))

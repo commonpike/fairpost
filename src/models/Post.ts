@@ -43,8 +43,10 @@ export default class Post {
       this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
       this.published = this.published ? new Date(this.published) : undefined;
       this.ignoreFiles = this.ignoreFiles ?? [];
+    } else {
+      this.files = []; // allow optional once strict
     }
-    const assetsPath = this.getFilePath(platform.assetsFolder());
+    const assetsPath = this.getFilePath(platform.assetsFolder);
     if (!fs.existsSync(assetsPath)) {
       fs.mkdirSync(assetsPath, { recursive: true });
     }
@@ -98,7 +100,7 @@ export default class Post {
 
   /**
    * Check body for title, #tags, @mentions and %geo
-   * and store those in separate fields instead. 
+   * and store those in separate fields instead.
    * Does not save.
    */
   decompileBody() {
@@ -160,8 +162,7 @@ export default class Post {
   }
 
   /**
-   * Create a body containing the given arguments. 
-   * 
+   * Create a body containing the given arguments.
    * @param parts - any of 'title','body','tags','mentions','geo'
    * prepending a ! to every part removes those parts from the default array instead.
    * @returns compiled body
@@ -338,9 +339,8 @@ export default class Post {
    * Replace the file info of file `search` for new info
    * gathered for file `replace`. Keeps the oldfile order
    * and sets replace.original to search.name
-   * 
+   *
    * Does not save.
-   * 
    * @param search - the name of the file to replace
    * @param replace - the name of the file to replace it with
    * @returns the info of the replaced file

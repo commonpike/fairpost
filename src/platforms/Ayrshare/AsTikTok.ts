@@ -8,6 +8,8 @@ import Post from "../../models/Post";
  */
 export default class AsTikTok extends Ayrshare {
   id = PlatformId.ASTIKTOK;
+  assetsFolder = "_astiktok";
+  postFileName = "post.json";
 
   constructor() {
     super();

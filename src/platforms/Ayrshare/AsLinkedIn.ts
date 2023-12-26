@@ -11,6 +11,8 @@ import Post from "../../models/Post";
  */
 export default class AsLinkedIn extends Ayrshare {
   id = PlatformId.ASLINKEDIN;
+  assetsFolder = "_aslinkedin";
+  postFileName = "post.json";
 
   constructor() {
     super();
@@ -30,7 +32,7 @@ export default class AsLinkedIn extends Ayrshare {
       // linkedin: max 5mb images
       for (const file of post.getFiles("image")) {
         const src = file.name;
-        const dst = this.assetsFolder() + "/linkedin-" + src;
+        const dst = this.assetsFolder + "/linkedin-" + src;
         if (file.size / (1024 * 1024) >= 5) {
           Logger.trace("Resizing " + src + " for linkedin ..");
           await sharp(post.getFilePath(src))

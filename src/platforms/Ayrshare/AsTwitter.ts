@@ -11,6 +11,8 @@ import Post from "../../models/Post";
  */
 export default class AsTwitter extends Ayrshare {
   id = PlatformId.ASTWITTER;
+  assetsFolder = "_astwitter";
+  postFileName = "post.json";
 
   constructor() {
     super();
@@ -26,7 +28,7 @@ export default class AsTwitter extends Ayrshare {
       // twitter: max 5mb images
       for (const file of post.getFiles("image")) {
         const src = file.name;
-        const dst = this.assetsFolder() + "/twitter-" + src;
+        const dst = this.assetsFolder + "/twitter-" + src;
         if (file.size / (1024 * 1024) >= 5) {
           Logger.trace("Resizing " + src + " for twitter ..");
           await sharp(post.getFilePath(src))

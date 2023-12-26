@@ -9,6 +9,9 @@ import Storage from "../../services/Storage";
  */
 export default class AsReddit extends Ayrshare {
   id = PlatformId.ASREDDIT;
+  assetsFolder = "_asreddit";
+  postFileName = "post.json";
+
   SUBREDDIT: string;
 
   constructor() {

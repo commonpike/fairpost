@@ -10,6 +10,8 @@ import Post from "../../models/Post";
  */
 export default class AsFacebook extends Ayrshare {
   id: PlatformId = PlatformId.ASFACEBOOK;
+  assetsFolder = "_asfacebook";
+  postFileName = "post.json";
 
   constructor() {
     super();
@@ -21,7 +23,7 @@ export default class AsFacebook extends Ayrshare {
       // facebook : max 10mb images
       for (const file of post.getFiles("image")) {
         const src = file.name;
-        const dst = this.assetsFolder() + "/facebook-" + src;
+        const dst = this.assetsFolder + "/facebook-" + src;
         if (file.size / (1024 * 1024) >= 10) {
           console.log("Resizing " + src + " for facebook ..");
           await sharp(post.getFilePath(src))

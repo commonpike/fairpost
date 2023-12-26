@@ -17,6 +17,8 @@ import { XMLParser } from "fast-xml-parser";
  */
 export default class Reddit extends Platform {
   id = PlatformId.REDDIT;
+  assetsFolder = "_reddit";
+  postFileName = "post.json";
 
   SUBREDDIT: string;
   api: RedditApi;
@@ -68,7 +70,7 @@ export default class Reddit extends Platform {
         const src = file.name;
         if (file.width > 3000) {
           Logger.trace("Resizing " + src + " for reddit ..");
-          const dst = this.assetsFolder() + "/reddit-" + file.basename + ".jpg";
+          const dst = this.assetsFolder + "/reddit-" + file.basename + ".jpg";
           await sharp(post.getFilePath(src))
             .resize({
               width: 3000,
