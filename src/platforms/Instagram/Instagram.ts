@@ -42,7 +42,7 @@ export default class Instagram extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post | undefined> {
+  async preparePost(folder: Folder): Promise<Post> {
     Logger.trace("Instagram.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
@@ -62,7 +62,7 @@ export default class Instagram extends Platform {
 
       // instagram : scale images, jpeg only
       for (const file of post.getFiles("image")) {
-        if (file.width > 1440) {
+        if (file.width && file.width > 1440) {
           const src = file.name;
           const dst =
             this.assetsFolder + "/instagram-" + file.basename + ".JPEG";
@@ -90,25 +90,25 @@ export default class Instagram extends Platform {
     Logger.trace("Instagram.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as { id: string };
-    let error = undefined;
+    let error = undefined as Error | undefined;
 
     if (post.getFiles("video").length === 1 && !post.hasFiles("image")) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else if (post.getFiles("image").length === 1 && !post.hasFiles("video")) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else {
       try {
         response = await this.publishMixedPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     }
 
@@ -224,10 +224,10 @@ export default class Instagram extends Platform {
         const videoLink = await this.getVideoLink(videoId);
         uploadIds.push(
           (
-            await this.api.postJson("%USER%/media", {
+            (await this.api.postJson("%USER%/media", {
               is_carousel_item: true,
               video_url: videoLink,
-            })
+            })) as { id: string }
           )["id"],
         );
       }
@@ -238,10 +238,10 @@ export default class Instagram extends Platform {
         const photoLink = await this.getImageLink(photoId);
         uploadIds.push(
           (
-            await this.api.postJson("%USER%/media", {
+            (await this.api.postJson("%USER%/media", {
               is_carousel_item: true,
               image_url: photoLink,
-            })
+            })) as { id: string }
           )["id"],
         );
       }

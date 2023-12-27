@@ -15,7 +15,7 @@ export default class AsYouTube extends Ayrshare {
     super();
   }
 
-  async preparePost(folder: Folder): Promise<Post | undefined> {
+  async preparePost(folder: Folder): Promise<Post> {
     const post = await super.preparePost(folder);
     if (post) {
       // youtube: only 1 video

@@ -56,7 +56,7 @@ export default abstract class Ayrshare extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post | undefined> {
+  async preparePost(folder: Folder): Promise<Post> {
     return super.preparePost(folder);
   }
 
@@ -90,7 +90,7 @@ export default abstract class Ayrshare extends Platform {
         response = await this.postAyrshare(post, platformOptions, uploads);
       }
     } catch (e) {
-      error = e;
+      error = e as Error;
     }
 
     return post.processResult(

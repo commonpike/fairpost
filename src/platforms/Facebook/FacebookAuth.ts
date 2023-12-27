@@ -132,7 +132,7 @@ export default class FacebookAuth {
         access_token: string;
       }[];
     };
-    const llPageAccessToken = data.data?.find((page) => page.id === pageId)[
+    const llPageAccessToken = data.data?.find((page) => page.id === pageId)?.[
       "access_token"
     ];
 

@@ -38,7 +38,10 @@ export default class Reddit extends Platform {
 
   /** @inheritdoc */
   async test() {
-    const me = await this.api.get("me");
+    const me = (await this.api.get("me")) as {
+      id: string;
+      name: string;
+    };
     if (!me) return false;
     return {
       id: me["id"],
@@ -53,7 +56,7 @@ export default class Reddit extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post | undefined> {
+  async preparePost(folder: Folder): Promise<Post> {
     Logger.trace("Reddit.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
@@ -68,7 +71,7 @@ export default class Reddit extends Platform {
         // <MaxSizeAllowed>20971520</MaxSizeAllowed>
         const file = post.getFiles("image")[0];
         const src = file.name;
-        if (file.width > 3000) {
+        if (file.width && file.width > 3000) {
           Logger.trace("Resizing " + src + " for reddit ..");
           const dst = this.assetsFolder + "/reddit-" + file.basename + ".jpg";
           await sharp(post.getFilePath(src))
@@ -89,25 +92,25 @@ export default class Reddit extends Platform {
     Logger.trace("Reddit.publishPost", post.id, dryrun);
 
     let response = {};
-    let error = undefined;
+    let error = undefined as Error | undefined;
 
     if (post.hasFiles("video")) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else if (post.hasFiles("image")) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else {
       try {
         response = await this.publishTextPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     }
 

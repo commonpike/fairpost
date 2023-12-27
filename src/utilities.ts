@@ -5,7 +5,7 @@ export function isSimilarArray(a: any, b: any) {
   a = Array.isArray(a) ? a : [];
   b = Array.isArray(b) ? b : [];
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  return a.length === b.length && a.every((el:any) => b.includes(el));
+  return a.length === b.length && a.every((el: any) => b.includes(el));
 }
 
 export class ApiResponseError extends Error {

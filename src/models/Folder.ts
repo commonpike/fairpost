@@ -96,8 +96,8 @@ export default class Folder {
     return file;
   }
 
-  public static guessMimeType(filename: string) {
-    const extension = path.extname(filename);
+  public static guessMimeType(filename: string): string {
+    const extension = path.extname(filename).toLowerCase();
     const mimeTypes = {
       ".txt": "text/plain",
       ".png": "image/png",
@@ -106,8 +106,11 @@ export default class Folder {
       ".jpg": "image/jpeg",
       ".jpeg": "image/jpeg",
       ".gif": "image/gif",
-    };
-    return mimeTypes[extension.toLowerCase()] ?? "application/unknown";
+    } as { [ext: string]: string };
+    if (extension in mimeTypes) {
+      return mimeTypes[extension];
+    }
+    return "application/unknown";
   }
 }
 

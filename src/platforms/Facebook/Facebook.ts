@@ -43,7 +43,7 @@ export default class Facebook extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post | undefined> {
+  async preparePost(folder: Folder): Promise<Post> {
     Logger.trace("Facebook.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
@@ -77,25 +77,25 @@ export default class Facebook extends Platform {
     Logger.trace("Facebook.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as { id: string };
-    let error = undefined;
+    let error = undefined as Error | undefined;
 
     if (post.hasFiles("video")) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else if (post.hasFiles("image")) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else {
       try {
         response = await this.publishTextPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     }
 

@@ -93,36 +93,36 @@ export default class LinkedIn extends Platform {
       id?: string;
       headers?: { [key: string]: string };
     };
-    let error = undefined;
+    let error = undefined as Error | undefined;
 
     if (post.hasFiles("video")) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else if (post.getFiles("image").length > 1) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else if (post.getFiles("image").length === 1) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else {
       try {
         response = await this.publishTextPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     }
 
     return post.processResult(
-      response.id,
+      response.id as string,
       "https://www.linkedin.com/feed/update/" + response.id,
       {
         date: new Date(),
@@ -141,7 +141,13 @@ export default class LinkedIn extends Platform {
    * @returns object, incl. some ids and names
    */
   private async getProfile() {
-    const me = await this.api.get("me");
+    const me = (await this.api.get("me")) as {
+      id: string;
+      localizedFirstName: string;
+      localizedLastName: string;
+      localizedHeadline: string;
+      vanityName: string;
+    };
     if (!me) return false;
     return {
       id: me["id"],

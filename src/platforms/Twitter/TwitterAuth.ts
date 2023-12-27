@@ -5,7 +5,7 @@ import { TwitterApi } from "twitter-api-v2";
 import { strict as assert } from "assert";
 
 export default class TwitterAuth extends OAuth2Service {
-  client: TwitterApi;
+  client?: TwitterApi;
 
   /**
    * Set up Twitter platform
