@@ -17,6 +17,9 @@ export default class Folder {
   files?: FileInfo[];
 
   constructor(path: string) {
+    if (!fs.statSync(path).isDirectory()) {
+      throw Logger.error("No such folder: " + path);
+    }
     this.id = path.replace(/^\//, "").split("/").slice(1).join("/");
     this.path = path;
   }
