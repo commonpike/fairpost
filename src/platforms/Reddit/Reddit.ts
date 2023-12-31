@@ -169,8 +169,9 @@ export default class Reddit extends Platform {
   private async publishImagePost(post: Post, dryrun = false): Promise<object> {
     Logger.trace("Reddit.publishImagePost");
     const title = post.title;
-    const file = post.getFilePath(post.getFiles("image")[0].name);
-    const leash = await this.getUploadLeash(file);
+    const image = post.getFiles("image")[0];
+    const file = post.getFilePath(image.name);
+    const leash = await this.getUploadLeash(file, image.mimetype);
     const imageUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
       return (await this.api.post("submit", {
@@ -204,8 +205,9 @@ export default class Reddit extends Platform {
   private async publishVideoPost(post: Post, dryrun = false): Promise<object> {
     Logger.trace("Reddit.publishVideoPost");
     const title = post.title;
-    const file = post.getFilePath(post.getFiles("video")[0].name);
-    const leash = await this.getUploadLeash(file);
+    const video = post.getFiles("video")[0];
+    const file = post.getFilePath(video.name);
+    const leash = await this.getUploadLeash(file, video.mimetype);
     const videoUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
       return (await this.api.post("submit", {
@@ -236,16 +238,19 @@ export default class Reddit extends Platform {
    *
    * All these fields should be reposted on the upload
    * @param file - path to the file to upload
+   * @param mimetype
    * @returns leash - args with action and fields
    */
-  private async getUploadLeash(file: string): Promise<{
+  private async getUploadLeash(
+    file: string,
+    mimetype: string,
+  ): Promise<{
     action: string;
     fields: {
       [name: string]: string;
     };
   }> {
     const filename = path.basename(file);
-    const mimetype = Folder.guessMimeType(filename);
 
     const form = new FormData();
     form.append("filepath", filename);

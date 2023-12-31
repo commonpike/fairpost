@@ -105,12 +105,13 @@ export default class Post {
    * Does not save.
    */
   decompileBody() {
-    const lines = this.body?.split("\n") ?? [];
+    const lines = this.body?.trim().split("\n") ?? [];
 
     // chop title
-    const title = lines.shift();
+    const title = lines[0];
     if (!this.title || this.title === title) {
       this.title = title ?? "";
+      lines.shift();
       this.body = lines.join("\n");
     }
 
@@ -367,7 +368,7 @@ export default class Post {
     if (index > -1) {
       const oldFile = this.getFile(search);
       if (this.files && oldFile) {
-        const newFile = await this.folder.getFile(replace, oldFile.order);
+        const newFile = await this.folder.getFileInfo(replace, oldFile.order);
         newFile.original = oldFile.name;
         this.files[index] = newFile;
         return this.files[index];

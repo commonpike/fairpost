@@ -116,12 +116,12 @@ fairpost.js get-platform --platform=xxx
 fairpost.js get-platforms [--platforms=xxx,xxx]
 fairpost.js get-folder --folder=xxx
 fairpost.js get-folders [--folders=xxx,xxx]
-fairpost.js get-post --folder=xxx --platform=xxx
+fairpost.js get-post --post=xxx:xxx
 fairpost.js get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost.js prepare-post --folder=xxx --platform=xxx
-fairpost.js schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx 
+fairpost.js prepare-post --post=xxx:xxx
+fairpost.js schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
 fairpost.js schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx
-fairpost.js publish-post --folder=xxx --platform=xxx [--dry-run]
+fairpost.js publish-post --post=xxx:xxx [--dry-run]
 fairpost.js publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
 
 # feed planning:
