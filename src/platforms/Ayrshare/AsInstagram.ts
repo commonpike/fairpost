@@ -18,7 +18,7 @@ export default class AsInstagram extends Ayrshare {
     super();
   }
 
-  async preparePost(folder: Folder): Promise<Post | undefined> {
+  async preparePost(folder: Folder): Promise<Post> {
     const post = await super.preparePost(folder);
     if (post && post.files) {
       if (post.getFiles("video").length > 10) {
@@ -34,7 +34,7 @@ export default class AsInstagram extends Ayrshare {
       // instagram : scale images, jpeg only
       for (const file of post.getFiles("image")) {
         const src = file.name;
-        if (file.width > 1440) {
+        if (file.width && file.width > 1440) {
           Logger.trace("Resizing " + src + " for instagram ..");
           const dst =
             this.assetsFolder + "/instagram-" + file.basename + ".JPEG";

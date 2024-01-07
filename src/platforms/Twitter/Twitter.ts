@@ -89,19 +89,19 @@ export default class Twitter extends Platform {
         id: string;
       };
     };
-    let error = undefined;
+    let error = undefined as Error | undefined;
 
     if (post.hasFiles("image")) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     } else {
       try {
         response = await this.publishTextPost(post, dryrun);
       } catch (e) {
-        error = e;
+        error = e as Error;
       }
     }
 

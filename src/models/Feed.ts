@@ -56,7 +56,7 @@ export default class Feed {
     report +=
       "\n - folders: " +
       this.getFolders()
-        .map((f) => f.path)
+        .map((f) => f.id)
         .join();
     return report;
   }
@@ -81,7 +81,7 @@ export default class Feed {
     platformsIds?: PlatformId[],
   ): Promise<{ [id: string]: unknown }> {
     Logger.trace("Feed", "setupPlatforms", platformsIds);
-    const results = {};
+    const results = {} as { [id: string]: unknown };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
       results[platformId] = await this.setupPlatform(platformId);
@@ -134,7 +134,7 @@ export default class Feed {
     platformsIds?: PlatformId[],
   ): Promise<{ [id: string]: unknown }> {
     Logger.trace("Feed", "testPlatforms", platformsIds);
-    const results = {};
+    const results = {} as { [id: string]: unknown };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
       results[platformId] = await this.testPlatform(platformId);
@@ -161,7 +161,7 @@ export default class Feed {
     platformsIds?: PlatformId[],
   ): Promise<{ [id: string]: boolean }> {
     Logger.trace("Feed", "refreshPlatforms", platformsIds);
-    const results = {};
+    const results = {} as { [id: string]: boolean };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
       results[platformId] = await this.refreshPlatform(platformId);
@@ -313,6 +313,9 @@ export default class Feed {
   schedulePost(path: string, platformId: PlatformId, date: Date): Post {
     Logger.trace("Feed", "schedulePost", path, platformId, date);
     const post = this.getPost(path, platformId);
+    if (!post) {
+      throw Logger.error("Post not found");
+    }
     if (!post.valid) {
       throw Logger.error("Post is not valid");
     }
@@ -350,6 +353,9 @@ export default class Feed {
     for (const platform of platforms) {
       for (const folder of folders) {
         const post = platform.getPost(folder);
+        if (!post) {
+          throw Logger.error("Post not found");
+        }
         if (!post.valid) {
           throw Logger.error("Post is not valid");
         }
@@ -385,7 +391,13 @@ export default class Feed {
     const now = new Date();
     const platform = this.getPlatform(platformId);
     const folder = this.getFolder(path);
+    if (!folder) {
+      throw Logger.error("Folder not found", path);
+    }
     const post = platform.getPost(folder);
+    if (!post) {
+      throw Logger.error("Post not found", path, platformId);
+    }
     if (!post.valid) {
       throw Logger.error("Post is not valid");
     }
@@ -421,17 +433,21 @@ export default class Feed {
     for (const platform of platforms) {
       for (const folder of folders) {
         const post = platform.getPost(folder);
-        if (post.valid) {
-          if (!post.skip) {
-            post.schedule(now);
-            Logger.trace("Posting", post.id);
-            await platform.publishPost(post, dryrun);
-            posts.push(post);
+        if (post) {
+          if (post.valid) {
+            if (!post.skip) {
+              post.schedule(now);
+              Logger.trace("Posting", post.id);
+              await platform.publishPost(post, dryrun);
+              posts.push(post);
+            } else {
+              Logger.warn("Skipping post marked skip", post.id);
+            }
           } else {
-            Logger.warn("Skipping post marked skip", post.id);
+            Logger.warn("Skipping invalid post", post.id);
           }
         } else {
-          Logger.warn("Skipping invalid post", post.id);
+          Logger.warn("Skipping post not found", folder.id, platform.id);
         }
       }
     }
@@ -449,14 +465,20 @@ export default class Feed {
    */
   getLastPost(platformId: PlatformId): Post | void {
     Logger.trace("Feed", "getLastPost");
-    let lastPost: Post = undefined;
+    let lastPost: Post | undefined = undefined;
     const posts = this.getPosts({
       platforms: [platformId],
       status: PostStatus.PUBLISHED,
     });
     for (const post of posts) {
-      if (!lastPost || post.published >= lastPost.published) {
-        lastPost = post;
+      if (post.published) {
+        if (
+          !lastPost ||
+          !lastPost.published ||
+          post.published >= lastPost.published
+        ) {
+          lastPost = post;
+        }
       }
     }
     return lastPost;
@@ -474,7 +496,7 @@ export default class Feed {
     Logger.trace("Feed", "getNextPostDate");
     let nextDate = null;
     const lastPost = this.getLastPost(platformId);
-    if (lastPost) {
+    if (lastPost && lastPost.published) {
       nextDate = new Date(lastPost.published);
       nextDate.setDate(nextDate.getDate() + this.interval);
     } else {
@@ -553,6 +575,15 @@ export default class Feed {
       for (const folder of folders) {
         const post = platform.getPost(folder);
         if (post && post.status === PostStatus.SCHEDULED) {
+          if (!post.scheduled) {
+            Logger.warn(
+              "Not publishing scheduled post without date. Unscheduling post.",
+              post.id,
+            );
+            post.status = PostStatus.UNSCHEDULED;
+            post.save();
+            continue;
+          }
           if (post.skip) {
             Logger.warn(
               "Not publishing scheduled post marked skip. Unscheduling post.",

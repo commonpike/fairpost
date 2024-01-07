@@ -105,8 +105,12 @@ async function main() {
       }
       case "get-folder": {
         const folder = feed.getFolder(FOLDER);
-        report += folder.report() + "\n";
-        result = folder;
+        if (folder) {
+          report += folder.report() + "\n";
+          result = folder;
+        } else {
+          report += "not found:" + FOLDER + "\n";
+        }
         break;
       }
       case "get-folders": {
@@ -120,8 +124,12 @@ async function main() {
       }
       case "get-post": {
         const post = feed.getPost(FOLDER, PLATFORM);
-        report += post.report();
-        result = post;
+        if (post) {
+          report += post.report();
+          result = post;
+        } else {
+          report += "Not found:" + FOLDER + ":" + PLATFORM;
+        }
         break;
       }
       case "get-posts": {
@@ -139,8 +147,12 @@ async function main() {
       }
       case "prepare-post": {
         const preppost = await feed.preparePost(FOLDER, PLATFORM);
-        report += preppost.report();
-        result = preppost;
+        if (preppost) {
+          report += preppost.report();
+          result = preppost;
+        } else {
+          report += "Failed: " + FOLDER + ":" + PLATFORM;
+        }
         break;
       }
       case "prepare-posts": {
@@ -257,7 +269,7 @@ async function main() {
       }
     }
   } catch (e) {
-    console.error(e.message);
+    console.error((e as Error).message ?? e);
   }
 
   switch (REPORT) {

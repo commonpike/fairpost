@@ -1,16 +1,18 @@
 import Logger from "./services/Logger";
 
-export function isSimilarArray(a, b) {
+// eslint-disable-next-line  @typescript-eslint/no-explicit-any
+export function isSimilarArray(a: any, b: any) {
   a = Array.isArray(a) ? a : [];
   b = Array.isArray(b) ? b : [];
-  return a.length === b.length && a.every((el) => b.includes(el));
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  return a.length === b.length && a.every((el: any) => b.includes(el));
 }
 
 export class ApiResponseError extends Error {
   response: Response;
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  responseData: any;
-  responseText: string;
+  responseData?: any;
+  responseText?: string;
   constructor(response: Response, data?: object | string) {
     super("ApiResponseError: " + response.status + " " + response.statusText);
     this.response = response;
@@ -31,7 +33,7 @@ export async function handleEmptyResponse(
   response: Response,
   includeHeaders = false,
 ): Promise<object> {
-  const data = {};
+  const data = {} as { headers: { [key: string]: string } };
   if (includeHeaders) {
     data["headers"] = {};
     for (const [name, value] of response.headers) {
@@ -94,7 +96,8 @@ export async function handleFormResponse(
   response: Response,
   includeHeaders = false,
 ): Promise<object> {
-  const data = Object.fromEntries(await response.formData()) as object;
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  const data = Object.fromEntries(await response.formData()) as any;
   if (includeHeaders) {
     data["headers"] = {};
     for (const [name, value] of response.headers) {

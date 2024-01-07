@@ -199,10 +199,7 @@ export default class Platform {
    * publishPost
    *
    * - publish the post for this platform, sync.
-   * - set the posted date to now.
-   * - add the result to post.results
-   * - on success, set the status to published and return true,
-   * - else set the status to failed and return false
+   * - when done, pass the result to post.processResult()
    *
    * do not throw errors, instead catch and log them, and
    * set the post to failed.
@@ -211,15 +208,12 @@ export default class Platform {
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     Logger.trace("Platform", "publishPost", post.id, dryrun);
-    post.results.push({
+    return post.processResult("-99", "#undefined", {
       date: new Date(),
+      dryrun: dryrun,
       success: false,
-      error: new Error("publishing not implemented for " + this.id),
       response: {},
+      error: new Error("publishing not implemented for " + this.id),
     });
-    post.published = undefined;
-    post.status = PostStatus.FAILED;
-    post.save();
-    return false;
   }
 }

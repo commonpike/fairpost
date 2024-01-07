@@ -18,7 +18,7 @@ export default class AsTwitter extends Ayrshare {
     super();
   }
 
-  async preparePost(folder: Folder): Promise<Post | undefined> {
+  async preparePost(folder: Folder): Promise<Post> {
     const post = await super.preparePost(folder);
     if (post) {
       // twitter: no video

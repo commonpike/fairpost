@@ -85,14 +85,21 @@ export default class LinkedInApi {
           : handleJsonResponse(res, true),
       )
       .then((res) => {
-        if (!res["id"] && "headers" in res) {
-          if (res.headers?.["x-restli-id"]) {
-            res["id"] = res.headers["x-restli-id"];
-          } else if (res.headers?.["x-linkedin-id"]) {
-            res["id"] = res.headers["x-linkedin-id"];
+        const linkedinRes = res as {
+          id?: string;
+          headers?: {
+            "x-restli-id"?: string;
+            "x-linkedin-id"?: string;
+          };
+        };
+        if (!linkedinRes["id"] && "headers" in linkedinRes) {
+          if (linkedinRes.headers?.["x-restli-id"]) {
+            linkedinRes["id"] = linkedinRes.headers["x-restli-id"];
+          } else if (linkedinRes.headers?.["x-linkedin-id"]) {
+            linkedinRes["id"] = linkedinRes.headers["x-linkedin-id"];
           }
         }
-        return res;
+        return linkedinRes;
       })
       .catch((err) => this.handleLinkedInError(err))
       .catch((err) => handleApiError(err));
@@ -114,9 +121,12 @@ export default class LinkedInApi {
         ") " +
         error.responseData.message;
     }
-    if (error.response?.headers?.["x-linkedin-error-response"]) {
+    if (
+      error.response?.headers &&
+      "x-linkedin-error-response" in error.response.headers
+    ) {
       error.message +=
-        " - " + error.response?.headers["x-linkedin-error-response"];
+        " - " + error.response.headers["x-linkedin-error-response"];
     }
 
     throw error;

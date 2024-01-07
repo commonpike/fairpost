@@ -49,25 +49,31 @@ class Logger {
     }
     return Logger.instance;
   }
-  trace(...args) {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  trace(...args: any[]) {
     this.logger.trace(args);
   }
-  debug(...args) {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  debug(...args: any[]) {
     this.logger.debug(args);
   }
-  info(...args) {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  info(...args: any[]) {
     this.logger.info(args);
   }
-  warn(...args) {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  warn(...args: any[]) {
     this.logger.warn(args);
   }
-  error(...args): Error {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  error(...args: any[]): Error {
     this.logger.error(args);
     return new Error(
       "Error: " + args.filter((arg) => typeof arg === "string").join("; "),
     );
   }
-  fatal(...args): Error {
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  fatal(...args: any[]): Error {
     this.logger.fatal(args);
     const code = parseInt(args[0]);
     process.exitCode = code || 1;

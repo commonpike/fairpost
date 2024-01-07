@@ -6,8 +6,8 @@ import Storage from "./Storage";
 
 class DeferredResponseQuery {
   promise: Promise<{ [key: string]: string | string[] }>;
-  reject: Function; // eslint-disable-line
-  resolve: Function; // eslint-disable-line
+  reject: Function = () => {}; // eslint-disable-line
+  resolve: Function = () => {}; // eslint-disable-line
   constructor() {
     this.promise = new Promise((resolve, reject) => {
       this.reject = reject;
