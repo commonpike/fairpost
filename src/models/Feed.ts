@@ -56,7 +56,7 @@ export default class Feed {
     report +=
       "\n - folders: " +
       this.getFolders()
-        .map((f) => f.path)
+        .map((f) => f.id)
         .join();
     return report;
   }
