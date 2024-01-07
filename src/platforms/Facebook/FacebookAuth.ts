@@ -34,7 +34,7 @@ export default class FacebookAuth {
   }
 
   protected async requestCode(clientId: string): Promise<string> {
-    Logger.trace('FacebookAuth','requestCode');
+    Logger.trace("FacebookAuth", "requestCode");
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -80,7 +80,7 @@ export default class FacebookAuth {
     clientId: string,
     clientSecret: string,
   ): Promise<string> {
-    Logger.trace('FacebookAuth','exchangeCode');
+    Logger.trace("FacebookAuth", "exchangeCode");
     const redirectUri = OAuth2Service.getCallbackUrl();
 
     const tokens = (await this.get("oauth/access_token", {
@@ -118,7 +118,7 @@ export default class FacebookAuth {
     pageId: string,
     userAccessToken: string,
   ): Promise<string> {
-    Logger.trace('FacebookAuth','getLLPageToken');
+    Logger.trace("FacebookAuth", "getLLPageToken");
     const appUserId = await this.getAppUserId(userAccessToken);
     const llUserAccessToken = await this.getLLUserAccessToken(
       appId,
@@ -143,9 +143,7 @@ export default class FacebookAuth {
         data,
       );
     }
-    const llPageAccessToken = pageData[
-      "access_token"
-    ];
+    const llPageAccessToken = pageData["access_token"];
 
     if (!llPageAccessToken) {
       throw Logger.error(
@@ -169,7 +167,7 @@ export default class FacebookAuth {
     appSecret: string,
     userAccessToken: string,
   ): Promise<string> {
-    Logger.trace('FacebookAuth','getLLUserAccessToken');
+    Logger.trace("FacebookAuth", "getLLUserAccessToken");
     const query = {
       grant_type: "fb_exchange_token",
       client_id: appId,
@@ -196,7 +194,7 @@ export default class FacebookAuth {
    * @returns the app scoped user id ('me')
    */
   private async getAppUserId(accessToken: string): Promise<string> {
-    Logger.trace('FacebookAuth','getAppUserId');
+    Logger.trace("FacebookAuth", "getAppUserId");
     const query = {
       fields: "id,name",
       access_token: accessToken,
