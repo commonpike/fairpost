@@ -38,11 +38,18 @@ export default class Twitter extends Platform {
       accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
       accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
+    const creds1 = await client1.v1.verifyCredentials();
     Logger.trace("Twitter.test: get oauth2 api");
     const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
+    const creds2 = await client2.v2.me();
     return {
-      oauth1: await client1.v1.verifyCredentials(),
-      oauth2: await client2.v2.me(),
+      oauth1: {
+        id: creds1["id"],
+        name: creds1["name"],
+        screen_name: creds1["screen_name"],
+        url: creds1["url"],
+      },
+      oauth2: creds2["data"],
     };
   }
 
@@ -177,11 +184,24 @@ export default class Twitter extends Platform {
     });
     const mediaIds = [];
 
+    const additionalOwner = Storage.get(
+      "settings",
+      "TWITTER_OA1_ADDITIONAL_OWNER",
+    );
     for (const image of post.getFiles("image")) {
       const path = post.getFilePath(image.name);
       Logger.trace("Uploading " + path + "...");
       try {
-        mediaIds.push(await client1.v1.uploadMedia(path));
+        mediaIds.push(
+          await client1.v1.uploadMedia(path, {
+            // mimeType : '' //MIME type as a string. To help you across allowed MIME types, enum EUploadMimeType is here for you. This option is required if file is not specified as string.
+            // target: 'tweet' //Target type tweet or dm. Defaults to tweet. You must specify it if you send a media to use in DMs.
+            // longVideo : false //Specify true here if you're sending a video and it can exceed 120 seconds. Otherwise, this option has no effet.
+            // shared: false //Specify true here if you want to use this media in Welcome Direct Messages.
+            additionalOwners: additionalOwner ? [additionalOwner] : [], //List of user IDs (except you) allowed to use the new media ID.
+            // maxConcurrentUploads: 3 //Number of concurrent chunk uploads allowed to be sent. Defaults to 3.
+          }),
+        );
       } catch (e) {
         throw Logger.error("Twitter.publishPost uploadMedia failed", e);
       }
