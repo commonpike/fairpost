@@ -3,6 +3,14 @@
 The `facebook` platform manages a facebook **page** (not your feed)
 using the plain graph api - no extensions installed.
 
+Requesting access tokens only works 
+ - in dev mode and for users that can manage the app
+ - or in live mode if the app has advanced access permissions
+To get advanced access permissions, the app has to go
+through a review. Below, I will assume you use dev
+mode when requesting the tokens. Once you have the 
+tokens, you can turn on Live mode and start posting.
+
 ## Setting up the Facebook platform
 
 
@@ -23,6 +31,7 @@ using the plain graph api - no extensions installed.
 ### Enable the platform
  - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
 
+
 ### Get a (long lived) Page Access Token for the page you want the app to manage
 
 This token should last forever. It involves getting a user access token,
@@ -30,19 +39,53 @@ exchanging it for  a long-lived user token and
 then requesting the 'accounts' for your 'app scoped user id'; 
 but this app provides a tool to help you do that: 
 
- - call `./fairpost.js setup-platform --platform=facebook`
- - follow instructions from the command line
+- set your app back in dev mode 
+  - go to https://developers.facebook.com/
+  - select your app, edit it 
+  - set App Mode to 'dev'
+- call `./fairpost.js setup-platform --platform=facebook`
+- follow instructions from the command line
 
 ### Test the platform
  - call `./fairpost.js test-platform --platform=facebook`
 
-### Make the app live 
- - before you use the app, set the App Mode to 'Live'
-   - use https://github.com/commonpike/fairpost/blob/master/public/privacy-policy.md for the privacy policy url
+### Set the App to Live Mode
+before you use the app, set the App Mode to 'Live'
+  - go to https://developers.facebook.com/
+  - select your app, edit it 
+  - set App Mode to 'live'
+  - use https://github.com/commonpike/fairpost/blob/master/public/privacy-policy.md for the privacy policy url
 
 ### Other settings 
 
 `FAIRPOST_FACEBOOK_PUBLISH_POSTS` - if false, posts will be posted but not be published
+
+## Manage additional pages with the same app
+
+One fairpost `.env` can only manage one page. If you create a second `.env-foo`, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
+
+### Enter credentials for your other installation
+
+- set the `FAIRPOST_FACEBOOK_APP_ID` in your .env-foo
+- set the `FAIRPOST_FACEBOOK_APP_SECRET` in your .env-foo
+
+### Enable the app on the other page 
+
+- Go to https://www.facebook.com/settings/?tab=business_tools
+- edit the app and check the boxes of the other pages you want to manage.
+
+### Get a access token for the other page
+
+- set your app back in dev mode 
+  - go to https://developers.facebook.com/
+  - select your app, edit it 
+  - set App Mode to 'dev'
+- call `./fairpost.js setup-platform --platform=facebook --config=.env-foo`
+- follow instructions from the command line
+- put your app back in live mode 
+
+### Test the platform for the other page
+ - call `./fairpost.js test-platform --platform=facebook --config=.env-foo`
 
 # Limitations 
 

@@ -7,7 +7,7 @@ The LinkedIn platform posts to your companies feed.
 
 ### Create a new App in your linkedin account
 - create an company your account can manage
-- find your company id (like , 93841222)
+- find your company id (in the url, like , 93841222)
   - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your .env
 - create an app to manage the company page \
 https://www.linkedin.com/developers/apps/new
@@ -37,6 +37,25 @@ The refresh token (if given) lasts for 1 year.
 
 ### Test the platform
  - call `./fairpost.js test-platform --platform=linkedin`
+
+## Manage additional pages with the same app
+
+One fairpost `.env` can only manage one page. If you create a second `.env-foo`, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
+
+### Enter credentials for your other installation
+
+- set the `FAIRPOST_LINKEDIN_CLIENT_ID` in your .env-foo
+- set the `FAIRPOST_LINKEDIN_CLIENT_SECRET` in your .env-foo
+- find your company id (in the url, like , 93841222)
+  - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your .env-foo
+
+### Get an OAuth2 Access Token for your other page
+
+ - call `./fairpost.js setup-platform --platform=linkedin --config=.env-foo`
+ - follow instructions from the command line
+
+### Test the other installation
+ - call `./fairpost.js test-platform --platform=linkedin --config=.env-foo`
 
 # Limitations 
 
