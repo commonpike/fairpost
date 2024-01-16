@@ -11,13 +11,7 @@ It uses the related facebook account to
 upload temporary files, because the instagram
 api requires files in posts to have an url.
 
-Requesting access tokens only works 
- - in dev mode and for users that can manage the app
- - or in live mode if the app has advanced access permissions
-To get advanced access permissions, the app has to go
-through a review. Below, I will assume you use dev
-mode when requesting the tokens. Once you have the 
-tokens, you can turn on Live mode and start posting.
+
 
 ## Setting up the Instagram platform
 
@@ -49,7 +43,17 @@ tokens, you can turn on Live mode and start posting.
 This token should last forever. It involves getting a user access token,
 exchaning it for  a long-lived user token and 
 then requesting the 'accounts' for your 'app scoped user id'; 
-but this app provides a tool to help you do that: 
+but this app provides a tool to help you do that.
+
+Requesting access tokens only works 
+ - in dev mode and for users that can manage the app
+ - or in live mode if the app has advanced access permissions
+ 
+To get advanced access permissions, the app has to go
+through a review. Below, I will assume you use dev
+mode when requesting the tokens. Once you have the 
+tokens, you can turn on Live mode and start posting.
+
 
 - set your app back in dev mode 
   - go to https://developers.facebook.com/
