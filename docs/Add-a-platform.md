@@ -186,9 +186,11 @@ import {
 
 
 Another good approach to refactor is to take the Authentication 
-flow out of your platform into a separate `FooBarAuth.ts`.
+flow out of your platform into a separate `FooBar/FooBarAuth.ts`.
 Add a method `setup()` and link your `Foobar.setup()` there.
 Optionally add a method `refresh()` and link your `Foobar.refresh()` there.
+Store the access tokens in `auth` Storage, so you can access them
+in your platform class.
 
 There is a service to help you with the OAuth flow. It starts a web server 
 and presents you with a link to click, and processes the response:
