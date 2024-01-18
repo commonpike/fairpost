@@ -13,7 +13,7 @@ export default class YouTubeAuth {
   API_VERSION = "v2";
 
   /**
-   * Set up LinkedIn platform
+   * Set up YouTube platform
    */
   async setup() {
     const code = await this.requestCode();
