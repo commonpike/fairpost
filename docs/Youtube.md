@@ -2,10 +2,10 @@
 
 --The `youtube` platform manages a youtube **channel** 
 
-## Setting up the Facebook platform
+## Setting up the YouTube platform
 
 
-### Create a new project in your youtube account
+### Create a new project in your account
 
  - Log in to Google Developers Console.
  - Create a new project.
