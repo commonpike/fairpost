@@ -25,7 +25,7 @@ export default class YouTubeAuth {
    * Refresh YouTube  tokens
    */
   async refresh() {
-    const tokens = (await this.post("accessToken", {
+    const tokens = (await this.post("token", {
       grant_type: "refresh_token",
       refresh_token: Storage.get("auth", "YOUTUBE_REFRESH_TOKEN"),
       client_id: Storage.get("settings", "YOUTUBE_CLIENT_ID"),
