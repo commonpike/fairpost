@@ -12,7 +12,6 @@ import Storage from "../../services/Storage";
  */
 
 export default class YouTubeApi {
-  LGC_API_VERSION = "v2";
   API_VERSION = "v3";
 
   /**
@@ -25,7 +24,6 @@ export default class YouTubeApi {
     endpoint: string,
     query: { [key: string]: string } = {},
   ): Promise<object> {
-    // nb this is the legacy format
     const url = new URL("https://www.googleapis.com");
     url.pathname = "/youtube/" + this.API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
