@@ -197,7 +197,7 @@ export default class LinkedIn extends Platform {
     // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#sample-response-4
     const body = {
       author: this.POST_AUTHOR,
-      commentary: post.getCompiledBody("!title"),
+      commentary: post.getCompiledBody(),
       visibility: this.POST_VISIBILITY,
       distribution: this.POST_DISTRIBUTION,
       content: {
@@ -282,7 +282,7 @@ export default class LinkedIn extends Platform {
     // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#sample-response-4
     const body = {
       author: this.POST_AUTHOR,
-      commentary: post.getCompiledBody("!title"),
+      commentary: post.getCompiledBody(),
       visibility: this.POST_VISIBILITY,
       distribution: this.POST_DISTRIBUTION,
       content: {
