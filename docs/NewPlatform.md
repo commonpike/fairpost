@@ -202,11 +202,6 @@ and presents you with a link to click, and processes the response:
 import OAuth2Service from "../../services/OAuth2Service";
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
-import {
-  ApiResponseError,
-  handleApiError,
-  handleJsonResponse,
-} from "../../utilities";
 
 export default class FooBarAuth {
 
@@ -265,8 +260,9 @@ export default class FooBarAuth {
    * @param code - the code to exchange
    * @returns - TokenResponse
    */
-  private async exchangeCode(code: string): Promise<TokenResponse> {
+  private async exchangeCode(code: string) {
     const redirectUri = OAuth2Service.getCallbackUrl();
+    // implement your own post method ... 
     const tokens = (await this.post("token", {
       grant_type: "authorization_code",
       code: code,
@@ -285,38 +281,10 @@ export default class FooBarAuth {
    * Save all tokens in auth store
    * @param tokens - the tokens to store
    */
-  private store(tokens: TokenResponse) {
+  private store(tokens) {
     Storage.set("auth", "FOOBAR_ACCESS_TOKEN", tokens["access_token"]);
   }
 
-  /**
-   * The oauth post is sometimes slightly different
-   * from the regular api post ..  
-   */
-  private async post(
-    endpoint: string,
-    body: { [key: string]: string },
-  ): Promise<object> {
-    const url = new URL("https://foobar.com");
-    url.pathname = "bla/auth/"+endpoint;
-
-    return await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(body),
-    })
-      .then((res) => handleJsonResponse(res))
-      .catch((err) => handleApiError(err));
-  }
-
-  /**
-   * A very minimal TokenResponse. Extend to suit your needs.
-   */
-  interface TokenResponse {
-    access_token: string;
-  }
+}
 
 ```

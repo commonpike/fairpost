@@ -60,6 +60,9 @@ To have Fairpost publish **public** videos, your app has to be audited
 
 ### Other settings 
 
+- `FAIRPOST_YOUTUBE_PRIVACY` = public | private
+- `FAIRPOST_YOUTUBE_CATEGORY` = valid youtube category id
+
 ## Manage additional pages with the same app
 
 ...
@@ -67,10 +70,13 @@ To have Fairpost publish **public** videos, your app has to be audited
 # Limitations 
 
 ## Video 
-### Supported Formats
 
+### Supported Formats
+Accepted Media MIME types: 
+video/*, application/octet-stream
 
 ### File Size
+Maximum file size: 256GB
 
 
 # Random documentation

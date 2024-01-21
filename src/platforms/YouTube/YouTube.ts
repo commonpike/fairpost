@@ -1,11 +1,11 @@
-//import * as fs from "fs";
-//import { handleApiError, handleEmptyResponse } from "../../utilities";
+import * as fs from "fs";
 
 import Folder from "../../models/Folder";
 import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
+import Storage from "../../services/Storage";
 import YouTubeAuth from "./YouTubeAuth";
 
 export default class YouTube extends Platform {
@@ -14,6 +14,16 @@ export default class YouTube extends Platform {
   postFileName = "post.json";
 
   auth: YouTubeAuth;
+
+  // post defaults
+  notifySubscribers = true;
+  onBehalfOfContentOwner = "";
+  onBehalfOfContentOwnerChannel = "";
+  defaultLanguage = "en-us";
+  embeddable = true;
+  license = "youtube";
+  publicStatsViewable = true;
+  selfDeclaredMadeForKids = false;
 
   constructor() {
     super();
@@ -60,7 +70,6 @@ export default class YouTube extends Platform {
 
     let response = { id: "-99" } as {
       id?: string;
-      headers?: { [key: string]: string };
     };
     let error = undefined as Error | undefined;
 
@@ -70,13 +79,17 @@ export default class YouTube extends Platform {
       error = e as Error;
     }
 
-    return post.processResult(response.id as string, "#unknown", {
-      date: new Date(),
-      dryrun: dryrun,
-      success: !error,
-      error: error,
-      response: response,
-    });
+    return post.processResult(
+      response.id as string,
+      "https://www.youtube.com/watch?v=" + response.id,
+      {
+        date: new Date(),
+        dryrun: dryrun,
+        success: !error,
+        error: error,
+        response: response,
+      },
+    );
   }
 
   // Platform API Specific
@@ -125,6 +138,69 @@ export default class YouTube extends Platform {
    */
   private async publishVideoPost(post: Post, dryrun: boolean = false) {
     Logger.trace("YouTube.publishVideoPost", dryrun);
-    return { id: "-99" };
+
+    const file = post.getFiles("video")[0];
+
+    const client = this.auth.getClient();
+    Logger.trace("YouTube.publishVideoPost", "uploading " + file.name + " ...");
+    const result = (await client.videos.insert({
+      part: ["snippet", "status"],
+      notifySubscribers: this.notifySubscribers,
+      ...(this.onBehalfOfContentOwner && {
+        onBehalfOfContentOwner: this.onBehalfOfContentOwner,
+      }),
+      ...(this.onBehalfOfContentOwnerChannel && {
+        onBehalfOfContentOwnerChannel: this.onBehalfOfContentOwnerChannel,
+      }),
+      requestBody: {
+        snippet: {
+          title: post.title,
+          description: post.getCompiledBody("!title"),
+          tags: post.tags, // both in body and separate
+          categoryId: Storage.get("settings", "YOUTUBE_CATEGORY", ""),
+          defaultLanguage: this.defaultLanguage,
+        },
+        status: {
+          embeddable: this.embeddable,
+          license: this.license,
+          publicStatsViewable: this.publicStatsViewable,
+          selfDeclaredMadeForKids: this.selfDeclaredMadeForKids,
+          privacyStatus: Storage.get("settings", "YOUTUBE_PRIVACY"),
+        },
+      },
+      media: {
+        mimeType: file.mimetype,
+        body: fs.createReadStream(post.getFilePath(file.name)),
+      },
+    })) as {
+      data: {
+        id: string;
+        status?: {
+          uploadStatus: string;
+          failureReason: string;
+          rejectionReason: string;
+        };
+        snippet: object;
+      };
+    };
+
+    if (result.data.status?.uploadStatus !== "uploaded") {
+      throw Logger.error(
+        "YouTube.publishVideoPost",
+        "failed",
+        result.data.status?.uploadStatus,
+        result.data.status?.failureReason,
+        result.data.status?.rejectionReason,
+      );
+    }
+    if (!result.data.id) {
+      throw Logger.error(
+        "YouTube.publishVideoPost",
+        "missing id in result",
+        result,
+      );
+    }
+
+    return { id: result.data.id };
   }
 }
