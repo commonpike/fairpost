@@ -3,6 +3,7 @@ export { default as Instagram } from "./Instagram/Instagram";
 export { default as Twitter } from "./Twitter/Twitter";
 export { default as Reddit } from "./Reddit/Reddit";
 export { default as LinkedIn } from "./LinkedIn/LinkedIn";
+export { default as YouTube } from "./YouTube/YouTube";
 export { default as AsYouTube } from "./Ayrshare/AsYouTube";
 export { default as AsInstagram } from "./Ayrshare/AsInstagram";
 export { default as AsTwitter } from "./Ayrshare/AsTwitter";
@@ -18,6 +19,7 @@ export enum PlatformId {
   TWITTER = "twitter",
   REDDIT = "reddit",
   LINKEDIN = "linkedin",
+  YOUTUBE = "youtube",
   ASYOUTUBE = "asyoutube",
   ASINSTAGRAM = "asinstagram",
   ASFACEBOOK = "asfacebook",

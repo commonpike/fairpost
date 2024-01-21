@@ -157,6 +157,8 @@ in `src/platforms/index.ts` and enable your platformId in your `.env`.
 Similarly, you can copy one platform, rename it and edit it to your
 likings, give it a different `platformId` and enable that.
 
+For more detailed instructions look at [How to add a new platform](./docs/NewPlatform.md)
+
 Oh, and send me a PR if you create anything useful :-) 
 
 
