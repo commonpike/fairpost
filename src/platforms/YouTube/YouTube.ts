@@ -6,8 +6,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-//import Storage from "../../services/Storage";
-import YouTubeApi from "./YouTubeApi";
 import YouTubeAuth from "./YouTubeAuth";
 
 export default class YouTube extends Platform {
@@ -15,12 +13,10 @@ export default class YouTube extends Platform {
   assetsFolder = "_youtube";
   postFileName = "post.json";
 
-  api: YouTubeApi;
   auth: YouTubeAuth;
 
   constructor() {
     super();
-    this.api = new YouTubeApi();
     this.auth = new YouTubeAuth();
   }
 
@@ -90,27 +86,33 @@ export default class YouTube extends Platform {
    * @returns object, incl. some ids and names
    */
   private async getChannel() {
-    const result = (await this.api.get("channels", {
-      part: "snippet",
-      mine: "true",
+    const client = this.auth.getClient();
+    const result = (await client.channels.list({
+      part: ["snippet", "contentDetails", "status"],
+      mine: true,
     })) as {
-      items?: {
-        id: string;
-        snippet: {
-          title: string;
-          customUrl: string;
-        };
-      }[];
+      data?: {
+        items?: {
+          id: string;
+          snippet: {
+            title: string;
+            customUrl: string;
+          };
+        }[];
+      };
+      status: number;
+      statusText: string;
     };
-    if (result.items?.length) {
+    if (result.data?.items?.length) {
       return {
-        id: result.items[0].id,
+        id: result.data.items[0].id,
         snippet: {
-          title: result.items[0].snippet.title,
-          customUrl: result.items[0].snippet.customUrl,
+          title: result.data.items[0].snippet.title,
+          customUrl: result.data.items[0].snippet.customUrl,
         },
       };
     }
+    throw Logger.error("YouTube.getChannel", "invalid result", result);
   }
 
   /**

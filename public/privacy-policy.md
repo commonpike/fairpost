@@ -7,6 +7,10 @@ This Privacy Policy describes The Softwares policies and procedures on the colle
 
 The Software can use Your Personal data to provide the service. By using Fairpost, You agree to the collection and use of information in accordance with this Privacy Policy. 
 
+By using Fairpost for any of the following platforms, you agree to the privacy policies defined for that platform:
+
+- YouTube: http://www.google.com/policies/privacy
+
 Interpretation and Definitions
 ------------------------------
 

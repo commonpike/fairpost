@@ -143,8 +143,9 @@ move your class there, and update the imports.
 
 ### FooBarApi.ts
 
-A simple approach to refactor is to take the API
-calls out of your platform into a separate `FooBar/FooBarApi.ts`.
+If you're using your own api calls, a simple approach to 
+refactor is to take these API calls out of your platform 
+into a separate `FooBar/FooBarApi.ts`.
 
 There are some utilities to help you with your Api 
 responses and errors. The below code will unpack a json 
