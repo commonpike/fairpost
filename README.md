@@ -5,7 +5,7 @@
 
 Fairpost helps you manage your social media feeds from a single 
 entry point, using Node. It supports Facebook, Instagram, 
-Reddit, Twitter and LinkedIn.
+Reddit, Twitter, YouTube and LinkedIn.
 
 Your Feed is just a folder on disk, and all subfolders are Posts, 
 containing at least one text file (the post body) and 
