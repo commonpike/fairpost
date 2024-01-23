@@ -96,7 +96,7 @@ You agree to maintain a complete and accurate copy of any Content in a location 
 ### **Intellectual Property Infringement**
 
 
-If You are a copyright owner, or authorized on behalf of one, and You believe that the copyrighted work has been copied in a way that constitutes copyright infringement that is taking place through the Software, You must submit Your notice in writing to the service to which the work was posted.
+If You are a copyright owner, or authorized on behalf of one, and You believe that the copyrighted work has been copied in a way that constitutes copyright infringement that is taking place through the Software, You must submit Your notice in writing to the Third-party Social Media Software to which the work was posted.
 
 
 ### **Intellectual Property**
