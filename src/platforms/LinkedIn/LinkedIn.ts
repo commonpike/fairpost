@@ -278,11 +278,13 @@ export default class LinkedIn extends Platform {
     const leash = await this.getVideoLeash(video);
 
     if (leash.value.uploadInstructions.length === 1) {
-      await this.uploadVideo(
+      const chunkId = await this.uploadVideo(
         leash.value.uploadInstructions[0].uploadUrl,
         video,
       );
-      // todo: finish with chunkIds ?
+      await this.uploadVideoFinish(leash.value.video, leash.value.uploadToken, [
+        chunkId,
+      ]);
     } else {
       const chunkIds = await this.uploadVideoChunks(
         leash.value.uploadInstructions.map((i) => {
@@ -379,8 +381,6 @@ export default class LinkedIn extends Platform {
 
   /**
    * Get a leash to upload an video
-   *
-   * untested
    * @param file
    * @returns object, incl. uploadUrl
    */
@@ -428,17 +428,15 @@ export default class LinkedIn extends Platform {
 
   /**
    * Upload a video file to an url
-   *
-   * untested
    * @param leashUrl
    * @param file
-   * @returns empty
+   * @returns string : chunkId
    */
-  private async uploadVideo(leashUrl: string, file: string) {
+  private async uploadVideo(leashUrl: string, file: string): Promise<string> {
     Logger.trace("LinkedIn.uploadVideo");
     const rawData = fs.readFileSync(file);
     Logger.trace("PUT", leashUrl);
-    return await fetch(leashUrl, {
+    const result = (await fetch(leashUrl, {
       method: "PUT",
       headers: {
         "Content-Type": "application/octet-stream",
@@ -447,13 +445,16 @@ export default class LinkedIn extends Platform {
     })
       .then((res) => handleEmptyResponse(res, true))
       .catch((err) => this.api.handleLinkedInError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err))) as {
+      headers: {
+        etag: string;
+      };
+    };
+    return result.headers.etag;
   }
 
   /**
    * Upload a video file in chunks
-   *
-   * seems to fail
    * @param leashes
    * @param file
    * @returns array of chunkIds
