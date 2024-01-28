@@ -327,6 +327,32 @@ export default class Post {
   }
 
   /**
+   * Add the file info of file `name` to the files of
+   * this post. Returns undefined if it already exists.
+   *
+   * Does not save.
+   * @param name - the name of the file to add
+   * @returns the info of the added file
+   */
+  async addFile(name: string): Promise<FileInfo | undefined> {
+    const index = this.files?.findIndex((file) => file.name === name) ?? -1;
+    if (index === -1) {
+      const newFile = await this.folder.getFileInfo(
+        name,
+        this.files?.length ?? 0,
+      );
+      if (!this.files) {
+        this.files = [];
+      }
+      Logger.trace("Post.addFile", newFile);
+      this.files.push(newFile);
+      return newFile;
+    } else {
+      Logger.warn("Post.addFile", "Not replacing existing file", name);
+    }
+  }
+
+  /**
    * @param file - the fileinfo to add or replace.
    * Does not save.
    */

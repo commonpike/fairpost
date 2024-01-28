@@ -64,7 +64,46 @@ export default class Reddit extends Platform {
       // TODO: extract video thumbnail
       if (post.hasFiles('video')) { // eslint-disable-line
         post.limitFiles("video", 1);
+        const poster = this.assetsFolder + "/reddit-poster.png";
+        const posters = post
+          .getFiles("image")
+          .filter((file) => file.basename === "poster");
+        if (posters.length) {
+          // copy that file to its dest
+          Logger.trace(
+            "Reddit.preparePost",
+            "copying poster",
+            posters[0].name,
+            poster,
+          );
+          fs.copyFileSync(
+            post.getFilePath(posters[0].name),
+            post.getFilePath(poster),
+          );
+        } else if (post.hasFiles("image")) {
+          // copy the first image to poster
+          const img = post.getFiles("image")[0];
+          Logger.trace(
+            "Reddit.preparePost",
+            "copying poster",
+            img.name,
+            poster,
+          );
+          fs.copyFileSync(post.getFilePath(img.name), post.getFilePath(poster));
+        } else {
+          // create a poster using ffmpeg
+          try {
+            throw Logger.error("thumbnails not implemented");
+            // https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
+            // const video = post.getFiles('video')[0];
+            // Logger.trace("Reddit.preparePost", "creating thumbnail", video.name, poster);
+            // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(poster));
+          } catch (e) {
+            post.valid = false;
+          }
+        }
         post.removeFiles("image");
+        await post.addFile(poster);
       }
       if (post.hasFiles("image")) {
         post.limitFiles("image", 1);
@@ -138,7 +177,7 @@ export default class Reddit extends Platform {
     const title = post.title;
     const body = post.getCompiledBody("!title");
     if (!dryrun) {
-      return (await this.api.post("submit", {
+      const response = (await this.api.post("submit", {
         sr: this.SUBREDDIT,
         kind: "self",
         title: title,
@@ -147,13 +186,17 @@ export default class Reddit extends Platform {
         extension: "json",
       })) as {
         json: {
-          errors: string[];
+          errors: string[][];
           data: {
             user_submitted_page: string;
             websocket_url: string;
           };
         };
       };
+      if (response.json?.errors?.length) {
+        throw Logger.error(response.json.errors.flat());
+      }
+      return response;
     }
     return {
       dryrun: true,
@@ -174,7 +217,7 @@ export default class Reddit extends Platform {
     const leash = await this.getUploadLeash(file, image.mimetype);
     const imageUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
-      return (await this.api.post("submit", {
+      const response = (await this.api.post("submit", {
         sr: this.SUBREDDIT,
         kind: "image",
         title: title,
@@ -190,6 +233,10 @@ export default class Reddit extends Platform {
           };
         };
       };
+      if (response.json?.errors?.length) {
+        throw Logger.error(response.json.errors.flat());
+      }
+      return response;
     }
     return {
       dryrun: true,
@@ -205,17 +252,25 @@ export default class Reddit extends Platform {
   private async publishVideoPost(post: Post, dryrun = false): Promise<object> {
     Logger.trace("Reddit.publishVideoPost");
     const title = post.title;
+
+    // upload poster first
+    const poster = post.getFiles("image")[0];
+    const posterFile = post.getFilePath(poster.name);
+    const posterLeash = await this.getUploadLeash(posterFile, poster.mimetype);
+    const posterUrl = await this.uploadFile(posterLeash, posterFile);
+
+    // upload video with poster
     const video = post.getFiles("video")[0];
     const file = post.getFilePath(video.name);
     const leash = await this.getUploadLeash(file, video.mimetype);
     const videoUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
-      return (await this.api.post("submit", {
+      const response = (await this.api.post("submit", {
         sr: this.SUBREDDIT,
         kind: "video",
         title: title,
         url: videoUrl,
-        video_poster_url: "", // TODO
+        video_poster_url: posterUrl,
         api_type: "json",
         extension: "json",
       })) as {
@@ -227,6 +282,10 @@ export default class Reddit extends Platform {
           };
         };
       };
+      if (response.json?.errors?.length) {
+        throw Logger.error(response.json.errors.flat());
+      }
+      return response;
     }
     return {
       dryrun: true,

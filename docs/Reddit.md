@@ -79,6 +79,9 @@ https://github.com/rvelasq/scriptable-selig/blob/master/Selig.js#L855
 https://github.com/Pyprohly/reddit-api-doc-notes/blob/main/docs/api-reference/submission.rst#upload-media
 
 upload video
+
+https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
+
 https://www.reddit.com/r/redditdev/comments/9x3a6c/comment/e9p9cet/?utm_source=share&utm_medium=web2x&context=3
 https://oauth.reddit.com/api/v2/image_upload_s3.json
 similar to upload emoji
