@@ -71,6 +71,19 @@ One fairpost `.env` can only manage one page. If you create a second `.env-foo`,
 
 xxx
 
+## video
+
+https://www.linkedin.com/help/linkedin/answer/a548372
+
+- Maximum file size: 5GB
+- Minimum file size: 75KB
+- Maximum video duration: 15 minutes when uploading from desktop and 10 minutes when uploading from the LinkedIn mobile app.
+- Minimum video duration: 3 seconds
+- Resolution range: 256x144 to 4096x2304
+- Aspect ratio: 1:2.4 - 2.4:1
+- Frame rates: 10fps - 60 fps
+- Bit rates: 192 kbps - 30 Mbps
+
 # Random documentation
 
 ## access token 

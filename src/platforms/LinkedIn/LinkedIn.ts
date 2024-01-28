@@ -1,5 +1,4 @@
 import * as fs from "fs";
-//import * as path from "path";
 import * as sharp from "sharp";
 
 import { handleApiError, handleEmptyResponse } from "../../utilities";
@@ -277,9 +276,31 @@ export default class LinkedIn extends Platform {
     const video = post.getFilePath(post.getFiles("video")[0].name);
 
     const leash = await this.getVideoLeash(video);
-    await this.uploadVideo(leash.value.uploadInstructions[0].uploadUrl, video);
-    // TODO: save headers[etag] ..
-    // https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/videos-api?view=li-lms-2023-10&tabs=http#sample-response-4
+
+    if (leash.value.uploadInstructions.length === 1) {
+      await this.uploadVideo(
+        leash.value.uploadInstructions[0].uploadUrl,
+        video,
+      );
+      // todo: finish with chunkIds ?
+    } else {
+      const chunkIds = await this.uploadVideoChunks(
+        leash.value.uploadInstructions.map((i) => {
+          return {
+            url: i.uploadUrl,
+            start: i.firstByte,
+            end: i.lastByte,
+          };
+        }),
+        video,
+      );
+      await this.uploadVideoFinish(
+        leash.value.video,
+        leash.value.uploadToken,
+        chunkIds,
+      );
+    }
+
     const body = {
       author: this.POST_AUTHOR,
       commentary: post.getCompiledBody(),
@@ -424,8 +445,71 @@ export default class LinkedIn extends Platform {
       },
       body: rawData,
     })
-      .then((res) => handleEmptyResponse(res))
+      .then((res) => handleEmptyResponse(res, true))
       .catch((err) => this.api.handleLinkedInError(err))
       .catch((err) => handleApiError(err));
+  }
+
+  /**
+   * Upload a video file in chunks
+   *
+   * seems to fail
+   * @param leashes
+   * @param file
+   * @returns array of chunkIds
+   */
+
+  private async uploadVideoChunks(
+    leashes: {
+      url: string;
+      start: number;
+      end: number; // exclusive
+    }[],
+    file: string,
+  ): Promise<string[]> {
+    Logger.trace("LinkedIn.uploadVideoChunks");
+    const buffer = fs.readFileSync(file);
+    const blob = new Blob([buffer]);
+    const results = [];
+    for (const leash of leashes) {
+      const chunk = blob.slice(leash.start, leash.end + 1);
+      Logger.trace("PUT", leash.url, leash.start, leash.end + 1);
+      results.push(
+        (await fetch(leash.url, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/octet-stream",
+          },
+          body: chunk,
+        })
+          .then((res) => handleEmptyResponse(res, true))
+          .catch((err) => this.api.handleLinkedInError(err))
+          .catch((err) => handleApiError(err))) as {
+          headers: {
+            etag: string;
+          };
+        },
+      );
+    }
+    return results.map((r) => r.headers.etag);
+  }
+
+  private async uploadVideoFinish(
+    videoId: string,
+    uploadToken: string,
+    chunkIds: string[],
+  ) {
+    Logger.trace("LinkedIn.uploadVideoFinish");
+    return await this.api.postJson(
+      "videos?action=finalizeUpload",
+      {
+        finalizeUploadRequest: {
+          video: videoId,
+          uploadToken: uploadToken,
+          uploadedPartIds: chunkIds,
+        },
+      },
+      true,
+    );
   }
 }
