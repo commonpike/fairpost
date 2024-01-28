@@ -25,6 +25,9 @@ export default class Instagram extends Platform {
   api: InstagramApi;
   auth: InstagramAuth;
 
+  pollingDelay = 2500;
+  pollingLimit = 20;
+
   constructor() {
     super();
     this.auth = new InstagramAuth();
@@ -179,6 +182,7 @@ export default class Instagram extends Platform {
     const videoId = (await this.uploadVideo(file))["id"];
     const videoLink = await this.getVideoLink(videoId);
     const container = (await this.api.postJson("%USER%/media", {
+      media_type: "REELS",
       video_url: videoLink,
       caption: caption,
     })) as { id: string };
@@ -186,9 +190,14 @@ export default class Instagram extends Platform {
       throw Logger.error("No id returned for container for " + file, container);
     }
 
+    // wait for ready
+    try {
+      await this.checkPostStatus(container.id);
+    } catch (e) {
+      throw Logger.error(e);
+    }
+
     if (!dryrun) {
-      // wait for upload ?
-      // https://github.com/fbsamples/reels_publishing_apis/blob/main/insta_reels_publishing_api_sample/utils.js#L23
       const response = (await this.api.postJson("%USER%/media_publish", {
         creation_id: container.id,
       })) as { id: string };
@@ -225,6 +234,7 @@ export default class Instagram extends Platform {
         uploadIds.push(
           (
             (await this.api.postJson("%USER%/media", {
+              media_type: "REELS",
               is_carousel_item: true,
               video_url: videoLink,
             })) as { id: string }
@@ -257,6 +267,13 @@ export default class Instagram extends Platform {
     };
     if (!container["id"]) {
       throw Logger.error("No id returned for carroussel container ", container);
+    }
+
+    // wait for ready
+    try {
+      await this.checkPostStatus(container.id);
+    } catch (e) {
+      throw Logger.error(e);
     }
 
     // publish carousel
@@ -362,21 +379,75 @@ export default class Instagram extends Platform {
   }
 
   /**
-   * Get a link to an uploaded facebook video
+   * Get a link to an uploaded facebook video, polling until it is ready
    * @param id - id of the uploaded video
    * @returns link to the video to use in post attachments
    */
 
   private async getVideoLink(id: string): Promise<string> {
-    const videoData = (await this.api.get(id, {
-      fields: "permalink_url,source",
-    })) as {
-      permalink_url: string;
-      source: string;
-    };
-    if (!videoData.source) {
-      throw Logger.error("No source url found for video " + id);
-    }
-    return videoData["source"];
+    const api = this.api;
+    const delay = this.pollingDelay;
+    const limit = this.pollingLimit;
+    let counter = 0;
+    return new Promise((resolve, reject) => {
+      async function poll() {
+        counter++;
+        Logger.trace("getVideoLink", "Polling video source " + counter);
+        const videoData = (await api.get(id, {
+          fields: "permalink_url,source",
+        })) as {
+          permalink_url: string;
+          source: string;
+        };
+        if (videoData.source) {
+          Logger.trace("getVideoLink", "Video source ready", videoData.source);
+          resolve(videoData.source);
+        } else {
+          if (counter < limit) {
+            setTimeout(poll, delay);
+          } else {
+            reject("getVideoLink: Failed after max polls " + counter);
+          }
+        }
+      }
+      poll();
+    });
+  }
+
+  /**
+   * Waiting for the post status, polling until it is FINISHED
+   * @param id - ig container id
+   * @returns link to the video to use in post attachments
+   */
+
+  private async checkPostStatus(id: string): Promise<boolean> {
+    const api = this.api;
+    const delay = this.pollingDelay;
+    const limit = this.pollingLimit;
+    let counter = 0;
+    return new Promise((resolve, reject) => {
+      async function poll() {
+        counter++;
+        Logger.trace("checkStatus", "Polling post status " + counter);
+        const response = (await api.get(id, {
+          fields: "status_code",
+        })) as {
+          status_code: string;
+        };
+        if (response.status_code === "FINISHED") {
+          Logger.trace("checkStatus", "Post status FINISHED");
+          resolve(true);
+        } else if (response.status_code === "IN_PROGRESS") {
+          if (counter < limit) {
+            setTimeout(poll, delay);
+          } else {
+            reject("checkStatus: Failed after max polls " + counter);
+          }
+        } else {
+          reject("checkStatus: Failed with status " + response.status_code);
+        }
+      }
+      poll();
+    });
   }
 }
