@@ -60,7 +60,7 @@ To have Fairpost publish **public** videos, your app has to be audited
 
 ### Other settings 
 
-- `FAIRPOST_YOUTUBE_PRIVACY` = public | private
+- `FAIRPOST_YOUTUBE_PRIVACY` = public | private | unlisted
 - `FAIRPOST_YOUTUBE_CATEGORY` = valid youtube category id
 
 ## Manage additional pages with the same app
