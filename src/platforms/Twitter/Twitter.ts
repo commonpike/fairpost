@@ -187,6 +187,7 @@ export default class Twitter extends Platform {
     const additionalOwner = Storage.get(
       "settings",
       "TWITTER_OA1_ADDITIONAL_OWNER",
+      "",
     );
     for (const image of post.getFiles("image")) {
       const path = post.getFilePath(image.name);
@@ -198,7 +199,7 @@ export default class Twitter extends Platform {
             // target: 'tweet' //Target type tweet or dm. Defaults to tweet. You must specify it if you send a media to use in DMs.
             // longVideo : false //Specify true here if you're sending a video and it can exceed 120 seconds. Otherwise, this option has no effet.
             // shared: false //Specify true here if you want to use this media in Welcome Direct Messages.
-            additionalOwners: additionalOwner ? [additionalOwner] : [], //List of user IDs (except you) allowed to use the new media ID.
+            ...(additionalOwner && { additionalOwners: [additionalOwner] }),
             // maxConcurrentUploads: 3 //Number of concurrent chunk uploads allowed to be sent. Defaults to 3.
           }),
         );
