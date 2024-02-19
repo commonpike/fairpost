@@ -35,7 +35,7 @@ export default class YouTubeAuth {
       this.store(response["res"]["data"]);
       return;
     }
-    throw Logger.error("YouTubeAuth.refresh", "no a valid repsonse", response);
+    throw Logger.error("YouTubeAuth.refresh", "not a valid repsonse", response);
   }
 
   /**

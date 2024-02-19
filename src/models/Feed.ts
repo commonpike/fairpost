@@ -149,7 +149,12 @@ export default class Feed {
    */
   async refreshPlatform(platformId: PlatformId): Promise<boolean> {
     Logger.trace("Feed", "refreshPlatform", platformId);
-    return await this.getPlatform(platformId).refresh();
+    try {
+      return await this.getPlatform(platformId).refresh();
+    } catch (error) {
+      Logger.error("Feed", "refreshPlatform", error);
+      return false;
+    }
   }
 
   /**
