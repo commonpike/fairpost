@@ -5,7 +5,6 @@ import {
 } from "../../utilities";
 
 import Logger from "../../services/Logger";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 
 /**
@@ -35,7 +34,7 @@ export default class RedditApi {
     url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
 
-    const accessToken = Storage.get("auth", "REDDIT_ACCESS_TOKEN");
+    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
 
     Logger.trace("GET", url.href);
     return await fetch(url, {
@@ -43,7 +42,7 @@ export default class RedditApi {
       headers: {
         Accept: "application/json",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "USER_AGENT"),
       },
     })
       .then((res) => handleJsonResponse(res))
@@ -65,7 +64,7 @@ export default class RedditApi {
     //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.pathname = "api/" + endpoint;
 
-    const accessToken = Storage.get("auth", "REDDIT_ACCESS_TOKEN");
+    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
     Logger.trace("POST", url.href);
 
     return await fetch(url, {
@@ -74,7 +73,7 @@ export default class RedditApi {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "USER_AGENT"),
       },
       body: new URLSearchParams(body),
     })
@@ -94,7 +93,7 @@ export default class RedditApi {
     //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.pathname = "api/" + endpoint;
 
-    const accessToken = Storage.get("auth", "REDDIT_ACCESS_TOKEN");
+    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
     Logger.trace("POST", url.href);
 
     return await fetch(url, {
@@ -102,7 +101,7 @@ export default class RedditApi {
       headers: {
         Accept: "application/json",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "USER_AGENT"),
       },
       body: body,
     })

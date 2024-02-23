@@ -1,6 +1,5 @@
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
-import Storage from "../../services/Storage";
 import { TwitterApi } from "twitter-api-v2";
 import User from "../../models/User";
 import { strict as assert } from "assert";
@@ -28,7 +27,7 @@ export default class TwitterAuth {
    */
   async refresh() {
     const tokens = (await this.getClient().refreshOAuth2Token(
-      Storage.get("auth", "TWITTER_REFRESH_TOKEN"),
+      this.user.get("auth", "TWITTER_REFRESH_TOKEN"),
     )) as TokenResponse;
     if (!isTokenResponse(tokens)) {
       throw Logger.error(
@@ -48,8 +47,8 @@ export default class TwitterAuth {
       return this.client;
     }
     this.client = new TwitterApi({
-      clientId: Storage.get("settings", "TWITTER_CLIENT_ID"),
-      clientSecret: Storage.get("settings", "TWITTER_CLIENT_SECRET"),
+      clientId: this.user.get("settings", "TWITTER_CLIENT_ID"),
+      clientSecret: this.user.get("settings", "TWITTER_CLIENT_SECRET"),
     });
     return this.client;
   }
@@ -59,8 +58,8 @@ export default class TwitterAuth {
    * @returns - {code, verifier}
    */
   private async requestCode(): Promise<{ code: string; verifier: string }> {
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const { url, codeVerifier, state } =
       this.getClient().generateOAuth2AuthLink(
         OAuth2Service.getCallbackUrl(clientHost, clientPort),
@@ -102,8 +101,8 @@ export default class TwitterAuth {
     code: string,
     verifier: string,
   ): Promise<TokenResponse> {
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const tokens = (await this.getClient().loginWithOAuth2({
       code: code,
       codeVerifier: verifier,
@@ -123,13 +122,13 @@ export default class TwitterAuth {
    * @param tokens - the tokens to store
    */
   private store(tokens: TokenResponse) {
-    Storage.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
+    this.user.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expiresIn"] * 1000,
     ).toISOString();
-    Storage.set("auth", "TWITTER_ACCESS_EXPIRY", accessExpiry);
+    this.user.set("auth", "TWITTER_ACCESS_EXPIRY", accessExpiry);
 
-    Storage.set("auth", "TWITTER_REFRESH_TOKEN", tokens["refreshToken"]);
+    this.user.set("auth", "TWITTER_REFRESH_TOKEN", tokens["refreshToken"]);
   }
 }
 

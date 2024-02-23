@@ -5,7 +5,6 @@ import {
 } from "../../utilities";
 
 import Logger from "../../services/Logger";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 
 /**
@@ -34,17 +33,17 @@ export default class InstagramApi {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      Storage.get("settings", "INSTAGRAM_USER_ID"),
+      this.user.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
-    const accessToken = Storage.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN");
+    const accessToken = this.user.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN");
     Logger.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
@@ -75,11 +74,11 @@ export default class InstagramApi {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      Storage.get("settings", "INSTAGRAM_USER_ID"),
+      this.user.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -91,7 +90,7 @@ export default class InstagramApi {
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization:
-          "Bearer " + Storage.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: JSON.stringify(body),
     })
@@ -110,11 +109,11 @@ export default class InstagramApi {
   public async postForm(endpoint: string, body: FormData): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      Storage.get("settings", "INSTAGRAM_USER_ID"),
+      this.user.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -126,7 +125,7 @@ export default class InstagramApi {
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + Storage.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })

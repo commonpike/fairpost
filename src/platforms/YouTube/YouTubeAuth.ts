@@ -1,7 +1,6 @@
 import Logger from "../../services/Logger";
 import { OAuth2Client } from "google-auth-library";
 import OAuth2Service from "../../services/OAuth2Service";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 import { strict as assert } from "assert";
 import { youtube_v3 } from "@googleapis/youtube";
@@ -29,11 +28,11 @@ export default class YouTubeAuth {
    */
   async refresh() {
     const auth = new OAuth2Client(
-      Storage.get("settings", "YOUTUBE_CLIENT_ID"),
-      Storage.get("settings", "YOUTUBE_CLIENT_SECRET"),
+      this.user.get("settings", "YOUTUBE_CLIENT_ID"),
+      this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
     );
     auth.setCredentials({
-      refresh_token: Storage.get("auth", "YOUTUBE_REFRESH_TOKEN"),
+      refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
     const response = (await auth.getAccessToken()) as {
       res: { data: TokenResponse };
@@ -55,7 +54,7 @@ export default class YouTubeAuth {
     }
     const auth = new OAuth2Client();
     auth.setCredentials({
-      access_token: Storage.get("auth", "YOUTUBE_ACCESS_TOKEN"),
+      access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
     });
     this.client = new youtube_v3.Youtube({ auth });
     return this.client;
@@ -67,13 +66,13 @@ export default class YouTubeAuth {
    */
   private async requestCode(): Promise<string> {
     Logger.trace("YouTubeAuth", "requestCode");
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     const auth = new OAuth2Client(
-      Storage.get("settings", "YOUTUBE_CLIENT_ID"),
-      Storage.get("settings", "YOUTUBE_CLIENT_SECRET"),
+      this.user.get("settings", "YOUTUBE_CLIENT_ID"),
+      this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
     const url = auth.generateAuthUrl({
@@ -115,12 +114,12 @@ export default class YouTubeAuth {
   private async exchangeCode(code: string): Promise<TokenResponse> {
     Logger.trace("YouTubeAuth", "exchangeCode", code);
 
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
 
     const auth = new OAuth2Client(
-      Storage.get("settings", "YOUTUBE_CLIENT_ID"),
-      Storage.get("settings", "YOUTUBE_CLIENT_SECRET"),
+      this.user.get("settings", "YOUTUBE_CLIENT_ID"),
+      this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
 
@@ -138,14 +137,14 @@ export default class YouTubeAuth {
    * @param tokens - the tokens to store
    */
   private store(tokens: TokenResponse) {
-    Storage.set("auth", "YOUTUBE_ACCESS_TOKEN", tokens["access_token"]);
+    this.user.set("auth", "YOUTUBE_ACCESS_TOKEN", tokens["access_token"]);
     const accessExpiry = new Date(tokens["expiry_date"]).toISOString();
-    Storage.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry);
+    this.user.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry);
     if ("scope" in tokens) {
-      Storage.set("auth", "YOUTUBE_SCOPE", tokens["scope"] ?? "");
+      this.user.set("auth", "YOUTUBE_SCOPE", tokens["scope"] ?? "");
     }
     if ("refresh_token" in tokens) {
-      Storage.set(
+      this.user.set(
         "auth",
         "YOUTUBE_REFRESH_TOKEN",
         tokens["refresh_token"] ?? "",

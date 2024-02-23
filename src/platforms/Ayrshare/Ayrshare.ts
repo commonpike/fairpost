@@ -12,7 +12,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import Storage from "../../services/Storage";
 import { randomUUID } from "crypto";
 
 /**
@@ -38,7 +37,7 @@ export default abstract class Ayrshare extends Platform {
 
   /** @inheritdoc */
   async test() {
-    const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
+    const APIKEY = this.user.get("settings", "AYRSHARE_API_KEY");
     return await fetch("https://app.ayrshare.com/api/user", {
       method: "GET",
       headers: {
@@ -108,7 +107,7 @@ export default abstract class Ayrshare extends Platform {
    * @returns array of links to uploaded media
    */
   async uploadMedia(media: string[]): Promise<string[]> {
-    const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
+    const APIKEY = this.user.get("settings", "AYRSHARE_API_KEY");
     const urls = [] as string[];
     for (const file of media) {
       const buffer = fs.readFileSync(file);
@@ -171,7 +170,7 @@ export default abstract class Ayrshare extends Platform {
       postUrl: string;
     }[];
   }> {
-    const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");
+    const APIKEY = this.user.get("settings", "AYRSHARE_API_KEY");
     const scheduleDate = post.scheduled;
 
     const postPlatform = this.platforms[this.id];

@@ -9,7 +9,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 
 /**
@@ -126,7 +125,7 @@ export default class Facebook extends Platform {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
         message: post.getCompiledBody(),
-        published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        published: this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"),
       })) as { id: string };
     }
     return { id: "-99" };
@@ -154,7 +153,7 @@ export default class Facebook extends Platform {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
         message: post.getCompiledBody(),
-        published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        published: this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"),
         attached_media: attachments,
       })) as { id: string };
     }
@@ -186,7 +185,7 @@ export default class Facebook extends Platform {
     const body = new FormData();
     body.set("title", title);
     body.set("description", description);
-    body.set("published", Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"));
+    body.set("published", this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"));
     body.set("source", blob, path.basename(file));
 
     if (!dryrun) {

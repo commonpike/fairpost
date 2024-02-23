@@ -6,7 +6,6 @@ import {
 
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 import { strict as assert } from "assert";
 
@@ -21,29 +20,29 @@ export default class FacebookAuth {
 
   async setup() {
     const code = await this.requestCode(
-      Storage.get("settings", "FACEBOOK_APP_ID"),
+      this.user.get("settings", "FACEBOOK_APP_ID"),
     );
 
     const accessToken = await this.exchangeCode(
       code,
-      Storage.get("settings", "FACEBOOK_APP_ID"),
-      Storage.get("settings", "FACEBOOK_APP_SECRET"),
+      this.user.get("settings", "FACEBOOK_APP_ID"),
+      this.user.get("settings", "FACEBOOK_APP_SECRET"),
     );
 
     const pageToken = await this.getLLPageToken(
-      Storage.get("settings", "FACEBOOK_APP_ID"),
-      Storage.get("settings", "FACEBOOK_APP_SECRET"),
-      Storage.get("settings", "FACEBOOK_PAGE_ID"),
+      this.user.get("settings", "FACEBOOK_APP_ID"),
+      this.user.get("settings", "FACEBOOK_APP_SECRET"),
+      this.user.get("settings", "FACEBOOK_PAGE_ID"),
       accessToken,
     );
 
-    Storage.set("auth", "FACEBOOK_PAGE_ACCESS_TOKEN", pageToken);
+    this.user.set("auth", "FACEBOOK_PAGE_ACCESS_TOKEN", pageToken);
   }
 
   protected async requestCode(clientId: string): Promise<string> {
     Logger.trace("FacebookAuth", "requestCode");
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -93,8 +92,8 @@ export default class FacebookAuth {
   ): Promise<string> {
     Logger.trace("FacebookAuth", "exchangeCode");
 
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.get("oauth/access_token", {

@@ -9,7 +9,6 @@ import { PlatformId } from "..";
 import Post from "../../models/Post";
 import RedditApi from "./RedditApi";
 import RedditAuth from "./RedditAuth";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 import { XMLParser } from "fast-xml-parser";
 
@@ -27,7 +26,7 @@ export default class Reddit extends Platform {
 
   constructor(user: User) {
     super(user);
-    this.SUBREDDIT = Storage.get("settings", "REDDIT_SUBREDDIT", "");
+    this.SUBREDDIT = this.user.get("settings", "REDDIT_SUBREDDIT", "");
     this.api = new RedditApi(user);
     this.auth = new RedditAuth(user);
   }

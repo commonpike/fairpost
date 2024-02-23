@@ -5,7 +5,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 import YouTubeAuth from "./YouTubeAuth";
 
@@ -158,7 +157,7 @@ export default class YouTube extends Platform {
           title: post.title,
           description: post.getCompiledBody("!title"),
           tags: post.tags, // both in body and separate
-          categoryId: Storage.get("settings", "YOUTUBE_CATEGORY", ""),
+          categoryId: this.user.get("settings", "YOUTUBE_CATEGORY", ""),
           defaultLanguage: this.defaultLanguage,
         },
         status: {
@@ -166,7 +165,7 @@ export default class YouTube extends Platform {
           license: this.license,
           publicStatsViewable: this.publicStatsViewable,
           selfDeclaredMadeForKids: this.selfDeclaredMadeForKids,
-          privacyStatus: Storage.get("settings", "YOUTUBE_PRIVACY"),
+          privacyStatus: this.user.get("settings", "YOUTUBE_PRIVACY"),
         },
       },
       media: {

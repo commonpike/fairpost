@@ -1,7 +1,6 @@
 import FacebookAuth from "../Facebook/FacebookAuth";
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 
 export default class InstagramAuth extends FacebookAuth {
@@ -11,28 +10,28 @@ export default class InstagramAuth extends FacebookAuth {
 
   async setup() {
     const code = await this.requestCode(
-      Storage.get("settings", "INSTAGRAM_APP_ID"),
+      this.user.get("settings", "INSTAGRAM_APP_ID"),
     );
 
     const accessToken = await this.exchangeCode(
       code,
-      Storage.get("settings", "INSTAGRAM_APP_ID"),
-      Storage.get("settings", "INSTAGRAM_APP_SECRET"),
+      this.user.get("settings", "INSTAGRAM_APP_ID"),
+      this.user.get("settings", "INSTAGRAM_APP_SECRET"),
     );
 
     const pageToken = await this.getLLPageToken(
-      Storage.get("settings", "INSTAGRAM_APP_ID"),
-      Storage.get("settings", "INSTAGRAM_APP_SECRET"),
-      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.get("settings", "INSTAGRAM_APP_ID"),
+      this.user.get("settings", "INSTAGRAM_APP_SECRET"),
+      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
       accessToken,
     );
 
-    Storage.set("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN", pageToken);
+    this.user.set("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN", pageToken);
   }
 
   protected async requestCode(clientId: string): Promise<string> {
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url

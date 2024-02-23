@@ -5,7 +5,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import Storage from "../../services/Storage";
 import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth";
 import User from "../../models/User";
@@ -34,14 +33,16 @@ export default class Twitter extends Platform {
   async test() {
     Logger.trace("Twitter.test: get oauth1 api");
     const client1 = new TwitterApi({
-      appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
-      appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.get("settings", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const creds1 = await client1.v1.verifyCredentials();
     Logger.trace("Twitter.test: get oauth2 api");
-    const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
+    const client2 = new TwitterApi(
+      this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+    );
     const creds2 = await client2.v2.me();
     return {
       oauth1: {
@@ -143,7 +144,7 @@ export default class Twitter extends Platform {
     Logger.trace("Twitter.publishTextPost", post.id, dryrun);
     if (!dryrun) {
       const client2 = new TwitterApi(
-        Storage.get("auth", "TWITTER_ACCESS_TOKEN"),
+        this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
       );
       const result = await client2.v2.tweet({
         text: post.getCompiledBody(),
@@ -178,14 +179,14 @@ export default class Twitter extends Platform {
     Logger.trace("Twitter.publishImagesPost", post.id, dryrun);
 
     const client1 = new TwitterApi({
-      appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
-      appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.get("settings", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const mediaIds = [];
 
-    const additionalOwner = Storage.get(
+    const additionalOwner = this.user.get(
       "settings",
       "TWITTER_OA1_ADDITIONAL_OWNER",
       "",
@@ -209,7 +210,9 @@ export default class Twitter extends Platform {
       }
     }
 
-    const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
+    const client2 = new TwitterApi(
+      this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+    );
 
     if (!dryrun) {
       Logger.trace("Tweeting " + post.id + "...");

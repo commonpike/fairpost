@@ -10,7 +10,6 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 
 export default class LinkedIn extends Platform {
@@ -36,7 +35,7 @@ export default class LinkedIn extends Platform {
     this.auth = new LinkedInAuth(user);
     this.POST_AUTHOR =
       "urn:li:organization:" +
-      Storage.get("settings", "LINKEDIN_COMPANY_ID", "");
+      this.user.get("settings", "LINKEDIN_COMPANY_ID", "");
   }
 
   /** @inheritdoc */
@@ -367,7 +366,7 @@ export default class LinkedIn extends Platform {
     Logger.trace("LinkedIn.uploadImage");
     const rawData = fs.readFileSync(file);
     Logger.trace("PUT", leashUrl);
-    const accessToken = Storage.get("auth", "LINKEDIN_ACCESS_TOKEN");
+    const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
     return await fetch(leashUrl, {
       method: "PUT",
       headers: {

@@ -6,7 +6,6 @@ import {
 
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 import { strict as assert } from "assert";
 
@@ -35,9 +34,9 @@ export default class LinkedInAuth {
   async refresh() {
     const tokens = (await this.post("accessToken", {
       grant_type: "refresh_token",
-      refresh_token: Storage.get("auth", "LINKEDIN_REFRESH_TOKEN"),
-      client_id: Storage.get("settings", "LINKEDIN_CLIENT_ID"),
-      client_secret: Storage.get("settings", "LINKEDIN_CLIENT_SECRET"),
+      refresh_token: this.user.get("auth", "LINKEDIN_REFRESH_TOKEN"),
+      client_id: this.user.get("settings", "LINKEDIN_CLIENT_ID"),
+      client_secret: this.user.get("settings", "LINKEDIN_CLIENT_SECRET"),
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
@@ -55,9 +54,9 @@ export default class LinkedInAuth {
    */
   private async requestCode(): Promise<string> {
     Logger.trace("LinkedInAuth", "requestCode");
-    const clientId = Storage.get("settings", "LINKEDIN_CLIENT_ID");
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientId = this.user.get("settings", "LINKEDIN_CLIENT_ID");
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -105,15 +104,15 @@ export default class LinkedInAuth {
    */
   private async exchangeCode(code: string): Promise<TokenResponse> {
     Logger.trace("LinkedInAuth", "exchangeCode", code);
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.post("accessToken", {
       grant_type: "authorization_code",
       code: code,
-      client_id: Storage.get("settings", "LINKEDIN_CLIENT_ID"),
-      client_secret: Storage.get("settings", "LINKEDIN_CLIENT_SECRET"),
+      client_id: this.user.get("settings", "LINKEDIN_CLIENT_ID"),
+      client_secret: this.user.get("settings", "LINKEDIN_CLIENT_SECRET"),
       redirect_uri: redirectUri,
     })) as TokenResponse;
 
@@ -129,19 +128,19 @@ export default class LinkedInAuth {
    * @param tokens - the tokens to store
    */
   private store(tokens: TokenResponse) {
-    Storage.set("auth", "LINKEDIN_ACCESS_TOKEN", tokens["access_token"]);
+    this.user.set("auth", "LINKEDIN_ACCESS_TOKEN", tokens["access_token"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expires_in"] * 1000,
     ).toISOString();
-    Storage.set("auth", "LINKEDIN_ACCESS_EXPIRY", accessExpiry);
+    this.user.set("auth", "LINKEDIN_ACCESS_EXPIRY", accessExpiry);
 
-    Storage.set("auth", "LINKEDIN_REFRESH_TOKEN", tokens["refresh_token"]);
+    this.user.set("auth", "LINKEDIN_REFRESH_TOKEN", tokens["refresh_token"]);
     const refreshExpiry = new Date(
       new Date().getTime() + tokens["refresh_token_expires_in"] * 1000,
     ).toISOString();
-    Storage.set("auth", "LINKEDIN_REFRESH_EXPIRY", refreshExpiry);
+    this.user.set("auth", "LINKEDIN_REFRESH_EXPIRY", refreshExpiry);
 
-    Storage.set("auth", "LINKEDIN_SCOPE", tokens["scope"]);
+    this.user.set("auth", "LINKEDIN_SCOPE", tokens["scope"]);
   }
 
   // API implementation -------------------

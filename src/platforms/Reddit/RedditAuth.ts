@@ -6,7 +6,6 @@ import {
 
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
-import Storage from "../../services/Storage";
 import User from "../../models/User";
 import { strict as assert } from "assert";
 
@@ -33,7 +32,7 @@ export default class RedditAuth {
   public async refresh() {
     const tokens = (await this.post("access_token", {
       grant_type: "refresh_token",
-      refresh_token: Storage.get("auth", "REDDIT_REFRESH_TOKEN"),
+      refresh_token: this.user.get("auth", "REDDIT_REFRESH_TOKEN"),
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
@@ -51,9 +50,9 @@ export default class RedditAuth {
    */
   protected async requestCode(): Promise<string> {
     Logger.trace("RedditAuth", "requestCode");
-    const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientId = this.user.get("settings", "REDDIT_CLIENT_ID");
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -97,8 +96,8 @@ export default class RedditAuth {
    */
   protected async exchangeCode(code: string): Promise<TokenResponse> {
     Logger.trace("RedditAuth", "exchangeCode", code);
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.post("access_token", {
@@ -128,13 +127,13 @@ export default class RedditAuth {
    * @param tokens - the tokens to store
    */
   private store(tokens: TokenResponse) {
-    Storage.set("auth", "REDDIT_ACCESS_TOKEN", tokens["access_token"]);
+    this.user.set("auth", "REDDIT_ACCESS_TOKEN", tokens["access_token"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expires_in"] * 1000,
     ).toISOString();
-    Storage.set("auth", "REDDIT_ACCESS_EXPIRY", accessExpiry);
-    Storage.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
-    Storage.set("auth", "REDDIT_SCOPE", tokens["scope"]);
+    this.user.set("auth", "REDDIT_ACCESS_EXPIRY", accessExpiry);
+    this.user.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
+    this.user.set("auth", "REDDIT_SCOPE", tokens["scope"]);
   }
 
   // API implementation -------------------
@@ -153,8 +152,8 @@ export default class RedditAuth {
     url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     Logger.trace("POST", url.href);
 
-    const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
-    const clientSecret = Storage.get("settings", "REDDIT_CLIENT_SECRET");
+    const clientId = this.user.get("settings", "REDDIT_CLIENT_ID");
+    const clientSecret = this.user.get("settings", "REDDIT_CLIENT_SECRET");
     const userpass = clientId + ":" + clientSecret;
     const userpassb64 = Buffer.from(userpass).toString("base64");
 
