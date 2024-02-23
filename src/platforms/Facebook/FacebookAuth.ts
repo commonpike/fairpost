@@ -7,10 +7,17 @@ import {
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 import { strict as assert } from "assert";
 
 export default class FacebookAuth {
   GRAPH_API_VERSION: string = "v18.0";
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   async setup() {
     const code = await this.requestCode(
@@ -35,6 +42,8 @@ export default class FacebookAuth {
 
   protected async requestCode(clientId: string): Promise<string> {
     Logger.trace("FacebookAuth", "requestCode");
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -42,7 +51,7 @@ export default class FacebookAuth {
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: OAuth2Service.getCallbackUrl(),
+      redirect_uri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
       state: state,
       response_type: "code",
       scope: [
@@ -59,6 +68,8 @@ export default class FacebookAuth {
     const result = await OAuth2Service.requestRemotePermissions(
       "Facebook",
       url.href,
+      clientHost,
+      clientPort,
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
@@ -81,7 +92,10 @@ export default class FacebookAuth {
     clientSecret: string,
   ): Promise<string> {
     Logger.trace("FacebookAuth", "exchangeCode");
-    const redirectUri = OAuth2Service.getCallbackUrl();
+
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.get("oauth/access_token", {
       client_id: clientId,

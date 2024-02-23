@@ -22,7 +22,7 @@ export default class Twitter extends Platform {
 
   constructor(user: User) {
     super(user);
-    this.auth = new TwitterAuth();
+    this.auth = new TwitterAuth(user);
   }
 
   /** @inheritdoc */

@@ -7,11 +7,17 @@ import {
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 import { strict as assert } from "assert";
 
 export default class RedditAuth {
   API_VERSION = "v1";
 
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
   async setup() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
@@ -46,6 +52,8 @@ export default class RedditAuth {
   protected async requestCode(): Promise<string> {
     Logger.trace("RedditAuth", "requestCode");
     const clientId = Storage.get("settings", "REDDIT_CLIENT_ID");
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -53,7 +61,7 @@ export default class RedditAuth {
     url.pathname = "api/" + this.API_VERSION + "/authorize";
     const query = {
       client_id: clientId,
-      redirect_uri: OAuth2Service.getCallbackUrl(),
+      redirect_uri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
       state: state,
       response_type: "code",
       duration: "permanent",
@@ -64,6 +72,8 @@ export default class RedditAuth {
     const result = await OAuth2Service.requestRemotePermissions(
       "Reddit",
       url.href,
+      clientHost,
+      clientPort,
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
@@ -87,7 +97,9 @@ export default class RedditAuth {
    */
   protected async exchangeCode(code: string): Promise<TokenResponse> {
     Logger.trace("RedditAuth", "exchangeCode", code);
-    const redirectUri = OAuth2Service.getCallbackUrl();
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+    const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.post("access_token", {
       grant_type: "authorization_code",

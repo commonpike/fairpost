@@ -7,6 +7,7 @@ import {
 
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * LinkedInApi: support for linkedin platform.
@@ -15,6 +16,12 @@ import Storage from "../../services/Storage";
 export default class LinkedInApi {
   LGC_API_VERSION = "v2";
   API_VERSION = "202304";
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Do a GET request on the api.

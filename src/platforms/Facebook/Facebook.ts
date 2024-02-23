@@ -29,8 +29,8 @@ export default class Facebook extends Platform {
 
   constructor(user: User) {
     super(user);
-    this.auth = new FacebookAuth();
-    this.api = new FacebookApi();
+    this.auth = new FacebookAuth(user);
+    this.api = new FacebookApi(user);
   }
 
   /** @inheritdoc */

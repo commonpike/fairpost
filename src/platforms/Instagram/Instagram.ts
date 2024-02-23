@@ -31,8 +31,8 @@ export default class Instagram extends Platform {
 
   constructor(user: User) {
     super(user);
-    this.auth = new InstagramAuth();
-    this.api = new InstagramApi();
+    this.auth = new InstagramAuth(user);
+    this.api = new InstagramApi(user);
   }
 
   /** @inheritdoc */

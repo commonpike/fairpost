@@ -6,6 +6,7 @@ import {
 
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * InstagramApi: support for instagram platform.
@@ -13,6 +14,12 @@ import Storage from "../../services/Storage";
 
 export default class InstagramApi {
   GRAPH_API_VERSION = "v18.0";
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Do a GET request on the graph.

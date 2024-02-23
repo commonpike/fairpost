@@ -2,8 +2,13 @@ import FacebookAuth from "../Facebook/FacebookAuth";
 import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 export default class InstagramAuth extends FacebookAuth {
+  constructor(user: User) {
+    super(user);
+  }
+
   async setup() {
     const code = await this.requestCode(
       Storage.get("settings", "INSTAGRAM_APP_ID"),
@@ -26,6 +31,8 @@ export default class InstagramAuth extends FacebookAuth {
   }
 
   protected async requestCode(clientId: string): Promise<string> {
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -33,7 +40,7 @@ export default class InstagramAuth extends FacebookAuth {
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: OAuth2Service.getCallbackUrl(),
+      redirect_uri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
       state: state,
       response_type: "code",
       scope: [
@@ -52,6 +59,8 @@ export default class InstagramAuth extends FacebookAuth {
     const result = await OAuth2Service.requestRemotePermissions(
       "Instagram",
       url.href,
+      clientHost,
+      clientPort,
     );
 
     if (result["error"]) {

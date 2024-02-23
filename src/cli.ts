@@ -1,14 +1,13 @@
 /*
-    202309*pike
+    202402*pike
     Fairpost cli handler     
 */
 
-import "./bootstrap-cli";
+//import "./bootstrap-cli";
 
 import * as path from "path";
 
 import User from "./models/User";
-//import Fairpost from "./services/Fairpost";
 import Logger from "./services/Logger";
 import { PlatformId } from "./platforms";
 import { PostStatus } from "./models/Post";
@@ -17,6 +16,7 @@ import { PostStatus } from "./models/Post";
 const COMMAND = process.argv[2] ?? "help";
 
 // options
+const USER = (getOption("user") as string) ?? "default";
 const DRY_RUN = !!getOption("dry-run") ?? false;
 const REPORT = (getOption("report") as string) ?? "text";
 const PLATFORMS =
@@ -44,7 +44,7 @@ async function main() {
   let result: unknown;
   let report = "";
 
-  const user = new User();
+  const user = new User(USER);
   const feed = user.getFeed();
   Logger.trace(
     "Fairpost " + user.id + ":" + feed.id + " " + COMMAND,

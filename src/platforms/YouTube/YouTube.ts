@@ -6,8 +6,8 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import Storage from "../../services/Storage";
-import YouTubeAuth from "./YouTubeAuth";
 import User from "../../models/User";
+import YouTubeAuth from "./YouTubeAuth";
 
 export default class YouTube extends Platform {
   id: PlatformId = PlatformId.YOUTUBE;
@@ -28,7 +28,7 @@ export default class YouTube extends Platform {
 
   constructor(user: User) {
     super(user);
-    this.auth = new YouTubeAuth();
+    this.auth = new YouTubeAuth(user);
   }
 
   /** @inheritdoc */

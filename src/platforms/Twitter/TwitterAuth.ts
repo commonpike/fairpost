@@ -2,10 +2,17 @@ import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
 import { TwitterApi } from "twitter-api-v2";
+import User from "../../models/User";
 import { strict as assert } from "assert";
 
-export default class TwitterAuth extends OAuth2Service {
+export default class TwitterAuth {
   client?: TwitterApi;
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Set up Twitter platform
@@ -52,11 +59,21 @@ export default class TwitterAuth extends OAuth2Service {
    * @returns - {code, verifier}
    */
   private async requestCode(): Promise<{ code: string; verifier: string }> {
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     const { url, codeVerifier, state } =
-      this.getClient().generateOAuth2AuthLink(OAuth2Service.getCallbackUrl(), {
-        scope: ["users.read", "tweet.read", "tweet.write", "offline.access"],
-      });
-    const result = await OAuth2Service.requestRemotePermissions("Twitter", url);
+      this.getClient().generateOAuth2AuthLink(
+        OAuth2Service.getCallbackUrl(clientHost, clientPort),
+        {
+          scope: ["users.read", "tweet.read", "tweet.write", "offline.access"],
+        },
+      );
+    const result = await OAuth2Service.requestRemotePermissions(
+      "Twitter",
+      url,
+      clientHost,
+      clientPort,
+    );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
       throw Logger.error("TwitterApi.requestCode: " + msg, result);
@@ -85,10 +102,12 @@ export default class TwitterAuth extends OAuth2Service {
     code: string,
     verifier: string,
   ): Promise<TokenResponse> {
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     const tokens = (await this.getClient().loginWithOAuth2({
       code: code,
       codeVerifier: verifier,
-      redirectUri: OAuth2Service.getCallbackUrl(),
+      redirectUri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
     })) as TokenResponse;
     if (!isTokenResponse(tokens)) {
       throw Logger.error(

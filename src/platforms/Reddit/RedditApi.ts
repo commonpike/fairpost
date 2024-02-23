@@ -6,6 +6,7 @@ import {
 
 import Logger from "../../services/Logger";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * RedditApi: support for reddit platform.
@@ -13,6 +14,12 @@ import Storage from "../../services/Storage";
 
 export default class RedditApi {
   API_VERSION = "v1";
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Do a GET request on the api.

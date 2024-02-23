@@ -2,11 +2,18 @@ import Logger from "../../services/Logger";
 import { OAuth2Client } from "google-auth-library";
 import OAuth2Service from "../../services/OAuth2Service";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 import { strict as assert } from "assert";
 import { youtube_v3 } from "@googleapis/youtube";
 
 export default class YouTubeAuth {
   client?: youtube_v3.Youtube;
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Set up YouTube platform
@@ -60,12 +67,14 @@ export default class YouTubeAuth {
    */
   private async requestCode(): Promise<string> {
     Logger.trace("YouTubeAuth", "requestCode");
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     const auth = new OAuth2Client(
       Storage.get("settings", "YOUTUBE_CLIENT_ID"),
       Storage.get("settings", "YOUTUBE_CLIENT_SECRET"),
-      OAuth2Service.getCallbackUrl(),
+      OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
     const url = auth.generateAuthUrl({
       access_type: "offline",
@@ -77,7 +86,12 @@ export default class YouTubeAuth {
       state: state,
     });
 
-    const result = await OAuth2Service.requestRemotePermissions("YouTube", url);
+    const result = await OAuth2Service.requestRemotePermissions(
+      "YouTube",
+      url,
+      clientHost,
+      clientPort,
+    );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
       throw Logger.error(msg, result);
@@ -101,10 +115,13 @@ export default class YouTubeAuth {
   private async exchangeCode(code: string): Promise<TokenResponse> {
     Logger.trace("YouTubeAuth", "exchangeCode", code);
 
+    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+
     const auth = new OAuth2Client(
       Storage.get("settings", "YOUTUBE_CLIENT_ID"),
       Storage.get("settings", "YOUTUBE_CLIENT_SECRET"),
-      OAuth2Service.getCallbackUrl(),
+      OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
 
     const response = (await auth.getToken(code)) as {

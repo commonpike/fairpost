@@ -32,8 +32,8 @@ export default class LinkedIn extends Platform {
 
   constructor(user: User) {
     super(user);
-    this.api = new LinkedInApi();
-    this.auth = new LinkedInAuth();
+    this.api = new LinkedInApi(user);
+    this.auth = new LinkedInAuth(user);
     this.POST_AUTHOR =
       "urn:li:organization:" +
       Storage.get("settings", "LINKEDIN_COMPANY_ID", "");
