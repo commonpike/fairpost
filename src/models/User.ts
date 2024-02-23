@@ -36,7 +36,6 @@ export default class User {
     this.loadGlobalEnv();
     this.homedir = this.getEnv("USERS_DIR", "users") + "/" + this.id;
     this.loadUserEnv();
-    console.log(this.envData);
     this.loadJson();
   }
 

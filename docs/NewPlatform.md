@@ -104,19 +104,20 @@ usually to get the access tokens and save them in Storage.
 This method allows you to call `fairpost.js refresh-platform --platform=foobar`, 
 usually to refresh the access tokens and save them in Storage.
 
-### Using Storage
+### Using User.get() and User.set()
 
-There are two stores, `settings` and `auth`. Depending on your 
-configuration, these may be stored in different places. If you 
+Your platform is constructed with a User, `FooBar.user`.
+All configuration, including 'global' configuration from 
+Fairpost, is set on (and can be overriden by) the user. 
+The user has two stores, `settings` and `auth`. Depending on the 
+users configuration, these may be stored in different places. If a 
 storage uses `.env`, it is read-only.
 
 ```php
 <?php
-
-    import Storage from "../../services/Storage";
     ...
-    Storage.set('auth', 'foo', 'bar');
-    console.log(Storage.get('auth', 'foo')); // bar
+    this.user.set('auth', 'foo', 'bar');
+    console.log(this.user.get('auth', 'foo')); // bar
 ```
 ### Using Logger
 
@@ -201,10 +202,15 @@ and presents you with a link to click, and processes the response:
 
 import OAuth2Service from "../../services/OAuth2Service";
 import Logger from "../../services/Logger";
-import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 export default class FooBarAuth {
 
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
   /**
    * Set up FooBar platform
    */
@@ -219,7 +225,9 @@ export default class FooBarAuth {
    * @returns - code
    */
   private async requestCode(): Promise<string> {
-    const clientId = Storage.get("settings", "FOOBAR_CLIENT_ID");
+    const clientId = this.user.get("settings", "FOOBAR_CLIENT_ID");
+     const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -227,7 +235,7 @@ export default class FooBarAuth {
     url.pathname = "bla/auth";
     const query = {
       client_id: clientId,
-      redirect_uri: OAuth2Service.getCallbackUrl(),
+      redirect_uri: OAuth2Service.getCallbackUrl(clientHost,clientPort),
       state: state,
       response_type: "code",
       scope: [
@@ -240,6 +248,8 @@ export default class FooBarAuth {
     const result = await OAuth2Service.requestRemotePermissions(
       "FooBar",
       url.href,
+      clientHost,
+      clientPort
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
@@ -261,13 +271,15 @@ export default class FooBarAuth {
    * @returns - TokenResponse
    */
   private async exchangeCode(code: string) {
-    const redirectUri = OAuth2Service.getCallbackUrl();
+    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const redirectUri = OAuth2Service.getCallbackUrl(clientHost,clientPort);
     // implement your own post method ... 
     const tokens = (await this.post("token", {
       grant_type: "authorization_code",
       code: code,
-      client_id: Storage.get("settings", "FOOBAR_CLIENT_ID"),
-      client_secret: Storage.get("settings", "FOOBAR_CLIENT_SECRET"),
+      client_id: this.user.get("settings", "FOOBAR_CLIENT_ID"),
+      client_secret: this.user.get("settings", "FOOBAR_CLIENT_SECRET"),
       redirect_uri: redirectUri,
     }));
     if (!('accessToken' in tokens)) {
@@ -282,7 +294,7 @@ export default class FooBarAuth {
    * @param tokens - the tokens to store
    */
   private store(tokens) {
-    Storage.set("auth", "FOOBAR_ACCESS_TOKEN", tokens["access_token"]);
+    this.user.set("auth", "FOOBAR_ACCESS_TOKEN", tokens["access_token"]);
   }
 
 }

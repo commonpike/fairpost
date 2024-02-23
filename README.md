@@ -3,31 +3,34 @@
 
 # Fairpost
 
-Fairpost helps you manage your social media feeds from a single 
+Fairpost helps you manage users social media feeds from a single 
 entry point, using Node. It supports Facebook, Instagram, 
 Reddit, Twitter, YouTube and LinkedIn.
 
-Your Feed is just a folder on disk, and all subfolders are Posts, 
+A Feed is just a folder on disk, and all subfolders are Posts, 
 containing at least one text file (the post body) and 
 optionally images or video. 
 Fairpost is *opinionated*, meaning, it will decide
 how a folder with contents can best be presented
 as a post on each platform. 
 
-Commonly, you would call this script every day or week. 
-Fairpost can then automatically **prepare** the folders,
+By default, there is one user, in `users/default`,
+with a feed located in `users/default/feed`
+Edit `users/default/.env` to manage the platforms
+you want to support, the interval for new posts,
+etcetera. For each platform, you'll have to 
+register the app to post on the users behalf.
+
+Commonly, you would call this script every day or week
+for every user. Fairpost can then automatically **prepare** the folders,
 **schedule** the next post using a certain interval and 
-**publish** any post when it is due. All you have to do is 
+**publish** any post when it is due. All the user has to do is 
 add folders with content.
 
 Or, if you prefer, you can manually publish one
-specific post on all supported and enabled 
+specific folder as posts on all supported and enabled 
 platforms at once.
 
-Edit the .env file to manage the platforms
-you want to support, the interval for new posts,
-etcetera. For each platform, you'll have to 
-register the app to post on your behalf.
 
 ## Setting up 
 ```
@@ -37,8 +40,11 @@ npm install
 # compile typescript code
 npm run build
 
-# copy and edit config file
+# copy and edit fairpost config file
 cp .env.dist .env && nano .env
+
+# copy and edit users config file
+cp users/default/.env.dist users/default/.env && nano users/default/.env
 
 # run
 ./fairpost.js help
@@ -133,8 +139,8 @@ fairpost.js publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-r
 ### Common arguments 
 
 ```
-# Select which config file to use
-fairpost.js [command] [arguments] --config=.env-test
+# Select which user to handle
+fairpost.js [command] [arguments] --user=test
 
 # Set the cli report format to pure json
 fairpost.js [command] [arguments] --report=json
