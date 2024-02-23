@@ -7,7 +7,8 @@ import "./bootstrap-cli";
 
 import * as path from "path";
 
-import Fairpost from "./services/Fairpost";
+import User from "./models/User";
+//import Fairpost from "./services/Fairpost";
 import Logger from "./services/Logger";
 import { PlatformId } from "./platforms";
 import { PostStatus } from "./models/Post";
@@ -43,9 +44,10 @@ async function main() {
   let result: unknown;
   let report = "";
 
-  const feed = Fairpost.getFeed();
+  const user = new User();
+  const feed = user.getFeed();
   Logger.trace(
-    "Fairpost " + feed.id + " " + COMMAND,
+    "Fairpost " + user.id + ":" + feed.id + " " + COMMAND,
     DRY_RUN ? " dry-run" : "",
   );
 

@@ -14,10 +14,6 @@ export default class AsInstagram extends Ayrshare {
   assetsFolder = "_asinstagram";
   postFileName = "post.json";
 
-  constructor() {
-    super();
-  }
-
   async preparePost(folder: Folder): Promise<Post> {
     const post = await super.preparePost(folder);
     if (post && post.files) {

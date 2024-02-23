@@ -1,5 +1,6 @@
 import Ayrshare from "./Ayrshare";
 import Folder from "../../models/Folder";
+import User from "../../models/User";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import Storage from "../../services/Storage";
@@ -14,8 +15,8 @@ export default class AsReddit extends Ayrshare {
 
   SUBREDDIT: string;
 
-  constructor() {
-    super();
+  constructor(user: User) {
+    super(user);
     this.SUBREDDIT = Storage.get("settings", "AYRSHARE_SUBREDDIT", "");
   }
 

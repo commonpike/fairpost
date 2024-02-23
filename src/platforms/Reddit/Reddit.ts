@@ -11,6 +11,7 @@ import RedditApi from "./RedditApi";
 import RedditAuth from "./RedditAuth";
 import Storage from "../../services/Storage";
 import { XMLParser } from "fast-xml-parser";
+import User from "../../models/User";
 
 /**
  * Reddit: support for reddit platform
@@ -24,8 +25,8 @@ export default class Reddit extends Platform {
   api: RedditApi;
   auth: RedditAuth;
 
-  constructor() {
-    super();
+  constructor(user: User) {
+    super(user);
     this.SUBREDDIT = Storage.get("settings", "REDDIT_SUBREDDIT", "");
     this.api = new RedditApi();
     this.auth = new RedditAuth();

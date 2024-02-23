@@ -2,11 +2,11 @@ import * as fs from "fs";
 
 import Folder from "./Folder";
 import Logger from "../services/Logger";
+import User from "./User";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import Storage from "../services/Storage";
 
 /**
  * Feed - the core handler of fairpost
@@ -19,6 +19,7 @@ import Storage from "../services/Storage";
 export default class Feed {
   id: string = "";
   path: string = "";
+  user: User;
   platforms: {
     [id in PlatformId]?: Platform;
   } = {};
@@ -35,11 +36,19 @@ export default class Feed {
    * @param configPath - path to file for dotenv to parse
    */
 
-  constructor(platforms: Platform[]) {
-    platforms.forEach((p) => (this.platforms[p.id] = p));
-    this.path = Storage.get("settings", "FEED_PATH");
-    this.id = this.path;
-    this.interval = Number(Storage.get("settings", "FEED_INTERVAL", "7"));
+  constructor(user: User) {
+    this.user = user;
+    user.platforms
+      .filter((p) => p.active)
+      .forEach((p) => (this.platforms[p.id] = p));
+    this.path = this.user.get(
+      "settings",
+      "FEED_PATH",
+      this.user.homedir + "/feed",
+    );
+    this.id =
+      this.user.id + ":" + this.user.get("settings", "FEED_PATH", "feed");
+    this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
   }
 
   /**

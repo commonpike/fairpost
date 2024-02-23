@@ -9,6 +9,7 @@ import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
+import User from "../../models/User";
 
 /**
  * Instagram: support for instagram platform.
@@ -28,8 +29,8 @@ export default class Instagram extends Platform {
   pollingDelay = 2500;
   pollingLimit = 20;
 
-  constructor() {
-    super();
+  constructor(user: User) {
+    super(user);
     this.auth = new InstagramAuth();
     this.api = new InstagramApi();
   }

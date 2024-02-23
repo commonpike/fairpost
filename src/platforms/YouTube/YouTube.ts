@@ -7,6 +7,7 @@ import { PlatformId } from "..";
 import Post from "../../models/Post";
 import Storage from "../../services/Storage";
 import YouTubeAuth from "./YouTubeAuth";
+import User from "../../models/User";
 
 export default class YouTube extends Platform {
   id: PlatformId = PlatformId.YOUTUBE;
@@ -25,8 +26,8 @@ export default class YouTube extends Platform {
   publicStatsViewable = true;
   selfDeclaredMadeForKids = false;
 
-  constructor() {
-    super();
+  constructor(user: User) {
+    super(user);
     this.auth = new YouTubeAuth();
   }
 

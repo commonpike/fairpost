@@ -14,10 +14,6 @@ export default class AsTwitter extends Ayrshare {
   assetsFolder = "_astwitter";
   postFileName = "post.json";
 
-  constructor() {
-    super();
-  }
-
   async preparePost(folder: Folder): Promise<Post> {
     const post = await super.preparePost(folder);
     if (post) {

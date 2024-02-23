@@ -11,6 +11,7 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;
@@ -29,8 +30,8 @@ export default class LinkedIn extends Platform {
   };
   POST_NORESHARE = false;
 
-  constructor() {
-    super();
+  constructor(user: User) {
+    super(user);
     this.api = new LinkedInApi();
     this.auth = new LinkedInAuth();
     this.POST_AUTHOR =

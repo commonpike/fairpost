@@ -36,10 +36,6 @@ export default abstract class Ayrshare extends Platform {
     [PlatformId.ASREDDIT]: "reddit",
   };
 
-  constructor() {
-    super();
-  }
-
   /** @inheritdoc */
   async test() {
     const APIKEY = Storage.get("settings", "AYRSHARE_API_KEY");

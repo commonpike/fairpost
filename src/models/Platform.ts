@@ -1,5 +1,6 @@
 import * as fs from "fs";
 
+import User from "./User";
 import Folder from "./Folder";
 import Logger from "../services/Logger";
 import { PlatformId } from "../platforms";
@@ -15,9 +16,14 @@ import { PostStatus } from "./Post";
 export default class Platform {
   active: boolean = false;
   id: PlatformId = PlatformId.UNKNOWN;
+  user: User;
   defaultBody: string = "Fairpost feed";
   assetsFolder: string = "_fairpost";
   postFileName: string = "post.json";
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Return a small report for this feed

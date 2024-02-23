@@ -8,6 +8,7 @@ import Post from "../../models/Post";
 import Storage from "../../services/Storage";
 import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth";
+import User from "../../models/User";
 
 /**
  * Twitter: support for twitter platform
@@ -19,8 +20,8 @@ export default class Twitter extends Platform {
 
   auth: TwitterAuth;
 
-  constructor() {
-    super();
+  constructor(user: User) {
+    super(user);
     this.auth = new TwitterAuth();
   }
 

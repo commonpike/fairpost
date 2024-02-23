@@ -10,6 +10,7 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * Facebook: support for facebook platform.
@@ -26,8 +27,8 @@ export default class Facebook extends Platform {
   api: FacebookApi;
   auth: FacebookAuth;
 
-  constructor() {
-    super();
+  constructor(user: User) {
+    super(user);
     this.auth = new FacebookAuth();
     this.api = new FacebookApi();
   }

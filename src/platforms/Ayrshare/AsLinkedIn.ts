@@ -14,10 +14,6 @@ export default class AsLinkedIn extends Ayrshare {
   assetsFolder = "_aslinkedin";
   postFileName = "post.json";
 
-  constructor() {
-    super();
-  }
-
   async preparePost(folder: Folder): Promise<Post> {
     const post = await super.preparePost(folder);
     if (post) {
