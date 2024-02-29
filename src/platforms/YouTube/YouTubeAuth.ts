@@ -66,8 +66,8 @@ export default class YouTubeAuth {
    */
   private async requestCode(): Promise<string> {
     Logger.trace("YouTubeAuth", "requestCode");
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     const auth = new OAuth2Client(
@@ -114,8 +114,8 @@ export default class YouTubeAuth {
   private async exchangeCode(code: string): Promise<TokenResponse> {
     Logger.trace("YouTubeAuth", "exchangeCode", code);
 
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
 
     const auth = new OAuth2Client(
       this.user.get("settings", "YOUTUBE_CLIENT_ID"),

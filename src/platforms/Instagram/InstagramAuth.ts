@@ -30,8 +30,8 @@ export default class InstagramAuth extends FacebookAuth {
   }
 
   protected async requestCode(clientId: string): Promise<string> {
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url

@@ -42,7 +42,7 @@ export default class RedditApi {
       headers: {
         Accept: "application/json",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": this.user.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "OAUTH_USERAGENT"),
       },
     })
       .then((res) => handleJsonResponse(res))
@@ -73,7 +73,7 @@ export default class RedditApi {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": this.user.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "OAUTH_USERAGENT"),
       },
       body: new URLSearchParams(body),
     })
@@ -101,7 +101,7 @@ export default class RedditApi {
       headers: {
         Accept: "application/json",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": this.user.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "OAUTH_USERAGENT"),
       },
       body: body,
     })

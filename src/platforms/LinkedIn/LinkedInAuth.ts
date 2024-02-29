@@ -55,8 +55,8 @@ export default class LinkedInAuth {
   private async requestCode(): Promise<string> {
     Logger.trace("LinkedInAuth", "requestCode");
     const clientId = this.user.get("settings", "LINKEDIN_CLIENT_ID");
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -104,8 +104,8 @@ export default class LinkedInAuth {
    */
   private async exchangeCode(code: string): Promise<TokenResponse> {
     Logger.trace("LinkedInAuth", "exchangeCode", code);
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.post("accessToken", {

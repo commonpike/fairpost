@@ -58,8 +58,8 @@ export default class TwitterAuth {
    * @returns - {code, verifier}
    */
   private async requestCode(): Promise<{ code: string; verifier: string }> {
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const { url, codeVerifier, state } =
       this.getClient().generateOAuth2AuthLink(
         OAuth2Service.getCallbackUrl(clientHost, clientPort),
@@ -101,8 +101,8 @@ export default class TwitterAuth {
     code: string,
     verifier: string,
   ): Promise<TokenResponse> {
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const tokens = (await this.getClient().loginWithOAuth2({
       code: code,
       codeVerifier: verifier,

@@ -42,7 +42,7 @@ export default class Feed {
       .filter((p) => p.active)
       .forEach((p) => (this.platforms[p.id] = p));
     this.path = this.user
-      .get("settings", "FEED_PATH", "users/%user%/feed")
+      .get("settings", "USER_FEEDPATH", "users/%user%/feed")
       .replace("%user%", this.user.id);
     this.id = this.user.id + ":feed";
     this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));

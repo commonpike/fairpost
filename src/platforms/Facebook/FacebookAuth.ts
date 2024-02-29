@@ -41,8 +41,8 @@ export default class FacebookAuth {
 
   protected async requestCode(clientId: string): Promise<string> {
     Logger.trace("FacebookAuth", "requestCode");
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -92,8 +92,8 @@ export default class FacebookAuth {
   ): Promise<string> {
     Logger.trace("FacebookAuth", "exchangeCode");
 
-    const clientHost = this.user.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "REQUEST_PORT"));
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.get("oauth/access_token", {
