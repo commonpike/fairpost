@@ -7,10 +7,10 @@
 
 import * as path from "path";
 
-import User from "./models/User";
 import Logger from "./services/Logger";
 import { PlatformId } from "./platforms";
 import { PostStatus } from "./models/Post";
+import User from "./models/User";
 
 // arguments
 const COMMAND = process.argv[2] ?? "help";
@@ -53,6 +53,11 @@ async function main() {
 
   try {
     switch (COMMAND) {
+      case "get-user": {
+        result = user;
+        report = user.report();
+        break;
+      }
       case "get-feed": {
         result = feed;
         report = feed.report();

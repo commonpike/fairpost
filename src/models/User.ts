@@ -34,17 +34,39 @@ export default class User {
   constructor(id: string = "default") {
     this.id = id;
     this.loadGlobalEnv();
-    this.homedir = this.getEnv("USERS_DIR", "users") + "/" + this.id;
+    this.homedir = this.getEnv("USER_DIR", "users/%user%").replace('%user%',this.id);
     this.loadUserEnv();
     this.loadJson();
   }
 
-  public getFeed() {
+  /**
+   * Return a small report for this feed
+   * @returns the report in text
+   */
+
+  report(): string {
+    Logger.trace("User", "report");
+    let report = "";
+    report += "\nUser: " + this.id;
+    report += "\n - homedir: " + this.homedir;
+    return report;
+  }
+
+  /**
+   * @returns the feed for this user
+   */
+
+  public getFeed(): Feed {
     this.loadPlatforms();
     return new Feed(this);
   }
 
-  private loadPlatforms() {
+  /**
+   * Load all available platforms, and set
+   * those that are active in the settings,
+   * active
+   */
+  private loadPlatforms(): void {
     const activePlatformIds = this.get("settings", "FEED_PLATFORMS", "").split(
       ",",
     );
@@ -60,6 +82,14 @@ export default class User {
 
   /* storage */
 
+  /**
+   * Get a value from the storage associated
+   * with the store given in the request
+   * @param store
+   * @param key
+   * @param def
+   * @returns the value
+   */
   public get(store: "settings" | "auth", key: string, def?: string): string {
     const storage =
       store === "settings"
@@ -97,6 +127,14 @@ export default class User {
     return value;
   }
 
+  /**
+   * Set a key/value in the storage associated
+   * with the store given in the request
+   * @param store
+   * @param key
+   * @param value
+   * @returns the value
+   */
   public set(store: "settings" | "auth", key: string, value: string) {
     const storage =
       store === "settings"
@@ -129,38 +167,6 @@ export default class User {
     this.saveJson();
   }
 
-  private loadGlobalEnv() {
-    // load global env file into user env
-    const configPath =
-      process.argv
-        .find((element) => element.startsWith(`--config=`))
-        ?.replace(`--config=`, "") ?? ".env";
-    const configPathResolved = path.resolve(__dirname + "/../../" + configPath);
-
-    if (!fs.existsSync(configPathResolved)) {
-      throw new Error("Missing global config file: " + configPathResolved);
-    }
-    dotenv.config({ path: configPathResolved, processEnv: this.envData });
-
-    // allow cli to override FAIRPOST_LOGGER_*
-    if (process.argv.includes("--verbose")) {
-      this.envData["LOGGER_LEVEL"] = "TRACE";
-      this.envData["LOGGER_CONSOLE"] = "true";
-    }
-  }
-
-  private loadUserEnv() {
-    const userEnvFile =
-      this.homedir + "/" + this.getEnv("STORAGE_ENVPATH", ".env");
-    if (fs.existsSync(userEnvFile)) {
-      dotenv.config({
-        path: userEnvFile,
-        processEnv: this.envData,
-        override: true,
-      });
-    }
-  }
-
   private loadJson() {
     const jsonFile =
       this.homedir +
@@ -185,5 +191,48 @@ export default class User {
       fs.mkdirSync(path.dirname(jsonFile), { recursive: true });
     }
     fs.writeFileSync(jsonFile, JSON.stringify(this.jsonData, null, "\t"));
+  }
+
+  /**
+   * Load the global, non-user, env
+   * into the user store. You can override
+   * the path on the cli using --config=[path]
+   */
+  private loadGlobalEnv() {
+    // load global env file into user env
+    const configPath =
+      process.argv
+        .find((element) => element.startsWith(`--config=`))
+        ?.replace(`--config=`, "") ?? ".env";
+    const configPathResolved = path.resolve(__dirname + "/../../" + configPath);
+
+    if (!fs.existsSync(configPathResolved)) {
+      throw new Error("Missing global config file: " + configPathResolved);
+    }
+    dotenv.config({ path: configPathResolved, processEnv: this.envData });
+
+    // allow cli to override FAIRPOST_LOGGER_*
+    if (process.argv.includes("--verbose")) {
+      this.envData["LOGGER_LEVEL"] = "TRACE";
+      this.envData["LOGGER_CONSOLE"] = "true";
+    }
+  }
+
+  /**
+   * Load the personal user env
+   * into the user store, optionally overriding
+   * global settings. It is located in the users
+   * homedir at STORAGE_ENVPATH
+   */
+  private loadUserEnv() {
+    const userEnvFile =
+      this.homedir + "/" + this.getEnv("STORAGE_ENVPATH", ".env");
+    if (fs.existsSync(userEnvFile)) {
+      dotenv.config({
+        path: userEnvFile,
+        processEnv: this.envData,
+        override: true,
+      });
+    }
   }
 }

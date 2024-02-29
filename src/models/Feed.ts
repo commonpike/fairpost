@@ -2,11 +2,11 @@ import * as fs from "fs";
 
 import Folder from "./Folder";
 import Logger from "../services/Logger";
-import User from "./User";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
 import { PostStatus } from "./Post";
+import User from "./User";
 
 /**
  * Feed - the core handler of fairpost
@@ -41,13 +41,10 @@ export default class Feed {
     user.platforms
       .filter((p) => p.active)
       .forEach((p) => (this.platforms[p.id] = p));
-    this.path = this.user.get(
-      "settings",
-      "FEED_PATH",
-      this.user.homedir + "/feed",
-    );
-    this.id =
-      this.user.id + ":" + this.user.get("settings", "FEED_PATH", "feed");
+    this.path = this.user
+      .get("settings", "FEED_PATH", "users/%user%/feed")
+      .replace("%user%", this.user.id);
+    this.id = this.user.id + ":feed";
     this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
   }
 
