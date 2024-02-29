@@ -19,8 +19,10 @@ class Logger {
     }
     const configFile = process.env.FAIRPOST_LOGGER_CONFIG || "log4js.json";
     const category = process.env.FAIRPOST_LOGGER_CATEGORY || "default";
-    const level = process.env.FAIRPOST_LOGGER_LEVEL || "INFO";
-    const console = process.env.FAIRPOST_LOGGER_CONSOLE !== "false";
+    //const level = process.env.FAIRPOST_LOGGER_LEVEL || "INFO";
+    //const console = process.env.FAIRPOST_LOGGER_CONSOLE !== "false";
+    const level = "TRACE";
+    const console = true;
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const config = require(__dirname + "/../../" + configFile);
