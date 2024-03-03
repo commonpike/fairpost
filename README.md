@@ -43,8 +43,8 @@ npm run build
 # copy and edit fairpost config file
 cp .env.dist .env && nano .env
 
-# copy and edit users config file
-cp users/default/.env.dist users/default/.env && nano users/default/.env
+# create a single user feed
+cp -a etc/skeleton/feed ./feed
 
 # run
 ./fairpost.js help
