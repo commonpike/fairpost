@@ -140,7 +140,7 @@ fairpost.js publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-r
 
 ```
 # Select which user to handle
-fairpost.js [command] [arguments] --user=test
+fairpost.js @[user] [command] [arguments] 
 
 # Set the cli report format to pure json
 fairpost.js [command] [arguments] --report=json

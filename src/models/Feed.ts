@@ -352,12 +352,20 @@ export default class Feed {
    */
   schedulePosts(
     filters: {
-      folders?: string[];
+      folders: string[];
       platforms?: PlatformId[];
     },
     date: Date,
   ): Post[] {
     Logger.trace("Feed", "schedulePosts", filters, date);
+    if (!filters.folders) {
+      if (!filters.platforms) {
+        throw Logger.error("Feed.schedulePosts needs to filter on either folders or platforms");
+      }
+    }
+    if (filters.folders && filters.folders.length >1) {
+      throw Logger.error("Feed.schedulePosts will cowardly only operate on one folder");
+    }
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
     const folders = this.getFolders(filters?.folders);
@@ -430,13 +438,21 @@ export default class Feed {
    * @returns multiple posts
    */
   async publishPosts(
-    filters?: {
-      folders?: string[];
+    filters: {
+      folders: string[];
       platforms?: PlatformId[];
     },
     dryrun: boolean = false,
   ): Promise<Post[]> {
     Logger.trace("Feed", "publishPosts", filters, dryrun);
+    if (!filters.folders) {
+      if (!filters.platforms) {
+        throw Logger.error("Feed.schedulePosts needs to filter on either folders or platforms");
+      }
+    }
+    if (filters.folders && filters.folders.length >1) {
+      throw Logger.error("Feed.schedulePosts will cowardly only operate on one folder");
+    }
     const now = new Date();
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);

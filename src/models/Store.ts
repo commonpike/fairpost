@@ -92,12 +92,12 @@ export default class Store {
   private setEnv(key: string, value: string) {
     const ui = this.envData["FAIRPOST_UI"];
     if (ui === "cli") {
-      console.log("Store this value in your .env file:");
+      console.log("Store this value in your users .env file:");
       console.log();
       console.log("FAIRPOST_" + key + "=" + value);
       console.log();
     } else {
-      throw new Error("Storage.setEnv: UI " + ui + " not implemented");
+      throw new Error("Storage.setEnv: UI " + ui + " not supported");
     }
   }
 

@@ -13,10 +13,10 @@ import { PostStatus } from "./models/Post";
 import User from "./models/User";
 
 // arguments
-const COMMAND = process.argv[2] ?? "help";
+const USER = process.argv[2]?.includes('@') ? process.argv[2].replace('@','') : "admin";
+const COMMAND = process.argv[2]?.includes('@') ? process.argv[3] ?? "help" : process.argv[2];
 
 // options
-const USER = (getOption("user") as string) ?? "default";
 const DRY_RUN = !!getOption("dry-run") ?? false;
 const REPORT = (getOption("report") as string) ?? "text";
 const PLATFORMS =
