@@ -23,11 +23,14 @@ class CommandHandler {
     }
     return CommandHandler.instance;
   }
-  async execute(user: User, command: string = "help", args: CommandArguments = {}): Promise<{
-    result: any,
-    report: string
+  async execute(
+    user: User,
+    command: string = "help",
+    args: CommandArguments = {},
+  ): Promise<{
+    result: unknown;
+    report: string;
   }> {
-
     let result: unknown;
     let report = "";
 
@@ -50,12 +53,15 @@ class CommandHandler {
       }
       case "setup-platform": {
         if (!args.platform) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: platform");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: platform",
+          );
         }
         await feed.setupPlatform(args.platform);
         result = "Success"; // or error
         report = "Result: \n" + JSON.stringify(result, null, "\t");
-        
+
         break;
       }
       case "setup-platforms": {
@@ -66,7 +72,10 @@ class CommandHandler {
       }
       case "get-platform": {
         if (!args.platform) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: platform");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: platform",
+          );
         }
         const platform = feed.getPlatform(args.platform);
         report += platform.report() + "\n";
@@ -84,7 +93,10 @@ class CommandHandler {
       }
       case "test-platform": {
         if (!args.platform) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: platform");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: platform",
+          );
         }
         result = await feed.testPlatform(args.platform);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
@@ -97,7 +109,10 @@ class CommandHandler {
       }
       case "refresh-platform": {
         if (!args.platform) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: platform");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: platform",
+          );
         }
         result = await feed.refreshPlatform(args.platform);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
@@ -110,7 +125,10 @@ class CommandHandler {
       }
       case "get-folder": {
         if (!args.folder) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: folder");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: folder",
+          );
         }
         const folder = feed.getFolder(args.folder);
         if (folder) {
@@ -132,10 +150,16 @@ class CommandHandler {
       }
       case "get-post": {
         if (!args.folder) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: folder");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: folder",
+          );
         }
         if (!args.platform) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: platform");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: platform",
+          );
         }
         const post = feed.getPost(args.folder, args.platform);
         if (post) {
@@ -161,10 +185,16 @@ class CommandHandler {
       }
       case "prepare-post": {
         if (!args.folder) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: folder");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: folder",
+          );
         }
         if (!args.platform) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: platform");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: platform",
+          );
         }
         const preppost = await feed.preparePost(args.folder, args.platform);
         if (preppost) {
@@ -188,25 +218,44 @@ class CommandHandler {
       }
       case "schedule-post": {
         if (!args.folder) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: folder");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: folder",
+          );
         }
         if (!args.platform) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: platform");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: platform",
+          );
         }
         if (!args.date) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: date");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: date",
+          );
         }
-        const schedpost = feed.schedulePost(args.folder, args.platform, args.date);
+        const schedpost = feed.schedulePost(
+          args.folder,
+          args.platform,
+          args.date,
+        );
         report += schedpost.report();
         result = schedpost;
         break;
       }
       case "schedule-posts": {
         if (!args.folders) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: folders");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: folders",
+          );
         }
         if (!args.date) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: date");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: date",
+          );
         }
         const schedposts = feed.schedulePosts(
           {
@@ -223,19 +272,32 @@ class CommandHandler {
       }
       case "publish-post": {
         if (!args.folder) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: folder");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: folder",
+          );
         }
         if (!args.platform) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: platform");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: platform",
+          );
         }
-        const pubpost = await feed.publishPost(args.folder, args.platform, args.dryrun);
+        const pubpost = await feed.publishPost(
+          args.folder,
+          args.platform,
+          args.dryrun,
+        );
         report += pubpost.report();
         result = pubpost;
         break;
       }
       case "publish-posts": {
         if (!args.folders) {
-          throw Logger.error("CommandHandler "+command,"Missing argument: folders");
+          throw Logger.error(
+            "CommandHandler " + command,
+            "Missing argument: folders",
+          );
         }
         const pubposts = await feed.publishPosts(
           {
@@ -282,7 +344,7 @@ class CommandHandler {
       }
 
       default: {
-        const cmd = 'fairpost:';
+        const cmd = "fairpost:";
         result = [
           "# basic commands:",
           `${cmd} help`,
@@ -314,17 +376,17 @@ class CommandHandler {
     }
     return {
       result: result,
-      report: report
-    }
+      report: report,
+    };
   }
 }
 interface CommandArguments {
-  dryrun?: boolean,
-  platforms?: PlatformId[],
-  platform?: PlatformId,
-  folders?: string[],
-  folder?: string,
-  date?: Date,
-  status?: PostStatus
+  dryrun?: boolean;
+  platforms?: PlatformId[];
+  platform?: PlatformId;
+  folders?: string[];
+  folder?: string;
+  date?: Date;
+  status?: PostStatus;
 }
 export default CommandHandler.getInstance();

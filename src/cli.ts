@@ -9,8 +9,12 @@ import { PostStatus } from "./models/Post";
 import User from "./models/User";
 
 // arguments
-const USER = process.argv[2]?.includes('@') ? process.argv[2].replace('@','') : "admin";
-const COMMAND = process.argv[2]?.includes('@') ? process.argv[3] ?? "help" : process.argv[2];
+const USER = process.argv[2]?.includes("@")
+  ? process.argv[2].replace("@", "")
+  : "admin";
+const COMMAND = process.argv[2]?.includes("@")
+  ? process.argv[3] ?? "help"
+  : process.argv[2];
 
 // options
 const DRY_RUN = !!getOption("dry-run") ?? false;
@@ -43,14 +47,14 @@ async function main() {
   const user = new User(USER);
 
   try {
-    ({result,report} = await CommandHandler.execute(user,COMMAND,{
+    ({ result, report } = await CommandHandler.execute(user, COMMAND, {
       dryrun: DRY_RUN,
       platforms: PLATFORMS,
       platform: PLATFORM,
       folders: FOLDERS,
       folder: FOLDER,
       date: DATE ? new Date(DATE) : undefined,
-      status: STATUS
+      status: STATUS,
     }));
   } catch (e) {
     console.error((e as Error).message ?? e);
