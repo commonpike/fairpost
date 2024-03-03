@@ -31,8 +31,8 @@ const POST = (getOption("post") as string) ?? undefined;
 if (POST) {
   [FOLDER, PLATFORM] = POST.split(":") as [string, PlatformId];
 }
-// utilities
 
+// utilities
 function getOption(key: string): boolean | string | null {
   if (process.argv.includes(`--${key}`)) return true;
   const value = process.argv.find((element) => element.startsWith(`--${key}=`));
@@ -41,13 +41,10 @@ function getOption(key: string): boolean | string | null {
 }
 
 async function main() {
-  let result: unknown;
-  let report = "";
-
   const user = new User(USER);
 
   try {
-    ({ result, report } = await CommandHandler.execute(user, COMMAND, {
+    const { result, report } = await CommandHandler.execute(user, COMMAND, {
       dryrun: DRY_RUN,
       platforms: PLATFORMS,
       platform: PLATFORM,
@@ -55,19 +52,19 @@ async function main() {
       folder: FOLDER,
       date: DATE ? new Date(DATE) : undefined,
       status: STATUS,
-    }));
+    });
+
+    switch (REPORT) {
+      case "json": {
+        console.log(JSON.stringify(result, null, "\t"));
+        break;
+      }
+      default: {
+        console.log(report);
+      }
+    }
   } catch (e) {
     console.error((e as Error).message ?? e);
-  }
-
-  switch (REPORT) {
-    case "json": {
-      console.log(JSON.stringify(result, null, "\t"));
-      break;
-    }
-    default: {
-      console.log(report);
-    }
   }
 }
 
