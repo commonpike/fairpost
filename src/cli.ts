@@ -14,7 +14,7 @@ const USER = process.argv[2]?.includes("@")
   : "admin";
 const COMMAND = process.argv[2]?.includes("@")
   ? process.argv[3] ?? "help"
-  : process.argv[2];
+  : process.argv[2] ?? "help";
 
 // options
 const DRY_RUN = !!getOption("dry-run") ?? false;
