@@ -3,7 +3,6 @@ import * as log4js from "log4js";
 import * as platformClasses from "../platforms";
 
 import Feed from "./Feed";
-import Logger from "../services/Logger";
 import Platform from "./Platform";
 import Store from "./Store";
 
@@ -40,7 +39,7 @@ export default class User {
    */
 
   report(): string {
-    Logger.trace("User", "report");
+    this.trace("User", "report");
     let report = "";
     report += "\nUser: " + this.id;
     report += "\n - homedir: " + this.homedir;
@@ -79,7 +78,7 @@ export default class User {
     try {
       return this.store.get(store, key, def);
     } catch (error) {
-      throw Logger.error(error);
+      throw this.error(error);
     }
   }
 
@@ -87,7 +86,7 @@ export default class User {
     try {
       return this.store.set(store, key, value);
     } catch (error) {
-      throw Logger.error(error);
+      throw this.error(error);
     }
   }
 

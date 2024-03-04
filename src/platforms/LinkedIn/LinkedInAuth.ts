@@ -4,7 +4,6 @@ import {
   handleJsonResponse,
 } from "../../utilities";
 
-import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import User from "../../models/User";
 import { strict as assert } from "assert";
@@ -40,7 +39,7 @@ export default class LinkedInAuth {
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw Logger.error(
+      throw this.user.error(
         "LinkedInAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -53,7 +52,7 @@ export default class LinkedInAuth {
    * @returns - code
    */
   private async requestCode(): Promise<string> {
-    Logger.trace("LinkedInAuth", "requestCode");
+    this.user.trace("LinkedInAuth", "requestCode");
     const clientId = this.user.get("settings", "LINKEDIN_CLIENT_ID");
     const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
@@ -84,15 +83,15 @@ export default class LinkedInAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -103,7 +102,7 @@ export default class LinkedInAuth {
    * @returns - TokenResponse
    */
   private async exchangeCode(code: string): Promise<TokenResponse> {
-    Logger.trace("LinkedInAuth", "exchangeCode", code);
+    this.user.trace("LinkedInAuth", "exchangeCode", code);
     const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
@@ -117,7 +116,7 @@ export default class LinkedInAuth {
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw Logger.error("Invalid TokenResponse", tokens);
+      throw this.user.error("Invalid TokenResponse", tokens);
     }
 
     return tokens;
@@ -157,7 +156,7 @@ export default class LinkedInAuth {
   ): Promise<object> {
     const url = new URL("https://www.linkedin.com");
     url.pathname = "oauth/" + this.API_VERSION + "/" + endpoint;
-    Logger.trace("POST", url.href);
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
@@ -169,7 +168,7 @@ export default class LinkedInAuth {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleLinkedInError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**

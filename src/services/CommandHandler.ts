@@ -5,7 +5,6 @@
  *
  */
 
-import Logger from "../services/Logger";
 import { PlatformId } from "../platforms";
 import { PostStatus } from "../models/Post";
 import User from "../models/User";
@@ -35,7 +34,7 @@ class CommandHandler {
     let report = "";
 
     const feed = user.getFeed();
-    Logger.trace(
+    user.trace(
       "Fairpost " + user.id + ":" + feed.id + " " + command,
       args.dryrun ? " dry-run" : "",
     );
@@ -53,7 +52,7 @@ class CommandHandler {
       }
       case "setup-platform": {
         if (!args.platform) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
@@ -72,7 +71,7 @@ class CommandHandler {
       }
       case "get-platform": {
         if (!args.platform) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
@@ -93,7 +92,7 @@ class CommandHandler {
       }
       case "test-platform": {
         if (!args.platform) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
@@ -109,7 +108,7 @@ class CommandHandler {
       }
       case "refresh-platform": {
         if (!args.platform) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
@@ -125,7 +124,7 @@ class CommandHandler {
       }
       case "get-folder": {
         if (!args.folder) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: folder",
           );
@@ -150,13 +149,13 @@ class CommandHandler {
       }
       case "get-post": {
         if (!args.folder) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: folder",
           );
         }
         if (!args.platform) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
@@ -185,13 +184,13 @@ class CommandHandler {
       }
       case "prepare-post": {
         if (!args.folder) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: folder",
           );
         }
         if (!args.platform) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
@@ -218,19 +217,19 @@ class CommandHandler {
       }
       case "schedule-post": {
         if (!args.folder) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: folder",
           );
         }
         if (!args.platform) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
         }
         if (!args.date) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: date",
           );
@@ -246,13 +245,13 @@ class CommandHandler {
       }
       case "schedule-posts": {
         if (!args.folders) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: folders",
           );
         }
         if (!args.date) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: date",
           );
@@ -272,13 +271,13 @@ class CommandHandler {
       }
       case "publish-post": {
         if (!args.folder) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: folder",
           );
         }
         if (!args.platform) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
@@ -294,7 +293,7 @@ class CommandHandler {
       }
       case "publish-posts": {
         if (!args.folders) {
-          throw Logger.error(
+          throw user.error(
             "CommandHandler " + command,
             "Missing argument: folders",
           );

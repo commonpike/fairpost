@@ -4,7 +4,6 @@ import {
   handleJsonResponse,
 } from "../../utilities";
 
-import Logger from "../../services/Logger";
 import User from "../../models/User";
 
 /**
@@ -36,7 +35,7 @@ export default class RedditApi {
 
     const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
 
-    Logger.trace("GET", url.href);
+    this.user.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {
@@ -47,7 +46,7 @@ export default class RedditApi {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleRedditError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -65,7 +64,7 @@ export default class RedditApi {
     url.pathname = "api/" + endpoint;
 
     const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
-    Logger.trace("POST", url.href);
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
@@ -79,7 +78,7 @@ export default class RedditApi {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleRedditError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -94,7 +93,7 @@ export default class RedditApi {
     url.pathname = "api/" + endpoint;
 
     const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
-    Logger.trace("POST", url.href);
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
@@ -107,7 +106,7 @@ export default class RedditApi {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleRedditError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**

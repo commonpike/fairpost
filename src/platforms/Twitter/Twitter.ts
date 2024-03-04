@@ -1,7 +1,6 @@
 import * as sharp from "sharp";
 
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -31,7 +30,7 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async test() {
-    Logger.trace("Twitter.test: get oauth1 api");
+    this.user.trace("Twitter.test: get oauth1 api");
     const client1 = new TwitterApi({
       appKey: this.user.get("settings", "TWITTER_OA1_API_KEY"),
       appSecret: this.user.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
@@ -39,7 +38,7 @@ export default class Twitter extends Platform {
       accessSecret: this.user.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const creds1 = await client1.v1.verifyCredentials();
-    Logger.trace("Twitter.test: get oauth2 api");
+    this.user.trace("Twitter.test: get oauth2 api");
     const client2 = new TwitterApi(
       this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
     );
@@ -63,7 +62,7 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post> {
-    Logger.trace("Twitter.preparePost", folder.id);
+    this.user.trace("Twitter.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
       // twitter: no video
@@ -75,7 +74,7 @@ export default class Twitter extends Platform {
         const src = file.name;
         const dst = this.assetsFolder + "/twitter-" + src;
         if (file.size / (1024 * 1024) >= 5) {
-          Logger.trace("Resizing " + src + " for twitter ..");
+          this.user.trace("Resizing " + src + " for twitter ..");
           await sharp(post.getFilePath(src))
             .resize({
               width: 1200,
@@ -91,7 +90,7 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Twitter.publishPost", post.id, dryrun);
+    this.user.trace("Twitter.publishPost", post.id, dryrun);
 
     let response = { data: { id: "-99" } } as {
       data: {
@@ -141,7 +140,7 @@ export default class Twitter extends Platform {
       id: string;
     };
   }> {
-    Logger.trace("Twitter.publishTextPost", post.id, dryrun);
+    this.user.trace("Twitter.publishTextPost", post.id, dryrun);
     if (!dryrun) {
       const client2 = new TwitterApi(
         this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
@@ -150,7 +149,7 @@ export default class Twitter extends Platform {
         text: post.getCompiledBody(),
       });
       if (result.errors) {
-        throw Logger.error(result.errors.join());
+        throw this.user.error(result.errors.join());
       }
       return result;
     }
@@ -176,7 +175,7 @@ export default class Twitter extends Platform {
       id: string;
     };
   }> {
-    Logger.trace("Twitter.publishImagesPost", post.id, dryrun);
+    this.user.trace("Twitter.publishImagesPost", post.id, dryrun);
 
     const client1 = new TwitterApi({
       appKey: this.user.get("settings", "TWITTER_OA1_API_KEY"),
@@ -193,7 +192,7 @@ export default class Twitter extends Platform {
     );
     for (const image of post.getFiles("image")) {
       const path = post.getFilePath(image.name);
-      Logger.trace("Uploading " + path + "...");
+      this.user.trace("Uploading " + path + "...");
       try {
         mediaIds.push(
           await client1.v1.uploadMedia(path, {
@@ -206,7 +205,7 @@ export default class Twitter extends Platform {
           }),
         );
       } catch (e) {
-        throw Logger.error("Twitter.publishPost uploadMedia failed", e);
+        throw this.user.error("Twitter.publishPost uploadMedia failed", e);
       }
     }
 
@@ -215,13 +214,13 @@ export default class Twitter extends Platform {
     );
 
     if (!dryrun) {
-      Logger.trace("Tweeting " + post.id + "...");
+      this.user.trace("Tweeting " + post.id + "...");
       const result = await client2.v2.tweet({
         text: post.getCompiledBody(),
         media: { media_ids: mediaIds },
       });
       if (result.errors) {
-        throw Logger.error(result.errors.join());
+        throw this.user.error(result.errors.join());
       }
       return result;
     }

@@ -1,4 +1,3 @@
-import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import { TwitterApi } from "twitter-api-v2";
 import User from "../../models/User";
@@ -30,7 +29,7 @@ export default class TwitterAuth {
       this.user.get("auth", "TWITTER_REFRESH_TOKEN"),
     )) as TokenResponse;
     if (!isTokenResponse(tokens)) {
-      throw Logger.error(
+      throw this.user.error(
         "TwitterAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -75,15 +74,15 @@ export default class TwitterAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw Logger.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.error("TwitterApi.requestCode: " + msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw Logger.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.error("TwitterApi.requestCode: " + msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw Logger.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.error("TwitterApi.requestCode: " + msg, result);
     }
     return {
       code: result["code"] as string,
@@ -109,7 +108,7 @@ export default class TwitterAuth {
       redirectUri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
     })) as TokenResponse;
     if (!isTokenResponse(tokens)) {
-      throw Logger.error(
+      throw this.user.error(
         "TitterAuth.requestAccessToken: reponse is not a valid TokenResponse",
       );
     }

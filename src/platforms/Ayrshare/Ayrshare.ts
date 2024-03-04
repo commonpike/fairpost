@@ -8,7 +8,6 @@ import {
 } from "../../utilities";
 
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -47,7 +46,7 @@ export default abstract class Ayrshare extends Platform {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleAyrshareError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /** @inheritdoc */
@@ -114,7 +113,7 @@ export default abstract class Ayrshare extends Platform {
       const ext = path.extname(file);
       const basename = path.basename(file, ext);
       const uname = basename + "-" + randomUUID() + ext;
-      Logger.trace("Ayrshare.uploadMedia: fetching uploadid...", file);
+      this.user.trace("Ayrshare.uploadMedia: fetching uploadid...", file);
       const data = (await fetch(
         "https://app.ayrshare.com/api/media/uploadUrl?fileName=" +
           uname +
@@ -129,13 +128,13 @@ export default abstract class Ayrshare extends Platform {
       )
         .then((res) => handleJsonResponse(res))
         .catch((err) => this.handleAyrshareError(err))
-        .catch((err) => handleApiError(err))) as {
+        .catch((err) => handleApiError(err, this.user))) as {
         uploadUrl: string;
         contentType: string;
         accessUrl: string;
       };
 
-      Logger.trace("Ayrshare.uploadMedia: uploading..", uname, data);
+      this.user.trace("Ayrshare.uploadMedia: uploading..", uname, data);
 
       await fetch(data.uploadUrl, {
         method: "PUT",
@@ -145,7 +144,7 @@ export default abstract class Ayrshare extends Platform {
         },
         body: buffer,
       }).catch((error) => {
-        throw Logger.error("Failed uploading " + file, error);
+        throw this.user.error("Failed uploading " + file, error);
       });
 
       urls.push(data.accessUrl.replace(/ /g, "%20"));
@@ -175,7 +174,7 @@ export default abstract class Ayrshare extends Platform {
 
     const postPlatform = this.platforms[this.id];
     if (!postPlatform) {
-      throw Logger.error(
+      throw this.user.error(
         "Ayrshare.postAyrshare: No ayrshare platform associated with platform " +
           this.id,
       );
@@ -197,7 +196,7 @@ export default abstract class Ayrshare extends Platform {
             requiresApproval: this.requiresApproval,
           },
     );
-    Logger.trace("Ayrshare.postAyrshare: publishing...", postPlatform);
+    this.user.trace("Ayrshare.postAyrshare: publishing...", postPlatform);
     const response = (await fetch("https://app.ayrshare.com/api/post", {
       method: "POST",
       headers: {
@@ -208,7 +207,7 @@ export default abstract class Ayrshare extends Platform {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleAyrshareError(err))
-      .catch((err) => handleApiError(err))) as {
+      .catch((err) => handleApiError(err, this.user))) as {
       id: string;
       status?: string;
     };
@@ -219,7 +218,7 @@ export default abstract class Ayrshare extends Platform {
     ) {
       const error =
         "Ayrshare.postAyrshare: Bad result status: " + response["status"];
-      throw Logger.error(error);
+      throw this.user.error(error);
     }
     return response;
   }

@@ -2,7 +2,6 @@ import * as sharp from "sharp";
 
 import Ayrshare from "./Ayrshare";
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 
@@ -18,12 +17,12 @@ export default class AsInstagram extends Ayrshare {
     const post = await super.preparePost(folder);
     if (post && post.files) {
       if (post.getFiles("video").length > 10) {
-        Logger.trace("Removing > 10 videos for instagram caroussel..");
+        this.user.trace("Removing > 10 videos for instagram caroussel..");
         post.limitFiles("video", 10);
       }
       const remaining = 10 - post.getFiles("video").length;
       if (post.getFiles("image").length > remaining) {
-        Logger.trace("Removing some images for instagram caroussel..");
+        this.user.trace("Removing some images for instagram caroussel..");
         post.limitFiles("image", remaining);
       }
 
@@ -31,7 +30,7 @@ export default class AsInstagram extends Ayrshare {
       for (const file of post.getFiles("image")) {
         const src = file.name;
         if (file.width && file.width > 1440) {
-          Logger.trace("Resizing " + src + " for instagram ..");
+          this.user.trace("Resizing " + src + " for instagram ..");
           const dst =
             this.assetsFolder + "/instagram-" + file.basename + ".JPEG";
           await sharp(post.getFilePath(src))

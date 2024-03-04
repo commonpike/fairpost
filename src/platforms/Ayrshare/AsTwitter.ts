@@ -2,7 +2,6 @@ import * as sharp from "sharp";
 
 import Ayrshare from "./Ayrshare";
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 
@@ -26,7 +25,7 @@ export default class AsTwitter extends Ayrshare {
         const src = file.name;
         const dst = this.assetsFolder + "/twitter-" + src;
         if (file.size / (1024 * 1024) >= 5) {
-          Logger.trace("Resizing " + src + " for twitter ..");
+          this.user.trace("Resizing " + src + " for twitter ..");
           await sharp(post.getFilePath(src))
             .resize({
               width: 1200,

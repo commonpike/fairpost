@@ -1,4 +1,4 @@
-import Logger from "./services/Logger";
+import User from "./models/User";
 
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 export function isSimilarArray(a: any, b: any) {
@@ -111,7 +111,13 @@ export async function handleFormResponse(
   return data;
 }
 
-export async function handleApiError(error: ApiResponseError): Promise<never> {
+export async function handleApiError(
+  error: ApiResponseError,
+  user?: User,
+): Promise<never> {
+  if (!user) {
+    throw error;
+  }
   let errorMessage = error.message;
 
   const errorDetails = {} as { [key: string]: string | number | object };
@@ -155,6 +161,5 @@ export async function handleApiError(error: ApiResponseError): Promise<never> {
       errorDetails["errno"] = error.errno as number;
     }
   }
-
-  throw Logger.error(errorMessage, error.response?.url, errorDetails);
+  throw user.error(errorMessage, error.response?.url, errorDetails);
 }

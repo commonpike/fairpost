@@ -3,7 +3,6 @@ import * as path from "path";
 import * as sharp from "sharp";
 
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -57,7 +56,7 @@ export default class Reddit extends Platform {
 
   /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post> {
-    Logger.trace("Reddit.preparePost", folder.id);
+    this.user.trace("Reddit.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
       // reddit: max 1 image or video
@@ -70,7 +69,7 @@ export default class Reddit extends Platform {
           .filter((file) => file.basename === "poster");
         if (posters.length) {
           // copy that file to its dest
-          Logger.trace(
+          this.user.trace(
             "Reddit.preparePost",
             "copying poster",
             posters[0].name,
@@ -83,7 +82,7 @@ export default class Reddit extends Platform {
         } else if (post.hasFiles("image")) {
           // copy the first image to poster
           const img = post.getFiles("image")[0];
-          Logger.trace(
+          this.user.trace(
             "Reddit.preparePost",
             "copying poster",
             img.name,
@@ -93,10 +92,10 @@ export default class Reddit extends Platform {
         } else {
           // create a poster using ffmpeg
           try {
-            throw Logger.error("thumbnails not implemented");
+            throw this.user.error("thumbnails not implemented");
             // https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
             // const video = post.getFiles('video')[0];
-            // Logger.trace("Reddit.preparePost", "creating thumbnail", video.name, poster);
+            // this.user.trace("Reddit.preparePost", "creating thumbnail", video.name, poster);
             // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(poster));
           } catch (e) {
             post.valid = false;
@@ -111,7 +110,7 @@ export default class Reddit extends Platform {
         const file = post.getFiles("image")[0];
         const src = file.name;
         if (file.width && file.width > 3000) {
-          Logger.trace("Resizing " + src + " for reddit ..");
+          this.user.trace("Resizing " + src + " for reddit ..");
           const dst = this.assetsFolder + "/reddit-" + file.basename + ".jpg";
           await sharp(post.getFilePath(src))
             .resize({
@@ -128,7 +127,7 @@ export default class Reddit extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Reddit.publishPost", post.id, dryrun);
+    this.user.trace("Reddit.publishPost", post.id, dryrun);
 
     let response = {};
     let error = undefined as Error | undefined;
@@ -173,7 +172,7 @@ export default class Reddit extends Platform {
    * @returns result
    */
   private async publishTextPost(post: Post, dryrun = false): Promise<object> {
-    Logger.trace("Reddit.publishTextPost");
+    this.user.trace("Reddit.publishTextPost");
     const title = post.title;
     const body = post.getCompiledBody("!title");
     if (!dryrun) {
@@ -194,7 +193,7 @@ export default class Reddit extends Platform {
         };
       };
       if (response.json?.errors?.length) {
-        throw Logger.error(response.json.errors.flat());
+        throw this.user.error(response.json.errors.flat());
       }
       return response;
     }
@@ -210,7 +209,7 @@ export default class Reddit extends Platform {
    * @returns result
    */
   private async publishImagePost(post: Post, dryrun = false): Promise<object> {
-    Logger.trace("Reddit.publishImagePost");
+    this.user.trace("Reddit.publishImagePost");
     const title = post.title;
     const image = post.getFiles("image")[0];
     const file = post.getFilePath(image.name);
@@ -234,7 +233,7 @@ export default class Reddit extends Platform {
         };
       };
       if (response.json?.errors?.length) {
-        throw Logger.error(response.json.errors.flat());
+        throw this.user.error(response.json.errors.flat());
       }
       return response;
     }
@@ -250,7 +249,7 @@ export default class Reddit extends Platform {
    * @returns result
    */
   private async publishVideoPost(post: Post, dryrun = false): Promise<object> {
-    Logger.trace("Reddit.publishVideoPost");
+    this.user.trace("Reddit.publishVideoPost");
     const title = post.title;
 
     // upload poster first
@@ -283,7 +282,7 @@ export default class Reddit extends Platform {
         };
       };
       if (response.json?.errors?.length) {
-        throw Logger.error(response.json.errors.flat());
+        throw this.user.error(response.json.errors.flat());
       }
       return response;
     }
@@ -326,7 +325,7 @@ export default class Reddit extends Platform {
     };
     if (!leash.args?.action || !leash.args?.fields) {
       const msg = "Reddit.getUploadLeash: bad answer";
-      throw Logger.error(msg, leash);
+      throw this.user.error(msg, leash);
     }
 
     return {
@@ -363,7 +362,7 @@ export default class Reddit extends Platform {
       form.append(fieldname, leash.fields[fieldname]);
     }
     form.append("file", new Blob([buffer]), filename);
-    Logger.trace("POST", leash.action);
+    this.user.trace("POST", leash.action);
 
     const responseRaw = await fetch(leash.action, {
       method: "POST",
@@ -379,12 +378,12 @@ export default class Reddit extends Platform {
       const encodedURL = xml.PostResponse.Location;
       if (!encodedURL) {
         const msg = "Reddit.uploadFile: No URL returned";
-        throw Logger.error(msg, xml);
+        throw this.user.error(msg, xml);
       }
       return decodeURIComponent(encodedURL);
     } catch (e) {
       const msg = "Reddit.uploadFile: cant parse xml";
-      throw Logger.error(msg, response, e);
+      throw this.user.error(msg, response, e);
     }
   }
 }

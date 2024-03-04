@@ -1,4 +1,3 @@
-import Logger from "../../services/Logger";
 import { OAuth2Client } from "google-auth-library";
 import OAuth2Service from "../../services/OAuth2Service";
 import User from "../../models/User";
@@ -41,7 +40,11 @@ export default class YouTubeAuth {
       this.store(response["res"]["data"]);
       return;
     }
-    throw Logger.error("YouTubeAuth.refresh", "not a valid repsonse", response);
+    throw this.user.error(
+      "YouTubeAuth.refresh",
+      "not a valid repsonse",
+      response,
+    );
   }
 
   /**
@@ -65,7 +68,7 @@ export default class YouTubeAuth {
    * @returns - code
    */
   private async requestCode(): Promise<string> {
-    Logger.trace("YouTubeAuth", "requestCode");
+    this.user.trace("YouTubeAuth", "requestCode");
     const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
@@ -93,15 +96,15 @@ export default class YouTubeAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -112,7 +115,7 @@ export default class YouTubeAuth {
    * @returns - TokenResponse
    */
   private async exchangeCode(code: string): Promise<TokenResponse> {
-    Logger.trace("YouTubeAuth", "exchangeCode", code);
+    this.user.trace("YouTubeAuth", "exchangeCode", code);
 
     const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
@@ -127,7 +130,7 @@ export default class YouTubeAuth {
       tokens: TokenResponse;
     };
     if (!isTokenResponse(response.tokens)) {
-      throw Logger.error("Invalid TokenResponse", response.tokens);
+      throw this.user.error("Invalid TokenResponse", response.tokens);
     }
     return response.tokens;
   }

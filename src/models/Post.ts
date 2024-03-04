@@ -2,7 +2,6 @@ import * as fs from "fs";
 
 import Folder, { FileInfo } from "./Folder";
 
-import Logger from "../services/Logger";
 import Platform from "./Platform";
 import { isSimilarArray } from "../utilities";
 
@@ -58,7 +57,7 @@ export default class Post {
    */
 
   report(): string {
-    Logger.trace("Post", "report");
+    this.platform.user.trace("Post", "report");
     let report = "";
     report += "\nPost: " + this.id;
     report += "\n - valid: " + this.valid;
@@ -74,7 +73,7 @@ export default class Post {
    */
 
   save(): void {
-    Logger.trace("Post", "save");
+    this.platform.user.trace("Post", "save");
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const data = { ...this } as { [key: string]: any };
     delete data.folder;
@@ -93,7 +92,7 @@ export default class Post {
    */
 
   schedule(date: Date): void {
-    Logger.trace("Post", "schedule");
+    this.platform.user.trace("Post", "schedule");
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
@@ -278,7 +277,7 @@ export default class Post {
   purgeFiles() {
     this.getFiles().forEach((file) => {
       if (file.original && !fs.existsSync(this.getFilePath(file.original))) {
-        Logger.info(
+        this.platform.user.info(
           "Post",
           "purgeFiles",
           "purging non-existant derivate",
@@ -287,7 +286,7 @@ export default class Post {
         this.removeFile(file.name);
       }
       if (!fs.existsSync(this.getFilePath(file.name))) {
-        Logger.info(
+        this.platform.user.info(
           "Post",
           "purgeFiles",
           "purging non-existent file",
@@ -344,11 +343,15 @@ export default class Post {
       if (!this.files) {
         this.files = [];
       }
-      Logger.trace("Post.addFile", newFile);
+      this.platform.user.trace("Post.addFile", newFile);
       this.files.push(newFile);
       return newFile;
     } else {
-      Logger.warn("Post.addFile", "Not replacing existing file", name);
+      this.platform.user.warn(
+        "Post.addFile",
+        "Not replacing existing file",
+        name,
+      );
     }
   }
 
@@ -424,7 +427,7 @@ export default class Post {
     this.results.push(result);
 
     if (result.error) {
-      Logger.warn(
+      this.platform.user.warn(
         "Post.processResult",
         this.id,
         "failed",

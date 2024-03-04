@@ -2,7 +2,6 @@ import * as sharp from "sharp";
 
 import Ayrshare from "./Ayrshare";
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 
@@ -30,7 +29,7 @@ export default class AsLinkedIn extends Ayrshare {
         const src = file.name;
         const dst = this.assetsFolder + "/linkedin-" + src;
         if (file.size / (1024 * 1024) >= 5) {
-          Logger.trace("Resizing " + src + " for linkedin ..");
+          this.user.trace("Resizing " + src + " for linkedin ..");
           await sharp(post.getFilePath(src))
             .resize({
               width: 1200,

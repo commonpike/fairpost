@@ -4,7 +4,6 @@ import {
   handleJsonResponse,
 } from "../../utilities";
 
-import Logger from "../../services/Logger";
 import User from "../../models/User";
 
 /**
@@ -38,7 +37,7 @@ export default class FacebookApi {
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
-    Logger.trace("GET", url.href);
+    this.user.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {
@@ -49,7 +48,7 @@ export default class FacebookApi {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleFacebookError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -69,7 +68,7 @@ export default class FacebookApi {
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    Logger.trace("POST", url.href);
+    this.user.trace("POST", url.href);
     return await fetch(url, {
       method: "POST",
       headers: {
@@ -82,7 +81,7 @@ export default class FacebookApi {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleFacebookError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -99,7 +98,7 @@ export default class FacebookApi {
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    Logger.trace("POST", url.href);
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
@@ -112,7 +111,7 @@ export default class FacebookApi {
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleFacebookError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**

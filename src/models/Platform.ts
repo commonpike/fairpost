@@ -1,11 +1,10 @@
 import * as fs from "fs";
 
-import User from "./User";
 import Folder from "./Folder";
-import Logger from "../services/Logger";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
 import { PostStatus } from "./Post";
+import User from "./User";
 
 /**
  * Platform base class to extend all platforms on
@@ -31,7 +30,7 @@ export default class Platform {
    */
 
   report(): string {
-    Logger.trace("Platform", "report");
+    this.user.trace("Platform", "report");
     let report = "";
     report += "\nPlatform: " + this.id;
     report += "\n - active: " + this.active;
@@ -47,7 +46,7 @@ export default class Platform {
    * @returns - any object
    */
   async setup() {
-    throw Logger.error(
+    throw this.user.error(
       "No setup implemented for " +
         this.id +
         ". Read the docs in the docs folder.",
@@ -74,7 +73,7 @@ export default class Platform {
    * @returns - true if refreshed
    */
   async refresh(): Promise<boolean> {
-    Logger.trace("Refresh not implemented for " + this.id);
+    this.user.trace("Refresh not implemented for " + this.id);
     return false;
   }
 
@@ -95,7 +94,7 @@ export default class Platform {
    */
 
   getPost(folder: Folder): Post | undefined {
-    Logger.trace("Platform", "getPost");
+    this.user.trace("Platform", "getPost");
 
     const postFilePath = this.getPostFilePath(folder);
     if (fs.existsSync(postFilePath)) {
@@ -128,7 +127,7 @@ export default class Platform {
    * @returns the prepared post
    */
   async preparePost(folder: Folder): Promise<Post> {
-    Logger.trace("Platform", "preparePost");
+    this.user.trace("Platform", "preparePost");
 
     const post = this.getPost(folder) ?? new Post(folder, this);
     if (post.status === PostStatus.PUBLISHED) {
@@ -213,7 +212,7 @@ export default class Platform {
    */
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Platform", "publishPost", post.id, dryrun);
+    this.user.trace("Platform", "publishPost", post.id, dryrun);
     return post.processResult("-99", "#undefined", {
       date: new Date(),
       dryrun: dryrun,

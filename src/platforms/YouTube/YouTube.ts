@@ -1,7 +1,6 @@
 import * as fs from "fs";
 
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -48,7 +47,7 @@ export default class YouTube extends Platform {
 
   /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post> {
-    Logger.trace("YouTube.preparePost", folder.id);
+    this.user.trace("YouTube.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
       // youtube: 1 video
@@ -66,7 +65,7 @@ export default class YouTube extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("YouTube.publishPost", post.id, dryrun);
+    this.user.trace("YouTube.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as {
       id?: string;
@@ -125,7 +124,7 @@ export default class YouTube extends Platform {
         },
       };
     }
-    throw Logger.error("YouTube.getChannel", "invalid result", result);
+    throw this.user.error("YouTube.getChannel", "invalid result", result);
   }
 
   /**
@@ -137,12 +136,15 @@ export default class YouTube extends Platform {
    * @returns object, incl. id of the created post
    */
   private async publishVideoPost(post: Post, dryrun: boolean = false) {
-    Logger.trace("YouTube.publishVideoPost", dryrun);
+    this.user.trace("YouTube.publishVideoPost", dryrun);
 
     const file = post.getFiles("video")[0];
 
     const client = this.auth.getClient();
-    Logger.trace("YouTube.publishVideoPost", "uploading " + file.name + " ...");
+    this.user.trace(
+      "YouTube.publishVideoPost",
+      "uploading " + file.name + " ...",
+    );
     const result = (await client.videos.insert({
       part: ["snippet", "status"],
       notifySubscribers: this.notifySubscribers,
@@ -185,7 +187,7 @@ export default class YouTube extends Platform {
     };
 
     if (result.data.status?.uploadStatus !== "uploaded") {
-      throw Logger.error(
+      throw this.user.error(
         "YouTube.publishVideoPost",
         "failed",
         result.data.status?.uploadStatus,
@@ -194,7 +196,7 @@ export default class YouTube extends Platform {
       );
     }
     if (!result.data.id) {
-      throw Logger.error(
+      throw this.user.error(
         "YouTube.publishVideoPost",
         "missing id in result",
         result,

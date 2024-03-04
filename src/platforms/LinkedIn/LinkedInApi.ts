@@ -5,7 +5,6 @@ import {
   handleJsonResponse,
 } from "../../utilities";
 
-import Logger from "../../services/Logger";
 import User from "../../models/User";
 
 /**
@@ -39,7 +38,7 @@ export default class LinkedInApi {
 
     const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
 
-    Logger.trace("GET", url.href);
+    this.user.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {
@@ -51,7 +50,7 @@ export default class LinkedInApi {
     })
       .then((res) => handleJsonResponse(res, true))
       .catch((err) => this.handleLinkedInError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -73,7 +72,7 @@ export default class LinkedInApi {
       url.search = search;
     }
     const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
-    Logger.trace("POST", url.href);
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
@@ -108,7 +107,7 @@ export default class LinkedInApi {
         return linkedinRes;
       })
       .catch((err) => this.handleLinkedInError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**

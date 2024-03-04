@@ -1,5 +1,4 @@
 import FacebookAuth from "../Facebook/FacebookAuth";
-import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
 import User from "../../models/User";
 
@@ -64,15 +63,15 @@ export default class InstagramAuth extends FacebookAuth {
 
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     return result["code"] as string;
   }
