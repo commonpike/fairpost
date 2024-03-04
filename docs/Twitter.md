@@ -23,19 +23,19 @@ keys will not be needed anymore.
   - website https://github.com/commonpike/fairpost
 - From the Oauth 01 settings
   - generate Api Key and secret
-  - save these in .env as 
+  - save these in your servers .env as 
     - `FAIRPOST_TWITTER_OA1_API_KEY`
     - `FAIRPOST_TWITTER_OA1_API_KEY_SECRET`
   - generate access token and secret, make sure it is read and write
-  - save these in .env as as 
+  - save these in your servers .env as as 
     - `FAIRPOST_TWITTER_OA1_ACCESS_TOKEN`
     - `FAIRPOST_TWITTER_OA1_ACCESS_TOKEN_SECRET`
 - From the OAuth 2 settings
-  - save `FAIRPOST_TWITTER_CLIENT_ID` in .env
-  - save `FAIRPOST_TWITTER_CLIENT_SECRET` in .env
+  - save `FAIRPOST_TWITTER_CLIENT_ID` in your servers .env
+  - save `FAIRPOST_TWITTER_CLIENT_SECRET` in your servers .env
 
 ### Enable the platform
- - Add 'twitter' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
+ - Add 'twitter' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
 
 ### Get an OAuth2 Access Token for your twitter account
 
@@ -49,29 +49,23 @@ This token should last forever (?)
 
 ## Manage additional feeds with the same app
 
-One fairpost `.env` can only manage one feed. If you create a second `.env-foo`, you can use the same app to manage a different feed. OAuth2 allows you to enable the app for your second account, but the OAuth1 part is tied to your first
+One fairpost user can only manage one feed. If you create a second user, you can use the same app to manage a different feed. OAuth2 allows you to enable the app for your second account, but the OAuth1 part is tied to your first
 account and requires you to specify an 'additional_owner' for the uploaded media.
 
-### Enter credentials for your other installation
-
-- set the `FAIRPOST_TWITTER_CLIENT_ID` in your .env-foo
-- set the `FAIRPOST_TWITTER_CLIENT_SECRET` in your .env-foo
-- set the `FAIRPOST_TWITTER_OA1_API_KEY` in your .env-foo
-- set the `FAIRPOST_TWITTER_OA1_API_KEY_SECRET` in your .env-foo
-- set the `FAIRPOST_TWITTER_OA1_ACCESS_TOKEN` in your .env-foo
-- set the `FAIRPOST_TWITTER_OA1_ACCESS_SECRET` in your .env-foo
+## Add a second user 
+- call `./fairpost.js add-user --user=foo` # todo
 
 ### Get an OAuth2 Access Token for your other page
 
-- call `./fairpost.js setup-platform --platform=twitter --config=.env-foo`
+- call `./fairpost.js @foo setup-platform --platform=twitter`
 - follow instructions from the command line
 
 ### Test the other installation
-- call `./fairpost.js test-platform --platform=twitter --config=.env-foo`
+- call `./fairpost.js @foo test-platform --platform=twitter`
 
 ### Set the 'additional owner'
 - from the previous `test-platform` result, copy the `oauth2:id`
-- set this as the `FAIRPOST_TWITTER_OA1_ADDITIONAL_OWNER` in your .env-foo
+- set this as the `FAIRPOST_TWITTER_OA1_ADDITIONAL_OWNER` in your users .env
 
 # Random documentation
 

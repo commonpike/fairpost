@@ -16,6 +16,7 @@ return false and let the Post.processResult().
 <?php
 
 import { PlatformId } from "..";
+import User from "../models/User";
 import Post from "../models/Post";
 
 export default class FooBar extends Platform {
@@ -23,6 +24,10 @@ export default class FooBar extends Platform {
     id: PlatformId = PlatformId.FOOBAR;
     assetsFolder = "_foobar";
     postFileName = "post.json";
+    
+    constructor(user: User) {
+      super(user);
+    }
     
     /** @inheritdoc */
     async preparePost(folder: Folder): Promise<Post> {
@@ -119,9 +124,9 @@ storage uses `.env`, it is read-only.
     this.user.set('auth', 'foo', 'bar');
     console.log(this.user.get('auth', 'foo')); // bar
 ```
-### Using Logger
+### Using User.trace(), User.info(), User.error() etc.
 
-The logger service is a simple wrapper around log4js. It is configured 
+The user contains wrapper methods around log4js. It is configured 
 in your `.env` and in `log4js.json`. The `error()` method is exceptional, 
 in that it not only logs the error, but also returns an error object 
 for you throw:
@@ -129,10 +134,9 @@ for you throw:
 ```php
 <?php
 
-    import Logger from "../../services/Logger";
     ...
-    Logger.trace('foo', 'bar', 'quz');
-    throw Logger.error('foo', 'bar', 'quz');
+    this.user.trace('foo', 'bar', 'quz');
+    throw this.user.error('foo', 'bar', 'quz');
 ```
 
 
@@ -173,7 +177,7 @@ import {
     })
     .then((res) => handleJsonResponse(res))
     .catch((err) => this.handleFooBarError(err))
-    .catch((err) => handleApiError(err));
+    .catch((err) => handleApiError(err,this.user));
 
 ...
 

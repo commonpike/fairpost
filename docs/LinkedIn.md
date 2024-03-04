@@ -8,7 +8,7 @@ The LinkedIn platform posts to your companies feed.
 ### Create a new App in your linkedin account
 - create an company your account can manage
 - find your company id (in the url, like , 93841222)
-  - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your .env
+  - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your users .env
 - create an app to manage the company page \
 https://www.linkedin.com/developers/apps/new
 - add 'share on linkedin' product on your app
@@ -20,12 +20,12 @@ https://www.linkedin.com/developers/apps/new
 - on the 'auth' tab of your app
   - copy ClientID and ClientSecret \
     and save those as `FAIRPOST_LINKEDIN_CLIENT_ID` and `FAIRPOST_LINKEDIN_CLIENT_SECRET` \
-    in your `.env`
+    in your servers `.env`
   - add redirect url for your app as set in your .env (http://localhost:8000/callback)
 
 
 ### Enable the platform
- - Add 'linkedin' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
+ - Add 'linkedin' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
 
 ### Get an OAuth2 Access Token for your platform
 
@@ -40,22 +40,20 @@ The refresh token (if given) lasts for 1 year.
 
 ## Manage additional pages with the same app
 
-One fairpost `.env` can only manage one page. If you create a second `.env-foo`, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
+One fairpost user can only manage one page. If you create a second user, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
 
-### Enter credentials for your other installation
-
-- set the `FAIRPOST_LINKEDIN_CLIENT_ID` in your .env-foo
-- set the `FAIRPOST_LINKEDIN_CLIENT_SECRET` in your .env-foo
+## Add a second user 
+- call `./fairpost.js add-user --user=foo` # todo
 - find your company id (in the url, like , 93841222)
-  - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your .env-foo
+  - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your users .env
 
 ### Get an OAuth2 Access Token for your other page
 
- - call `./fairpost.js setup-platform --platform=linkedin --config=.env-foo`
+ - call `./fairpost.js @foo setup-platform --platform=linkedin`
  - follow instructions from the command line
 
 ### Test the other installation
- - call `./fairpost.js test-platform --platform=linkedin --config=.env-foo`
+ - call `./fairpost.js @foo test-platform --platform=linkedin`
 
 # Limitations 
 

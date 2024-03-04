@@ -24,10 +24,10 @@ The Ayrshare platforms supported by FairPost are
 
 - get an account at Ayrshare
 - get your Api key at https://app.ayrshare.com/api
-- store this key as FAIRPOST_AYRSHARE_API_KEY
+- store this key as FAIRPOST_AYRSHARE_API_KEY in your servers .env
 
 ### Enable and test the facebook platform
- - Add one or more of the 'as*' platforms to `FAIRPOST_FEED_PLATFORMS` in `.env`
+ - Add one or more of the 'as*' platforms to `FAIRPOST_FEED_PLATFORMS` in the users `.env`
  - call `./fairpost.js test-platforms`
 
 # Limitations 
