@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as log4js from "log4js";
 import * as platformClasses from "../platforms";
 
 import Feed from "./Feed";
@@ -17,6 +19,7 @@ export default class User {
   homedir: string;
   platforms = [] as Platform[];
   store: Store;
+  logger: log4js.Logger;
 
   jsonData: { [key: string]: string } = {};
   envData: { [key: string]: string } = {};
@@ -28,6 +31,7 @@ export default class User {
       "%user%",
       this.id,
     );
+    this.logger = this.getLogger();
   }
 
   /**
@@ -85,5 +89,85 @@ export default class User {
     } catch (error) {
       throw Logger.error(error);
     }
+  }
+
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public trace(...args: any[]) {
+    this.logger.trace(args);
+  }
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public debug(...args: any[]) {
+    this.logger.debug(args);
+  }
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public info(...args: any[]) {
+    this.logger.info(args);
+  }
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public warn(...args: any[]) {
+    this.logger.warn(args);
+  }
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public error(...args: any[]): Error {
+    this.logger.error(args);
+    return new Error(
+      "Error: " + args.filter((arg) => typeof arg === "string").join("; "),
+    );
+  }
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+  public fatal(...args: any[]): Error {
+    this.logger.fatal(args);
+    const code = parseInt(args[0]);
+    process.exitCode = code || 1;
+    return new Error(
+      "Fatal: " + args.filter((arg) => typeof arg === "string").join("; "),
+    );
+  }
+
+  /**
+   * @returns a logger to use on this user
+   *
+   * allow cli/env to override level and console
+   */
+  private getLogger(): log4js.Logger {
+    const configFile = this.store.get(
+      "settings",
+      "LOGGER_CONFIG",
+      "log4js.json",
+    );
+    const category = this.store.get("settings", "LOGGER_CATEGORY", "default");
+    const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
+    const addConsole = this.store.get("settings", "LOGGER_CONSOLE", "false");
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const config = fs.existsSync(this.homedir + "/" + configFile)
+      ? require(this.homedir + "/" + configFile)
+      : require(__dirname + "/../../" + configFile);
+    if (!config.categories[category]) {
+      throw new Error(
+        "Logger: Log4js category " + category + " not found in " + configFile,
+      );
+    }
+    for (const appender in config.appenders) {
+      if (config.appenders[appender].filename) {
+        config.appenders[appender].filename = config.appenders[
+          appender
+        ].filename?.replace("%user%", this.id);
+      }
+    }
+    if (
+      addConsole &&
+      !config.categories[category]["appenders"].includes("console")
+    ) {
+      if (!config.appenders["console"]) {
+        config.appenders["console"] = { type: "console" };
+      }
+      config.categories[category]["appenders"].push("console");
+    }
+
+    log4js.configure(config);
+    const logger = log4js.getLogger(category);
+    logger.level = level;
+    return logger;
   }
 }
