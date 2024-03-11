@@ -1,15 +1,15 @@
 {
   "appenders": {
-    "server": { 
+    "global": { 
       "type": "dateFile", 
       "filename" : "var/log/fairpost.log", 
       "compress": true,
       "numBackups" : 7
     },
-    "server-filtered": {
+    "global-filtered": {
       "type": "logLevelFilter",
       "level": "info",
-      "appender": "server"
+      "appender": "global"
     },
     "user": { 
       "type": "dateFile", 
@@ -19,6 +19,6 @@
     }
   },
   "categories": {
-    "default": { "appenders": ["user", "server-filtered"], "level": "info" }
+    "default": { "appenders": ["global"], "level": "info" }
   }
 }

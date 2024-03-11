@@ -1,6 +1,7 @@
 # Fairpost
 feed
 users
+var
 .DS_Store
 build
 *.log

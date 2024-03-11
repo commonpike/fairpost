@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as log4js from "log4js";
+import * as path from "path";
 import * as platformClasses from "../platforms";
 
 import Feed from "./Feed";
@@ -136,12 +137,15 @@ export default class User {
     );
     const category = this.store.get("settings", "LOGGER_CATEGORY", "default");
     const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
-    const addConsole = this.store.get("settings", "LOGGER_CONSOLE", "false");
+    const addConsole =
+      this.store.get("settings", "LOGGER_CONSOLE", "false") === "true";
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const config = fs.existsSync(this.homedir + "/" + configFile)
-      ? require(this.homedir + "/" + configFile)
-      : require(__dirname + "/../../" + configFile);
+      ? require(
+          path.resolve(__dirname + "/../../", this.homedir + "/" + configFile),
+        )
+      : require(path.resolve(__dirname + "/../../", configFile));
     if (!config.categories[category]) {
       throw new Error(
         "Logger: Log4js category " + category + " not found in " + configFile,
@@ -154,6 +158,7 @@ export default class User {
         ].filename?.replace("%user%", this.id);
       }
     }
+
     if (
       addConsole &&
       !config.categories[category]["appenders"].includes("console")

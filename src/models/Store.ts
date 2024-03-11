@@ -30,6 +30,8 @@ export default class Store {
       userid,
     );
     this.loadUserEnv();
+    this.loadConsoleEnv();
+
     this.jsonPath = this.getEnv(
       "USER_JSONPATH",
       "users/%user%/var/lib/storage.json",
@@ -139,13 +141,8 @@ export default class Store {
     if (!fs.existsSync(configPathResolved)) {
       throw new Error("Missing global config file: " + configPathResolved);
     }
-    dotenv.config({ path: configPathResolved, processEnv: this.envData });
 
-    // allow cli to override FAIRPOST_LOGGER_*
-    if (process.argv.includes("--verbose")) {
-      this.envData["LOGGER_LEVEL"] = "TRACE";
-      this.envData["LOGGER_CONSOLE"] = "true";
-    }
+    dotenv.config({ path: configPathResolved, processEnv: this.envData });
   }
 
   /**
@@ -161,6 +158,16 @@ export default class Store {
         processEnv: this.envData,
         override: true,
       });
+    }
+  }
+
+  /**
+   * Allow the cli to override some env settings
+   */
+  private loadConsoleEnv() {
+    if (process.argv.includes("--verbose")) {
+      this.envData["FAIRPOST_LOGGER_LEVEL"] = "TRACE";
+      this.envData["FAIRPOST_LOGGER_CONSOLE"] = "true";
     }
   }
 }
