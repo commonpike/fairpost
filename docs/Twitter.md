@@ -3,6 +3,9 @@
 The Twitter platform is using 
 https://github.com/PLhery/node-twitter-api-v2
 
+If you only have one user, your user .env is 
+the same as your global .env
+
 ## Setting up the Twitter platform
 
 The Twitter api was being rebuild when Elon Musk
@@ -23,16 +26,16 @@ keys will not be needed anymore.
   - website https://github.com/commonpike/fairpost
 - From the Oauth 01 settings
   - generate Api Key and secret
-  - save these in your servers .env as 
+  - save these in your global .env as 
     - `FAIRPOST_TWITTER_OA1_API_KEY`
     - `FAIRPOST_TWITTER_OA1_API_KEY_SECRET`
   - generate access token and secret, make sure it is read and write
-  - save these in your servers .env as as 
+  - save these in your global .env as as 
     - `FAIRPOST_TWITTER_OA1_ACCESS_TOKEN`
     - `FAIRPOST_TWITTER_OA1_ACCESS_TOKEN_SECRET`
 - From the OAuth 2 settings
-  - save `FAIRPOST_TWITTER_CLIENT_ID` in your servers .env
-  - save `FAIRPOST_TWITTER_CLIENT_SECRET` in your servers .env
+  - save `FAIRPOST_TWITTER_CLIENT_ID` in your global .env
+  - save `FAIRPOST_TWITTER_CLIENT_SECRET` in your global .env
 
 ### Enable the platform
  - Add 'twitter' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
@@ -51,6 +54,8 @@ This token should last forever (?)
 
 One fairpost user can only manage one feed. If you create a second user, you can use the same app to manage a different feed. OAuth2 allows you to enable the app for your second account, but the OAuth1 part is tied to your first
 account and requires you to specify an 'additional_owner' for the uploaded media.
+
+To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
 
 ## Add a second user 
 - call `./fairpost.js add-user --user=foo` # todo

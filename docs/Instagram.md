@@ -11,7 +11,8 @@ It uses the related facebook account to
 upload temporary files, because the instagram
 api requires files in posts to have an url.
 
-
+If you only have one user, your user .env is 
+the same as your global .env
 
 ## Setting up the Instagram platform
 
@@ -25,9 +26,9 @@ api requires files in posts to have an url.
  - create an app that can manage pages 
  - include the "Instagram Graph API" product as a new product 
  - under 'settings', find your app ID 
-   - save this as `FAIRPOST_INSTAGRAM_APP_ID` in your servers .env
+   - save this as `FAIRPOST_INSTAGRAM_APP_ID` in your global .env
  - under 'settings', find your app secret
-   - save this as `FAIRPOST_INSTAGRAM_APP_SECRET` in your servers .env
+   - save this as `FAIRPOST_INSTAGRAM_APP_SECRET` in your global .env
 
 
 ### Find your instagram user id 
@@ -75,6 +76,8 @@ before you use the app, set the App Mode to 'Live'
 ## Manage additional pages with the same app
 
 One fairpost user can only manage one page. If you create a second user, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
+
+To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
 
 ## Add a second user 
 - call `./fairpost.js add-user --user=foo` # todo

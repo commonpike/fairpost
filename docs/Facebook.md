@@ -3,6 +3,8 @@
 The `facebook` platform manages a facebook **page** (not your feed)
 using the plain graph api - no extensions installed.
 
+If you only have one user, your user .env is 
+the same as your global .env
 
 ## Setting up the Facebook platform
 
@@ -11,9 +13,9 @@ using the plain graph api - no extensions installed.
  - go to https://developers.facebook.com/
  - create an app that can manage pages 
  - under 'settings', find your app ID 
-   - save this as `FAIRPOST_FACEBOOK_APP_ID` in your servers .env
+   - save this as `FAIRPOST_FACEBOOK_APP_ID` in your global .env
  - under 'settings', find your app secret
-   - save this as `FAIRPOST_FACEBOOK_APP_SECRET` in your servers .env
+   - save this as `FAIRPOST_FACEBOOK_APP_SECRET` in your global .env
  - keep the app under development, otherwise the localhost return url wont work
 
 ### Find the page id of the page you want the app to manage
@@ -66,6 +68,8 @@ before you use the app, set the App Mode to 'Live'
 ## Manage additional pages with the same app
 
 One fairpost user can only manage one page. If you create a second user, you can use the same app to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
+
+To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
 
 ## Add a second user 
 - call `./fairpost.js add-user --user=foo` # todo

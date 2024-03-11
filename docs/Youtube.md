@@ -11,6 +11,9 @@ the YouTube Terms of Service: https://www.youtube.com/t/terms
 Your posts will be preprocessed to fit YouTube. The limitations 
 imposed by Fairpost are not imposed by YouTube. 
 
+If you only have one user, your user .env is 
+the same as your global .env
+
 ## Setting up the YouTube platform
 
 
@@ -31,7 +34,7 @@ Below is how to do it manually.
    - privacy https://github.com/commonpike/fairpost/blob/develop/public/privacy-policy.md
    - for the scopes, add YouTube Data API v3
  - Under credentials, create OAuth 2.0 Client IDs
-   - Save as `FAIRPOST_YOUTUBE_CLIENT_ID` and `FAIRPOST_YOUTUBE_CLIENT_SECRET` in your servers .env
+   - Save as `FAIRPOST_YOUTUBE_CLIENT_ID` and `FAIRPOST_YOUTUBE_CLIENT_SECRET` in your global .env
 
 ### Enable the platform
  - Add 'youtube' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
@@ -66,6 +69,8 @@ To have Fairpost publish **public** videos, your app has to be audited
 ## Manage additional pages with the same app
 
 ...
+To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
+
 
 # Limitations 
 

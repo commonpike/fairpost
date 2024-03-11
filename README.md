@@ -14,9 +14,11 @@ Fairpost is *opinionated*, meaning, it will decide
 how a folder with contents can best be presented
 as a post on each platform. 
 
-By default, there is one user, in `users/default`,
-with a feed located in `users/default/feed`
-Edit `users/default/.env` to manage the platforms
+By default there is one user with a feed located in `./feed`.
+Read [Set up for multiple users](./docs/MultipleUsers.md)
+on how to set it up for more users.
+
+Edit `.env` to manage the platforms
 you want to support, the interval for new posts,
 etcetera. For each platform, you'll have to 
 register the app to post on the users behalf.

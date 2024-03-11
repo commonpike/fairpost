@@ -1,5 +1,8 @@
 # Platform: Reddit
 
+If you only have one user, your user .env is 
+the same as your global .env
+
 ## Setting up the Reddit platform
 
 ### Create a new App in your Reddit account
@@ -8,8 +11,8 @@
 - create an app ('script')
   - redirect url with host/port from your .env (http://localhost:8000/callback)
 - note the code and secret in your app box
-  - save as `FAIRPOST_REDDIT_CLIENT_ID` in your servers .env
-  - save as `FAIRPOST_REDDIT_CLIENT_SECRET` in your servers .env
+  - save as `FAIRPOST_REDDIT_CLIENT_ID` in your global .env
+  - save as `FAIRPOST_REDDIT_CLIENT_SECRET` in your global .env
 - read the terms here https://www.reddit.com/wiki/api/#wiki_read_the_full_api_terms_and_sign_up_for_usage
 - request access to the API using the request form, and wait until approved
 

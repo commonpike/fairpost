@@ -2,6 +2,9 @@
 
 The LinkedIn platform posts to your companies feed.
 
+If you only have one user, your user .env is 
+the same as your global .env
+
 ## Setting up the LinkedIn platform
 
 
@@ -20,7 +23,7 @@ https://www.linkedin.com/developers/apps/new
 - on the 'auth' tab of your app
   - copy ClientID and ClientSecret \
     and save those as `FAIRPOST_LINKEDIN_CLIENT_ID` and `FAIRPOST_LINKEDIN_CLIENT_SECRET` \
-    in your servers `.env`
+    in your global `.env`
   - add redirect url for your app as set in your .env (http://localhost:8000/callback)
 
 
@@ -41,6 +44,8 @@ The refresh token (if given) lasts for 1 year.
 ## Manage additional pages with the same app
 
 One fairpost user can only manage one page. If you create a second user, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
+
+To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
 
 ## Add a second user 
 - call `./fairpost.js add-user --user=foo` # todo
