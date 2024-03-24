@@ -109,30 +109,30 @@ to get a new pair of tokens.
 
 ```
 # basic commands:
-fairpost.js help
-fairpost.js get-feed [--config=xxx]
-fairpost.js setup-platform --platform=xxx
-fairpost.js setup-platforms [--platforms=xxx,xxx]
-fairpost.js test-platform --platform=xxx
-fairpost.js test-platforms [--platforms=xxx,xxx]
-fairpost.js refresh-platform --platform=xxx
-fairpost.js refresh-platforms [--platforms=xxx,xxx]
-fairpost.js get-platform --platform=xxx
-fairpost.js get-platforms [--platforms=xxx,xxx]
-fairpost.js get-folder --folder=xxx
-fairpost.js get-folders [--folders=xxx,xxx]
-fairpost.js get-post --post=xxx:xxx
-fairpost.js get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost.js prepare-post --post=xxx:xxx
-fairpost.js schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
-fairpost.js schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx
-fairpost.js publish-post --post=xxx:xxx [--dry-run]
-fairpost.js publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
+fairpost: help
+fairpost: get-feed [--config=xxx]
+fairpost: setup-platform --platform=xxx
+fairpost: setup-platforms [--platforms=xxx,xxx]
+fairpost: test-platform --platform=xxx
+fairpost: test-platforms [--platforms=xxx,xxx]
+fairpost: refresh-platform --platform=xxx
+fairpost: refresh-platforms [--platforms=xxx,xxx]
+fairpost: get-platform --platform=xxx
+fairpost: get-platforms [--platforms=xxx,xxx]
+fairpost: get-folder --folder=xxx
+fairpost: get-folders [--folders=xxx,xxx]
+fairpost: get-post --post=xxx:xxx
+fairpost: get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: prepare-post --post=xxx:xxx
+fairpost: schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
+fairpost: schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
+fairpost: publish-post --post=xxx:xxx [--dry-run]
+fairpost: publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
 
 # feed planning:
-fairpost.js prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
-fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost.js publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+fairpost: prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
 ```
 
 ### Common arguments 
