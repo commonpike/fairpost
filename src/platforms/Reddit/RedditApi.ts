@@ -4,8 +4,7 @@ import {
   handleJsonResponse,
 } from "../../utilities";
 
-import Logger from "../../services/Logger";
-import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * RedditApi: support for reddit platform.
@@ -13,6 +12,12 @@ import Storage from "../../services/Storage";
 
 export default class RedditApi {
   API_VERSION = "v1";
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Do a GET request on the api.
@@ -28,20 +33,20 @@ export default class RedditApi {
     url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
 
-    const accessToken = Storage.get("auth", "REDDIT_ACCESS_TOKEN");
+    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
 
-    Logger.trace("GET", url.href);
+    this.user.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "OAUTH_USERAGENT"),
       },
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleRedditError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -58,8 +63,8 @@ export default class RedditApi {
     //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.pathname = "api/" + endpoint;
 
-    const accessToken = Storage.get("auth", "REDDIT_ACCESS_TOKEN");
-    Logger.trace("POST", url.href);
+    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
@@ -67,13 +72,13 @@ export default class RedditApi {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "OAUTH_USERAGENT"),
       },
       body: new URLSearchParams(body),
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleRedditError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -87,21 +92,21 @@ export default class RedditApi {
     //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.pathname = "api/" + endpoint;
 
-    const accessToken = Storage.get("auth", "REDDIT_ACCESS_TOKEN");
-    Logger.trace("POST", url.href);
+    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "OAUTH_USERAGENT"),
       },
       body: body,
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleRedditError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**

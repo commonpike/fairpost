@@ -5,11 +5,10 @@ import * as sharp from "sharp";
 import FacebookApi from "./FacebookApi";
 import FacebookAuth from "./FacebookAuth";
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * Facebook: support for facebook platform.
@@ -26,10 +25,10 @@ export default class Facebook extends Platform {
   api: FacebookApi;
   auth: FacebookAuth;
 
-  constructor() {
-    super();
-    this.auth = new FacebookAuth();
-    this.api = new FacebookApi();
+  constructor(user: User) {
+    super(user);
+    this.auth = new FacebookAuth(user);
+    this.api = new FacebookApi(user);
   }
 
   /** @inheritdoc */
@@ -44,19 +43,19 @@ export default class Facebook extends Platform {
 
   /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post> {
-    Logger.trace("Facebook.preparePost", folder.id);
+    this.user.trace("Facebook.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
       // facebook: video post can only contain 1 video
       if (post.hasFiles("video")) {
-        Logger.warn("have video");
+        this.user.warn("have video");
         post.limitFiles("video", 1);
         post.removeFiles("image");
       }
       // facebook : max 4mb images
       for (const file of post.getFiles("image")) {
         if (file.size / (1024 * 1024) >= 4) {
-          Logger.trace("Resizing " + file.name + " for facebook ..");
+          this.user.trace("Resizing " + file.name + " for facebook ..");
           const src = file.name;
           const dst = this.assetsFolder + "/facebook-" + file.name;
           await sharp(post.getFilePath(src))
@@ -74,7 +73,7 @@ export default class Facebook extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Facebook.publishPost", post.id, dryrun);
+    this.user.trace("Facebook.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as { id: string };
     let error = undefined as Error | undefined;
@@ -125,7 +124,7 @@ export default class Facebook extends Platform {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
         message: post.getCompiledBody(),
-        published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        published: this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"),
       })) as { id: string };
     }
     return { id: "-99" };
@@ -153,7 +152,7 @@ export default class Facebook extends Platform {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
         message: post.getCompiledBody(),
-        published: Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        published: this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"),
         attached_media: attachments,
       })) as { id: string };
     }
@@ -178,14 +177,14 @@ export default class Facebook extends Platform {
     const title = post.title;
     const description = post.getCompiledBody("!title");
 
-    Logger.trace("Reading file", file);
+    this.user.trace("Reading file", file);
     const rawData = fs.readFileSync(file);
     const blob = new Blob([rawData]);
 
     const body = new FormData();
     body.set("title", title);
     body.set("description", description);
-    body.set("published", Storage.get("settings", "FACEBOOK_PUBLISH_POSTS"));
+    body.set("published", this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"));
     body.set("source", blob, path.basename(file));
 
     if (!dryrun) {
@@ -193,7 +192,7 @@ export default class Facebook extends Platform {
         id: string;
       };
       if (!result["id"]) {
-        throw Logger.error("No id returned when uploading video");
+        throw this.user.error("No id returned when uploading video");
       }
       return result;
     }
@@ -210,7 +209,7 @@ export default class Facebook extends Platform {
     file: string = "",
     published = false,
   ): Promise<{ id: string }> {
-    Logger.trace("Reading file", file);
+    this.user.trace("Reading file", file);
     const rawData = fs.readFileSync(file);
     const blob = new Blob([rawData]);
 
@@ -223,7 +222,7 @@ export default class Facebook extends Platform {
     };
 
     if (!result["id"]) {
-      throw Logger.error("No id returned when uploading photo");
+      throw this.user.error("No id returned when uploading photo");
     }
     return result;
   }

@@ -2,8 +2,6 @@ import * as fs from "fs";
 import * as http from "http";
 import * as url from "url";
 
-import Storage from "./Storage";
-
 class DeferredResponseQuery {
   promise: Promise<{ [key: string]: string | string[] }>;
   reject: Function = () => {}; // eslint-disable-line
@@ -21,14 +19,12 @@ class DeferredResponseQuery {
  * requesting remote permissions on a service
  */
 export default class OAuth2Service {
-  public static getRequestUrl(): string {
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
+  public static getRequestUrl(clientHost: string, clientPort: number): string {
     return `http://${clientHost}:${clientPort}`;
   }
 
-  public static getCallbackUrl(): string {
-    return this.getRequestUrl() + "/callback";
+  public static getCallbackUrl(clientHost: string, clientPort: number): string {
+    return this.getRequestUrl(clientHost, clientPort) + "/callback";
   }
 
   /**
@@ -46,14 +42,19 @@ export default class OAuth2Service {
   public static async requestRemotePermissions(
     serviceName: string,
     serviceLink: string,
+    clientHost: string,
+    clientPort: number,
   ): Promise<{ [key: string]: string | string[] }> {
-    const clientHost = Storage.get("settings", "REQUEST_HOSTNAME");
-    const clientPort = Number(Storage.get("settings", "REQUEST_PORT"));
     const server = http.createServer();
     const deferred = new DeferredResponseQuery();
 
     server.listen(clientPort, clientHost, () => {
-      console.log(`Open a web browser and go to ${this.getRequestUrl()}`);
+      console.log(
+        `Open a web browser and go to ${this.getRequestUrl(
+          clientHost,
+          clientPort,
+        )}`,
+      );
     });
     const requestListener = async function (
       request: http.IncomingMessage,

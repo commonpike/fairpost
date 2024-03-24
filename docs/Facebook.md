@@ -3,6 +3,8 @@
 The `facebook` platform manages a facebook **page** (not your feed)
 using the plain graph api - no extensions installed.
 
+If you only have one user, your user .env is 
+the same as your global .env
 
 ## Setting up the Facebook platform
 
@@ -11,18 +13,18 @@ using the plain graph api - no extensions installed.
  - go to https://developers.facebook.com/
  - create an app that can manage pages 
  - under 'settings', find your app ID 
-   - save this as `FAIRPOST_FACEBOOK_APP_ID` in your .env
+   - save this as `FAIRPOST_FACEBOOK_APP_ID` in your global .env
  - under 'settings', find your app secret
-   - save this as `FAIRPOST_FACEBOOK_APP_SECRET` in your .env
+   - save this as `FAIRPOST_FACEBOOK_APP_SECRET` in your global .env
  - keep the app under development, otherwise the localhost return url wont work
 
 ### Find the page id of the page you want the app to manage
   - go to https://business.facebook.com/
   - find your page (currently under 'settings > accounts > pages')
-  - save the page id as `FAIRPOST_FACEBOOK_PAGE_ID` in your .env
+  - save the page id as `FAIRPOST_FACEBOOK_PAGE_ID` in your users .env
 
 ### Enable the platform
- - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
+ - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
 
 
 ### Get a (long lived) Page Access Token for the page you want the app to manage
@@ -65,12 +67,12 @@ before you use the app, set the App Mode to 'Live'
 
 ## Manage additional pages with the same app
 
-One fairpost `.env` can only manage one page. If you create a second `.env-foo`, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
+One fairpost user can only manage one page. If you create a second user, you can use the same app to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
 
-### Enter credentials for your other installation
+To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
 
-- set the `FAIRPOST_FACEBOOK_APP_ID` in your .env-foo
-- set the `FAIRPOST_FACEBOOK_APP_SECRET` in your .env-foo
+## Add a second user 
+- call `./fairpost.js add-user --user=foo` # todo
 
 ### Enable the app on the other page 
 
@@ -83,12 +85,12 @@ One fairpost `.env` can only manage one page. If you create a second `.env-foo`,
   - go to https://developers.facebook.com/
   - select your app, edit it 
   - set App Mode to 'dev'
-- call `./fairpost.js setup-platform --platform=facebook --config=.env-foo`
+- call `./fairpost.js @foo setup-platform  --platform=facebook`
 - follow instructions from the command line
 - put your app back in live mode 
 
 ### Test the platform for the other page
- - call `./fairpost.js test-platform --platform=facebook --config=.env-foo`
+ - call `./fairpost.js @foo test-platform --platform=facebook`
 
 # Limitations 
 

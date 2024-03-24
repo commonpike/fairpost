@@ -2,7 +2,7 @@ import Ayrshare from "./Ayrshare";
 import Folder from "../../models/Folder";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * AsReddit: support for reddit platform through Ayrshare
@@ -14,9 +14,9 @@ export default class AsReddit extends Ayrshare {
 
   SUBREDDIT: string;
 
-  constructor() {
-    super();
-    this.SUBREDDIT = Storage.get("settings", "AYRSHARE_SUBREDDIT", "");
+  constructor(user: User) {
+    super(user);
+    this.SUBREDDIT = this.user.get("settings", "AYRSHARE_SUBREDDIT", "");
   }
 
   async preparePost(folder: Folder): Promise<Post> {

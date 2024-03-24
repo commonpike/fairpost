@@ -1,31 +1,36 @@
 import FacebookAuth from "../Facebook/FacebookAuth";
-import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
-import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 export default class InstagramAuth extends FacebookAuth {
+  constructor(user: User) {
+    super(user);
+  }
+
   async setup() {
     const code = await this.requestCode(
-      Storage.get("settings", "INSTAGRAM_APP_ID"),
+      this.user.get("settings", "INSTAGRAM_APP_ID"),
     );
 
     const accessToken = await this.exchangeCode(
       code,
-      Storage.get("settings", "INSTAGRAM_APP_ID"),
-      Storage.get("settings", "INSTAGRAM_APP_SECRET"),
+      this.user.get("settings", "INSTAGRAM_APP_ID"),
+      this.user.get("settings", "INSTAGRAM_APP_SECRET"),
     );
 
     const pageToken = await this.getLLPageToken(
-      Storage.get("settings", "INSTAGRAM_APP_ID"),
-      Storage.get("settings", "INSTAGRAM_APP_SECRET"),
-      Storage.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.get("settings", "INSTAGRAM_APP_ID"),
+      this.user.get("settings", "INSTAGRAM_APP_SECRET"),
+      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
       accessToken,
     );
 
-    Storage.set("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN", pageToken);
+    this.user.set("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN", pageToken);
   }
 
   protected async requestCode(clientId: string): Promise<string> {
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -33,7 +38,7 @@ export default class InstagramAuth extends FacebookAuth {
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: OAuth2Service.getCallbackUrl(),
+      redirect_uri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
       state: state,
       response_type: "code",
       scope: [
@@ -52,19 +57,21 @@ export default class InstagramAuth extends FacebookAuth {
     const result = await OAuth2Service.requestRemotePermissions(
       "Instagram",
       url.href,
+      clientHost,
+      clientPort,
     );
 
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw Logger.error(msg, result);
+      throw this.user.error(msg, result);
     }
     return result["code"] as string;
   }

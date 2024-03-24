@@ -13,10 +13,6 @@ export default class AsFacebook extends Ayrshare {
   assetsFolder = "_asfacebook";
   postFileName = "post.json";
 
-  constructor() {
-    super();
-  }
-
   async preparePost(folder: Folder): Promise<Post> {
     const post = await super.preparePost(folder);
     if (post) {

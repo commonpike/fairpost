@@ -5,10 +5,10 @@ import * as sharp from "sharp";
 import Folder from "../../models/Folder";
 import InstagramApi from "./InstagramApi";
 import InstagramAuth from "./InstagramAuth";
-import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
+import User from "../../models/User";
 
 /**
  * Instagram: support for instagram platform.
@@ -28,10 +28,10 @@ export default class Instagram extends Platform {
   pollingDelay = 2500;
   pollingLimit = 20;
 
-  constructor() {
-    super();
-    this.auth = new InstagramAuth();
-    this.api = new InstagramApi();
+  constructor(user: User) {
+    super(user);
+    this.auth = new InstagramAuth(user);
+    this.api = new InstagramApi(user);
   }
 
   /** @inheritdoc */
@@ -46,19 +46,19 @@ export default class Instagram extends Platform {
 
   /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post> {
-    Logger.trace("Instagram.preparePost", folder.id);
+    this.user.trace("Instagram.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
       // instagram: 1 video for reel
       const numVideos = post.getFiles("video").length;
       if (numVideos) {
         if (numVideos > 10) {
-          Logger.trace("Removing > 10 videos for instagram caroussel..");
+          this.user.trace("Removing > 10 videos for instagram caroussel..");
           post.limitFiles("video", 10);
         }
         const remaining = 10 - post.getFiles("video").length;
         if (post.getFiles("image").length > remaining) {
-          Logger.trace("Removing some images for instagram caroussel..");
+          this.user.trace("Removing some images for instagram caroussel..");
           post.limitFiles("images", remaining);
         }
       }
@@ -69,7 +69,7 @@ export default class Instagram extends Platform {
           const src = file.name;
           const dst =
             this.assetsFolder + "/instagram-" + file.basename + ".JPEG";
-          Logger.trace("Resizing " + src + " for instagram ..");
+          this.user.trace("Resizing " + src + " for instagram ..");
           await sharp(post.getFilePath(src))
             .resize({
               width: 1440,
@@ -90,7 +90,7 @@ export default class Instagram extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Instagram.publishPost", post.id, dryrun);
+    this.user.trace("Instagram.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as { id: string };
     let error = undefined as Error | undefined;
@@ -146,7 +146,10 @@ export default class Instagram extends Platform {
       caption: caption,
     })) as { id: string };
     if (!container?.id) {
-      throw Logger.error("No id returned for container for " + file, container);
+      throw this.user.error(
+        "No id returned for container for " + file,
+        container,
+      );
     }
 
     if (!dryrun) {
@@ -156,7 +159,10 @@ export default class Instagram extends Platform {
         creation_id: container.id,
       })) as { id: string };
       if (!response?.id) {
-        throw Logger.error("No id returned for igMedia for " + file, response);
+        throw this.user.error(
+          "No id returned for igMedia for " + file,
+          response,
+        );
       }
       return response;
     }
@@ -187,14 +193,17 @@ export default class Instagram extends Platform {
       caption: caption,
     })) as { id: string };
     if (!container?.id) {
-      throw Logger.error("No id returned for container for " + file, container);
+      throw this.user.error(
+        "No id returned for container for " + file,
+        container,
+      );
     }
 
     // wait for ready
     try {
       await this.checkPostStatus(container.id);
     } catch (e) {
-      throw Logger.error(e);
+      throw this.user.error(e);
     }
 
     if (!dryrun) {
@@ -202,7 +211,10 @@ export default class Instagram extends Platform {
         creation_id: container.id,
       })) as { id: string };
       if (!response?.id) {
-        throw Logger.error("No id returned for igMedia for " + file, response);
+        throw this.user.error(
+          "No id returned for igMedia for " + file,
+          response,
+        );
       }
       return response;
     }
@@ -266,14 +278,17 @@ export default class Instagram extends Platform {
       id: string;
     };
     if (!container["id"]) {
-      throw Logger.error("No id returned for carroussel container ", container);
+      throw this.user.error(
+        "No id returned for carroussel container ",
+        container,
+      );
     }
 
     // wait for ready
     try {
       await this.checkPostStatus(container.id);
     } catch (e) {
-      throw Logger.error(e);
+      throw this.user.error(e);
     }
 
     // publish carousel
@@ -284,7 +299,7 @@ export default class Instagram extends Platform {
         id: string;
       };
       if (!response["id"]) {
-        throw Logger.error(
+        throw this.user.error(
           "No id returned for igMedia for carroussel",
           response,
         );
@@ -302,7 +317,7 @@ export default class Instagram extends Platform {
    * @returns id of the uploaded photo to use in post attachments
    */
   private async uploadImage(file: string = ""): Promise<{ id: string }> {
-    Logger.trace("Reading file", file);
+    this.user.trace("Reading file", file);
     const rawData = fs.readFileSync(file);
     const blob = new Blob([rawData]);
 
@@ -315,7 +330,7 @@ export default class Instagram extends Platform {
     };
 
     if (!result["id"]) {
-      throw Logger.error("No id returned after uploading photo " + file);
+      throw this.user.error("No id returned after uploading photo " + file);
     }
     return result;
   }
@@ -339,7 +354,7 @@ export default class Instagram extends Platform {
       picture: string;
     };
     if (!photoData.images?.length) {
-      throw Logger.error("No derivates found for photo " + id);
+      throw this.user.error("No derivates found for photo " + id);
     }
 
     // find largest derivative
@@ -347,7 +362,9 @@ export default class Instagram extends Platform {
       return prev && prev.width > current.width ? prev : current;
     });
     if (!largestPhoto["source"]) {
-      throw Logger.error("Largest derivate for photo " + id + " has no source");
+      throw this.user.error(
+        "Largest derivate for photo " + id + " has no source",
+      );
     }
     return largestPhoto["source"];
   }
@@ -359,7 +376,7 @@ export default class Instagram extends Platform {
    */
 
   private async uploadVideo(file: string): Promise<{ id: string }> {
-    Logger.trace("Reading file", file);
+    this.user.trace("Reading file", file);
     const rawData = fs.readFileSync(file);
     const blob = new Blob([rawData]);
 
@@ -373,7 +390,7 @@ export default class Instagram extends Platform {
     };
 
     if (!result["id"]) {
-      throw Logger.error("No id returned when uploading video");
+      throw this.user.error("No id returned when uploading video");
     }
     return result;
   }
@@ -390,9 +407,9 @@ export default class Instagram extends Platform {
     const limit = this.pollingLimit;
     let counter = 0;
     return new Promise((resolve, reject) => {
-      async function poll() {
+      const poll = async () => {
         counter++;
-        Logger.trace("getVideoLink", "Polling video source " + counter);
+        this.user.trace("getVideoLink", "Polling video source " + counter);
         const videoData = (await api.get(id, {
           fields: "permalink_url,source",
         })) as {
@@ -400,7 +417,11 @@ export default class Instagram extends Platform {
           source: string;
         };
         if (videoData.source) {
-          Logger.trace("getVideoLink", "Video source ready", videoData.source);
+          this.user.trace(
+            "getVideoLink",
+            "Video source ready",
+            videoData.source,
+          );
           resolve(videoData.source);
         } else {
           if (counter < limit) {
@@ -409,7 +430,7 @@ export default class Instagram extends Platform {
             reject("getVideoLink: Failed after max polls " + counter);
           }
         }
-      }
+      };
       poll();
     });
   }
@@ -426,16 +447,16 @@ export default class Instagram extends Platform {
     const limit = this.pollingLimit;
     let counter = 0;
     return new Promise((resolve, reject) => {
-      async function poll() {
+      const poll = async () => {
         counter++;
-        Logger.trace("checkStatus", "Polling post status " + counter);
+        this.user.trace("checkStatus", "Polling post status " + counter);
         const response = (await api.get(id, {
           fields: "status_code",
         })) as {
           status_code: string;
         };
         if (response.status_code === "FINISHED") {
-          Logger.trace("checkStatus", "Post status FINISHED");
+          this.user.trace("checkStatus", "Post status FINISHED");
           resolve(true);
         } else if (response.status_code === "IN_PROGRESS") {
           if (counter < limit) {
@@ -446,7 +467,7 @@ export default class Instagram extends Platform {
         } else {
           reject("checkStatus: Failed with status " + response.status_code);
         }
-      }
+      };
       poll();
     });
   }

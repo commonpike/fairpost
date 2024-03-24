@@ -1,8 +1,24 @@
 {
   "appenders": {
-    "log": { "type": "file", "filename" : "var/log/fairpost.log" }
+    "global": { 
+      "type": "dateFile", 
+      "filename" : "var/log/fairpost.log", 
+      "compress": true,
+      "numBackups" : 7
+    },
+    "global-filtered": {
+      "type": "logLevelFilter",
+      "level": "info",
+      "appender": "global"
+    },
+    "user": { 
+      "type": "dateFile", 
+      "filename" : "users/%user%/var/log/fairpost.log", 
+      "compress": true,
+      "numBackups" : 7
+    }
   },
   "categories": {
-    "default": { "appenders": ["log"], "level": "info" }
+    "default": { "appenders": ["global"], "level": "info" }
   }
 }

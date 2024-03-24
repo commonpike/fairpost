@@ -5,8 +5,7 @@ import {
   handleJsonResponse,
 } from "../../utilities";
 
-import Logger from "../../services/Logger";
-import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * LinkedInApi: support for linkedin platform.
@@ -15,6 +14,12 @@ import Storage from "../../services/Storage";
 export default class LinkedInApi {
   LGC_API_VERSION = "v2";
   API_VERSION = "202304";
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Do a GET request on the api.
@@ -31,21 +36,21 @@ export default class LinkedInApi {
     url.pathname = this.LGC_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
 
-    const accessToken = Storage.get("auth", "LINKEDIN_ACCESS_TOKEN");
+    const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
 
-    Logger.trace("GET", url.href);
+    this.user.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
         Connection: "Keep-Alive",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": Storage.get("settings", "USER_AGENT"),
+        "User-Agent": this.user.get("settings", "OAUTH_USERAGENT"),
       },
     })
       .then((res) => handleJsonResponse(res, true))
       .catch((err) => this.handleLinkedInError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -66,8 +71,8 @@ export default class LinkedInApi {
     if (search) {
       url.search = search;
     }
-    const accessToken = Storage.get("auth", "LINKEDIN_ACCESS_TOKEN");
-    Logger.trace("POST", url.href);
+    const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
@@ -102,7 +107,7 @@ export default class LinkedInApi {
         return linkedinRes;
       })
       .catch((err) => this.handleLinkedInError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**

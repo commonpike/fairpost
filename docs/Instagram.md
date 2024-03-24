@@ -11,7 +11,8 @@ It uses the related facebook account to
 upload temporary files, because the instagram
 api requires files in posts to have an url.
 
-
+If you only have one user, your user .env is 
+the same as your global .env
 
 ## Setting up the Instagram platform
 
@@ -20,23 +21,23 @@ api requires files in posts to have an url.
  - create an Instagram business account
  - connect a Facebook page to your Instagram business account
  - find that pages id and 
-   - save this as `FAIRPOST_INSTAGRAM_PAGE_ID` in your .env
+   - save this as `FAIRPOST_INSTAGRAM_PAGE_ID` in your users .env
  - go to https://developers.facebook.com/
  - create an app that can manage pages 
  - include the "Instagram Graph API" product as a new product 
  - under 'settings', find your app ID 
-   - save this as `FAIRPOST_INSTAGRAM_APP_ID` in your .env
+   - save this as `FAIRPOST_INSTAGRAM_APP_ID` in your global .env
  - under 'settings', find your app secret
-   - save this as `FAIRPOST_INSTAGRAM_APP_SECRET` in your .env
+   - save this as `FAIRPOST_INSTAGRAM_APP_SECRET` in your global .env
 
 
 ### Find your instagram user id 
   - go to https://www.instagram.com/web/search/topsearch/?query={username}
   - find your fbid_v2 
-  - save this as `FAIRPOST_INSTAGRAM_USER_ID` in your .env
+  - save this as `FAIRPOST_INSTAGRAM_USER_ID` in your users .env
 
 ### Enable the platform
- - Add 'instagram' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
+ - Add 'instagram' to your `FAIRPOST_FEED_PLATFORMS` in your users env `.env`
 
 ### Get a (long lived) Page Access Token for the page you want the app to manage
 
@@ -74,17 +75,17 @@ before you use the app, set the App Mode to 'Live'
 
 ## Manage additional pages with the same app
 
-One fairpost `.env` can only manage one page. If you create a second `.env-foo`, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
+One fairpost user can only manage one page. If you create a second user, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
 
-### Enter credentials for your other installation
+To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
 
-- set the `FAIRPOST_INSTAGRAM_APP_ID` in your .env-foo
-- set the `FAIRPOST_INSTAGRAM_APP_SECRET` in your .env-foo
+## Add a second user 
+- call `./fairpost.js add-user --user=foo` # todo
 
 ### Find your other instagram user id 
   - go to https://www.instagram.com/web/search/topsearch/?query={username}
   - find your fbid_v2 
-  - save this as `FAIRPOST_INSTAGRAM_USER_ID` in your .env-foo
+  - save this as `FAIRPOST_INSTAGRAM_USER_ID` in your users .env
 
 ### Enable the app on the other page 
 - Go to https://www.facebook.com/settings/?tab=business_tools
@@ -96,12 +97,12 @@ One fairpost `.env` can only manage one page. If you create a second `.env-foo`,
   - go to https://developers.facebook.com/
   - select your app, edit it 
   - set App Mode to 'dev'
-- call `./fairpost.js setup-platform --platform=instagram --config=.env-foo`
+- call `./fairpost.js @foo setup-platform --platform=instagram`
 - follow instructions from the command line
 - put your app back in live mode 
 
 ### Test the platform for the other page
- - call `./fairpost.js test-platform --platform=instagram --config=.env-foo`
+ - call `./fairpost.js @foo test-platform --platform=instagram`
 
 
 # Limitations 

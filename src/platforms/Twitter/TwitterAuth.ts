@@ -1,11 +1,16 @@
-import Logger from "../../services/Logger";
 import OAuth2Service from "../../services/OAuth2Service";
-import Storage from "../../services/Storage";
 import { TwitterApi } from "twitter-api-v2";
+import User from "../../models/User";
 import { strict as assert } from "assert";
 
-export default class TwitterAuth extends OAuth2Service {
+export default class TwitterAuth {
   client?: TwitterApi;
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Set up Twitter platform
@@ -21,10 +26,10 @@ export default class TwitterAuth extends OAuth2Service {
    */
   async refresh() {
     const tokens = (await this.getClient().refreshOAuth2Token(
-      Storage.get("auth", "TWITTER_REFRESH_TOKEN"),
+      this.user.get("auth", "TWITTER_REFRESH_TOKEN"),
     )) as TokenResponse;
     if (!isTokenResponse(tokens)) {
-      throw Logger.error(
+      throw this.user.error(
         "TwitterAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -41,8 +46,8 @@ export default class TwitterAuth extends OAuth2Service {
       return this.client;
     }
     this.client = new TwitterApi({
-      clientId: Storage.get("settings", "TWITTER_CLIENT_ID"),
-      clientSecret: Storage.get("settings", "TWITTER_CLIENT_SECRET"),
+      clientId: this.user.get("settings", "TWITTER_CLIENT_ID"),
+      clientSecret: this.user.get("settings", "TWITTER_CLIENT_SECRET"),
     });
     return this.client;
   }
@@ -52,22 +57,32 @@ export default class TwitterAuth extends OAuth2Service {
    * @returns - {code, verifier}
    */
   private async requestCode(): Promise<{ code: string; verifier: string }> {
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const { url, codeVerifier, state } =
-      this.getClient().generateOAuth2AuthLink(OAuth2Service.getCallbackUrl(), {
-        scope: ["users.read", "tweet.read", "tweet.write", "offline.access"],
-      });
-    const result = await OAuth2Service.requestRemotePermissions("Twitter", url);
+      this.getClient().generateOAuth2AuthLink(
+        OAuth2Service.getCallbackUrl(clientHost, clientPort),
+        {
+          scope: ["users.read", "tweet.read", "tweet.write", "offline.access"],
+        },
+      );
+    const result = await OAuth2Service.requestRemotePermissions(
+      "Twitter",
+      url,
+      clientHost,
+      clientPort,
+    );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw Logger.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.error("TwitterApi.requestCode: " + msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw Logger.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.error("TwitterApi.requestCode: " + msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw Logger.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.error("TwitterApi.requestCode: " + msg, result);
     }
     return {
       code: result["code"] as string,
@@ -85,13 +100,15 @@ export default class TwitterAuth extends OAuth2Service {
     code: string,
     verifier: string,
   ): Promise<TokenResponse> {
+    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
     const tokens = (await this.getClient().loginWithOAuth2({
       code: code,
       codeVerifier: verifier,
-      redirectUri: OAuth2Service.getCallbackUrl(),
+      redirectUri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
     })) as TokenResponse;
     if (!isTokenResponse(tokens)) {
-      throw Logger.error(
+      throw this.user.error(
         "TitterAuth.requestAccessToken: reponse is not a valid TokenResponse",
       );
     }
@@ -104,13 +121,13 @@ export default class TwitterAuth extends OAuth2Service {
    * @param tokens - the tokens to store
    */
   private store(tokens: TokenResponse) {
-    Storage.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
+    this.user.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expiresIn"] * 1000,
     ).toISOString();
-    Storage.set("auth", "TWITTER_ACCESS_EXPIRY", accessExpiry);
+    this.user.set("auth", "TWITTER_ACCESS_EXPIRY", accessExpiry);
 
-    Storage.set("auth", "TWITTER_REFRESH_TOKEN", tokens["refreshToken"]);
+    this.user.set("auth", "TWITTER_REFRESH_TOKEN", tokens["refreshToken"]);
   }
 }
 

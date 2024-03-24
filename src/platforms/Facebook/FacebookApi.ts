@@ -4,8 +4,7 @@ import {
   handleJsonResponse,
 } from "../../utilities";
 
-import Logger from "../../services/Logger";
-import Storage from "../../services/Storage";
+import User from "../../models/User";
 
 /**
  * FacebookApi: support for facebook platform.
@@ -13,6 +12,12 @@ import Storage from "../../services/Storage";
 
 export default class FacebookApi {
   GRAPH_API_VERSION = "v18.0";
+
+  user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
 
   /**
    * Do a GET request on the graph.
@@ -26,24 +31,24 @@ export default class FacebookApi {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%PAGE%",
-      Storage.get("settings", "FACEBOOK_PAGE_ID"),
+      this.user.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
-    Logger.trace("GET", url.href);
+    this.user.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleFacebookError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -58,25 +63,25 @@ export default class FacebookApi {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%PAGE%",
-      Storage.get("settings", "FACEBOOK_PAGE_ID"),
+      this.user.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    Logger.trace("POST", url.href);
+    this.user.trace("POST", url.href);
     return await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization:
-          "Bearer " + Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
       body: JSON.stringify(body),
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleFacebookError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**
@@ -88,25 +93,25 @@ export default class FacebookApi {
   public async postForm(endpoint: string, body: FormData): Promise<object> {
     endpoint = endpoint.replace(
       "%PAGE%",
-      Storage.get("settings", "FACEBOOK_PAGE_ID"),
+      this.user.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    Logger.trace("POST", url.href);
+    this.user.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + Storage.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleFacebookError(err))
-      .catch((err) => handleApiError(err));
+      .catch((err) => handleApiError(err, this.user));
   }
 
   /**

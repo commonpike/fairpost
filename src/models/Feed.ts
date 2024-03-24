@@ -1,12 +1,11 @@
 import * as fs from "fs";
 
 import Folder from "./Folder";
-import Logger from "../services/Logger";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
 import { PostStatus } from "./Post";
-import Storage from "../services/Storage";
+import User from "./User";
 
 /**
  * Feed - the core handler of fairpost
@@ -19,6 +18,7 @@ import Storage from "../services/Storage";
 export default class Feed {
   id: string = "";
   path: string = "";
+  user: User;
   platforms: {
     [id in PlatformId]?: Platform;
   } = {};
@@ -35,11 +35,16 @@ export default class Feed {
    * @param configPath - path to file for dotenv to parse
    */
 
-  constructor(platforms: Platform[]) {
-    platforms.forEach((p) => (this.platforms[p.id] = p));
-    this.path = Storage.get("settings", "FEED_PATH");
-    this.id = this.path;
-    this.interval = Number(Storage.get("settings", "FEED_INTERVAL", "7"));
+  constructor(user: User) {
+    this.user = user;
+    user.platforms
+      .filter((p) => p.active)
+      .forEach((p) => (this.platforms[p.id] = p));
+    this.path = this.user
+      .get("settings", "USER_FEEDPATH", "users/%user%/feed")
+      .replace("%user%", this.user.id);
+    this.id = this.user.id + ":feed";
+    this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
   }
 
   /**
@@ -48,7 +53,7 @@ export default class Feed {
    */
 
   report(): string {
-    Logger.trace("Feed", "report");
+    this.user.trace("Feed", "report");
     let report = "";
     report += "\nFeed: " + this.id;
     report += "\n - path: " + this.path;
@@ -67,7 +72,7 @@ export default class Feed {
    * @returns the setup result
    */
   async setupPlatform(platformId: PlatformId): Promise<unknown> {
-    Logger.trace("Feed", "setupPlatform", platformId);
+    this.user.trace("Feed", "setupPlatform", platformId);
     const platform = this.getPlatform(platformId);
     return await platform.setup();
   }
@@ -80,7 +85,7 @@ export default class Feed {
   async setupPlatforms(
     platformsIds?: PlatformId[],
   ): Promise<{ [id: string]: unknown }> {
-    Logger.trace("Feed", "setupPlatforms", platformsIds);
+    this.user.trace("Feed", "setupPlatforms", platformsIds);
     const results = {} as { [id: string]: unknown };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
@@ -95,10 +100,10 @@ export default class Feed {
    * @returns platform given by id
    */
   getPlatform(platformId: PlatformId): Platform {
-    Logger.trace("Feed", "getPlatform", platformId);
+    this.user.trace("Feed", "getPlatform", platformId);
     const platform = this.platforms[platformId];
     if (!platform) {
-      throw Logger.error("Unknown platform: " + platformId);
+      throw this.user.error("Unknown platform: " + platformId);
     }
     return platform;
   }
@@ -109,7 +114,7 @@ export default class Feed {
    * @returns platforms given by ids
    */
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
-    Logger.trace("Feed", "getPlatforms", platformIds);
+    this.user.trace("Feed", "getPlatforms", platformIds);
     return platformIds
       ? platformIds.map((platformId) => this.getPlatform(platformId))
       : Object.values(this.platforms);
@@ -121,7 +126,7 @@ export default class Feed {
    * @returns the test result
    */
   async testPlatform(platformId: PlatformId): Promise<unknown> {
-    Logger.trace("Feed", "testPlatform", platformId);
+    this.user.trace("Feed", "testPlatform", platformId);
     return await this.getPlatform(platformId).test();
   }
 
@@ -133,7 +138,7 @@ export default class Feed {
   async testPlatforms(
     platformsIds?: PlatformId[],
   ): Promise<{ [id: string]: unknown }> {
-    Logger.trace("Feed", "testPlatforms", platformsIds);
+    this.user.trace("Feed", "testPlatforms", platformsIds);
     const results = {} as { [id: string]: unknown };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
@@ -148,11 +153,11 @@ export default class Feed {
    * @returns the refresh result
    */
   async refreshPlatform(platformId: PlatformId): Promise<boolean> {
-    Logger.trace("Feed", "refreshPlatform", platformId);
+    this.user.trace("Feed", "refreshPlatform", platformId);
     try {
       return await this.getPlatform(platformId).refresh();
     } catch (error) {
-      Logger.error("Feed", "refreshPlatform", error);
+      this.user.error("Feed", "refreshPlatform", error);
       return false;
     }
   }
@@ -165,7 +170,7 @@ export default class Feed {
   async refreshPlatforms(
     platformsIds?: PlatformId[],
   ): Promise<{ [id: string]: boolean }> {
-    Logger.trace("Feed", "refreshPlatforms", platformsIds);
+    this.user.trace("Feed", "refreshPlatforms", platformsIds);
     const results = {} as { [id: string]: boolean };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
@@ -179,7 +184,7 @@ export default class Feed {
    * @returns all folder in the feed
    */
   getAllFolders(): Folder[] {
-    Logger.trace("Feed", "getAllFolders");
+    this.user.trace("Feed", "getAllFolders");
     if (this.folders.length) {
       return this.folders;
     }
@@ -205,7 +210,7 @@ export default class Feed {
    * @returns the given folder object
    */
   getFolder(path: string): Folder | undefined {
-    Logger.trace("Feed", "getFolder", path);
+    this.user.trace("Feed", "getFolder", path);
     return this.getFolders([path])[0];
   }
 
@@ -215,7 +220,7 @@ export default class Feed {
    * @returns the given folder objects
    */
   getFolders(paths?: string[]): Folder[] {
-    Logger.trace("Feed", "getFolders", paths);
+    this.user.trace("Feed", "getFolders", paths);
     return (
       paths?.map((path) => new Folder(this.path + "/" + path)) ??
       this.getAllFolders()
@@ -229,7 +234,7 @@ export default class Feed {
    * @returns the given post, or undefined if not prepared
    */
   getPost(path: string, platformId: PlatformId): Post | undefined {
-    Logger.trace("Feed", "getPost");
+    this.user.trace("Feed", "getPost");
     return this.getPosts({ folders: [path], platforms: [platformId] })[0];
   }
 
@@ -246,7 +251,7 @@ export default class Feed {
     platforms?: PlatformId[];
     status?: PostStatus;
   }): Post[] {
-    Logger.trace("Feed", "getPosts");
+    this.user.trace("Feed", "getPosts");
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
     const folders = this.getFolders(filters?.folders);
@@ -274,7 +279,7 @@ export default class Feed {
     path: string,
     platformId: PlatformId,
   ): Promise<Post | undefined> {
-    Logger.trace("Feed", "preparePost", path, platformId);
+    this.user.trace("Feed", "preparePost", path, platformId);
     return (
       await this.preparePosts({ folders: [path], platforms: [platformId] })
     )[0];
@@ -290,7 +295,7 @@ export default class Feed {
     folders?: string[];
     platforms?: PlatformId[];
   }): Promise<Post[]> {
-    Logger.trace("Feed", "preparePosts", filters);
+    this.user.trace("Feed", "preparePosts", filters);
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
     const folders = this.getFolders(filters?.folders);
@@ -316,19 +321,19 @@ export default class Feed {
    * @returns the given post
    */
   schedulePost(path: string, platformId: PlatformId, date: Date): Post {
-    Logger.trace("Feed", "schedulePost", path, platformId, date);
+    this.user.trace("Feed", "schedulePost", path, platformId, date);
     const post = this.getPost(path, platformId);
     if (!post) {
-      throw Logger.error("Post not found");
+      throw this.user.error("Post not found");
     }
     if (!post.valid) {
-      throw Logger.error("Post is not valid");
+      throw this.user.error("Post is not valid");
     }
     if (post.skip) {
-      throw Logger.error("Post is marked to be skipped");
+      throw this.user.error("Post is marked to be skipped");
     }
     if (post.status !== PostStatus.UNSCHEDULED) {
-      throw Logger.error("Post is not unscheduled");
+      throw this.user.error("Post is not unscheduled");
     }
     post.schedule(date);
     return post;
@@ -346,12 +351,24 @@ export default class Feed {
    */
   schedulePosts(
     filters: {
-      folders?: string[];
+      folders: string[];
       platforms?: PlatformId[];
     },
     date: Date,
   ): Post[] {
-    Logger.trace("Feed", "schedulePosts", filters, date);
+    this.user.trace("Feed", "schedulePosts", filters, date);
+    if (!filters.folders) {
+      if (!filters.platforms) {
+        throw this.user.error(
+          "Feed.schedulePosts needs to filter on either folders or platforms",
+        );
+      }
+    }
+    if (filters.folders && filters.folders.length > 1) {
+      throw this.user.error(
+        "Feed.schedulePosts will cowardly only operate on one folder",
+      );
+    }
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
     const folders = this.getFolders(filters?.folders);
@@ -359,16 +376,16 @@ export default class Feed {
       for (const folder of folders) {
         const post = platform.getPost(folder);
         if (!post) {
-          throw Logger.error("Post not found");
+          throw this.user.error("Post not found");
         }
         if (!post.valid) {
-          throw Logger.error("Post is not valid");
+          throw this.user.error("Post is not valid");
         }
         if (post.skip) {
-          throw Logger.error("Post is marked to be skipped");
+          throw this.user.error("Post is marked to be skipped");
         }
         if (post.status !== PostStatus.UNSCHEDULED) {
-          throw Logger.error("Post is not unscheduled");
+          throw this.user.error("Post is not unscheduled");
         }
         post.schedule(date);
         posts.push(post);
@@ -392,22 +409,22 @@ export default class Feed {
     platformId: PlatformId,
     dryrun: boolean = false,
   ): Promise<Post> {
-    Logger.trace("Feed", "publishPost", path, platformId, dryrun);
+    this.user.trace("Feed", "publishPost", path, platformId, dryrun);
     const now = new Date();
     const platform = this.getPlatform(platformId);
     const folder = this.getFolder(path);
     if (!folder) {
-      throw Logger.error("Folder not found", path);
+      throw this.user.error("Folder not found", path);
     }
     const post = platform.getPost(folder);
     if (!post) {
-      throw Logger.error("Post not found", path, platformId);
+      throw this.user.error("Post not found", path, platformId);
     }
     if (!post.valid) {
-      throw Logger.error("Post is not valid");
+      throw this.user.error("Post is not valid");
     }
     if (!dryrun) post.schedule(now);
-    Logger.info("Posting", platformId, path);
+    this.user.info("Posting", platformId, path);
     await platform.publishPost(post, dryrun);
 
     return post;
@@ -424,13 +441,25 @@ export default class Feed {
    * @returns multiple posts
    */
   async publishPosts(
-    filters?: {
-      folders?: string[];
+    filters: {
+      folders: string[];
       platforms?: PlatformId[];
     },
     dryrun: boolean = false,
   ): Promise<Post[]> {
-    Logger.trace("Feed", "publishPosts", filters, dryrun);
+    this.user.trace("Feed", "publishPosts", filters, dryrun);
+    if (!filters.folders) {
+      if (!filters.platforms) {
+        throw this.user.error(
+          "Feed.schedulePosts needs to filter on either folders or platforms",
+        );
+      }
+    }
+    if (filters.folders && filters.folders.length > 1) {
+      throw this.user.error(
+        "Feed.schedulePosts will cowardly only operate on one folder",
+      );
+    }
     const now = new Date();
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
@@ -442,17 +471,17 @@ export default class Feed {
           if (post.valid) {
             if (!post.skip) {
               post.schedule(now);
-              Logger.trace("Posting", post.id);
+              this.user.trace("Posting", post.id);
               await platform.publishPost(post, dryrun);
               posts.push(post);
             } else {
-              Logger.warn("Skipping post marked skip", post.id);
+              this.user.warn("Skipping post marked skip", post.id);
             }
           } else {
-            Logger.warn("Skipping invalid post", post.id);
+            this.user.warn("Skipping invalid post", post.id);
           }
         } else {
-          Logger.warn("Skipping post not found", folder.id, platform.id);
+          this.user.warn("Skipping post not found", folder.id, platform.id);
         }
       }
     }
@@ -469,7 +498,7 @@ export default class Feed {
    * @returns the given post or none
    */
   getLastPost(platformId: PlatformId): Post | void {
-    Logger.trace("Feed", "getLastPost");
+    this.user.trace("Feed", "getLastPost");
     let lastPost: Post | undefined = undefined;
     const posts = this.getPosts({
       platforms: [platformId],
@@ -498,7 +527,7 @@ export default class Feed {
    * @returns the next date
    */
   getNextPostDate(platformId: PlatformId): Date {
-    Logger.trace("Feed", "getNextPostDate");
+    this.user.trace("Feed", "getNextPostDate");
     let nextDate = null;
     const lastPost = this.getLastPost(platformId);
     if (lastPost && lastPost.published) {
@@ -529,7 +558,7 @@ export default class Feed {
       platforms?: PlatformId[];
     },
   ): Post[] {
-    Logger.trace("Feed", "scheduleNextPosts");
+    this.user.trace("Feed", "scheduleNextPosts");
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
     const folders = this.getFolders(filters?.folders);
@@ -571,7 +600,7 @@ export default class Feed {
     },
     dryrun: boolean = false,
   ): Promise<Post[]> {
-    Logger.trace("Feed", "publishDuePosts");
+    this.user.trace("Feed", "publishDuePosts");
     const now = new Date();
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
@@ -581,7 +610,7 @@ export default class Feed {
         const post = platform.getPost(folder);
         if (post && post.status === PostStatus.SCHEDULED) {
           if (!post.scheduled) {
-            Logger.warn(
+            this.user.warn(
               "Not publishing scheduled post without date. Unscheduling post.",
               post.id,
             );
@@ -590,7 +619,7 @@ export default class Feed {
             continue;
           }
           if (post.skip) {
-            Logger.warn(
+            this.user.warn(
               "Not publishing scheduled post marked skip. Unscheduling post.",
               post.id,
             );

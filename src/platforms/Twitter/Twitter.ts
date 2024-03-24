@@ -1,13 +1,12 @@
 import * as sharp from "sharp";
 
 import Folder from "../../models/Folder";
-import Logger from "../../services/Logger";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
-import Storage from "../../services/Storage";
 import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth";
+import User from "../../models/User";
 
 /**
  * Twitter: support for twitter platform
@@ -19,9 +18,9 @@ export default class Twitter extends Platform {
 
   auth: TwitterAuth;
 
-  constructor() {
-    super();
-    this.auth = new TwitterAuth();
+  constructor(user: User) {
+    super(user);
+    this.auth = new TwitterAuth(user);
   }
 
   /** @inheritdoc */
@@ -31,16 +30,18 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async test() {
-    Logger.trace("Twitter.test: get oauth1 api");
+    this.user.trace("Twitter.test: get oauth1 api");
     const client1 = new TwitterApi({
-      appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
-      appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.get("settings", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const creds1 = await client1.v1.verifyCredentials();
-    Logger.trace("Twitter.test: get oauth2 api");
-    const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
+    this.user.trace("Twitter.test: get oauth2 api");
+    const client2 = new TwitterApi(
+      this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+    );
     const creds2 = await client2.v2.me();
     return {
       oauth1: {
@@ -61,7 +62,7 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async preparePost(folder: Folder): Promise<Post> {
-    Logger.trace("Twitter.preparePost", folder.id);
+    this.user.trace("Twitter.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
       // twitter: no video
@@ -73,7 +74,7 @@ export default class Twitter extends Platform {
         const src = file.name;
         const dst = this.assetsFolder + "/twitter-" + src;
         if (file.size / (1024 * 1024) >= 5) {
-          Logger.trace("Resizing " + src + " for twitter ..");
+          this.user.trace("Resizing " + src + " for twitter ..");
           await sharp(post.getFilePath(src))
             .resize({
               width: 1200,
@@ -89,7 +90,7 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    Logger.trace("Twitter.publishPost", post.id, dryrun);
+    this.user.trace("Twitter.publishPost", post.id, dryrun);
 
     let response = { data: { id: "-99" } } as {
       data: {
@@ -139,16 +140,16 @@ export default class Twitter extends Platform {
       id: string;
     };
   }> {
-    Logger.trace("Twitter.publishTextPost", post.id, dryrun);
+    this.user.trace("Twitter.publishTextPost", post.id, dryrun);
     if (!dryrun) {
       const client2 = new TwitterApi(
-        Storage.get("auth", "TWITTER_ACCESS_TOKEN"),
+        this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
       );
       const result = await client2.v2.tweet({
         text: post.getCompiledBody(),
       });
       if (result.errors) {
-        throw Logger.error(result.errors.join());
+        throw this.user.error(result.errors.join());
       }
       return result;
     }
@@ -174,24 +175,24 @@ export default class Twitter extends Platform {
       id: string;
     };
   }> {
-    Logger.trace("Twitter.publishImagesPost", post.id, dryrun);
+    this.user.trace("Twitter.publishImagesPost", post.id, dryrun);
 
     const client1 = new TwitterApi({
-      appKey: Storage.get("settings", "TWITTER_OA1_API_KEY"),
-      appSecret: Storage.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: Storage.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: Storage.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.get("settings", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const mediaIds = [];
 
-    const additionalOwner = Storage.get(
+    const additionalOwner = this.user.get(
       "settings",
       "TWITTER_OA1_ADDITIONAL_OWNER",
       "",
     );
     for (const image of post.getFiles("image")) {
       const path = post.getFilePath(image.name);
-      Logger.trace("Uploading " + path + "...");
+      this.user.trace("Uploading " + path + "...");
       try {
         mediaIds.push(
           await client1.v1.uploadMedia(path, {
@@ -204,20 +205,22 @@ export default class Twitter extends Platform {
           }),
         );
       } catch (e) {
-        throw Logger.error("Twitter.publishPost uploadMedia failed", e);
+        throw this.user.error("Twitter.publishPost uploadMedia failed", e);
       }
     }
 
-    const client2 = new TwitterApi(Storage.get("auth", "TWITTER_ACCESS_TOKEN"));
+    const client2 = new TwitterApi(
+      this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+    );
 
     if (!dryrun) {
-      Logger.trace("Tweeting " + post.id + "...");
+      this.user.trace("Tweeting " + post.id + "...");
       const result = await client2.v2.tweet({
         text: post.getCompiledBody(),
         media: { media_ids: mediaIds },
       });
       if (result.errors) {
-        throw Logger.error(result.errors.join());
+        throw this.user.error(result.errors.join());
       }
       return result;
     }

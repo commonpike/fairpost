@@ -2,8 +2,6 @@ import * as fs from "fs";
 import * as path from "path";
 import * as sharp from "sharp";
 
-import Logger from "../services/Logger";
-
 /**
  * Folder - a folder within a feed
  *
@@ -18,7 +16,7 @@ export default class Folder {
 
   constructor(path: string) {
     if (!fs.statSync(path).isDirectory()) {
-      throw Logger.error("No such folder: " + path);
+      throw new Error("No such folder: " + path);
     }
     this.id = path.replace(/^\//, "").split("/").slice(1).join("/");
     this.path = path;
@@ -30,7 +28,6 @@ export default class Folder {
    */
 
   report(): string {
-    Logger.trace("Folder", "report");
     let report = "";
     report += "\nFolder: " + this.id;
     report += "\n - path: " + this.path;
@@ -46,7 +43,6 @@ export default class Folder {
    */
 
   public async getFiles(): Promise<FileInfo[]> {
-    Logger.trace("Folder", "getFiles");
     if (this.files !== undefined) {
       return structuredClone(this.files);
     }
@@ -65,7 +61,6 @@ export default class Folder {
    * @returns fileinfo object for the file
    */
   public async getFileInfo(name: string, order: number): Promise<FileInfo> {
-    Logger.trace("Folder", "getFile", name);
     const filepath = this.path + "/" + name;
     const mime = this.guessMimeType(name);
     const group = mime !== "application/unknown" ? mime.split("/")[0] : "other";
@@ -94,7 +89,6 @@ export default class Folder {
    */
 
   private getFileNames(): string[] {
-    Logger.trace("Folder", "getFileNames");
     if (this.files !== undefined) {
       return this.files.map((file) => file.name);
     }
