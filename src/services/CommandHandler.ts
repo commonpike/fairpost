@@ -205,6 +205,12 @@ class CommandHandler {
         break;
       }
       case "prepare-posts": {
+        if (!args.platforms && args.platform) {
+          args.platforms = [args.platform];
+        }
+        if (!args.folders && args.folder) {
+          args.folders = [args.folder];
+        }
         const prepposts = await feed.preparePosts({
           folders: args.folders,
           platforms: args.platforms,
@@ -244,6 +250,12 @@ class CommandHandler {
         break;
       }
       case "schedule-posts": {
+        if (!args.platforms && args.platform) {
+          args.platforms = [args.platform];
+        }
+        if (!args.folders && args.folder) {
+          args.folders = [args.folder];
+        }
         if (!args.folders) {
           throw user.error(
             "CommandHandler " + command,
@@ -292,6 +304,12 @@ class CommandHandler {
         break;
       }
       case "publish-posts": {
+        if (!args.platforms && args.platform) {
+          args.platforms = [args.platform];
+        }
+        if (!args.folders && args.folder) {
+          args.folders = [args.folder];
+        }
         if (!args.folders) {
           throw user.error(
             "CommandHandler " + command,
