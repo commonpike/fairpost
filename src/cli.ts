@@ -4,6 +4,7 @@
 */
 
 import CommandHandler from "./services/CommandHandler";
+import { JSONReplacer } from "./utilities";
 import { PlatformId } from "./platforms";
 import { PostStatus } from "./models/Post";
 import User from "./models/User";
@@ -18,7 +19,7 @@ const COMMAND = process.argv[2]?.includes("@")
 
 // options
 const DRY_RUN = !!getOption("dry-run") ?? false;
-const REPORT = (getOption("report") as string) ?? "text";
+const OUTPUT = (getOption("output") as string) ?? "text";
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
 const FOLDERS = (getOption("folders") as string)?.split(",") ?? undefined;
@@ -54,9 +55,9 @@ async function main() {
       status: STATUS,
     });
 
-    switch (REPORT) {
+    switch (OUTPUT) {
       case "json": {
-        console.log(JSON.stringify(result, null, "\t"));
+        console.log(JSON.stringify(result, JSONReplacer, "\t"));
         break;
       }
       default: {

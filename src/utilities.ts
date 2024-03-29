@@ -1,6 +1,13 @@
 import User from "./models/User";
 
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+export function JSONReplacer(key: string, value: any): any {
+  if (typeof value === "object" && value.constructor.name === "User") {
+    return undefined;
+  }
+  return value;
+}
+// eslint-disable-next-line  @typescript-eslint/no-explicit-any
 export function isSimilarArray(a: any, b: any) {
   a = Array.isArray(a) ? a : [];
   b = Array.isArray(b) ? b : [];

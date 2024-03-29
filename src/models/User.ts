@@ -32,6 +32,12 @@ export default class User {
       this.id,
     );
     this.logger = this.getLogger();
+    if (
+      !fs.existsSync(this.homedir) ||
+      !fs.statSync(this.homedir).isDirectory()
+    ) {
+      throw this.error("No such user: " + id);
+    }
   }
 
   /**

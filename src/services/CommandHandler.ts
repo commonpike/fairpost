@@ -7,6 +7,7 @@
 
 import { PlatformId } from "../platforms";
 import { PostStatus } from "../models/Post";
+import Server from "../services/Server";
 import User from "../models/User";
 
 class CommandHandler {
@@ -35,7 +36,7 @@ class CommandHandler {
 
     const feed = user.getFeed();
     user.trace(
-      "Fairpost " + user.id + ":" + feed.id + " " + command,
+      "Fairpost " + user.id + " - " + feed.id + " " + command,
       args.dryrun ? " dry-run" : "",
     );
 
@@ -357,6 +358,14 @@ class CommandHandler {
           report += post.report();
         });
         result = dueposts;
+        break;
+      }
+
+      case "serve": {
+        await Server.serve().then((res) => {
+          result = res;
+          report = res;
+        });
         break;
       }
 

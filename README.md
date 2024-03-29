@@ -141,8 +141,8 @@ fairpost: publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run
 # Select which user to handle
 fairpost.js @[user] [command] [arguments] 
 
-# Set the cli report format to pure json
-fairpost.js [command] [arguments] --report=json
+# Set the cli output format to pure json
+fairpost.js [command] [arguments] --output=json
 
 # Enable trace logging output to the console (overriding .env)
 fairpost.js [command] [arguments] --verbose

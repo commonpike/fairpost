@@ -10,7 +10,6 @@ import { strict as assert } from "assert";
 
 export default class LinkedInAuth {
   API_VERSION = "v2";
-  accessToken = "";
 
   user: User;
 
