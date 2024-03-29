@@ -93,6 +93,10 @@ export default class Store {
 
   private setEnv(key: string, value: string) {
     const ui = this.envData["FAIRPOST_UI"];
+    if (key === "UI") {
+      this.envData["FAIRPOST_UI"] = value;
+      return;
+    }
     if (ui === "cli") {
       console.log("Store this value in your users .env file:");
       console.log();

@@ -34,9 +34,16 @@ class CommandHandler {
     let result: unknown;
     let report = "";
 
+    if (user.id === "admin" && user.get("settings", "UI") !== "cli") {
+      throw user.error(
+        "CommandHandler " + command,
+        "Attempt to access admin from wrong UI",
+      );
+    }
+
     const feed = user.getFeed();
     user.trace(
-      "Fairpost " + user.id + " - " + feed.id + " " + command,
+      "Fairpost " + user.id + " " + command,
       args.dryrun ? " dry-run" : "",
     );
 
@@ -362,6 +369,18 @@ class CommandHandler {
       }
 
       case "serve": {
+        if (user.get("settings", "UI") !== "cli") {
+          throw user.error(
+            "CommandHandler " + command,
+            "Attempt to launch server from wrong UI",
+          );
+        }
+        if (user.id !== "admin") {
+          throw user.error(
+            "CommandHandler " + command,
+            "Attempt to launch server from wrong account",
+          );
+        }
         await Server.serve().then((res) => {
           result = res;
           report = res;
@@ -396,6 +415,8 @@ class CommandHandler {
           `${cmd} prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
           `${cmd} schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
           `${cmd} publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
+          "\n# api server:",
+          `${cmd} serve`,
         ];
         (result as string[]).forEach((line) => (report += "\n" + line));
       }

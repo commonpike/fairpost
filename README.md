@@ -133,6 +133,9 @@ fairpost: publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--
 fairpost: prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
 fairpost: schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
 fairpost: publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+
+# api server
+fairpost: serve
 ```
 
 ### Common arguments 

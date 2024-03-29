@@ -8,13 +8,9 @@ import { PostStatus } from "../models/Post";
 import User from "../models/User";
 
 /**
- * ~~~~~: ~~~~~
+ * Server: start a webserver for an REST api
  */
 export default class Server {
-  /**
-   * starts a webserver on host:port
-   */
-
   public static async serve(): Promise<string> {
     const user = new User("admin");
     const host = user.get("settings", "SERVER_HOSTNAME");
@@ -37,7 +33,6 @@ export default class Server {
       const fileStream = fs.createReadStream("public/fairpost-icon.png");
       response.writeHead(200, { "Content-Type": "image/png" });
       fileStream.pipe(response);
-      //response.end();
       return;
     }
 
@@ -76,21 +71,25 @@ export default class Server {
       status: status,
     };
 
-    const { result, report } = await (async () => {
-      try {
-        const user = new User(username.replace("@", ""));
-        return await CommandHandler.execute(user, command, args);
-      } catch (e) {
-        return {
-          result: e,
-          report: e instanceof Error ? e.message : String(e),
-        };
-      }
-    })();
+    let code = 0;
+    let result = undefined;
+    let report = "";
+    let error = false as boolean | unknown;
+    try {
+      const user = new User(username.replace("@", ""));
+      user.set("settings", "UI", "rest");
+      ({ result, report } = await CommandHandler.execute(user, command, args));
+      code = 200;
+    } catch (e) {
+      code = 500;
+      error = e;
+      result = {};
+      report = "";
+    }
 
     response.setHeader("Content-Type", "application/json");
     response.setHeader("Connection", "close");
-    response.writeHead(200);
+    response.writeHead(code);
     response.end(
       JSON.stringify(
         {
@@ -100,6 +99,11 @@ export default class Server {
             arguments: args,
           },
           result: output === "json" ? result : report,
+          error: !error
+            ? false
+            : error instanceof Error
+            ? error.message
+            : String(error),
         },
         JSONReplacer,
       ),
