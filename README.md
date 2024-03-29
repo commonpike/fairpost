@@ -133,6 +133,9 @@ fairpost: publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--
 fairpost: prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
 fairpost: schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
 fairpost: publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+
+# api server
+fairpost: serve
 ```
 
 ### Common arguments 
@@ -141,8 +144,8 @@ fairpost: publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run
 # Select which user to handle
 fairpost.js @[user] [command] [arguments] 
 
-# Set the cli report format to pure json
-fairpost.js [command] [arguments] --report=json
+# Set the cli output format to pure json
+fairpost.js [command] [arguments] --output=json
 
 # Enable trace logging output to the console (overriding .env)
 fairpost.js [command] [arguments] --verbose
