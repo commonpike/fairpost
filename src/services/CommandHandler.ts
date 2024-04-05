@@ -289,6 +289,28 @@ class CommandHandler {
         result = schedposts;
         break;
       }
+      case "schedule-next-post": {
+        if (!args.platforms && args.platform) {
+          args.platforms = [args.platform];
+        }
+        if (!args.platforms) {
+          throw user.error(
+            "CommandHandler " + command,
+            "Missing argument: platforms",
+          );
+        }
+        const nextposts = feed.scheduleNextPosts(
+          args.date ? new Date(args.date) : undefined,
+          {
+            platforms: args.platforms,
+          },
+        );
+        nextposts.forEach((post) => {
+          report += post.report();
+        });
+        result = nextposts;
+        break;
+      }
       case "publish-post": {
         if (!args.folder) {
           throw user.error(
@@ -409,11 +431,12 @@ class CommandHandler {
           `${cmd} prepare-post --post=xxx:xxx`,
           `${cmd} schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
           `${cmd} schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
+          `${cmd} schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] `,
           `${cmd} publish-post --post=xxx:xxx [--dry-run]`,
           `${cmd} publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
           "\n# feed planning:",
           `${cmd} prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
-          `${cmd} schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
+          `${cmd} schedule-next-posts [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
           `${cmd} publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
           "\n# api server:",
           `${cmd} serve`,

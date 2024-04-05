@@ -563,6 +563,19 @@ export default class Feed {
     const platforms = this.getPlatforms(filters?.platforms);
     const folders = this.getFolders(filters?.folders);
     for (const platform of platforms) {
+      const scheduledPosts = this.getPosts({
+        platforms: [platform.id],
+        status: PostStatus.SCHEDULED,
+      });
+      if (scheduledPosts.length) {
+        this.user.trace(
+          "Feed",
+          "scheduleNextPosts",
+          platform.id,
+          "Already scheduled",
+        );
+        continue;
+      }
       const nextDate = date ? date : this.getNextPostDate(platform.id);
       for (const folder of folders) {
         const post = platform.getPost(folder);
@@ -628,10 +641,23 @@ export default class Feed {
             continue;
           }
           if (post.scheduled <= now) {
-            console.log("Posting", post.id);
+            this.user.trace(
+              "Feed",
+              "publishDuePosts",
+              post.id,
+              "Posting; scheduled for",
+              post.scheduled,
+            );
             await platform.publishPost(post, dryrun);
             posts.push(post);
             break;
+          } else {
+            this.user.trace(
+              "Feed",
+              post.id,
+              "Not posting; scheduled for",
+              post.scheduled,
+            );
           }
         }
       }
