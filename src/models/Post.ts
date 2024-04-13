@@ -264,7 +264,7 @@ export default class Post {
    */
   limitFiles(group: string, size: number) {
     this.getFiles(group).forEach((file, index) => {
-      if (index > size) {
+      if (index >= size) {
         this.removeFile(file.name);
       }
     });
