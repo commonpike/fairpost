@@ -122,4 +122,5 @@ isTokenExpiring()
 https://googleapis.dev/nodejs/google-auth-library/9.8.0/#oauth2
 
 https://google-auth.readthedocs.io/en/stable/reference/google.oauth2.credentials.html
+https://googleapis.dev/nodejs/google-auth-library/8.5.2/interfaces/Credentials.html
 https://googleapis.dev/nodejs/google-auth-library/8.5.2/interfaces/GetAccessTokenResponse.html

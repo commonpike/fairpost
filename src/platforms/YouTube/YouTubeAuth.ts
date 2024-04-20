@@ -37,14 +37,14 @@ export default class YouTubeAuth {
       refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
     const response = (await auth.refreshAccessToken()) as {
-      res?: { data: TokenResponse };
+      res?: { data: Credentials };
       credentials?: Credentials;
     };
-    if (response["res"]?.["data"] && isTokenResponse(response["res"]["data"])) {
+    if (response["res"]?.["data"] && isCredentials(response["res"]["data"])) {
       this.store(response["res"]["data"]);
       return;
     } else if (response.credentials) {
-      this.update(response.credentials);
+      this.store(response.credentials);
       return;
     }
     throw this.user.error(
@@ -71,7 +71,8 @@ export default class YouTubeAuth {
       refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
     auth.on("tokens", (creds) => {
-      this.update(creds);
+      this.user.trace("YouTubeAuth", "tokens event received");
+      this.store(creds);
     });
     this.client = new youtube_v3.Youtube({ auth });
     return this.client;
@@ -126,9 +127,9 @@ export default class YouTubeAuth {
   /**
    * Exchange remote code for tokens
    * @param code - the code to exchange
-   * @returns - TokenResponse
+   * @returns - Credentials
    */
-  private async exchangeCode(code: string): Promise<TokenResponse> {
+  private async exchangeCode(code: string): Promise<Credentials> {
     this.user.trace("YouTubeAuth", "exchangeCode", code);
 
     const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
@@ -140,67 +141,38 @@ export default class YouTubeAuth {
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
 
-    const response = (await auth.getToken(code)) as {
-      tokens: TokenResponse;
-    };
-    if (!isTokenResponse(response.tokens)) {
-      throw this.user.error("Invalid TokenResponse", response.tokens);
+    const response = await auth.getToken(code);
+    if (!isCredentials(response.tokens)) {
+      throw this.user.error("Invalid response for getToken", response);
     }
     return response.tokens;
   }
 
   /**
    * Save all tokens in auth store
-   * @param tokens - the tokens to store
+   * @param creds - contains the tokens to store
    */
-  private store(tokens: TokenResponse) {
-    this.user.set("auth", "YOUTUBE_ACCESS_TOKEN", tokens["access_token"]);
-    const accessExpiry = new Date(tokens["expiry_date"]).toISOString();
-    this.user.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry);
-    if ("scope" in tokens) {
-      this.user.set("auth", "YOUTUBE_SCOPE", tokens["scope"] ?? "");
+  private store(creds: Credentials) {
+    this.user.trace("YouTubeAuth", "store");
+    if (creds.access_token) {
+      this.user.set("auth", "YOUTUBE_ACCESS_TOKEN", creds.access_token);
     }
-    if ("refresh_token" in tokens) {
-      this.user.set(
-        "auth",
-        "YOUTUBE_REFRESH_TOKEN",
-        tokens["refresh_token"] ?? "",
-      );
+    if (creds.expiry_date) {
+      const accessExpiry = new Date(creds.expiry_date).toISOString();
+      this.user.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry);
     }
-  }
-  /**
-   * Save all credentials in auth store;
-   * this is called from the 'tokens' event on the client
-   * @param creds - google.oauth2.credentials
-   */
-  private update(creds: Credentials) {
-    this.user.trace("YouTubeAuth", "update", creds);
-    if ("access_token" in creds && creds.access_token) {
-      this.user.set("auth", "YOUTUBE_ACCESS_TOKEN", creds["access_token"]);
+    if (creds.scope) {
+      this.user.set("auth", "YOUTUBE_SCOPE", creds.scope);
     }
-    // we can not see the expiry date from the credentials,
-    // and since we have the 'tokens' event it gets irrelevant ..
-    const accessExpiry = new Date(0);
-    this.user.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry.toISOString());
-    if ("refresh_token" in creds && creds.refresh_token) {
-      this.user.set("auth", "YOUTUBE_REFRESH_TOKEN", creds["refresh_token"]);
+    if (creds.refresh_token) {
+      this.user.set("auth", "YOUTUBE_REFRESH_TOKEN", creds.refresh_token);
     }
   }
 }
 
-interface TokenResponse {
-  access_token: string;
-  token_type?: "bearer";
-  expiry_date: number;
-  refresh_token?: string;
-  scope?: string;
-  id_token?: string;
-}
-
-function isTokenResponse(tokens: TokenResponse) {
+function isCredentials(creds: Credentials) {
   try {
-    assert("access_token" in tokens);
-    assert("expiry_date" in tokens);
+    assert("access_token" in creds || "refresh_token" in creds);
   } catch (e) {
     return false;
   }
