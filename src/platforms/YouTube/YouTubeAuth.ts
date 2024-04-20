@@ -1,4 +1,5 @@
-import { OAuth2Client } from "google-auth-library";
+import { Credentials, OAuth2Client } from "google-auth-library";
+
 import OAuth2Service from "../../services/OAuth2Service";
 import User from "../../models/User";
 import { strict as assert } from "assert";
@@ -26,23 +27,29 @@ export default class YouTubeAuth {
    * Refresh YouTube  tokens
    */
   async refresh() {
+    this.user.trace("YouTubeAuth", "refresh");
     const auth = new OAuth2Client(
       this.user.get("settings", "YOUTUBE_CLIENT_ID"),
       this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
     );
     auth.setCredentials({
+      access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
       refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
-    const response = (await auth.getAccessToken()) as {
-      res: { data: TokenResponse };
+    const response = (await auth.refreshAccessToken()) as {
+      res?: { data: TokenResponse };
+      credentials?: Credentials;
     };
-    if (isTokenResponse(response["res"]["data"])) {
+    if (response["res"]?.["data"] && isTokenResponse(response["res"]["data"])) {
       this.store(response["res"]["data"]);
+      return;
+    } else if (response.credentials) {
+      this.update(response.credentials);
       return;
     }
     throw this.user.error(
       "YouTubeAuth.refresh",
-      "not a valid repsonse",
+      "not a valid response",
       response,
     );
   }
@@ -55,9 +62,16 @@ export default class YouTubeAuth {
     if (this.client) {
       return this.client;
     }
-    const auth = new OAuth2Client();
+    const auth = new OAuth2Client(
+      this.user.get("settings", "YOUTUBE_CLIENT_ID"),
+      this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
+    );
     auth.setCredentials({
       access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
+      refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
+    });
+    auth.on("tokens", (creds) => {
+      this.update(creds);
     });
     this.client = new youtube_v3.Youtube({ auth });
     return this.client;
@@ -152,6 +166,24 @@ export default class YouTubeAuth {
         "YOUTUBE_REFRESH_TOKEN",
         tokens["refresh_token"] ?? "",
       );
+    }
+  }
+  /**
+   * Save all credentials in auth store;
+   * this is called from the 'tokens' event on the client
+   * @param creds - google.oauth2.credentials
+   */
+  private update(creds: Credentials) {
+    this.user.trace("YouTubeAuth", "update", creds);
+    if ("access_token" in creds && creds.access_token) {
+      this.user.set("auth", "YOUTUBE_ACCESS_TOKEN", creds["access_token"]);
+    }
+    // we can not see the expiry date from the credentials,
+    // and since we have the 'tokens' event it gets irrelevant ..
+    const accessExpiry = new Date(0);
+    this.user.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry.toISOString());
+    if ("refresh_token" in creds && creds.refresh_token) {
+      this.user.set("auth", "YOUTUBE_REFRESH_TOKEN", creds["refresh_token"]);
     }
   }
 }

@@ -98,6 +98,7 @@ export default class YouTube extends Platform {
    * @returns object, incl. some ids and names
    */
   private async getChannel() {
+    this.user.trace("YouTube", "getChannel");
     const client = this.auth.getClient();
     const result = (await client.channels.list({
       part: ["snippet", "contentDetails", "status"],

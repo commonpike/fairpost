@@ -108,3 +108,18 @@ https://pixelswap.fr/entry/how-to-upload-a-video-on-youtube-with-nodejs/
 https://stackoverflow.com/questions/65258438/how-to-upload-video-to-youtube-using-google-api-without-libraries
 
 https://developers.google.com/youtube/terms/required-minimum-functionality
+
+
+https://cloud.google.com/nodejs/docs/reference/google-auth-library/latest/google-auth-library/oauth2client
+
+refreshAccessToken(callback)
+refreshToken(refreshToken)
+refreshTokenNoCache(refreshToken)
+getAccessToken()
+isTokenExpiring()
+
+
+https://googleapis.dev/nodejs/google-auth-library/9.8.0/#oauth2
+
+https://google-auth.readthedocs.io/en/stable/reference/google.oauth2.credentials.html
+https://googleapis.dev/nodejs/google-auth-library/8.5.2/interfaces/GetAccessTokenResponse.html
