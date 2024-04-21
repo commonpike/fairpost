@@ -68,9 +68,19 @@ To have Fairpost publish **public** videos, your app has to be audited
 
 ## Manage additional pages with the same app
 
-...
 To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
 
+## Add a second user 
+- call `./fairpost.js add-user --user=foo` # todo
+- add youtube to its FAIRPOST_PLATFORMS
+
+### Get an OAuth2 Access Token for your other page
+
+ - call `./fairpost.js @foo setup-platform --platform=youtube`
+ - follow instructions from the command line
+
+### Test the other installation
+ - call `./fairpost.js @foo test-platform --platform=youtube`
 
 # Limitations 
 
@@ -108,3 +118,19 @@ https://pixelswap.fr/entry/how-to-upload-a-video-on-youtube-with-nodejs/
 https://stackoverflow.com/questions/65258438/how-to-upload-video-to-youtube-using-google-api-without-libraries
 
 https://developers.google.com/youtube/terms/required-minimum-functionality
+
+
+https://cloud.google.com/nodejs/docs/reference/google-auth-library/latest/google-auth-library/oauth2client
+
+refreshAccessToken(callback)
+refreshToken(refreshToken)
+refreshTokenNoCache(refreshToken)
+getAccessToken()
+isTokenExpiring()
+
+
+https://googleapis.dev/nodejs/google-auth-library/9.8.0/#oauth2
+
+https://google-auth.readthedocs.io/en/stable/reference/google.oauth2.credentials.html
+https://googleapis.dev/nodejs/google-auth-library/8.5.2/interfaces/Credentials.html
+https://googleapis.dev/nodejs/google-auth-library/8.5.2/interfaces/GetAccessTokenResponse.html

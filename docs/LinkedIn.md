@@ -49,6 +49,7 @@ To get this working, you need to follow instruction at [Set up for multiple user
 
 ## Add a second user 
 - call `./fairpost.js add-user --user=foo` # todo
+- add linkedin to its FAIRPOST_PLATFORMS
 - find your company id (in the url, like , 93841222)
   - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your users .env
 
