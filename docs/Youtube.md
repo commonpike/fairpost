@@ -68,9 +68,19 @@ To have Fairpost publish **public** videos, your app has to be audited
 
 ## Manage additional pages with the same app
 
-...
 To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
 
+## Add a second user 
+- call `./fairpost.js add-user --user=foo` # todo
+- add youtube to its FAIRPOST_PLATFORMS
+
+### Get an OAuth2 Access Token for your other page
+
+ - call `./fairpost.js @foo setup-platform --platform=youtube`
+ - follow instructions from the command line
+
+### Test the other installation
+ - call `./fairpost.js @foo test-platform --platform=youtube`
 
 # Limitations 
 
