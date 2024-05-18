@@ -640,6 +640,15 @@ export default class Feed {
             post.save();
             continue;
           }
+          if (post.published) {
+            this.user.warn(
+              "Not publishing scheduled post previously published. Marking published.",
+              post.id,
+            );
+            post.status = PostStatus.PUBLISHED;
+            post.save();
+            continue;
+          }
           if (post.scheduled <= now) {
             this.user.trace(
               "Feed",
