@@ -27,17 +27,22 @@ export default class User {
   constructor(id: string = "default") {
     this.id = id;
     this.store = new Store(this.id);
-    this.homedir = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
-      "%user%",
-      this.id,
-    );
-    this.logger = this.getLogger();
-    if (
-      !fs.existsSync(this.homedir) ||
-      !fs.statSync(this.homedir).isDirectory()
-    ) {
-      throw this.error("No such user: " + id);
+    if (this.id !== "admin") {
+      this.homedir = this.get(
+        "settings",
+        "USER_HOMEDIR",
+        "users/%user%",
+      ).replace("%user%", this.id);
+      if (
+        !fs.existsSync(this.homedir) ||
+        !fs.statSync(this.homedir).isDirectory()
+      ) {
+        throw this.error("No such user: " + id);
+      }
+    } else {
+      this.homedir = path.resolve(__dirname, "../../");
     }
+    this.logger = this.getLogger();
   }
 
   /**
@@ -58,6 +63,9 @@ export default class User {
    */
 
   public getFeed(): Feed {
+    if (this.id === "admin") {
+      throw this.error("Admin does not have a feed");
+    }
     this.loadPlatforms();
     return new Feed(this);
   }
@@ -68,6 +76,9 @@ export default class User {
    * active
    */
   private loadPlatforms(): void {
+    if (this.id === "admin") {
+      throw this.error("Admin does not have platforms");
+    }
     const activePlatformIds = this.get("settings", "FEED_PLATFORMS", "").split(
       ",",
     );
@@ -141,7 +152,7 @@ export default class User {
       "LOGGER_CONFIG",
       "log4js.json",
     );
-    const category = this.store.get("settings", "LOGGER_CATEGORY", "default");
+    const category = this.id === "admin" ? "default" : "user";
     const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
     const addConsole =
       this.store.get("settings", "LOGGER_CONSOLE", "false") === "true";
@@ -157,12 +168,15 @@ export default class User {
         "Logger: Log4js category " + category + " not found in " + configFile,
       );
     }
+
     for (const appender in config.appenders) {
-      if (config.appenders[appender].filename) {
-        config.appenders[appender].filename = config.appenders[
-          appender
-        ].filename?.replace("%user%", this.id);
-      }
+      config.appenders[appender].filename = config.appenders[
+        appender
+      ].filename?.replace("%user%", this.id);
+    }
+
+    if (this.id === "admin") {
+      config.categories = { default: config.categories["default"] };
     }
 
     if (
