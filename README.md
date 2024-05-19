@@ -7,21 +7,22 @@ Fairpost helps you manage users social media feeds from a single
 entry point, using Node. It supports Facebook, Instagram, 
 Reddit, Twitter, YouTube and LinkedIn.
 
-A Feed is just a folder on disk, and all subfolders are Posts, 
+A Feed is just a folder on disk, and all subfolders are Source Posts, 
 containing at least one text file (the post body) and 
-optionally images or video. 
+optionally images or video. The Source Post will be transformed
+into real posts for each connected platform.
+
 Fairpost is *opinionated*, meaning, it will decide
-how a folder with contents can best be presented
-as a post on each platform. 
+how a SourcePost with contents can best be presented
+as a Post on each platform. 
 
-By default there is one user with a feed located in `./feed`.
-Read [Set up for multiple users](./docs/MultipleUsers.md)
-on how to set it up for more users.
+For each platform, you'll have to register the app on the
+platform. This usually results in an AppId and AppSecret or 
+something similar, which should be stored in global config.
 
-Edit `.env` to manage the platforms
-you want to support, the interval for new posts,
-etcetera. For each platform, you'll have to 
-register the app to post on the users behalf.
+Then for each user, you'll have to allow the app to
+post on their behalf. This is usually done via an
+online (oauth) consent page.
 
 Commonly, you would call this script every day or week
 for every user. Fairpost can then automatically **prepare** the folders,
@@ -31,7 +32,8 @@ add folders with content.
 
 Or, if you prefer, you can manually publish one
 specific folder as posts on all supported and enabled 
-platforms at once.
+platforms at once, or just one post on one platform,
+etcetera.
 
 
 ## Setting up 
@@ -48,11 +50,25 @@ cp .env.dist .env && nano .env
 # run
 ./fairpost.js help
 ```
- 
-## Enable platforms
+
+### Enable platforms
 
 Read how to enable various social media platforms in the [docs](docs).
 
+### Create a user and connect a platform 
+
+```
+# create a user foobar
+./fairpost.js create-user --userid=foobar
+
+# edit the users .env, finetune settings
+# and enable platform `bla`
+nano users/foobar/.env
+
+# connect platform `bla` to user `foobar`
+./fairpost.js @foobar setup-platform --platform=bla
+
+```
 
 ## Feed planning
 ### Prepare
@@ -110,29 +126,30 @@ to get a new pair of tokens.
 ```
 # basic commands:
 fairpost: help
-fairpost: get-feed [--config=xxx]
-fairpost: setup-platform --platform=xxx
-fairpost: setup-platforms [--platforms=xxx,xxx]
-fairpost: test-platform --platform=xxx
-fairpost: test-platforms [--platforms=xxx,xxx]
-fairpost: refresh-platform --platform=xxx
-fairpost: refresh-platforms [--platforms=xxx,xxx]
-fairpost: get-platform --platform=xxx
-fairpost: get-platforms [--platforms=xxx,xxx]
-fairpost: get-folder --folder=xxx
-fairpost: get-folders [--folders=xxx,xxx]
-fairpost: get-post --post=xxx:xxx
-fairpost: get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost: prepare-post --post=xxx:xxx
-fairpost: schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
-fairpost: schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
-fairpost: publish-post --post=xxx:xxx [--dry-run]
-fairpost: publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: create-user --userid=xxx
+fairpost: @user get-feed 
+fairpost: @user setup-platform --platform=xxx
+fairpost: @user setup-platforms [--platforms=xxx,xxx]
+fairpost: @user test-platform --platform=xxx
+fairpost: @user test-platforms [--platforms=xxx,xxx]
+fairpost: @user refresh-platform --platform=xxx
+fairpost: @user refresh-platforms [--platforms=xxx,xxx]
+fairpost: @user get-platform --platform=xxx
+fairpost: @user get-platforms [--platforms=xxx,xxx]
+fairpost: @user get-folder --folder=xxx
+fairpost: @user get-folders [--folders=xxx,xxx]
+fairpost: @user get-post --post=xxx:xxx
+fairpost: @user get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @user prepare-post --post=xxx:xxx
+fairpost: @user schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
+fairpost: @user schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
+fairpost: @user publish-post --post=xxx:xxx [--dry-run]
+fairpost: @user publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
 
 # feed planning:
-fairpost: prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
-fairpost: schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost: publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+fairpost: @user prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @user schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @user publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
 
 # api server
 fairpost: serve
@@ -141,9 +158,6 @@ fairpost: serve
 ### Common arguments 
 
 ```
-# Select which user to handle
-fairpost.js @[user] [command] [arguments] 
-
 # Set the cli output format to pure json
 fairpost.js [command] [arguments] --output=json
 

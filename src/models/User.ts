@@ -59,6 +59,27 @@ export default class User {
   }
 
   /**
+   * @returns the new user
+   */
+
+  public createUser(userId: string): User {
+    if (this.id !== "admin") {
+      throw this.error("Only admin can create users");
+    }
+    const src = path.resolve(__dirname, "../../etc/skeleton");
+    const dst = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
+      "%user%",
+      userId,
+    );
+    if (fs.existsSync(dst)) {
+      throw this.error("Homedir already exists: " + dst);
+    }
+    fs.cpSync(src, dst, { recursive: true });
+    fs.renameSync(dst + "/.env.dist", dst + "/.env");
+    return new User(userId);
+  }
+
+  /**
    * @returns the feed for this user
    */
 
@@ -159,10 +180,21 @@ export default class User {
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const config = fs.existsSync(this.homedir + "/" + configFile)
-      ? require(
-          path.resolve(__dirname + "/../../", this.homedir + "/" + configFile),
+      ? JSON.parse(
+          fs.readFileSync(
+            path.resolve(
+              __dirname + "/../../",
+              this.homedir + "/" + configFile,
+            ),
+            "utf8",
+          ),
         )
-      : require(path.resolve(__dirname + "/../../", configFile));
+      : JSON.parse(
+          fs.readFileSync(
+            path.resolve(__dirname + "/../../", configFile),
+            "utf8",
+          ),
+        );
     if (!config.categories[category]) {
       throw new Error(
         "Logger: Log4js category " + category + " not found in " + configFile,
