@@ -46,6 +46,7 @@ export default class Server {
     ];
     const dryrun = parsed.searchParams.get("dry-run") === "true";
     const output = parsed.searchParams.get("output") ?? "json";
+    const userid = parsed.searchParams.get("userid") || undefined;
     const date = parsed.searchParams.get("date");
     const post = parsed.searchParams.get("post");
     const [folder, platform] = post
@@ -63,6 +64,7 @@ export default class Server {
 
     const args = {
       dryrun: dryrun || undefined,
+      userid: userid,
       platforms: platforms,
       platform: platform,
       folders: folders,

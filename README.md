@@ -7,21 +7,22 @@ Fairpost helps you manage users social media feeds from a single
 entry point, using Node. It supports Facebook, Instagram, 
 Reddit, Twitter, YouTube and LinkedIn.
 
-A Feed is just a folder on disk, and all subfolders are Posts, 
+A Feed is just a folder on disk, and all subfolders are Source Posts, 
 containing at least one text file (the post body) and 
-optionally images or video. 
+optionally images or video. The Source Post will be transformed
+into real posts for each connected platform.
+
 Fairpost is *opinionated*, meaning, it will decide
-how a folder with contents can best be presented
-as a post on each platform. 
+how a Source Post with contents can best be presented
+as a Post on each platform. 
 
-By default there is one user with a feed located in `./feed`.
-Read [Set up for multiple users](./docs/MultipleUsers.md)
-on how to set it up for more users.
+For each platform, you'll have to register the app on the
+platform. This usually results in an AppId and AppSecret or 
+something similar, which should be stored in global config.
 
-Edit `.env` to manage the platforms
-you want to support, the interval for new posts,
-etcetera. For each platform, you'll have to 
-register the app to post on the users behalf.
+Then for each user, you'll have to allow the app to
+post on their behalf. This is usually done via an
+online (oauth) consent page in a webbrowser.
 
 Commonly, you would call this script every day or week
 for every user. Fairpost can then automatically **prepare** the folders,
@@ -31,7 +32,8 @@ add folders with content.
 
 Or, if you prefer, you can manually publish one
 specific folder as posts on all supported and enabled 
-platforms at once.
+platforms at once, or just one post on one platform,
+etcetera.
 
 
 ## Setting up 
@@ -48,11 +50,28 @@ cp .env.dist .env && nano .env
 # run
 ./fairpost.js help
 ```
- 
-## Enable platforms
 
-Read how to enable various social media platforms in the [docs](docs).
+### Set up platforms
 
+Read how to set up various social media platforms in the [docs](docs).
+
+### Create a user and connect a platform 
+
+Read how to connect various social media platforms in the [docs](docs);
+but in general, the steps are 
+
+```
+# create a user foobar
+./fairpost.js create-user --userid=foobar
+
+# edit the users .env, finetune settings
+# and enable platform `bla`
+nano users/foobar/.env
+
+# connect platform `bla` to user `foobar`
+./fairpost.js @foobar setup-platform --platform=bla
+
+```
 
 ## Feed planning
 ### Prepare
@@ -99,9 +118,9 @@ a certain post to a certain platform if you like.
 
 Access and refresh tokens for various platforms may
 expire sooner or later. Before you do anything, try
-`fairpost.js refresh-platforms`. Eventually, even
+`fairpost.js @userid refresh-platforms`. Eventually, even
 refresh tokens may expire, and you will have to run
-`fairpost.js setup-platform --platform=bla` again
+`fairpost.js @userid setup-platform --platform=bla` again
 to get a new pair of tokens.
 
 
@@ -110,40 +129,41 @@ to get a new pair of tokens.
 ```
 # basic commands:
 fairpost: help
-fairpost: get-feed [--config=xxx]
-fairpost: setup-platform --platform=xxx
-fairpost: setup-platforms [--platforms=xxx,xxx]
-fairpost: test-platform --platform=xxx
-fairpost: test-platforms [--platforms=xxx,xxx]
-fairpost: refresh-platform --platform=xxx
-fairpost: refresh-platforms [--platforms=xxx,xxx]
-fairpost: get-platform --platform=xxx
-fairpost: get-platforms [--platforms=xxx,xxx]
-fairpost: get-folder --folder=xxx
-fairpost: get-folders [--folders=xxx,xxx]
-fairpost: get-post --post=xxx:xxx
-fairpost: get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost: prepare-post --post=xxx:xxx
-fairpost: schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
-fairpost: schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
-fairpost: publish-post --post=xxx:xxx [--dry-run]
-fairpost: publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid get-user
+fairpost: @userid get-feed
+fairpost: @userid setup-platform --platform=xxx
+fairpost: @userid setup-platforms [--platforms=xxx,xxx]
+fairpost: @userid test-platform --platform=xxx
+fairpost: @userid test-platforms [--platforms=xxx,xxx]
+fairpost: @userid refresh-platform --platform=xxx
+fairpost: @userid refresh-platforms [--platforms=xxx,xxx]
+fairpost: @userid get-platform --platform=xxx
+fairpost: @userid get-platforms [--platforms=xxx,xxx]
+fairpost: @userid get-folder --folder=xxx
+fairpost: @userid get-folders [--folders=xxx,xxx]
+fairpost: @userid get-post --post=xxx:xxx
+fairpost: @userid get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid prepare-post --post=xxx:xxx
+fairpost: @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
+fairpost: @userid schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
+fairpost: @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] 
+fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
+fairpost: @userid publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
 
 # feed planning:
-fairpost: prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
-fairpost: schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost: publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+fairpost: @userid prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid schedule-next-posts [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
 
-# api server
+# admin only:
+fairpost: create-user --userid=xxx
+fairpost: get-user --userid=xxx
 fairpost: serve
 ```
 
 ### Common arguments 
 
 ```
-# Select which user to handle
-fairpost.js @[user] [command] [arguments] 
-
 # Set the cli output format to pure json
 fairpost.js [command] [arguments] --output=json
 

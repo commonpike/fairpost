@@ -25,17 +25,21 @@ export default class Store {
   envData: { [key: string]: string } = {};
   constructor(userid: string) {
     this.loadGlobalEnv();
-    this.envPath = this.getEnv("USER_ENVPATH", "users/%user%/.env").replace(
-      "%user%",
-      userid,
-    );
+    if (userid !== "admin") {
+      this.envPath = this.getEnv("USER_ENVPATH", "users/%user%/.env").replace(
+        "%user%",
+        userid,
+      );
+      this.jsonPath = this.getEnv(
+        "USER_JSONPATH",
+        "users/%user%/var/lib/storage.json",
+      ).replace("%user%", userid);
+    } else {
+      this.envPath = path.resolve(__dirname, "../../.env");
+      this.jsonPath = path.resolve(__dirname, "../../var/lib/storage.json");
+    }
     this.loadUserEnv();
     this.loadConsoleEnv();
-
-    this.jsonPath = this.getEnv(
-      "USER_JSONPATH",
-      "users/%user%/var/lib/storage.json",
-    ).replace("%user%", userid);
     this.loadJson();
   }
 

@@ -1,9 +1,6 @@
 # Platform: Reddit
 
-If you only have one user, your user .env is 
-the same as your global .env
-
-## Setting up the Reddit platform
+## Set up the platform
 
 ### Create a new App in your Reddit account
 
@@ -16,6 +13,8 @@ the same as your global .env
 - read the terms here https://www.reddit.com/wiki/api/#wiki_read_the_full_api_terms_and_sign_up_for_usage
 - request access to the API using the request form, and wait until approved
 
+## Connect the platform to a user
+
 ### Enable the platform
  - Add 'reddit' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
 
@@ -23,12 +22,12 @@ the same as your global .env
 
 This token only lasts for 24 hours and should be refreshed.
 
- - call `./fairpost.js setup-platform --platform=reddit`
+ - call `./fairpost.js @userid setup-platform --platform=reddit`
  - follow instructions from the command line
 
 
 ### Test the platform
- - call `./fairpost.js test-platform --platform=reddit`
+ - call `./fairpost.js @userid test-platform --platform=reddit`
    
 # Random documentation
 

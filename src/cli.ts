@@ -19,6 +19,7 @@ const COMMAND = process.argv[2]?.includes("@")
 
 // options
 const DRY_RUN = !!getOption("dry-run") ?? false;
+const USERID = (getOption("userid") as string) ?? "";
 const OUTPUT = (getOption("output") as string) ?? "text";
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
@@ -47,6 +48,7 @@ async function main() {
   try {
     const { result, report } = await CommandHandler.execute(user, COMMAND, {
       dryrun: DRY_RUN,
+      userid: USERID,
       platforms: PLATFORMS,
       platform: PLATFORM,
       folders: FOLDERS,

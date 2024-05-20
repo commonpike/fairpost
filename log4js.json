@@ -19,6 +19,7 @@
     }
   },
   "categories": {
-    "default": { "appenders": ["global"], "level": "info" }
+    "default": { "appenders": ["global"], "level": "info" },
+    "user": { "appenders": ["user","global-filtered"], "level": "info" }
   }
 }

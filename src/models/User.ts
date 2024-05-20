@@ -27,17 +27,22 @@ export default class User {
   constructor(id: string = "default") {
     this.id = id;
     this.store = new Store(this.id);
-    this.homedir = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
-      "%user%",
-      this.id,
-    );
-    this.logger = this.getLogger();
-    if (
-      !fs.existsSync(this.homedir) ||
-      !fs.statSync(this.homedir).isDirectory()
-    ) {
-      throw this.error("No such user: " + id);
+    if (this.id !== "admin") {
+      this.homedir = this.get(
+        "settings",
+        "USER_HOMEDIR",
+        "users/%user%",
+      ).replace("%user%", this.id);
+      if (
+        !fs.existsSync(this.homedir) ||
+        !fs.statSync(this.homedir).isDirectory()
+      ) {
+        throw this.error("No such user: " + id);
+      }
+    } else {
+      this.homedir = path.resolve(__dirname, "../../");
     }
+    this.logger = this.getLogger();
   }
 
   /**
@@ -54,10 +59,34 @@ export default class User {
   }
 
   /**
+   * @returns the new user
+   */
+
+  public createUser(userId: string): User {
+    if (this.id !== "admin") {
+      throw this.error("Only admin can create users");
+    }
+    const src = path.resolve(__dirname, "../../etc/skeleton");
+    const dst = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
+      "%user%",
+      userId,
+    );
+    if (fs.existsSync(dst)) {
+      throw this.error("Homedir already exists: " + dst);
+    }
+    fs.cpSync(src, dst, { recursive: true });
+    fs.renameSync(dst + "/.env.dist", dst + "/.env");
+    return new User(userId);
+  }
+
+  /**
    * @returns the feed for this user
    */
 
   public getFeed(): Feed {
+    if (this.id === "admin") {
+      throw this.error("Admin does not have a feed");
+    }
     this.loadPlatforms();
     return new Feed(this);
   }
@@ -68,6 +97,9 @@ export default class User {
    * active
    */
   private loadPlatforms(): void {
+    if (this.id === "admin") {
+      throw this.error("Admin does not have platforms");
+    }
     const activePlatformIds = this.get("settings", "FEED_PLATFORMS", "").split(
       ",",
     );
@@ -141,28 +173,42 @@ export default class User {
       "LOGGER_CONFIG",
       "log4js.json",
     );
-    const category = this.store.get("settings", "LOGGER_CATEGORY", "default");
+    const category = this.id === "admin" ? "default" : "user";
     const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
     const addConsole =
       this.store.get("settings", "LOGGER_CONSOLE", "false") === "true";
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const config = fs.existsSync(this.homedir + "/" + configFile)
-      ? require(
-          path.resolve(__dirname + "/../../", this.homedir + "/" + configFile),
+      ? JSON.parse(
+          fs.readFileSync(
+            path.resolve(
+              __dirname + "/../../",
+              this.homedir + "/" + configFile,
+            ),
+            "utf8",
+          ),
         )
-      : require(path.resolve(__dirname + "/../../", configFile));
+      : JSON.parse(
+          fs.readFileSync(
+            path.resolve(__dirname + "/../../", configFile),
+            "utf8",
+          ),
+        );
     if (!config.categories[category]) {
       throw new Error(
         "Logger: Log4js category " + category + " not found in " + configFile,
       );
     }
+
     for (const appender in config.appenders) {
-      if (config.appenders[appender].filename) {
-        config.appenders[appender].filename = config.appenders[
-          appender
-        ].filename?.replace("%user%", this.id);
-      }
+      config.appenders[appender].filename = config.appenders[
+        appender
+      ].filename?.replace("%user%", this.id);
+    }
+
+    if (this.id === "admin") {
+      config.categories = { default: config.categories["default"] };
     }
 
     if (

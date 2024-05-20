@@ -41,24 +41,52 @@ class CommandHandler {
       );
     }
 
-    const feed = user.getFeed();
+    const feed = user.id !== "admin" ? user.getFeed() : null;
     user.trace(
       "Fairpost " + user.id + " " + command,
       args.dryrun ? " dry-run" : "",
     );
 
     switch (command) {
+      case "create-user": {
+        if (user.id !== "admin") {
+          throw user.error("only admins can create-user");
+        }
+        if (!args.userid) {
+          throw user.error("userid is required");
+        }
+        if (!args.userid.match("^[a-z][a-z0-9_\\-\\.]{3,31}$")) {
+          throw user.error(
+            "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
+          );
+        }
+        const newUser = user.createUser(args.userid);
+        result = newUser;
+        report = newUser.report();
+        break;
+      }
       case "get-user": {
-        result = user;
-        report = user.report();
+        if (args.userid) {
+          if (user.id !== "admin") {
+            throw user.error("only admins can get-user other users");
+          }
+          const other = new User(args.userid);
+          result = other;
+          report = other.report();
+        } else {
+          result = user;
+          report = user.report();
+        }
         break;
       }
       case "get-feed": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         result = feed;
         report = feed.report();
         break;
       }
       case "setup-platform": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.platform) {
           throw user.error(
             "CommandHandler " + command,
@@ -72,12 +100,14 @@ class CommandHandler {
         break;
       }
       case "setup-platforms": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         await feed.setupPlatforms(args.platforms);
         result = "Success"; // or error
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "get-platform": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.platform) {
           throw user.error(
             "CommandHandler " + command,
@@ -90,6 +120,7 @@ class CommandHandler {
         break;
       }
       case "get-platforms": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         const platforms = feed.getPlatforms(args.platforms);
         report += platforms.length + " Platforms\n------\n";
         platforms.forEach((platform) => {
@@ -99,6 +130,7 @@ class CommandHandler {
         break;
       }
       case "test-platform": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.platform) {
           throw user.error(
             "CommandHandler " + command,
@@ -110,11 +142,13 @@ class CommandHandler {
         break;
       }
       case "test-platforms": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         result = await feed.testPlatforms(args.platforms);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "refresh-platform": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.platform) {
           throw user.error(
             "CommandHandler " + command,
@@ -126,11 +160,13 @@ class CommandHandler {
         break;
       }
       case "refresh-platforms": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         result = await feed.refreshPlatforms(args.platforms);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "get-folder": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.folder) {
           throw user.error(
             "CommandHandler " + command,
@@ -147,6 +183,7 @@ class CommandHandler {
         break;
       }
       case "get-folders": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         const folders = feed.getFolders(args.folders);
         report += folders.length + " Folders\n------\n";
         folders.forEach((folder) => {
@@ -156,6 +193,7 @@ class CommandHandler {
         break;
       }
       case "get-post": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.folder) {
           throw user.error(
             "CommandHandler " + command,
@@ -178,6 +216,7 @@ class CommandHandler {
         break;
       }
       case "get-posts": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         const allposts = feed.getPosts({
           folders: args.folders,
           platforms: args.platforms,
@@ -191,6 +230,7 @@ class CommandHandler {
         break;
       }
       case "prepare-post": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.folder) {
           throw user.error(
             "CommandHandler " + command,
@@ -213,6 +253,7 @@ class CommandHandler {
         break;
       }
       case "prepare-posts": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
@@ -230,6 +271,7 @@ class CommandHandler {
         break;
       }
       case "schedule-post": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.folder) {
           throw user.error(
             "CommandHandler " + command,
@@ -258,6 +300,7 @@ class CommandHandler {
         break;
       }
       case "schedule-posts": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
@@ -290,6 +333,7 @@ class CommandHandler {
         break;
       }
       case "schedule-next-post": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
@@ -312,6 +356,7 @@ class CommandHandler {
         break;
       }
       case "publish-post": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.folder) {
           throw user.error(
             "CommandHandler " + command,
@@ -334,6 +379,7 @@ class CommandHandler {
         break;
       }
       case "publish-posts": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
@@ -362,6 +408,7 @@ class CommandHandler {
 
       /* feed planning */
       case "schedule-next-posts": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         const nextposts = feed.scheduleNextPosts(
           args.date ? new Date(args.date) : undefined,
           {
@@ -376,6 +423,7 @@ class CommandHandler {
         break;
       }
       case "publish-due-posts": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
         const dueposts = await feed.publishDuePosts(
           {
             folders: args.folders,
@@ -415,30 +463,33 @@ class CommandHandler {
         result = [
           "# basic commands:",
           `${cmd} help`,
-          `${cmd} get-feed [--config=xxx]`,
-          `${cmd} setup-platform --platform=xxx`,
-          `${cmd} setup-platforms [--platforms=xxx,xxx]`,
-          `${cmd} test-platform --platform=xxx`,
-          `${cmd} test-platforms [--platforms=xxx,xxx]`,
-          `${cmd} refresh-platform --platform=xxx`,
-          `${cmd} refresh-platforms [--platforms=xxx,xxx]`,
-          `${cmd} get-platform --platform=xxx`,
-          `${cmd} get-platforms [--platforms=xxx,xxx]`,
-          `${cmd} get-folder --folder=xxx`,
-          `${cmd} get-folders [--folders=xxx,xxx]`,
-          `${cmd} get-post --post=xxx:xxx`,
-          `${cmd} get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
-          `${cmd} prepare-post --post=xxx:xxx`,
-          `${cmd} schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
-          `${cmd} schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
-          `${cmd} schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] `,
-          `${cmd} publish-post --post=xxx:xxx [--dry-run]`,
-          `${cmd} publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+          `${cmd} @userid get-user`,
+          `${cmd} @userid get-feed`,
+          `${cmd} @userid setup-platform --platform=xxx`,
+          `${cmd} @userid setup-platforms [--platforms=xxx,xxx]`,
+          `${cmd} @userid test-platform --platform=xxx`,
+          `${cmd} @userid test-platforms [--platforms=xxx,xxx]`,
+          `${cmd} @userid refresh-platform --platform=xxx`,
+          `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
+          `${cmd} @userid get-platform --platform=xxx`,
+          `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
+          `${cmd} @userid get-folder --folder=xxx`,
+          `${cmd} @userid get-folders [--folders=xxx,xxx]`,
+          `${cmd} @userid get-post --post=xxx:xxx`,
+          `${cmd} @userid get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
+          `${cmd} @userid prepare-post --post=xxx:xxx`,
+          `${cmd} @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
+          `${cmd} @userid schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
+          `${cmd} @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] `,
+          `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
+          `${cmd} @userid publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
           "\n# feed planning:",
-          `${cmd} prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
-          `${cmd} schedule-next-posts [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
-          `${cmd} publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
-          "\n# api server:",
+          `${cmd} @userid prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+          `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
+          `${cmd} @userid publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
+          "\n# admin only:",
+          `${cmd} create-user --userid=xxx`,
+          `${cmd} get-user --userid=xxx`,
           `${cmd} serve`,
         ];
         (result as string[]).forEach((line) => (report += "\n" + line));
@@ -452,6 +503,7 @@ class CommandHandler {
 }
 interface CommandArguments {
   dryrun?: boolean;
+  userid?: string;
   platforms?: PlatformId[];
   platform?: PlatformId;
   folders?: string[];
