@@ -4,10 +4,8 @@
 Tiktok does not allow services to run for a single user.
 This platform is not yet working.
 
-If you only have one user, your user .env is 
-the same as your global .env
 
-# setup
+## Set up the platform
 
 - sign up for a developer account https://developers.tiktok.com/apps/
 - create a personal app

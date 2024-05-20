@@ -13,7 +13,7 @@ optionally images or video. The Source Post will be transformed
 into real posts for each connected platform.
 
 Fairpost is *opinionated*, meaning, it will decide
-how a SourcePost with contents can best be presented
+how a Source Post with contents can best be presented
 as a Post on each platform. 
 
 For each platform, you'll have to register the app on the
@@ -22,7 +22,7 @@ something similar, which should be stored in global config.
 
 Then for each user, you'll have to allow the app to
 post on their behalf. This is usually done via an
-online (oauth) consent page.
+online (oauth) consent page in a webbrowser.
 
 Commonly, you would call this script every day or week
 for every user. Fairpost can then automatically **prepare** the folders,
@@ -51,11 +51,14 @@ cp .env.dist .env && nano .env
 ./fairpost.js help
 ```
 
-### Enable platforms
+### Set up platforms
 
-Read how to enable various social media platforms in the [docs](docs).
+Read how to set up various social media platforms in the [docs](docs).
 
 ### Create a user and connect a platform 
+
+Read how to connect various social media platforms in the [docs](docs);
+but in general, the steps are 
 
 ```
 # create a user foobar
@@ -115,9 +118,9 @@ a certain post to a certain platform if you like.
 
 Access and refresh tokens for various platforms may
 expire sooner or later. Before you do anything, try
-`fairpost.js refresh-platforms`. Eventually, even
+`fairpost.js @userid refresh-platforms`. Eventually, even
 refresh tokens may expire, and you will have to run
-`fairpost.js setup-platform --platform=bla` again
+`fairpost.js @userid setup-platform --platform=bla` again
 to get a new pair of tokens.
 
 
@@ -126,32 +129,35 @@ to get a new pair of tokens.
 ```
 # basic commands:
 fairpost: help
-fairpost: create-user --userid=xxx
-fairpost: @user get-feed 
-fairpost: @user setup-platform --platform=xxx
-fairpost: @user setup-platforms [--platforms=xxx,xxx]
-fairpost: @user test-platform --platform=xxx
-fairpost: @user test-platforms [--platforms=xxx,xxx]
-fairpost: @user refresh-platform --platform=xxx
-fairpost: @user refresh-platforms [--platforms=xxx,xxx]
-fairpost: @user get-platform --platform=xxx
-fairpost: @user get-platforms [--platforms=xxx,xxx]
-fairpost: @user get-folder --folder=xxx
-fairpost: @user get-folders [--folders=xxx,xxx]
-fairpost: @user get-post --post=xxx:xxx
-fairpost: @user get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost: @user prepare-post --post=xxx:xxx
-fairpost: @user schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
-fairpost: @user schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
-fairpost: @user publish-post --post=xxx:xxx [--dry-run]
-fairpost: @user publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid get-user
+fairpost: @userid get-feed
+fairpost: @userid setup-platform --platform=xxx
+fairpost: @userid setup-platforms [--platforms=xxx,xxx]
+fairpost: @userid test-platform --platform=xxx
+fairpost: @userid test-platforms [--platforms=xxx,xxx]
+fairpost: @userid refresh-platform --platform=xxx
+fairpost: @userid refresh-platforms [--platforms=xxx,xxx]
+fairpost: @userid get-platform --platform=xxx
+fairpost: @userid get-platforms [--platforms=xxx,xxx]
+fairpost: @userid get-folder --folder=xxx
+fairpost: @userid get-folders [--folders=xxx,xxx]
+fairpost: @userid get-post --post=xxx:xxx
+fairpost: @userid get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid prepare-post --post=xxx:xxx
+fairpost: @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
+fairpost: @userid schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
+fairpost: @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] 
+fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
+fairpost: @userid publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
 
 # feed planning:
-fairpost: @user prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
-fairpost: @user schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost: @user publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+fairpost: @userid prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid schedule-next-posts [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
 
-# api server
+# admin only:
+fairpost: create-user --userid=xxx
+fairpost: get-user --userid=xxx
 fairpost: serve
 ```
 

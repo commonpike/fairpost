@@ -11,10 +11,8 @@ the YouTube Terms of Service: https://www.youtube.com/t/terms
 Your posts will be preprocessed to fit YouTube. The limitations 
 imposed by Fairpost are not imposed by YouTube. 
 
-If you only have one user, your user .env is 
-the same as your global .env
 
-## Setting up the YouTube platform
+## Set up the platform
 
 
 ### Create a new project in your account
@@ -36,22 +34,9 @@ Below is how to do it manually.
  - Under credentials, create OAuth 2.0 Client IDs
    - Save as `FAIRPOST_YOUTUBE_CLIENT_ID` and `FAIRPOST_YOUTUBE_CLIENT_SECRET` in your global .env
 
-### Enable the platform
- - Add 'youtube' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
-
-### Get an OAuth2 Access Token for your platform
-
-This token last for a few hours and should be refreshed.
-The refresh token (if given) lasts until it is revoked.
-
- - call `./fairpost.js setup-platform --platform=youtube`
- - follow instructions from the command line
-
-### Test the platform
- - call `./fairpost.js test-platform --platform=youtube`
-
 ### Get your app audited
 
+You can already proceed below to test the app for private videoos.
 To have Fairpost publish **public** videos, your app has to be audited
 
  - go to https://support.google.com/youtube/contact/yt_api_form
@@ -60,18 +45,26 @@ To have Fairpost publish **public** videos, your app has to be audited
    - For the 'document describing your implementation', post this file
  - wait.
 
+## Connect the platform to a user
 
-### Other user settings 
+### Enable the platform
+ - Add 'youtube' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
 
-- `FAIRPOST_YOUTUBE_PRIVACY` = public | private | unlisted
-- `FAIRPOST_YOUTUBE_CATEGORY` = valid youtube category id
+### Get an OAuth2 Access Token for your platform
 
-## Manage additional pages with the same app
+This token last for a few hours and should be refreshed.
+The refresh token (if given) lasts until it is revoked.
 
-To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
+ - call `./fairpost.js @userid setup-platform --platform=youtube`
+ - follow instructions from the command line
 
-## Add a second user 
-- call `./fairpost.js add-user --user=foo` # todo
+### Test the platform
+ - call `./fairpost.js @userid test-platform --platform=youtube`
+
+
+## Connect the platform to another user
+
+- call `./fairpost.js create-user --user=foo` 
 - add youtube to its FAIRPOST_PLATFORMS
 
 ### Get an OAuth2 Access Token for your other page
@@ -81,6 +74,11 @@ To get this working, you need to follow instruction at [Set up for multiple user
 
 ### Test the other installation
  - call `./fairpost.js @foo test-platform --platform=youtube`
+
+## More user settings 
+
+- `FAIRPOST_YOUTUBE_PRIVACY` = public | private | unlisted
+- `FAIRPOST_YOUTUBE_CATEGORY` = valid youtube category id
 
 # Limitations 
 

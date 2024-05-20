@@ -2,11 +2,7 @@
 
 The LinkedIn platform posts to your companies feed.
 
-If you only have one user, your user .env is 
-the same as your global .env
-
-## Setting up the LinkedIn platform
-
+## Set up the platform
 
 ### Create a new App in your linkedin account
 - create an company your account can manage
@@ -26,6 +22,7 @@ https://www.linkedin.com/developers/apps/new
     in your global `.env`
   - add redirect url for your app as set in your .env (http://localhost:8000/callback)
 
+## Connect the platform to a user
 
 ### Enable the platform
  - Add 'linkedin' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
@@ -35,20 +32,18 @@ https://www.linkedin.com/developers/apps/new
 This token last for 60 days and should be refreshed.
 The refresh token (if given) lasts for 1 year.
 
- - call `./fairpost.js setup-platform --platform=linkedin`
+ - call `./fairpost.js @userid setup-platform --platform=linkedin`
  - follow instructions from the command line
 
 ### Test the platform
- - call `./fairpost.js test-platform --platform=linkedin`
+ - call `./fairpost.js @userid test-platform --platform=linkedin`
 
-## Manage additional pages with the same app
+## Connect the platform to another user
 
 One fairpost user can only manage one page. If you create a second user, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
 
-To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
-
-## Add a second user 
-- call `./fairpost.js add-user --user=foo` # todo
+### Create a new user 
+- call `./fairpost.js create-user --userid=foo` 
 - add linkedin to its FAIRPOST_PLATFORMS
 - find your company id (in the url, like , 93841222)
   - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your users .env

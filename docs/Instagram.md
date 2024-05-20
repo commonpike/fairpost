@@ -11,10 +11,8 @@ It uses the related facebook account to
 upload temporary files, because the instagram
 api requires files in posts to have an url.
 
-If you only have one user, your user .env is 
-the same as your global .env
 
-## Setting up the Instagram platform
+## Set up the platform
 
 
 ### Create a new App in your facebook account
@@ -30,6 +28,7 @@ the same as your global .env
  - under 'settings', find your app secret
    - save this as `FAIRPOST_INSTAGRAM_APP_SECRET` in your global .env
 
+## Connect the platform to a user
 
 ### Find your instagram user id 
   - go to https://www.instagram.com/web/search/topsearch/?query={username}
@@ -60,11 +59,11 @@ tokens, you can turn on Live mode and start posting.
   - go to https://developers.facebook.com/
   - select your app, edit it 
   - set App Mode to 'dev'
-- call `./fairpost.js setup-platform --platform=instagram`
+- call `./fairpost.js @userid setup-platform --platform=instagram`
 - follow instructions from the command line
 
 ### Test the  platform
- - call `./fairpost.js test-platform --platform=instagram`
+ - call `./fairpost.js @userid test-platform --platform=instagram`
 
 ### Set the App to Live Mode
 before you use the app, set the App Mode to 'Live'
@@ -73,14 +72,12 @@ before you use the app, set the App Mode to 'Live'
   - set App Mode to 'live'
   - use https://github.com/commonpike/fairpost/blob/master/public/privacy-policy.md for the privacy policy url
 
-## Manage additional pages with the same app
+## Connect the platform to another user
 
 One fairpost user can only manage one page. If you create a second user, you can use the same app id to manage a different page. The app is registered on your account, so if you can manage the other page, so can the app. 
 
-To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
-
-## Add a second user 
-- call `./fairpost.js add-user --user=foo` # todo
+### Add a second user 
+- call `./fairpost.js create-user --userid=foo` 
 
 ### Find your other instagram user id 
   - go to https://www.instagram.com/web/search/topsearch/?query={username}

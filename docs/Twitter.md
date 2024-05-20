@@ -3,10 +3,8 @@
 The Twitter platform is using 
 https://github.com/PLhery/node-twitter-api-v2
 
-If you only have one user, your user .env is 
-the same as your global .env
 
-## Setting up the Twitter platform
+## Set up the platform
 
 The Twitter api was being rebuild when Elon Musk
 bought it and broke it. Part of it now runs on 
@@ -37,6 +35,8 @@ keys will not be needed anymore.
   - save `FAIRPOST_TWITTER_CLIENT_ID` in your global .env
   - save `FAIRPOST_TWITTER_CLIENT_SECRET` in your global .env
 
+## Connect the platform to a user
+
 ### Enable the platform
  - Add 'twitter' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
 
@@ -44,21 +44,19 @@ keys will not be needed anymore.
 
 This token should last forever (?)
 
- - call `./fairpost.js setup-platform --platform=twitter`
+ - call `./fairpost.js @userid setup-platform --platform=twitter`
  - follow instructions from the command line
 
 ### Test the platform
- - call `./fairpost.js test-platform --platform=twitter`
+ - call `./fairpost.js @userid test-platform --platform=twitter`
 
-## Manage additional feeds with the same app
+## Connect the platform to another user
 
 One fairpost user can only manage one feed. If you create a second user, you can use the same app to manage a different feed. OAuth2 allows you to enable the app for your second account, but the OAuth1 part is tied to your first
 account and requires you to specify an 'additional_owner' for the uploaded media.
 
-To get this working, you need to follow instruction at [Set up for multiple users](./docs/MultipleUsers.md)
-
-## Add a second user 
-- call `./fairpost.js add-user --user=foo` # todo
+### Add a second user 
+- call `./fairpost.js create-user --userid=foo` 
 
 ### Get an OAuth2 Access Token for your other page
 
