@@ -132,6 +132,9 @@ GET /{ig-container-id}?fields=status_code — check media container publishing e
 GET /{ig-user-id}/content_publishing_limit — check app user's current publishing rate limit usage.
 
 ~~~
+permalink 
+https://developers.facebook.com/docs/instagram-basic-display-api/reference/media/
+~~~
 GET /{ig-container-id}?fields=status_code endpoint. This endpoint will return one of the following:
 
 EXPIRED — The container was not published within 24 hours and has expired.

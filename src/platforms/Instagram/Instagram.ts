@@ -92,7 +92,7 @@ export default class Instagram extends Platform {
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     this.user.trace("Instagram.publishPost", post.id, dryrun);
 
-    let response = { id: "-99" } as { id: string };
+    let response = { id: "-99" } as { id: string; permalink?: string };
     let error = undefined as Error | undefined;
 
     if (post.getFiles("video").length === 1 && !post.hasFiles("image")) {
@@ -115,7 +115,12 @@ export default class Instagram extends Platform {
       }
     }
 
-    return post.processResult(response.id, "#unknown", {
+    const details = await this.api.get(response.id, {
+      fields: "id,media_type,permalink,thumbnail_url,timestamp,username",
+    });
+    response = { ...response, ...details };
+
+    return post.processResult(response.id, response.permalink ?? "#unknown", {
       date: new Date(),
       dryrun: dryrun,
       success: !error,
@@ -152,9 +157,14 @@ export default class Instagram extends Platform {
       );
     }
 
+    // wait for ready
+    try {
+      await this.checkPostStatus(container.id);
+    } catch (e) {
+      throw this.user.error(e);
+    }
+
     if (!dryrun) {
-      // wait for upload ?
-      // https://github.com/fbsamples/reels_publishing_apis/blob/main/insta_reels_publishing_api_sample/utils.js#L23
       const response = (await this.api.postJson("%USER%/media_publish", {
         creation_id: container.id,
       })) as { id: string };
