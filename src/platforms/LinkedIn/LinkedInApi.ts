@@ -13,7 +13,7 @@ import User from "../../models/User";
 
 export default class LinkedInApi {
   LGC_API_VERSION = "v2";
-  API_VERSION = "202304";
+  API_VERSION = "202307";
 
   user: User;
 
