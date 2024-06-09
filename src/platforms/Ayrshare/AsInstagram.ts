@@ -1,9 +1,8 @@
-import * as sharp from "sharp";
-
 import Ayrshare from "./Ayrshare";
 import Folder from "../../models/Folder";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
+import sharp from "sharp";
 
 /**
  * AsInstagram: support for instagram platform through Ayrshare

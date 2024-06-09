@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as sharp from "sharp";
 
 import Folder from "../../models/Folder";
 import InstagramApi from "./InstagramApi";
@@ -9,6 +8,7 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
+import sharp from "sharp";
 
 /**
  * Instagram: support for instagram platform.

@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "commonjs",
+    "module": "nodenext",
     "sourceMap": true,
     "strict" : true,
+    "esModuleInterop": true,
     "outDir": "build"
   },
   "include": [

@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as sharp from "sharp";
 
 import FacebookApi from "./FacebookApi";
 import FacebookAuth from "./FacebookAuth";
@@ -9,6 +8,7 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
+import sharp from "sharp";
 
 /**
  * Facebook: support for facebook platform.
@@ -21,6 +21,7 @@ export default class Facebook extends Platform {
   id: PlatformId = PlatformId.FACEBOOK;
   assetsFolder = "_facebook";
   postFileName = "post.json";
+  pluginsKey = "FACEBOOK_PLUGINS";
 
   api: FacebookApi;
   auth: FacebookAuth;

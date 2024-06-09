@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as sharp from "sharp";
+
+import sharp from "sharp";
 
 /**
  * Folder - a folder within a feed

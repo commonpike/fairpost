@@ -1,5 +1,3 @@
-import * as sharp from "sharp";
-
 import Folder from "../../models/Folder";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
@@ -7,6 +5,7 @@ import Post from "../../models/Post";
 import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth";
 import User from "../../models/User";
+import sharp from "sharp";
 
 /**
  * Twitter: support for twitter platform

@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import * as sharp from "sharp";
 
 import { handleApiError, handleEmptyResponse } from "../../utilities";
 
@@ -10,6 +9,7 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
+import sharp from "sharp";
 
 export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;

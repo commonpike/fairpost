@@ -1,7 +1,9 @@
 import * as fs from "fs";
+import * as pluginClasses from "../plugins";
 
 import Folder from "./Folder";
 import { PlatformId } from "../platforms";
+import Plugin from "./Plugin";
 import Post from "./Post";
 import { PostStatus } from "./Post";
 import User from "./User";
@@ -19,9 +21,29 @@ export default class Platform {
   defaultBody: string = "Fairpost feed";
   assetsFolder: string = "_fairpost";
   postFileName: string = "post.json";
+  pluginsKey: string | undefined = undefined;
+  plugins: Plugin[] | undefined = undefined;
 
   constructor(user: User) {
     this.user = user;
+  }
+
+  /**
+   * Read the pluginsKey and load any of the plugins
+   * enabled on this platform
+   */
+  loadPlugins() {
+    if (this.pluginsKey && this.plugins === undefined) {
+      this.plugins = [];
+      const activePluginIds = this.user
+        .get("settings", this.pluginsKey)
+        .split(",");
+      Object.values(pluginClasses).forEach((pluginClass) => {
+        if (activePluginIds.includes(pluginClass.name)) {
+          this.plugins?.push(new pluginClass(this));
+        }
+      });
+    }
   }
 
   /**
@@ -34,6 +56,8 @@ export default class Platform {
     let report = "";
     report += "\nPlatform: " + this.id;
     report += "\n - active: " + this.active;
+    report += "\n - key: " + this.pluginsKey;
+    report += "\n - plugins: " + this.plugins?.map((p) => p.id).join(",");
     return report;
   }
 
@@ -155,6 +179,9 @@ export default class Platform {
     });
     post.reorderFiles();
 
+    // read textfiles and stick their contents
+    // into appropriate properties - body, title, etc
+
     const textFiles = post.getFiles("text");
 
     if (post.hasFile("body.txt")) {
@@ -186,7 +213,16 @@ export default class Platform {
       post.geo = fs.readFileSync(post.folder.path + "/geo.txt", "utf8");
     }
 
+    // decompile the body to see if there are
+    // appropriate metadata in there - title, tags, ..
+
     post.decompileBody();
+
+    // run all plugins
+    this.loadPlugins();
+    this.plugins?.forEach((plugin) => plugin.process(post));
+
+    // validate and set status
 
     if (post.title) {
       post.valid = true;
@@ -196,7 +232,9 @@ export default class Platform {
       post.status = PostStatus.UNSCHEDULED;
     }
 
+    // save
     post.save();
+
     return post;
   }
 

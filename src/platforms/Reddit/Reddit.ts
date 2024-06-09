@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as sharp from "sharp";
 
 import Folder from "../../models/Folder";
 import Platform from "../../models/Platform";
@@ -10,6 +9,7 @@ import RedditApi from "./RedditApi";
 import RedditAuth from "./RedditAuth";
 import User from "../../models/User";
 import { XMLParser } from "fast-xml-parser";
+import sharp from "sharp";
 
 /**
  * Reddit: support for reddit platform
