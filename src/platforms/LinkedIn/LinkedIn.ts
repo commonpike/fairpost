@@ -1,8 +1,8 @@
 import * as fs from "fs";
 
+import Folder, { FileGroup } from "../../models/Folder";
 import { handleApiError, handleEmptyResponse } from "../../utilities";
 
-import Folder from "../../models/Folder";
 import LinkedInApi from "./LinkedInApi";
 import LinkedInAuth from "./LinkedInAuth";
 import Platform from "../../models/Platform";
@@ -58,14 +58,16 @@ export default class LinkedIn extends Platform {
     this.user.trace("LinkedIn.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
+      /*
       // linkedin: prefer video, max 1 video
       if (post.hasFiles("video")) {
         post.limitFiles("video", 1);
         post.removeFiles("image");
       }
+      */
 
       // linkedin: max 5mb images
-      for (const file of post.getFiles("image")) {
+      for (const file of post.getFiles(FileGroup.IMAGE)) {
         const src = file.name;
         const dst = this.assetsFolder + "/linkedin-" + src;
         if (file.size / (1024 * 1024) >= 5) {
@@ -93,19 +95,19 @@ export default class LinkedIn extends Platform {
     };
     let error = undefined as Error | undefined;
 
-    if (post.hasFiles("video")) {
+    if (post.hasFiles(FileGroup.VIDEO)) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e as Error;
       }
-    } else if (post.getFiles("image").length > 1) {
+    } else if (post.getFiles(FileGroup.IMAGE).length > 1) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
         error = e as Error;
       }
-    } else if (post.getFiles("image").length === 1) {
+    } else if (post.getFiles(FileGroup.IMAGE).length === 1) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
@@ -188,7 +190,7 @@ export default class LinkedIn extends Platform {
   private async publishImagePost(post: Post, dryrun: boolean = false) {
     this.user.trace("LinkedIn.publishImagePost");
     const title = post.title;
-    const image = post.getFilePath(post.getFiles("image")[0].name);
+    const image = post.getFilePath(post.getFiles(FileGroup.IMAGE)[0].name);
     const leash = await this.getImageLeash();
     await this.uploadImage(leash.value.uploadUrl, image);
     // TODO: save headers[etag] ..
@@ -225,7 +227,7 @@ export default class LinkedIn extends Platform {
   private async publishImagesPost(post: Post, dryrun: boolean = false) {
     this.user.trace("LinkedIn.publishImagesPost");
     const images = post
-      .getFiles("image")
+      .getFiles(FileGroup.IMAGE)
       .map((image) => post.getFilePath(image.name));
     const imageIds = [];
     for (const image of images) {
@@ -272,7 +274,7 @@ export default class LinkedIn extends Platform {
     this.user.trace("LinkedIn.publishVideoPost");
 
     const title = post.title;
-    const video = post.getFilePath(post.getFiles("video")[0].name);
+    const video = post.getFilePath(post.getFiles(FileGroup.VIDEO)[0].name);
 
     const leash = await this.getVideoLeash(video);
 

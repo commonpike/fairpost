@@ -1,4 +1,5 @@
-import Folder from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Folder";
+
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -65,11 +66,11 @@ export default class Twitter extends Platform {
     const post = await super.preparePost(folder);
     if (post) {
       // twitter: no video
-      post.removeFiles("video");
+      //post.removeFiles("video");
       // twitter: max 4 images
-      post.limitFiles("image", 4);
+      //post.limitFiles("image", 4);
       // twitter: max 5mb images
-      for (const file of post.getFiles("image")) {
+      for (const file of post.getFiles(FileGroup.IMAGE)) {
         const src = file.name;
         const dst = this.assetsFolder + "/twitter-" + src;
         if (file.size / (1024 * 1024) >= 5) {
@@ -98,7 +99,7 @@ export default class Twitter extends Platform {
     };
     let error = undefined as Error | undefined;
 
-    if (post.hasFiles("image")) {
+    if (post.hasFiles(FileGroup.IMAGE)) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
@@ -189,7 +190,7 @@ export default class Twitter extends Platform {
       "TWITTER_OA1_ADDITIONAL_OWNER",
       "",
     );
-    for (const image of post.getFiles("image")) {
+    for (const image of post.getFiles(FileGroup.IMAGE)) {
       const path = post.getFilePath(image.name);
       this.user.trace("Uploading " + path + "...");
       try {

@@ -1,6 +1,6 @@
 {
   "name": "fairpost",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Feeds data to social media platforms based on folders in a dir",
   "main": "index.js",
   "scripts": {

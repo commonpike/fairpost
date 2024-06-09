@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as pluginClasses from "../plugins";
 
-import Folder from "./Folder";
+import Folder, { FileGroup } from "./Folder";
+
 import { PlatformId } from "../platforms";
 import Plugin from "./Plugin";
 import Post from "./Post";
@@ -182,7 +183,7 @@ export default class Platform {
     // read textfiles and stick their contents
     // into appropriate properties - body, title, etc
 
-    const textFiles = post.getFiles("text");
+    const textFiles = post.getFiles(FileGroup.TEXT);
 
     if (post.hasFile("body.txt")) {
       post.body = fs.readFileSync(post.folder.path + "/body.txt", "utf8");

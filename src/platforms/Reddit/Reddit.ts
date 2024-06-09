@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import Folder from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Folder";
+
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -61,11 +62,11 @@ export default class Reddit extends Platform {
     if (post) {
       // reddit: max 1 image or video
       // TODO: extract video thumbnail
-      if (post.hasFiles('video')) { // eslint-disable-line
-        post.limitFiles("video", 1);
+      if (post.hasFiles(FileGroup.VIDEO)) { // eslint-disable-line
+        //post.limitFiles("video", 1);
         const poster = this.assetsFolder + "/reddit-poster.png";
         const posters = post
-          .getFiles("image")
+          .getFiles(FileGroup.IMAGE)
           .filter((file) => file.basename === "poster");
         if (posters.length) {
           // copy that file to its dest
@@ -79,9 +80,9 @@ export default class Reddit extends Platform {
             post.getFilePath(posters[0].name),
             post.getFilePath(poster),
           );
-        } else if (post.hasFiles("image")) {
+        } else if (post.hasFiles(FileGroup.IMAGE)) {
           // copy the first image to poster
-          const img = post.getFiles("image")[0];
+          const img = post.getFiles(FileGroup.IMAGE)[0];
           this.user.trace(
             "Reddit.preparePost",
             "copying poster",
@@ -101,13 +102,13 @@ export default class Reddit extends Platform {
             post.valid = false;
           }
         }
-        post.removeFiles("image");
+        //post.removeFiles("image");
         await post.addFile(poster);
       }
-      if (post.hasFiles("image")) {
-        post.limitFiles("image", 1);
+      if (post.hasFiles(FileGroup.IMAGE)) {
+        // post.limitFiles("image", 1);
         // <MaxSizeAllowed>20971520</MaxSizeAllowed>
-        const file = post.getFiles("image")[0];
+        const file = post.getFiles(FileGroup.IMAGE)[0];
         const src = file.name;
         if (file.width && file.width > 3000) {
           this.user.trace("Resizing " + src + " for reddit ..");
@@ -132,13 +133,13 @@ export default class Reddit extends Platform {
     let response = {};
     let error = undefined as Error | undefined;
 
-    if (post.hasFiles("video")) {
+    if (post.hasFiles(FileGroup.VIDEO)) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e as Error;
       }
-    } else if (post.hasFiles("image")) {
+    } else if (post.hasFiles(FileGroup.IMAGE)) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
@@ -211,7 +212,7 @@ export default class Reddit extends Platform {
   private async publishImagePost(post: Post, dryrun = false): Promise<object> {
     this.user.trace("Reddit.publishImagePost");
     const title = post.title;
-    const image = post.getFiles("image")[0];
+    const image = post.getFiles(FileGroup.IMAGE)[0];
     const file = post.getFilePath(image.name);
     const leash = await this.getUploadLeash(file, image.mimetype);
     const imageUrl = await this.uploadFile(leash, file);
@@ -253,13 +254,13 @@ export default class Reddit extends Platform {
     const title = post.title;
 
     // upload poster first
-    const poster = post.getFiles("image")[0];
+    const poster = post.getFiles(FileGroup.IMAGE)[0];
     const posterFile = post.getFilePath(poster.name);
     const posterLeash = await this.getUploadLeash(posterFile, poster.mimetype);
     const posterUrl = await this.uploadFile(posterLeash, posterFile);
 
     // upload video with poster
-    const video = post.getFiles("video")[0];
+    const video = post.getFiles(FileGroup.VIDEO)[0];
     const file = post.getFilePath(video.name);
     const leash = await this.getUploadLeash(file, video.mimetype);
     const videoUrl = await this.uploadFile(leash, file);

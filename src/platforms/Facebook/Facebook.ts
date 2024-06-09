@@ -1,9 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 
+import Folder, { FileGroup } from "../../models/Folder";
+
 import FacebookApi from "./FacebookApi";
 import FacebookAuth from "./FacebookAuth";
-import Folder from "../../models/Folder";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -48,13 +49,13 @@ export default class Facebook extends Platform {
     const post = await super.preparePost(folder);
     if (post && post.files) {
       // facebook: video post can only contain 1 video
-      if (post.hasFiles("video")) {
+      /*if (post.hasFiles("video")) {
         this.user.warn("have video");
         post.limitFiles("video", 1);
         post.removeFiles("image");
-      }
+      }*/
       // facebook : max 4mb images
-      for (const file of post.getFiles("image")) {
+      for (const file of post.getFiles(FileGroup.IMAGE)) {
         if (file.size / (1024 * 1024) >= 4) {
           this.user.trace("Resizing " + file.name + " for facebook ..");
           const src = file.name;
@@ -79,13 +80,13 @@ export default class Facebook extends Platform {
     let response = { id: "-99" } as { id: string };
     let error = undefined as Error | undefined;
 
-    if (post.hasFiles("video")) {
+    if (post.hasFiles(FileGroup.VIDEO)) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e as Error;
       }
-    } else if (post.hasFiles("image")) {
+    } else if (post.hasFiles(FileGroup.IMAGE)) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
@@ -142,7 +143,7 @@ export default class Facebook extends Platform {
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
     const attachments = [];
-    for (const image of post.getFiles("image")) {
+    for (const image of post.getFiles(FileGroup.IMAGE)) {
       attachments.push({
         media_fbid: (await this.uploadImage(post.getFilePath(image.name)))[
           "id"
@@ -174,7 +175,7 @@ export default class Facebook extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const file = post.getFilePath(post.getFiles("video")[0].name);
+    const file = post.getFilePath(post.getFiles(FileGroup.VIDEO)[0].name);
     const title = post.title;
     const description = post.getCompiledBody("!title");
 

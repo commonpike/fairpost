@@ -1,7 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import Folder from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Folder";
+
 import InstagramApi from "./InstagramApi";
 import InstagramAuth from "./InstagramAuth";
 import Platform from "../../models/Platform";
@@ -50,7 +51,7 @@ export default class Instagram extends Platform {
     const post = await super.preparePost(folder);
     if (post && post.files) {
       // instagram: 1 video for reel
-      const numVideos = post.getFiles("video").length;
+      /* const numVideos = post.getFiles("video").length;
       if (numVideos) {
         if (numVideos > 10) {
           this.user.trace("Removing > 10 videos for instagram caroussel..");
@@ -62,9 +63,10 @@ export default class Instagram extends Platform {
           post.limitFiles("images", remaining);
         }
       }
+      */
 
       // instagram : scale images, jpeg only
-      for (const file of post.getFiles("image")) {
+      for (const file of post.getFiles(FileGroup.IMAGE)) {
         if (file.width && file.width > 1440) {
           const src = file.name;
           const dst =
@@ -80,7 +82,11 @@ export default class Instagram extends Platform {
       }
 
       // instagram: require media
-      if (post.getFiles("image").length + post.getFiles("video").length === 0) {
+      if (
+        post.getFiles(FileGroup.IMAGE).length +
+          post.getFiles(FileGroup.VIDEO).length ===
+        0
+      ) {
         post.valid = false;
       }
       post.save();
@@ -95,13 +101,19 @@ export default class Instagram extends Platform {
     let response = { id: "-99" } as { id: string; permalink?: string };
     let error = undefined as Error | undefined;
 
-    if (post.getFiles("video").length === 1 && !post.hasFiles("image")) {
+    if (
+      post.getFiles(FileGroup.VIDEO).length === 1 &&
+      !post.hasFiles(FileGroup.IMAGE)
+    ) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e as Error;
       }
-    } else if (post.getFiles("image").length === 1 && !post.hasFiles("video")) {
+    } else if (
+      post.getFiles(FileGroup.IMAGE).length === 1 &&
+      !post.hasFiles(FileGroup.VIDEO)
+    ) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
@@ -142,7 +154,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const file = post.getFilePath(post.getFiles("image")[0].name);
+    const file = post.getFilePath(post.getFiles(FileGroup.IMAGE)[0].name);
     const caption = post.getCompiledBody();
     const photoId = (await this.uploadImage(file))["id"];
     const photoLink = await this.getImageLink(photoId);
@@ -193,7 +205,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const file = post.getFilePath(post.getFiles("video")[0].name);
+    const file = post.getFilePath(post.getFiles(FileGroup.VIDEO)[0].name);
     const caption = post.getCompiledBody();
     const videoId = (await this.uploadVideo(file))["id"];
     const videoLink = await this.getVideoLink(videoId);
@@ -247,7 +259,7 @@ export default class Instagram extends Platform {
   ): Promise<{ id: string }> {
     const uploadIds = [] as string[];
 
-    for (const file of post.getFiles("video", "image")) {
+    for (const file of post.getFiles(FileGroup.VIDEO, FileGroup.IMAGE)) {
       if (file.group === "video") {
         const videoId = (await this.uploadVideo(post.getFilePath(file.name)))[
           "id"

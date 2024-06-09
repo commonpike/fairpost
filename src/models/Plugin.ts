@@ -12,13 +12,11 @@ import Post from "./Post";
  */
 export default class Plugin {
   id: string;
-  platform: Platform;
   settings: object;
 
   constructor(platform: Platform) {
     this.id = this.constructor.name;
-    this.platform = platform;
-    this.platform.user.trace("Add plugin", platform.id, this.id);
+    platform.user.trace(platform.id, "Add plugin", this.id);
     this.settings = {}; // todo
   }
 

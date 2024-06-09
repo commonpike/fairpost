@@ -1,6 +1,7 @@
 import * as fs from "fs";
 
-import Folder from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Folder";
+
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -49,7 +50,7 @@ export default class YouTube extends Platform {
   async preparePost(folder: Folder): Promise<Post> {
     this.user.trace("YouTube.preparePost", folder.id);
     const post = await super.preparePost(folder);
-    if (post) {
+    /*if (post) {
       // youtube: 1 video
       post.limitFiles("video", 1);
       post.removeFiles("image");
@@ -59,7 +60,7 @@ export default class YouTube extends Platform {
         post.valid = false;
       }
       post.save();
-    }
+    }*/
     return post;
   }
 
@@ -139,7 +140,7 @@ export default class YouTube extends Platform {
   private async publishVideoPost(post: Post, dryrun: boolean = false) {
     this.user.trace("YouTube.publishVideoPost", dryrun);
 
-    const file = post.getFiles("video")[0];
+    const file = post.getFiles(FileGroup.VIDEO)[0];
 
     const client = this.auth.getClient();
     this.user.trace(

@@ -35,6 +35,6 @@ export default class ImageSize extends Plugin {
    */
 
   process(post: Post): void {
-    this.platform.user.trace(this.id, post.id, "process");
+    post.platform.user.trace(this.id, post.id, "process");
   }
 }

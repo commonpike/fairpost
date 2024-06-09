@@ -64,19 +64,19 @@ export default class Folder {
   public async getFileInfo(name: string, order: number): Promise<FileInfo> {
     const filepath = this.path + "/" + name;
     const mime = this.guessMimeType(name);
-    const group = mime !== "application/unknown" ? mime.split("/")[0] : "other";
+    const group = mime.split("/")[0];
     const stats = fs.statSync(filepath);
     const extension = path.extname(name);
     const file = {
       name: name,
       basename: path.basename(name, extension || ""),
       extension: extension.substring(1),
-      group: group,
+      group: Object.values(FileGroup).includes(group as FileGroup) ? group : FileGroup.OTHER,
       mimetype: mime,
       size: stats.size,
       order: order,
     } as FileInfo;
-    if (group === "image") {
+    if (group === FileGroup.IMAGE) {
       const metadata = await sharp(filepath).metadata();
       file.width = metadata.width;
       file.height = metadata.height;
@@ -123,10 +123,17 @@ export interface FileInfo {
   original?: string;
   basename: string;
   extension: string;
-  group: string;
+  group: FileGroup;
   size: number;
   mimetype: string;
   order: number;
   width?: number;
   height?: number;
+}
+
+export enum FileGroup {
+  VIDEO = "video",
+  IMAGE = "image",
+  TEXT = "text",
+  OTHER = "other",
 }
