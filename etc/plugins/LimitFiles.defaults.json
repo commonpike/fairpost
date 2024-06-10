@@ -1,0 +1,44 @@
+{
+    "default": {
+      "prefer": [
+        "video",
+        "image",
+        "text",
+        "other"
+      ],
+      "exclusive": [],
+      "total_max": 0,
+      "total_min": 0,
+      "image_min": 0,
+      "image_max": 0,
+      "video_min": 0,
+      "video_max": 0,
+      "text_min": 0,
+      "text_max": 0,
+      "other_min": 0,
+      "other_max": 0
+    },
+    "facebook": {
+      "exclusive": ["video"],
+      "video_max": 1
+    },
+    "instagram": {
+      "total_max": 10
+    },
+    "linkedin": {
+      "exclusive": ["video"],
+      "video_max": 1
+    },
+    "reddit": {
+      "total_max": 1
+    },
+    "twitter": {
+      "video_max": 0,
+      "image_max": 4
+    },
+    "youtube": {
+      "exclusive": ["video"],
+      "video_min": 1,
+      "video_max": 1
+    }
+}

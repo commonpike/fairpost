@@ -71,7 +71,9 @@ export default class Folder {
       name: name,
       basename: path.basename(name, extension || ""),
       extension: extension.substring(1),
-      group: Object.values(FileGroup).includes(group as FileGroup) ? group : FileGroup.OTHER,
+      group: Object.values(FileGroup).includes(group as FileGroup)
+        ? group
+        : FileGroup.OTHER,
       mimetype: mime,
       size: stats.size,
       order: order,

@@ -3,6 +3,7 @@ import Platform from "../models/Platform";
 import { PlatformId } from "../platforms";
 import Plugin from "../models/Plugin";
 import Post from "../models/Post";
+import untypedDefaults from "../../etc/plugins/LimitFiles.defaults.json";
 
 /**
  * Plugin LimitFiles.
@@ -12,8 +13,8 @@ import Post from "../models/Post";
  */
 
 type LimitFilesSettings = {
-  prefer?: FileGroup[];
-  exclusive?: FileGroup[];
+  prefer?: string[]; // FileGroup[];
+  exclusive?: string[]; // FileGroup[];
   total_max?: number;
   total_min?: number;
   image_min?: number;
@@ -27,56 +28,14 @@ type LimitFilesSettings = {
 };
 
 export default class LimitFiles extends Plugin {
-  defaults: { [key in PlatformId]?: LimitFilesSettings } = {
-    [PlatformId.UNKNOWN]: {
-      prefer: [
-        FileGroup.VIDEO,
-        FileGroup.IMAGE,
-        FileGroup.TEXT,
-        FileGroup.OTHER,
-      ],
-      exclusive: [],
-      total_max: 0,
-      total_min: 0,
-      image_min: 0,
-      image_max: 0,
-      video_min: 0,
-      video_max: 0,
-      text_min: 0,
-      text_max: 0,
-      other_min: 0,
-      other_max: 0,
-    },
-    [PlatformId.FACEBOOK]: {
-      exclusive: [FileGroup.VIDEO],
-      video_max: 1,
-    },
-    [PlatformId.INSTAGRAM]: {
-      total_max: 10,
-    },
-    [PlatformId.LINKEDIN]: {
-      exclusive: [FileGroup.VIDEO],
-      video_max: 1,
-    },
-    [PlatformId.REDDIT]: {
-      total_max: 1,
-    },
-    [PlatformId.TWITTER]: {
-      video_max: 0,
-      image_max: 4,
-    },
-    [PlatformId.YOUTUBE]: {
-      exclusive: [FileGroup.VIDEO],
-      video_min: 1,
-      video_max: 1,
-    },
-  };
   settings: LimitFilesSettings = {};
   constructor(platform: Platform) {
     super(platform);
+    const defaults: { [key in PlatformId | "default"]?: LimitFilesSettings } =
+      untypedDefaults;
     this.settings = {
-      ...this.defaults[PlatformId.UNKNOWN],
-      ...(this.defaults[platform.id] ?? {}),
+      ...defaults["default"],
+      ...(defaults[platform.id] ?? {}),
     };
   }
 
@@ -150,7 +109,7 @@ export default class LimitFiles extends Plugin {
 
     if (this.settings.exclusive?.length) {
       for (const exclusiveGroup of this.settings.exclusive) {
-        if (post.hasFiles(exclusiveGroup)) {
+        if (post.hasFiles(exclusiveGroup as FileGroup)) {
           post.platform.user.trace(
             this.id,
             post.id,
@@ -220,7 +179,7 @@ export default class LimitFiles extends Plugin {
       for (const preferGroup of this.settings.prefer ??
         Object.values(FileGroup)) {
         if (remaining) {
-          const numfiles = post.getFiles(preferGroup).length;
+          const numfiles = post.getFiles(preferGroup as FileGroup).length;
           if (numfiles > this.settings.total_max) {
             post.platform.user.trace(
               this.id,
@@ -228,11 +187,11 @@ export default class LimitFiles extends Plugin {
               "total_max",
               "Limit " + preferGroup + " to " + remaining,
             );
-            post.limitFiles(preferGroup, remaining);
+            post.limitFiles(preferGroup as FileGroup, remaining);
           }
           remaining = Math.max(remaining - numfiles, 0);
         } else {
-          post.removeFiles(preferGroup);
+          post.removeFiles(preferGroup as FileGroup);
         }
       }
     }
