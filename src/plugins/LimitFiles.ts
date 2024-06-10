@@ -3,7 +3,7 @@ import Platform from "../models/Platform";
 import { PlatformId } from "../platforms";
 import Plugin from "../models/Plugin";
 import Post from "../models/Post";
-import untypedDefaults from "../../etc/plugins/LimitFiles.defaults.json";
+import untypedDefaults from "./LimitFiles.defaults.json";
 
 /**
  * Plugin LimitFiles.

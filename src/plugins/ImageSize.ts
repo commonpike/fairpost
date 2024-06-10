@@ -2,7 +2,7 @@ import Platform from "../models/Platform";
 import { PlatformId } from "../platforms";
 import Plugin from "../models/Plugin";
 import Post from "../models/Post";
-import untypedDefaults from "../../etc/plugins/ImageSize.defaults.json";
+import untypedDefaults from "./ImageSize.defaults.json";
 
 /**
  * Plugin ImageSize.

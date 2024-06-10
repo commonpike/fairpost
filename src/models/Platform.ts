@@ -54,6 +54,7 @@ export default class Platform {
 
   report(): string {
     this.user.trace("Platform", "report");
+    this.loadPlugins();
     let report = "";
     report += "\nPlatform: " + this.id;
     report += "\n - active: " + this.active;
