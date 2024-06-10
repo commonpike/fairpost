@@ -1,33 +1,38 @@
 import Platform from "../models/Platform";
+import { PlatformId } from "../platforms";
 import Plugin from "../models/Plugin";
 import Post from "../models/Post";
+import untypedDefaults from "../../etc/plugins/ImageSize.defaults.json";
 
 /**
  * Plugin ImageSize.
  *
- * Remove files from Post based on Platform limits.
+ * Resize images from Post based on Platform limits.
  *
  */
 
-/*
-type LimitFilesSettings = {
-    prefer_type?: "image" | "video" | "text" | "other";
-    strict_type?: boolean;
-    total_max?: number;
-    total_min?: number;
-    image_min?: number;
-    image_max?: number;
-    video_min?: number;
-    video_max?: number;
-    text_min?: number;
-    text_max?: number;
-    other_min?: number;
-    other_max?: number;
-};*/
+type ImageSizeSettings = {
+  fit?: string; // 'cover' | 'contain';
+  bgcolor?: string;
+  min_size?: number;
+  max_size?: number;
+  min_ratio?: number;
+  max_ratio?: number;
+  min_width?: number;
+  max_width?: number;
+  min_height?: number;
+  max_height?: number;
+};
 
 export default class ImageSize extends Plugin {
   constructor(platform: Platform) {
     super(platform);
+    const defaults: { [key in PlatformId | "default"]?: ImageSizeSettings } =
+      untypedDefaults;
+    this.settings = {
+      ...defaults["default"],
+      ...(defaults[platform.id] ?? {}),
+    };
   }
 
   /**

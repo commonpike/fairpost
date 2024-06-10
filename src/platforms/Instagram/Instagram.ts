@@ -22,6 +22,7 @@ export default class Instagram extends Platform {
   id: PlatformId = PlatformId.INSTAGRAM;
   assetsFolder = "_instagram";
   postFileName = "post.json";
+  pluginsKey = "INSTAGRAM_PLUGINS";
 
   api: InstagramApi;
   auth: InstagramAuth;

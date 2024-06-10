@@ -19,6 +19,7 @@ export default class Reddit extends Platform {
   id = PlatformId.REDDIT;
   assetsFolder = "_reddit";
   postFileName = "post.json";
+  pluginsKey = "REDDIT_PLUGINS";
 
   SUBREDDIT: string;
   api: RedditApi;

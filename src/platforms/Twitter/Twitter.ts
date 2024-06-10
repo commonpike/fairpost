@@ -15,6 +15,7 @@ export default class Twitter extends Platform {
   id = PlatformId.TWITTER;
   assetsFolder = "_twitter";
   postFileName = "post.json";
+  pluginsKey = "TWITTER_PLUGINS";
 
   auth: TwitterAuth;
 

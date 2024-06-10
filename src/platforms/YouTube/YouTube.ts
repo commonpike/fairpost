@@ -12,6 +12,7 @@ export default class YouTube extends Platform {
   id: PlatformId = PlatformId.YOUTUBE;
   assetsFolder = "_youtube";
   postFileName = "post.json";
+  pluginsKey = "YOUTUBE_PLUGINS";
 
   auth: YouTubeAuth;
 

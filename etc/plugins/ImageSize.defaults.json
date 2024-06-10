@@ -1,0 +1,31 @@
+{
+    "default": {
+        "fit": "contain",
+        "bgcolor": "white",
+        "min_size": 0,
+        "max_size": 0,
+        "min_ratio": 0,
+        "max_ratio": 0,
+        "min_width": 0,
+        "max_width": 0,
+        "min_height": 0,
+        "max_height": 0
+    },
+    "facebook": {
+      "max_size": 4000
+    },
+    "instagram": {
+      "max_width": 1440,
+      "min_ratio": 0.75,
+      "max_ratio": 1.33
+    },
+    "linkedin": {
+      "max_size": 5000
+    },
+    "reddit": {
+      "max_width": 3000
+    },
+    "twitter": {
+      "max_width": 5000
+    }
+}

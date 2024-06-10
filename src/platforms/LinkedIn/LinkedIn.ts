@@ -15,6 +15,7 @@ export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;
   assetsFolder = "_linkedin";
   postFileName = "post.json";
+  pluginsKey = "LINKEDIN_PLUGINS";
 
   api: LinkedInApi;
   auth: LinkedInAuth;
