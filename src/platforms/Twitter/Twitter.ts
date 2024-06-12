@@ -28,7 +28,7 @@ export default class Twitter extends Platform {
   async setup() {
     return await this.auth.setup();
   }
-  
+
   /** @inheritdoc */
   async test() {
     this.user.trace("Twitter.test: get oauth1 api");

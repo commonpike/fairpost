@@ -222,7 +222,9 @@ export default class Platform {
 
     // run all plugins
     this.loadPlugins();
-    this.plugins?.forEach((plugin) => plugin.process(post));
+    for (const plugin of this.plugins ?? []) {
+      await plugin.process(post);
+    }
 
     // validate and set status
 

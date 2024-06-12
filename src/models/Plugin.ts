@@ -43,7 +43,7 @@ export default class Plugin {
    * Process the post
    */
 
-  process(post: Post): void {
+  async process(post: Post): Promise<void> {
     throw post.platform.user.error(
       "process() not implemented for Plugin'" +
         this.id +

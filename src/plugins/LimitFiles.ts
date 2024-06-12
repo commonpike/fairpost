@@ -43,7 +43,7 @@ export default class LimitFiles extends Plugin {
    * Process the post
    */
 
-  process(post: Post): void {
+  async process(post: Post): Promise<void> {
     post.platform.user.trace(this.id, post.id, "process");
 
     if (this.settings.total_min) {
