@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import Folder, { FileInfo } from "./Folder";
+import Folder, { FileGroup, FileInfo } from "./Folder";
 
 import Platform from "./Platform";
 import { isSimilarArray } from "../utilities";
@@ -210,10 +210,10 @@ export default class Post {
   /**
    * @returns the files grouped by their group property
    */
-  getGroupedFiles(): { [group: string]: FileInfo[] } {
+  getGroupedFiles(): { [group in FileGroup]?: FileInfo[] } {
     return (
       this.files?.reduce(function (
-        collector: { [group: string]: FileInfo[] },
+        collector: { [group in FileGroup]?: FileInfo[] },
         file: FileInfo,
       ) {
         (collector[file["group"]] = collector[file["group"]] || []).push(file);
@@ -226,7 +226,7 @@ export default class Post {
    * @param groups - names of groups to return files from
    * @returns the files within those groups, sorted by order
    */
-  getFiles(...groups: string[]): FileInfo[] {
+  getFiles(...groups: FileGroup[]): FileInfo[] {
     if (!groups.length) {
       return this.files?.sort((a, b) => a.order - b.order) ?? [];
     }
@@ -241,7 +241,7 @@ export default class Post {
    * @param groups - names of groups to require files from
    * @returns boolean if files in post
    */
-  hasFiles(...groups: string[]): boolean {
+  hasFiles(...groups: FileGroup[]): boolean {
     if (!groups.length) {
       return !!(this.files?.length ?? 0);
     }
@@ -254,7 +254,7 @@ export default class Post {
    * @param group - the name of the group for which to remove the files
    * Does not save.
    */
-  removeFiles(group: string) {
+  removeFiles(group: FileGroup) {
     this.files = this.files?.filter((file) => file.group !== group);
   }
 
@@ -262,7 +262,7 @@ export default class Post {
    * @param group - the name of the group for which to remove some files
    * @param size - the number of files to leave in the group
    */
-  limitFiles(group: string, size: number) {
+  limitFiles(group: FileGroup, size: number) {
     this.getFiles(group).forEach((file, index) => {
       if (index >= size) {
         this.removeFile(file.name);
@@ -393,6 +393,7 @@ export default class Post {
     search: string,
     replace: string,
   ): Promise<FileInfo | undefined> {
+    this.platform.user.trace("Post.replaceFile", search, replace);
     const index = this.files?.findIndex((file) => file.name === search) ?? -1;
     if (index > -1) {
       const oldFile = this.getFile(search);
@@ -402,6 +403,8 @@ export default class Post {
         this.files[index] = newFile;
         return this.files[index];
       }
+    } else {
+      this.platform.user.warn("Post.replaceFile", "metadata not found", search);
     }
   }
 

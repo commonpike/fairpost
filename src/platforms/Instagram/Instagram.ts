@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as sharp from "sharp";
 
-import Folder from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Folder";
+
 import InstagramApi from "./InstagramApi";
 import InstagramAuth from "./InstagramAuth";
 import Platform from "../../models/Platform";
@@ -21,6 +21,18 @@ export default class Instagram extends Platform {
   id: PlatformId = PlatformId.INSTAGRAM;
   assetsFolder = "_instagram";
   postFileName = "post.json";
+  pluginSettings = {
+    limitfiles: {
+      total_max: 10,
+    },
+    imagesize: {
+      min_width: 320,
+      max_width: 1440,
+      min_ratio: 0.8,
+      max_ratio: 1.91,
+      max_size: 8000,
+    },
+  };
 
   api: InstagramApi;
   auth: InstagramAuth;
@@ -49,40 +61,21 @@ export default class Instagram extends Platform {
     this.user.trace("Instagram.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
-      // instagram: 1 video for reel
-      const numVideos = post.getFiles("video").length;
-      if (numVideos) {
-        if (numVideos > 10) {
-          this.user.trace("Removing > 10 videos for instagram caroussel..");
-          post.limitFiles("video", 10);
-        }
-        const remaining = 10 - post.getFiles("video").length;
-        if (post.getFiles("image").length > remaining) {
-          this.user.trace("Removing some images for instagram caroussel..");
-          post.limitFiles("images", remaining);
-        }
-      }
-
-      // instagram : scale images, jpeg only
-      for (const file of post.getFiles("image")) {
-        if (file.width && file.width > 1440) {
-          const src = file.name;
-          const dst =
-            this.assetsFolder + "/instagram-" + file.basename + ".JPEG";
-          this.user.trace("Resizing " + src + " for instagram ..");
-          await sharp(post.getFilePath(src))
-            .resize({
-              width: 1440,
-            })
-            .toFile(post.getFilePath(dst));
-          await post.replaceFile(src, dst);
-        }
-      }
-
       // instagram: require media
-      if (post.getFiles("image").length + post.getFiles("video").length === 0) {
+      if (
+        post.getFiles(FileGroup.IMAGE).length +
+          post.getFiles(FileGroup.VIDEO).length ===
+        0
+      ) {
         post.valid = false;
       }
+      if (post.valid) {
+        const plugins = this.loadPlugins(this.pluginSettings);
+        for (const plugin of plugins) {
+          await plugin.process(post);
+        }
+      }
+
       post.save();
     }
     return post;
@@ -95,13 +88,19 @@ export default class Instagram extends Platform {
     let response = { id: "-99" } as { id: string; permalink?: string };
     let error = undefined as Error | undefined;
 
-    if (post.getFiles("video").length === 1 && !post.hasFiles("image")) {
+    if (
+      post.getFiles(FileGroup.VIDEO).length === 1 &&
+      !post.hasFiles(FileGroup.IMAGE)
+    ) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e as Error;
       }
-    } else if (post.getFiles("image").length === 1 && !post.hasFiles("video")) {
+    } else if (
+      post.getFiles(FileGroup.IMAGE).length === 1 &&
+      !post.hasFiles(FileGroup.VIDEO)
+    ) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
@@ -142,7 +141,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const file = post.getFilePath(post.getFiles("image")[0].name);
+    const file = post.getFilePath(post.getFiles(FileGroup.IMAGE)[0].name);
     const caption = post.getCompiledBody();
     const photoId = (await this.uploadImage(file))["id"];
     const photoLink = await this.getImageLink(photoId);
@@ -193,7 +192,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    const file = post.getFilePath(post.getFiles("video")[0].name);
+    const file = post.getFilePath(post.getFiles(FileGroup.VIDEO)[0].name);
     const caption = post.getCompiledBody();
     const videoId = (await this.uploadVideo(file))["id"];
     const videoLink = await this.getVideoLink(videoId);
@@ -247,7 +246,7 @@ export default class Instagram extends Platform {
   ): Promise<{ id: string }> {
     const uploadIds = [] as string[];
 
-    for (const file of post.getFiles("video", "image")) {
+    for (const file of post.getFiles(FileGroup.VIDEO, FileGroup.IMAGE)) {
       if (file.group === "video") {
         const videoId = (await this.uploadVideo(post.getFilePath(file.name)))[
           "id"

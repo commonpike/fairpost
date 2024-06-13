@@ -10,7 +10,7 @@ extending `src/classes/Platform`. You want to override at least the
 method `preparePost(folder)` and  `publishPost(post,dryrun)`.
 
 Make sure not to throw errors in or below publishPost; instead, just 
-return false and let the Post.processResult().
+return false and let the `Post.processResult()` itself.
 
 ```php
 <?php
@@ -127,7 +127,7 @@ storage uses `.env`, it is read-only.
 ### Using User.trace(), User.info(), User.error() etc.
 
 The user contains wrapper methods around log4js. It is configured 
-in your `.env` and in `log4js.json`. The `error()` method is exceptional, 
+in your `.env` and in `log4js.json`. The `error()` method is exceptional 
 in that it not only logs the error, but also returns an error object 
 for you throw:
 
@@ -139,6 +139,14 @@ for you throw:
     throw this.user.error('foo', 'bar', 'quz');
 ```
 
+### Using Plugins to prepare your Post
+
+Inside `preparePost`, you can call plugins to, for example,
+limit the files to a certain type or scale down images, etcetera.
+See [Plugins](Plugins.md) for a more detailed description.
+If you want users to be able to finetune the plugin settings,
+or even enable additional plugins, read the plugin ids and/or
+settings using `User.get(...)`.
 
 ## A more elaborate setup
 

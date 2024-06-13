@@ -1,6 +1,7 @@
 import * as fs from "fs";
 
-import Folder from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Folder";
+
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -11,6 +12,13 @@ export default class YouTube extends Platform {
   id: PlatformId = PlatformId.YOUTUBE;
   assetsFolder = "_youtube";
   postFileName = "post.json";
+  pluginSettings = {
+    limitfiles: {
+      exclusive: ["video"],
+      video_min: 1,
+      video_max: 1,
+    },
+  };
 
   auth: YouTubeAuth;
 
@@ -50,13 +58,9 @@ export default class YouTube extends Platform {
     this.user.trace("YouTube.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
-      // youtube: 1 video
-      post.limitFiles("video", 1);
-      post.removeFiles("image");
-      post.removeFiles("text");
-      post.removeFiles("other");
-      if (!post.hasFiles("video")) {
-        post.valid = false;
+      const plugins = this.loadPlugins(this.pluginSettings);
+      for (const plugin of plugins) {
+        await plugin.process(post);
       }
       post.save();
     }
@@ -139,7 +143,7 @@ export default class YouTube extends Platform {
   private async publishVideoPost(post: Post, dryrun: boolean = false) {
     this.user.trace("YouTube.publishVideoPost", dryrun);
 
-    const file = post.getFiles("video")[0];
+    const file = post.getFiles(FileGroup.VIDEO)[0];
 
     const client = this.auth.getClient();
     this.user.trace(

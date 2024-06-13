@@ -1,7 +1,10 @@
 import * as fs from "fs";
+import * as pluginClasses from "../plugins";
 
-import Folder from "./Folder";
+import Folder, { FileGroup } from "./Folder";
+
 import { PlatformId } from "../platforms";
+import Plugin from "./Plugin";
 import Post from "./Post";
 import { PostStatus } from "./Post";
 import User from "./User";
@@ -19,6 +22,7 @@ export default class Platform {
   defaultBody: string = "Fairpost feed";
   assetsFolder: string = "_fairpost";
   postFileName: string = "post.json";
+  pluginsKey: string | undefined = undefined;
 
   constructor(user: User) {
     this.user = user;
@@ -155,7 +159,10 @@ export default class Platform {
     });
     post.reorderFiles();
 
-    const textFiles = post.getFiles("text");
+    // read textfiles and stick their contents
+    // into appropriate properties - body, title, etc
+
+    const textFiles = post.getFiles(FileGroup.TEXT);
 
     if (post.hasFile("body.txt")) {
       post.body = fs.readFileSync(post.folder.path + "/body.txt", "utf8");
@@ -186,7 +193,12 @@ export default class Platform {
       post.geo = fs.readFileSync(post.folder.path + "/geo.txt", "utf8");
     }
 
+    // decompile the body to see if there are
+    // appropriate metadata in there - title, tags, ..
+
     post.decompileBody();
+
+    // validate and set status
 
     if (post.title) {
       post.valid = true;
@@ -196,7 +208,9 @@ export default class Platform {
       post.status = PostStatus.UNSCHEDULED;
     }
 
+    // save
     post.save();
+
     return post;
   }
 
@@ -220,5 +234,19 @@ export default class Platform {
       response: {},
       error: new Error("publishing not implemented for " + this.id),
     });
+  }
+
+  /**
+   * @returns array of instances of the plugins given with the settings given.
+   */
+  loadPlugins(pluginSettings: { [pluginid: string]: object }): Plugin[] {
+    const plugins: Plugin[] = [];
+    Object.values(pluginClasses).forEach((pluginClass) => {
+      const pluginId = pluginClass.name.toLowerCase();
+      if (pluginId in pluginSettings) {
+        plugins?.push(new pluginClass(pluginSettings[pluginId]));
+      }
+    });
+    return plugins;
   }
 }

@@ -1,6 +1,5 @@
-import * as sharp from "sharp";
+import Folder, { FileGroup } from "../../models/Folder";
 
-import Folder from "../../models/Folder";
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -15,6 +14,16 @@ export default class Twitter extends Platform {
   id = PlatformId.TWITTER;
   assetsFolder = "_twitter";
   postFileName = "post.json";
+  pluginSettings = {
+    limitfiles: {
+      video_max: 0,
+      image_max: 4,
+    },
+    imagesize: {
+      max_width: 5000,
+      max_size: 5000,
+    },
+  };
 
   auth: TwitterAuth;
 
@@ -65,23 +74,9 @@ export default class Twitter extends Platform {
     this.user.trace("Twitter.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
-      // twitter: no video
-      post.removeFiles("video");
-      // twitter: max 4 images
-      post.limitFiles("image", 4);
-      // twitter: max 5mb images
-      for (const file of post.getFiles("image")) {
-        const src = file.name;
-        const dst = this.assetsFolder + "/twitter-" + src;
-        if (file.size / (1024 * 1024) >= 5) {
-          this.user.trace("Resizing " + src + " for twitter ..");
-          await sharp(post.getFilePath(src))
-            .resize({
-              width: 1200,
-            })
-            .toFile(post.getFilePath(dst));
-          await post.replaceFile(src, dst);
-        }
+      const plugins = this.loadPlugins(this.pluginSettings);
+      for (const plugin of plugins) {
+        await plugin.process(post);
       }
       post.save();
     }
@@ -99,7 +94,7 @@ export default class Twitter extends Platform {
     };
     let error = undefined as Error | undefined;
 
-    if (post.hasFiles("image")) {
+    if (post.hasFiles(FileGroup.IMAGE)) {
       try {
         response = await this.publishImagesPost(post, dryrun);
       } catch (e) {
@@ -190,7 +185,7 @@ export default class Twitter extends Platform {
       "TWITTER_OA1_ADDITIONAL_OWNER",
       "",
     );
-    for (const image of post.getFiles("image")) {
+    for (const image of post.getFiles(FileGroup.IMAGE)) {
       const path = post.getFilePath(image.name);
       this.user.trace("Uploading " + path + "...");
       try {

@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as sharp from "sharp";
 
-import Folder from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Folder";
+
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
@@ -18,6 +18,15 @@ export default class Reddit extends Platform {
   id = PlatformId.REDDIT;
   assetsFolder = "_reddit";
   postFileName = "post.json";
+  pluginSettings = {
+    limitfiles: {
+      prefer: ["video"],
+      total_max: 1,
+    },
+    imagesize: {
+      max_width: 3000,
+    },
+  };
 
   SUBREDDIT: string;
   api: RedditApi;
@@ -59,66 +68,51 @@ export default class Reddit extends Platform {
     this.user.trace("Reddit.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
-      // reddit: max 1 image or video
       // TODO: extract video thumbnail
-      if (post.hasFiles('video')) { // eslint-disable-line
-        post.limitFiles("video", 1);
-        const poster = this.assetsFolder + "/reddit-poster.png";
+      if (post.hasFiles(FileGroup.VIDEO)) {
+        let srcposter = "";
+        const dstposter = this.assetsFolder + "/reddit-poster.png";
         const posters = post
-          .getFiles("image")
+          .getFiles(FileGroup.IMAGE)
           .filter((file) => file.basename === "poster");
         if (posters.length) {
-          // copy that file to its dest
-          this.user.trace(
-            "Reddit.preparePost",
-            "copying poster",
-            posters[0].name,
-            poster,
-          );
-          fs.copyFileSync(
-            post.getFilePath(posters[0].name),
-            post.getFilePath(poster),
-          );
-        } else if (post.hasFiles("image")) {
+          srcposter = posters[0].name;
+        } else if (post.hasFiles(FileGroup.IMAGE)) {
           // copy the first image to poster
-          const img = post.getFiles("image")[0];
-          this.user.trace(
-            "Reddit.preparePost",
-            "copying poster",
-            img.name,
-            poster,
-          );
-          fs.copyFileSync(post.getFilePath(img.name), post.getFilePath(poster));
+          srcposter = post.getFiles(FileGroup.IMAGE)[0].name;
         } else {
           // create a poster using ffmpeg
           try {
-            throw this.user.error("thumbnails not implemented");
+            throw this.user.error(
+              "video poster.jpg missing - thumbnails not implemented",
+            );
             // https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
             // const video = post.getFiles('video')[0];
-            // this.user.trace("Reddit.preparePost", "creating thumbnail", video.name, poster);
-            // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(poster));
+            // this.user.trace("Reddit.preparePost", "creating thumbnail", video.name, dstposter);
+            // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(dstposter));
           } catch (e) {
             post.valid = false;
           }
         }
-        post.removeFiles("image");
-        await post.addFile(poster);
-      }
-      if (post.hasFiles("image")) {
-        post.limitFiles("image", 1);
-        // <MaxSizeAllowed>20971520</MaxSizeAllowed>
-        const file = post.getFiles("image")[0];
-        const src = file.name;
-        if (file.width && file.width > 3000) {
-          this.user.trace("Resizing " + src + " for reddit ..");
-          const dst = this.assetsFolder + "/reddit-" + file.basename + ".jpg";
-          await sharp(post.getFilePath(src))
-            .resize({
-              width: 3000,
-            })
-            .toFile(post.getFilePath(dst));
-          await post.replaceFile(src, dst);
+        if (srcposter) {
+          // copy that file to its dest
+          this.user.trace(
+            "Reddit.preparePost",
+            "copying poster",
+            srcposter,
+            dstposter,
+          );
+          fs.copyFileSync(
+            post.getFilePath(srcposter),
+            post.getFilePath(dstposter),
+          );
+          post.removeFiles(FileGroup.IMAGE);
+          await post.addFile(dstposter);
         }
+      }
+      const plugins = this.loadPlugins(this.pluginSettings);
+      for (const plugin of plugins) {
+        await plugin.process(post);
       }
       post.save();
     }
@@ -132,13 +126,13 @@ export default class Reddit extends Platform {
     let response = {};
     let error = undefined as Error | undefined;
 
-    if (post.hasFiles("video")) {
+    if (post.hasFiles(FileGroup.VIDEO)) {
       try {
         response = await this.publishVideoPost(post, dryrun);
       } catch (e) {
         error = e as Error;
       }
-    } else if (post.hasFiles("image")) {
+    } else if (post.hasFiles(FileGroup.IMAGE)) {
       try {
         response = await this.publishImagePost(post, dryrun);
       } catch (e) {
@@ -211,7 +205,7 @@ export default class Reddit extends Platform {
   private async publishImagePost(post: Post, dryrun = false): Promise<object> {
     this.user.trace("Reddit.publishImagePost");
     const title = post.title;
-    const image = post.getFiles("image")[0];
+    const image = post.getFiles(FileGroup.IMAGE)[0];
     const file = post.getFilePath(image.name);
     const leash = await this.getUploadLeash(file, image.mimetype);
     const imageUrl = await this.uploadFile(leash, file);
@@ -253,13 +247,13 @@ export default class Reddit extends Platform {
     const title = post.title;
 
     // upload poster first
-    const poster = post.getFiles("image")[0];
+    const poster = post.getFiles(FileGroup.IMAGE)[0];
     const posterFile = post.getFilePath(poster.name);
     const posterLeash = await this.getUploadLeash(posterFile, poster.mimetype);
     const posterUrl = await this.uploadFile(posterLeash, posterFile);
 
     // upload video with poster
-    const video = post.getFiles("video")[0];
+    const video = post.getFiles(FileGroup.VIDEO)[0];
     const file = post.getFilePath(video.name);
     const leash = await this.getUploadLeash(file, video.mimetype);
     const videoUrl = await this.uploadFile(leash, file);
