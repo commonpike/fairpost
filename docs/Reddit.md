@@ -29,6 +29,10 @@ This token only lasts for 24 hours and should be refreshed.
 ### Test the platform
  - call `./fairpost.js @userid test-platform --platform=reddit`
    
+## More user settings 
+
+ - `FAIRPOST_REDDIT_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
+
 # Random documentation
 
 https://www.reddit.com/r/test/

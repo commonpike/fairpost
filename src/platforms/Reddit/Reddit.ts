@@ -110,7 +110,14 @@ export default class Reddit extends Platform {
           await post.addFile(dstposter);
         }
       }
-      const plugins = this.loadPlugins(this.pluginSettings);
+      const userPluginSettings = JSON.parse(
+        this.user.get("settings", "REDDIT_PLUGIN_SETTINGS", "{}"),
+      );
+      const pluginSettings = {
+        ...this.pluginSettings,
+        ...(userPluginSettings || {}),
+      };
+      const plugins = this.loadPlugins(pluginSettings);
       for (const plugin of plugins) {
         await plugin.process(post);
       }

@@ -66,9 +66,15 @@ account and requires you to specify an 'additional_owner' for the uploaded media
 ### Test the other installation
 - call `./fairpost.js @foo test-platform --platform=twitter`
 
+
 ### Set the 'additional owner'
 - from the previous `test-platform` result, copy the `oauth2:id`
 - set this as the `FAIRPOST_TWITTER_OA1_ADDITIONAL_OWNER` in your users .env
+
+
+## More user settings 
+
+- `FAIRPOST_TWITTER_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Random documentation
 

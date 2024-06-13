@@ -55,7 +55,14 @@ export default class Facebook extends Platform {
     this.user.trace("Facebook.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
-      const plugins = this.loadPlugins(this.pluginSettings);
+      const userPluginSettings = JSON.parse(
+        this.user.get("settings", "FACEBOOK_PLUGIN_SETTINGS", "{}"),
+      );
+      const pluginSettings = {
+        ...this.pluginSettings,
+        ...(userPluginSettings || {}),
+      };
+      const plugins = this.loadPlugins(pluginSettings);
       for (const plugin of plugins) {
         await plugin.process(post);
       }

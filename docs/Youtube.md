@@ -62,6 +62,7 @@ The refresh token (if given) lasts until it is revoked.
  - call `./fairpost.js @userid test-platform --platform=youtube`
 
 
+
 ## Connect the platform to another user
 
 - call `./fairpost.js create-user --user=foo` 
@@ -79,6 +80,7 @@ The refresh token (if given) lasts until it is revoked.
 
 - `FAIRPOST_YOUTUBE_PRIVACY` = public | private | unlisted
 - `FAIRPOST_YOUTUBE_CATEGORY` = valid youtube category id
+- `FAIRPOST_YOUTUBE_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Limitations 
 

@@ -101,6 +101,9 @@ One fairpost user can only manage one page. If you create a second user, you can
 ### Test the platform for the other page
  - call `./fairpost.js @foo test-platform --platform=instagram`
 
+## More user settings 
+
+ - `FAIRPOST_INSTAGRAM_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Limitations 
 

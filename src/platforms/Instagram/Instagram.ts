@@ -70,7 +70,14 @@ export default class Instagram extends Platform {
         post.valid = false;
       }
       if (post.valid) {
-        const plugins = this.loadPlugins(this.pluginSettings);
+        const userPluginSettings = JSON.parse(
+          this.user.get("settings", "INSTAGRAM_PLUGIN_SETTINGS", "{}"),
+        );
+        const pluginSettings = {
+          ...this.pluginSettings,
+          ...(userPluginSettings || {}),
+        };
+        const plugins = this.loadPlugins(pluginSettings);
         for (const plugin of plugins) {
           await plugin.process(post);
         }

@@ -90,7 +90,8 @@ One fairpost user can only manage one page. If you create a second user, you can
 
 ## More user settings 
 
-`FAIRPOST_FACEBOOK_PUBLISH_POSTS` - if false, posts will be posted but not be published
+ - `FAIRPOST_FACEBOOK_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
+ - `FAIRPOST_FACEBOOK_PUBLISH_POSTS` - if false, posts will be posted but not be published
 
 # Limitations 
 
