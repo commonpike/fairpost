@@ -21,7 +21,15 @@ export default class Facebook extends Platform {
   id: PlatformId = PlatformId.FACEBOOK;
   assetsFolder = "_facebook";
   postFileName = "post.json";
-  pluginsKey = "FACEBOOK_PLUGINS";
+  pluginSettings = {
+    limitfiles: {
+      exclusive: ["video"],
+      video_max: 1,
+    },
+    imagesize: {
+      max_size: 4000,
+    },
+  };
 
   api: FacebookApi;
   auth: FacebookAuth;
@@ -47,26 +55,10 @@ export default class Facebook extends Platform {
     this.user.trace("Facebook.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post && post.files) {
-      // facebook: video post can only contain 1 video
-      /*if (post.hasFiles("video")) {
-        this.user.warn("have video");
-        post.limitFiles("video", 1);
-        post.removeFiles("image");
-      }*/
-      // facebook : max 4mb images
-      /*for (const file of post.getFiles(FileGroup.IMAGE)) {
-        if (file.size / (1024 * 1024) >= 4) {
-          this.user.trace("Resizing " + file.name + " for facebook ..");
-          const src = file.name;
-          const dst = this.assetsFolder + "/facebook-" + file.name;
-          await sharp(post.getFilePath(src))
-            .resize({
-              width: 1200,
-            })
-            .toFile(post.getFilePath(dst));
-          await post.replaceFile(src, dst);
-        }
-      }*/
+      const plugins = this.loadPlugins(this.pluginSettings);
+      for (const plugin of plugins) {
+        await plugin.process(post);
+      }
       post.save();
     }
     return post;

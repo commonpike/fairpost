@@ -14,7 +14,15 @@ export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;
   assetsFolder = "_linkedin";
   postFileName = "post.json";
-  pluginsKey = "LINKEDIN_PLUGINS";
+  pluginSettings = {
+    limitfiles: {
+      exclusive: ["video"],
+      video_max: 1,
+    },
+    imagesize: {
+      max_size: 5000,
+    },
+  };
 
   api: LinkedInApi;
   auth: LinkedInAuth;
@@ -58,28 +66,10 @@ export default class LinkedIn extends Platform {
     this.user.trace("LinkedIn.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
-      /*
-      // linkedin: prefer video, max 1 video
-      if (post.hasFiles("video")) {
-        post.limitFiles("video", 1);
-        post.removeFiles("image");
+      const plugins = this.loadPlugins(this.pluginSettings);
+      for (const plugin of plugins) {
+        await plugin.process(post);
       }
-      */
-
-      // linkedin: max 5mb images
-      /*for (const file of post.getFiles(FileGroup.IMAGE)) {
-        const src = file.name;
-        const dst = this.assetsFolder + "/linkedin-" + src;
-        if (file.size / (1024 * 1024) >= 5) {
-          this.user.trace("Resizing " + src + " for linkedin ..");
-          await sharp(post.getFilePath(src))
-            .resize({
-              width: 1200,
-            })
-            .toFile(post.getFilePath(dst));
-          await post.replaceFile(src, dst);
-        }
-      }*/
       post.save();
     }
     return post;

@@ -18,7 +18,15 @@ export default class Reddit extends Platform {
   id = PlatformId.REDDIT;
   assetsFolder = "_reddit";
   postFileName = "post.json";
-  pluginsKey = "REDDIT_PLUGINS";
+  pluginSettings = {
+    limitfiles: {
+      prefer: ["video"],
+      total_max: 1,
+    },
+    imagesize: {
+      max_width: 3000,
+    },
+  };
 
   SUBREDDIT: string;
   api: RedditApi;
@@ -60,36 +68,18 @@ export default class Reddit extends Platform {
     this.user.trace("Reddit.preparePost", folder.id);
     const post = await super.preparePost(folder);
     if (post) {
-      // reddit: max 1 image or video
       // TODO: extract video thumbnail
-      if (post.hasFiles(FileGroup.VIDEO)) { // eslint-disable-line
-        //post.limitFiles("video", 1);
-        const poster = this.assetsFolder + "/reddit-poster.png";
+      if (post.hasFiles(FileGroup.VIDEO)) {
+        let srcposter = "";
+        const dstposter = this.assetsFolder + "/reddit-poster.png";
         const posters = post
           .getFiles(FileGroup.IMAGE)
           .filter((file) => file.basename === "poster");
         if (posters.length) {
-          // copy that file to its dest
-          this.user.trace(
-            "Reddit.preparePost",
-            "copying poster",
-            posters[0].name,
-            poster,
-          );
-          fs.copyFileSync(
-            post.getFilePath(posters[0].name),
-            post.getFilePath(poster),
-          );
+          srcposter = posters[0].name;
         } else if (post.hasFiles(FileGroup.IMAGE)) {
           // copy the first image to poster
-          const img = post.getFiles(FileGroup.IMAGE)[0];
-          this.user.trace(
-            "Reddit.preparePost",
-            "copying poster",
-            img.name,
-            poster,
-          );
-          fs.copyFileSync(post.getFilePath(img.name), post.getFilePath(poster));
+          srcposter = post.getFiles(FileGroup.IMAGE)[0].name;
         } else {
           // create a poster using ffmpeg
           try {
@@ -98,30 +88,31 @@ export default class Reddit extends Platform {
             );
             // https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
             // const video = post.getFiles('video')[0];
-            // this.user.trace("Reddit.preparePost", "creating thumbnail", video.name, poster);
-            // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(poster));
-            //post.removeFiles("image");
-            // await post.addFile(poster);
+            // this.user.trace("Reddit.preparePost", "creating thumbnail", video.name, dstposter);
+            // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(dstposter));
           } catch (e) {
             post.valid = false;
           }
         }
+        if (srcposter) {
+          // copy that file to its dest
+          this.user.trace(
+            "Reddit.preparePost",
+            "copying poster",
+            srcposter,
+            dstposter,
+          );
+          fs.copyFileSync(
+            post.getFilePath(srcposter),
+            post.getFilePath(dstposter),
+          );
+          post.removeFiles(FileGroup.IMAGE);
+          await post.addFile(dstposter);
+        }
       }
-      if (post.hasFiles(FileGroup.IMAGE)) {
-        // post.limitFiles("image", 1);
-        // <MaxSizeAllowed>20971520</MaxSizeAllowed>
-        /*const file = post.getFiles(FileGroup.IMAGE)[0];
-        const src = file.name;
-        if (file.width && file.width > 3000) {
-          this.user.trace("Resizing " + src + " for reddit ..");
-          const dst = this.assetsFolder + "/reddit-" + file.basename + ".jpg";
-          await sharp(post.getFilePath(src))
-            .resize({
-              width: 3000,
-            })
-            .toFile(post.getFilePath(dst));
-          await post.replaceFile(src, dst);
-        }*/
+      const plugins = this.loadPlugins(this.pluginSettings);
+      for (const plugin of plugins) {
+        await plugin.process(post);
       }
       post.save();
     }

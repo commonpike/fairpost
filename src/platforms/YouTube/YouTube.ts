@@ -12,7 +12,13 @@ export default class YouTube extends Platform {
   id: PlatformId = PlatformId.YOUTUBE;
   assetsFolder = "_youtube";
   postFileName = "post.json";
-  pluginsKey = "YOUTUBE_PLUGINS";
+  pluginSettings = {
+    limitfiles: {
+      exclusive: ["video"],
+      video_min: 1,
+      video_max: 1,
+    },
+  };
 
   auth: YouTubeAuth;
 
@@ -51,17 +57,13 @@ export default class YouTube extends Platform {
   async preparePost(folder: Folder): Promise<Post> {
     this.user.trace("YouTube.preparePost", folder.id);
     const post = await super.preparePost(folder);
-    /*if (post) {
-      // youtube: 1 video
-      post.limitFiles("video", 1);
-      post.removeFiles("image");
-      post.removeFiles("text");
-      post.removeFiles("other");
-      if (!post.hasFiles("video")) {
-        post.valid = false;
+    if (post) {
+      const plugins = this.loadPlugins(this.pluginSettings);
+      for (const plugin of plugins) {
+        await plugin.process(post);
       }
       post.save();
-    }*/
+    }
     return post;
   }
 

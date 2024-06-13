@@ -23,28 +23,9 @@ export default class Platform {
   assetsFolder: string = "_fairpost";
   postFileName: string = "post.json";
   pluginsKey: string | undefined = undefined;
-  plugins: Plugin[] | undefined = undefined;
 
   constructor(user: User) {
     this.user = user;
-  }
-
-  /**
-   * Read the pluginsKey and load any of the plugins
-   * enabled on this platform
-   */
-  loadPlugins() {
-    if (this.pluginsKey && this.plugins === undefined) {
-      this.plugins = [];
-      const activePluginIds = this.user
-        .get("settings", this.pluginsKey)
-        .split(",");
-      Object.values(pluginClasses).forEach((pluginClass) => {
-        if (activePluginIds.includes(pluginClass.name)) {
-          this.plugins?.push(new pluginClass(this));
-        }
-      });
-    }
   }
 
   /**
@@ -54,12 +35,9 @@ export default class Platform {
 
   report(): string {
     this.user.trace("Platform", "report");
-    this.loadPlugins();
     let report = "";
     report += "\nPlatform: " + this.id;
     report += "\n - active: " + this.active;
-    report += "\n - key: " + this.pluginsKey;
-    report += "\n - plugins: " + this.plugins?.map((p) => p.id).join(",");
     return report;
   }
 
@@ -220,12 +198,6 @@ export default class Platform {
 
     post.decompileBody();
 
-    // run all plugins
-    this.loadPlugins();
-    for (const plugin of this.plugins ?? []) {
-      await plugin.process(post);
-    }
-
     // validate and set status
 
     if (post.title) {
@@ -262,5 +234,19 @@ export default class Platform {
       response: {},
       error: new Error("publishing not implemented for " + this.id),
     });
+  }
+
+  /**
+   * @returns array of instances of the plugins given with the settings given.
+   */
+  loadPlugins(pluginSettings: { [pluginid: string]: object }): Plugin[] {
+    const plugins: Plugin[] = [];
+    Object.values(pluginClasses).forEach((pluginClass) => {
+      const pluginId = pluginClass.name.toLowerCase();
+      if (pluginId in pluginSettings) {
+        plugins?.push(new pluginClass(pluginSettings[pluginId]));
+      }
+    });
+    return plugins;
   }
 }

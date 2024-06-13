@@ -1,11 +1,8 @@
 import { FileGroup, FileInfo } from "../models/Folder";
 
-import Platform from "../models/Platform";
-import { PlatformId } from "../platforms";
 import Plugin from "../models/Plugin";
 import Post from "../models/Post";
 import sharp from "sharp";
-import untypedDefaults from "./ImageSize.defaults.json";
 
 /**
  * Plugin ImageSize.
@@ -14,8 +11,8 @@ import untypedDefaults from "./ImageSize.defaults.json";
  *
  */
 
-type ImageSizeSettings = {
-  fit?: string; // 'cover' | 'contain';
+interface ImageSizeSettings {
+  fit?: "cover" | "contain";
   bgcolor?: string;
   min_size?: number;
   max_size?: number;
@@ -25,18 +22,28 @@ type ImageSizeSettings = {
   max_width?: number;
   min_height?: number;
   max_height?: number;
-};
+}
 
 export default class ImageSize extends Plugin {
+  static defaults: ImageSizeSettings = {
+    fit: "contain",
+    bgcolor: "white",
+    min_size: 0,
+    max_size: 0,
+    min_ratio: 0,
+    max_ratio: 0,
+    min_width: 0,
+    max_width: 0,
+    min_height: 0,
+    max_height: 0,
+  };
   settings: ImageSizeSettings;
 
-  constructor(platform: Platform) {
-    super(platform);
-    const defaults: { [key in PlatformId | "default"]?: ImageSizeSettings } =
-      untypedDefaults;
+  constructor(settings?: object) {
+    super();
     this.settings = {
-      ...defaults["default"],
-      ...(defaults[platform.id] ?? {}),
+      ...ImageSize.defaults,
+      ...(settings ?? {}),
     };
   }
 

@@ -1,9 +1,6 @@
 import { FileGroup } from "../models/Folder";
-import Platform from "../models/Platform";
-import { PlatformId } from "../platforms";
 import Plugin from "../models/Plugin";
 import Post from "../models/Post";
-import untypedDefaults from "./LimitFiles.defaults.json";
 
 /**
  * Plugin LimitFiles.
@@ -12,9 +9,9 @@ import untypedDefaults from "./LimitFiles.defaults.json";
  *
  */
 
-type LimitFilesSettings = {
-  prefer?: string[]; // FileGroup[];
-  exclusive?: string[]; // FileGroup[];
+interface LimitFilesSettings {
+  prefer?: FileGroup[];
+  exclusive?: FileGroup[];
   total_max?: number;
   total_min?: number;
   image_min?: number;
@@ -25,18 +22,35 @@ type LimitFilesSettings = {
   text_max?: number;
   other_min?: number;
   other_max?: number;
-};
+}
 
 export default class LimitFiles extends Plugin {
+  static defaults: LimitFilesSettings = {
+    prefer: [FileGroup.VIDEO, FileGroup.IMAGE, FileGroup.TEXT, FileGroup.OTHER],
+    exclusive: [],
+    total_max: 0,
+    total_min: 0,
+    image_min: 0,
+    image_max: 0,
+    video_min: 0,
+    video_max: 0,
+    text_min: 0,
+    text_max: 0,
+    other_min: 0,
+    other_max: 0,
+  };
   settings: LimitFilesSettings = {};
-  constructor(platform: Platform) {
-    super(platform);
-    const defaults: { [key in PlatformId | "default"]?: LimitFilesSettings } =
-      untypedDefaults;
+  constructor(settings?: object) {
+    super();
     this.settings = {
-      ...defaults["default"],
-      ...(defaults[platform.id] ?? {}),
+      ...LimitFiles.defaults,
+      ...(settings ?? {}),
     };
+    for (const defaultGroup of LimitFiles.defaults.prefer ?? []) {
+      if (!this.settings.prefer?.includes(defaultGroup)) {
+        this.settings.prefer?.push(defaultGroup);
+      }
+    }
   }
 
   /**
@@ -191,6 +205,12 @@ export default class LimitFiles extends Plugin {
           }
           remaining = Math.max(remaining - numfiles, 0);
         } else {
+          post.platform.user.trace(
+            this.id,
+            post.id,
+            "total_max",
+            "Remove all " + preferGroup,
+          );
           post.removeFiles(preferGroup as FileGroup);
         }
       }

@@ -1,23 +1,20 @@
-import Platform from "./Platform";
 import Post from "./Post";
 
 /**
  * Plugin - base class to extend plugins from
  *
  * A plugins processes a post during Platform.preparePost,
- * based on its settings for that platform, eg to make
+ * based on the given settings, eg to make
  * black and white images on Facebook but colored ones
  * on Instagram.
  *
  */
 export default class Plugin {
+  static defaults: object = {};
   id: string;
-  settings: object;
 
-  constructor(platform: Platform) {
-    this.id = this.constructor.name;
-    platform.user.trace(platform.id, "Add plugin", this.id);
-    this.settings = {}; // todo
+  constructor() {
+    this.id = this.constructor.name.toLowerCase();
   }
 
   /**
@@ -30,14 +27,6 @@ export default class Plugin {
     report += "\nPlugin: " + this.id;
     return report;
   }
-
-  /**
-   * Extend default settings for one platform
-   */
-
-  //getPlatformSettings(platformId: PlatformId): object {
-  //  return { ...this.settings.default, ...this.settings[platformId] }
-  //}
 
   /**
    * Process the post
