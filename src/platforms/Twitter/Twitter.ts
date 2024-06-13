@@ -21,7 +21,7 @@ export default class Twitter extends Platform {
     },
     imagesize: {
       max_width: 5000,
-      max_size: 5000
+      max_size: 5000,
     },
   };
 
