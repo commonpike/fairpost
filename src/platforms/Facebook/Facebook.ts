@@ -9,7 +9,6 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
-import sharp from "sharp";
 
 /**
  * Facebook: support for facebook platform.
@@ -55,7 +54,7 @@ export default class Facebook extends Platform {
         post.removeFiles("image");
       }*/
       // facebook : max 4mb images
-      for (const file of post.getFiles(FileGroup.IMAGE)) {
+      /*for (const file of post.getFiles(FileGroup.IMAGE)) {
         if (file.size / (1024 * 1024) >= 4) {
           this.user.trace("Resizing " + file.name + " for facebook ..");
           const src = file.name;
@@ -67,7 +66,7 @@ export default class Facebook extends Platform {
             .toFile(post.getFilePath(dst));
           await post.replaceFile(src, dst);
         }
-      }
+      }*/
       post.save();
     }
     return post;

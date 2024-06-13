@@ -9,7 +9,6 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
-import sharp from "sharp";
 
 export default class LinkedIn extends Platform {
   id: PlatformId = PlatformId.LINKEDIN;
@@ -68,7 +67,7 @@ export default class LinkedIn extends Platform {
       */
 
       // linkedin: max 5mb images
-      for (const file of post.getFiles(FileGroup.IMAGE)) {
+      /*for (const file of post.getFiles(FileGroup.IMAGE)) {
         const src = file.name;
         const dst = this.assetsFolder + "/linkedin-" + src;
         if (file.size / (1024 * 1024) >= 5) {
@@ -80,7 +79,7 @@ export default class LinkedIn extends Platform {
             .toFile(post.getFilePath(dst));
           await post.replaceFile(src, dst);
         }
-      }
+      }*/
       post.save();
     }
     return post;

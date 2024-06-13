@@ -9,7 +9,6 @@ import Platform from "../../models/Platform";
 import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
-import sharp from "sharp";
 
 /**
  * Instagram: support for instagram platform.
@@ -67,7 +66,7 @@ export default class Instagram extends Platform {
       */
 
       // instagram : scale images, jpeg only
-      for (const file of post.getFiles(FileGroup.IMAGE)) {
+      /*for (const file of post.getFiles(FileGroup.IMAGE)) {
         if (file.width && file.width > 1440) {
           const src = file.name;
           const dst =
@@ -80,7 +79,7 @@ export default class Instagram extends Platform {
             .toFile(post.getFilePath(dst));
           await post.replaceFile(src, dst);
         }
-      }
+      }*/
 
       // instagram: require media
       if (

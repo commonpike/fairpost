@@ -393,6 +393,7 @@ export default class Post {
     search: string,
     replace: string,
   ): Promise<FileInfo | undefined> {
+    this.platform.user.trace("Post.replaceFile", search, replace);
     const index = this.files?.findIndex((file) => file.name === search) ?? -1;
     if (index > -1) {
       const oldFile = this.getFile(search);
@@ -402,6 +403,8 @@ export default class Post {
         this.files[index] = newFile;
         return this.files[index];
       }
+    } else {
+      this.platform.user.warn("Post.replaceFile", "metadata not found", search);
     }
   }
 

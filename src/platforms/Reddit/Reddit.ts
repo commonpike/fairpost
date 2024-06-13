@@ -10,7 +10,6 @@ import RedditApi from "./RedditApi";
 import RedditAuth from "./RedditAuth";
 import User from "../../models/User";
 import { XMLParser } from "fast-xml-parser";
-import sharp from "sharp";
 
 /**
  * Reddit: support for reddit platform
@@ -94,22 +93,24 @@ export default class Reddit extends Platform {
         } else {
           // create a poster using ffmpeg
           try {
-            throw this.user.error("thumbnails not implemented");
+            throw this.user.error(
+              "video poster.jpg missing - thumbnails not implemented",
+            );
             // https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
             // const video = post.getFiles('video')[0];
             // this.user.trace("Reddit.preparePost", "creating thumbnail", video.name, poster);
             // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(poster));
+            //post.removeFiles("image");
+            // await post.addFile(poster);
           } catch (e) {
             post.valid = false;
           }
         }
-        //post.removeFiles("image");
-        await post.addFile(poster);
       }
       if (post.hasFiles(FileGroup.IMAGE)) {
         // post.limitFiles("image", 1);
         // <MaxSizeAllowed>20971520</MaxSizeAllowed>
-        const file = post.getFiles(FileGroup.IMAGE)[0];
+        /*const file = post.getFiles(FileGroup.IMAGE)[0];
         const src = file.name;
         if (file.width && file.width > 3000) {
           this.user.trace("Resizing " + src + " for reddit ..");
@@ -120,7 +121,7 @@ export default class Reddit extends Platform {
             })
             .toFile(post.getFilePath(dst));
           await post.replaceFile(src, dst);
-        }
+        }*/
       }
       post.save();
     }

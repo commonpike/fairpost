@@ -47,8 +47,10 @@ export default class ImageSize extends Plugin {
   async process(post: Post): Promise<void> {
     post.platform.user.trace(this.id, post.id, "process");
     for (const file of post.getFiles(FileGroup.IMAGE)) {
-      this.fixDimensions(post, file);
-      this.fixFileSize(post, file);
+      await this.fixDimensions(post, file);
+    }
+    for (const file of post.getFiles(FileGroup.IMAGE)) {
+      await this.fixFileSize(post, file);
     }
   }
 
@@ -73,10 +75,12 @@ export default class ImageSize extends Plugin {
       ) {
         post.platform.user.trace(
           "ImageSize.fixDimensions",
-          post.id +
+          file.name +
             ":" +
-            file.name +
-            ":" +
+            file.width +
+            "x" +
+            file.height +
+            "=>" +
             imgw +
             "x" +
             imgh +
@@ -86,19 +90,30 @@ export default class ImageSize extends Plugin {
             canh +
             "]",
         );
-        const newFileName = file.basename + "-resize." + file.extension;
+        const newFileName =
+          post.platform.id +
+          "-" +
+          file.basename +
+          "-" +
+          imgw +
+          "x" +
+          imgh +
+          "." +
+          file.extension;
         const src = file.name;
         const dst = post.platform.assetsFolder + "/" + newFileName;
+        const padh = Math.floor((canh - imgh) / 2);
+        const padw = Math.floor((canw - imgw) / 2);
         await sharp(post.getFilePath(file.name))
           .resize({
             width: imgw,
             height: imgh,
           })
           .extend({
-            top: (canh - imgh) / 2,
-            bottom: (canh - imgh) / 2,
-            left: (canw - imgw) / 2,
-            right: (canw - imgw) / 2,
+            top: padh,
+            bottom: padh,
+            left: padw,
+            right: padw,
             background: this.settings.bgcolor,
           })
           .toFile(post.getFilePath(dst));
@@ -126,23 +141,46 @@ export default class ImageSize extends Plugin {
     maxkb: number,
   ): Promise<void> {
     if (file.width && file.size / 1024 >= maxkb) {
+      if (file.mimetype !== "image/jpeg") {
+        console.log(file.mimetype);
+        const dst =
+          post.platform.assetsFolder +
+          "/" +
+          file.basename +
+          "-" +
+          file.extension +
+          ".jpg";
+        post.platform.user.trace(
+          "ImageSize.reduceFileSize",
+          post.id + ":" + file.name + ": to jpg",
+        );
+        await sharp(post.getFilePath(file.name))
+          .keepExif()
+          .toFormat("jpg") // default q = 80
+          .toFile(post.getFilePath(dst));
+        await post.replaceFile(file.name, dst);
+        file = await post.folder.getFileInfo(dst, file.order);
+      }
+    }
+    if (file.width && file.size / 1024 >= maxkb) {
       const newFileName = file.basename + "-small." + file.extension;
       const dst = post.platform.assetsFolder + "/" + newFileName;
       let newfile = await post.folder.getFileInfo(file.name, file.order);
       let factor = 1;
       let count = 1;
       while (newfile.size / 1024 >= maxkb) {
-        factor = factor * Math.sqrt((0.9 * newfile.size) / maxkb);
+        factor = factor * Math.sqrt((0.9 * maxkb) / (newfile.size / 1024));
         post.platform.user.trace(
           "ImageSize.reduceFileSize",
-          post.id + ":" + file.name + ":" + factor,
+          post.id + ":" + file.name + ": scale " + factor,
         );
         await sharp(post.getFilePath(file.name))
+          .keepExif()
           .resize({
             width: Math.round(file.width * factor),
           })
           .toFile(post.getFilePath(dst));
-        newfile = await post.folder.getFileInfo(newFileName, file.order);
+        newfile = await post.folder.getFileInfo(dst, file.order);
         if (count++ > 5) {
           throw post.platform.user.error(
             "ImageSize.reduceFileSize",
@@ -166,8 +204,6 @@ export default class ImageSize extends Plugin {
     maxr = 0,
     fit: "cover" | "contain" = "contain",
   ): { imgw: number; imgh: number; canw: number; canh: number } {
-    const canw = imgw;
-    const canh = imgh;
     if (minw && imgw < minw) {
       imgh = (imgh * minw) / imgw;
       imgw = minw;
@@ -257,6 +293,10 @@ export default class ImageSize extends Plugin {
         return this.padw(imgw, imgh, width, height);
       }
     }
+    imgw = Math.round(imgw);
+    imgh = Math.round(imgh);
+    const canw = imgw;
+    const canh = imgh;
     return { imgw, imgh, canw, canh };
   }
 
@@ -271,10 +311,10 @@ export default class ImageSize extends Plugin {
     width: number,
     height: number,
   ): { imgw: number; imgh: number; canw: number; canh: number } {
-    imgw = (imgw * height) / imgh; // scale up
-    imgh = height;
-    const canw = width; // crop
-    const canh = height;
+    imgw = Math.round((imgw * height) / imgh); // scale up
+    imgh = Math.round(height);
+    const canw = Math.round(width); // crop
+    const canh = Math.round(height);
     return { imgw, imgh, canw, canh };
   }
   /*
@@ -288,10 +328,10 @@ export default class ImageSize extends Plugin {
     width: number,
     height: number,
   ): { imgw: number; imgh: number; canw: number; canh: number } {
-    imgh = (imgh * width) / imgw;
-    imgw = width;
-    const canh = height; // crop
-    const canw = width;
+    imgh = Math.round((imgh * width) / imgw);
+    imgw = Math.round(width);
+    const canh = Math.round(height); // crop
+    const canw = Math.round(width);
     return { imgw, imgh, canw, canh };
   }
 
@@ -306,9 +346,9 @@ export default class ImageSize extends Plugin {
     width: number,
     height: number,
   ): { imgw: number; imgh: number; canw: number; canh: number } {
-    imgw = (imgw * imgh) / height;
-    imgh = height;
-    const canw = width; // pad
+    imgw = Math.round((imgw * imgh) / height);
+    imgh = Math.round(height);
+    const canw = Math.round(width); // pad
     const canh = imgh;
     return { imgw, imgh, canw, canh };
   }
@@ -323,9 +363,9 @@ export default class ImageSize extends Plugin {
     width: number,
     height: number,
   ): { imgw: number; imgh: number; canw: number; canh: number } {
-    imgh = (imgh * imgw) / width;
-    imgw = width;
-    const canh = height; // pad
+    imgh = Math.round((imgh * imgw) / width);
+    imgw = Math.round(width);
+    const canh = Math.round(height); // pad
     const canw = imgw;
     return { imgw, imgh, canw, canh };
   }

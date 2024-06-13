@@ -15,9 +15,11 @@
       "max_size": 4000
     },
     "instagram": {
+      "min_width": 320,
       "max_width": 1440,
-      "min_ratio": 0.75,
-      "max_ratio": 1.33
+      "min_ratio": 0.8,
+      "max_ratio": 1.91,
+      "max_size" : 8000
     },
     "linkedin": {
       "max_size": 5000

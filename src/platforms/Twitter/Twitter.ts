@@ -6,7 +6,6 @@ import Post from "../../models/Post";
 import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth";
 import User from "../../models/User";
-import sharp from "sharp";
 
 /**
  * Twitter: support for twitter platform
@@ -71,7 +70,7 @@ export default class Twitter extends Platform {
       // twitter: max 4 images
       //post.limitFiles("image", 4);
       // twitter: max 5mb images
-      for (const file of post.getFiles(FileGroup.IMAGE)) {
+      /*for (const file of post.getFiles(FileGroup.IMAGE)) {
         const src = file.name;
         const dst = this.assetsFolder + "/twitter-" + src;
         if (file.size / (1024 * 1024) >= 5) {
@@ -83,7 +82,7 @@ export default class Twitter extends Platform {
             .toFile(post.getFilePath(dst));
           await post.replaceFile(src, dst);
         }
-      }
+      }*/
       post.save();
     }
     return post;
