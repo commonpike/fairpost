@@ -85,6 +85,10 @@ export default class Twitter extends Platform {
       for (const plugin of plugins) {
         await plugin.process(post);
       }
+      // twitter requires a real body
+      if (!post.body) {
+        post.valid = false;
+      }
       post.save();
     }
     return post;

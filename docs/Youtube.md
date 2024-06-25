@@ -84,6 +84,11 @@ The refresh token (if given) lasts until it is revoked.
 
 # Limitations 
 
+## Refresh token
+
+As long as your app is in testing status, Refresh Tokens will expire every
+7 days - https://stackoverflow.com/a/69142542/95733
+
 ## Video 
 
 ### Supported Formats
