@@ -1,4 +1,4 @@
-import { FileGroup } from "../models/Folder";
+import { FileGroup } from "../models/Source";
 import Plugin from "../models/Plugin";
 import Post from "../models/Post";
 

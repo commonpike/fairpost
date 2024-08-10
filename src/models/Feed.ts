@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import Folder from "./Folder";
+import Folder from "./Source";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";

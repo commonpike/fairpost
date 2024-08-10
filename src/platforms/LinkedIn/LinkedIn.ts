@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import Folder, { FileGroup } from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Source";
 import { handleApiError, handleEmptyResponse } from "../../utilities";
 
 import LinkedInApi from "./LinkedInApi";

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import Folder, { FileGroup } from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Source";
 
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";

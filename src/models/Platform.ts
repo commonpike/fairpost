@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as pluginClasses from "../plugins";
 
-import Folder, { FileGroup } from "./Folder";
+import Folder, { FileGroup } from "./Source";
 
 import { PlatformId } from "../platforms";
 import Plugin from "./Plugin";

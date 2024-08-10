@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import Folder, { FileGroup, FileInfo } from "./Folder";
+import Folder, { FileGroup, FileInfo } from "./Source";
 
 import Platform from "./Platform";
 import { isSimilarArray } from "../utilities";

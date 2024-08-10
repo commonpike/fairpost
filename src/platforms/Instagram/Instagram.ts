@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import Folder, { FileGroup } from "../../models/Folder";
+import Folder, { FileGroup } from "../../models/Source";
 
 import InstagramApi from "./InstagramApi";
 import InstagramAuth from "./InstagramAuth";
