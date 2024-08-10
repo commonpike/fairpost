@@ -1,10 +1,10 @@
 import * as fs from "fs";
 
-import Folder from "./Folder";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
 import { PostStatus } from "./Post";
+import Source from "./Source";
 import User from "./User";
 
 /**
@@ -12,7 +12,7 @@ import User from "./User";
  *
  * You start a feed with a config, by default .env, which
  * defines the feed folder and platform settings. From the feed,
- * you are able to get platforms, folders and posts, and
+ * you are able to get platforms, sources and posts, and
  * manage and publish those.
  */
 export default class Feed {
@@ -22,7 +22,7 @@ export default class Feed {
   platforms: {
     [id in PlatformId]?: Platform;
   } = {};
-  folders: Folder[] = [];
+  sources: Source[] = [];
   interval: number;
 
   /**
@@ -59,8 +59,8 @@ export default class Feed {
     report += "\n - path: " + this.path;
     report += "\n - platforms: " + Object.keys(this.platforms).join();
     report +=
-      "\n - folders: " +
-      this.getFolders()
+      "\n - sources: " +
+      this.getSources()
         .map((f) => f.id)
         .join();
     return report;
@@ -180,13 +180,13 @@ export default class Feed {
   }
 
   /**
-   * Get all folders
-   * @returns all folder in the feed
+   * Get all sources
+   * @returns all source in the feed
    */
-  getAllFolders(): Folder[] {
-    this.user.trace("Feed", "getAllFolders");
-    if (this.folders.length) {
-      return this.folders;
+  getAllSources(): Source[] {
+    this.user.trace("Feed", "getAllSources");
+    if (this.sources.length) {
+      return this.sources;
     }
     if (!fs.existsSync(this.path)) {
       fs.mkdirSync(this.path);
@@ -199,65 +199,109 @@ export default class Feed {
       );
     });
     if (paths) {
-      this.folders = paths.map((path) => new Folder(this.path + "/" + path));
+      this.sources = paths.map((path) => new Source(this.path + "/" + path));
     }
-    return this.folders;
+    return this.sources;
   }
 
   /**
-   * Get one folder
-   * @param path - path to a single folder
-   * @returns the given folder object
+   * Get one source
+   * @param path - path to a single source
+   * @returns the given source object
    */
-  getFolder(path: string): Folder | undefined {
-    this.user.trace("Feed", "getFolder", path);
-    return this.getFolders([path])[0];
+  getSource(path: string): Source {
+    this.user.trace("Feed", "getSource", path);
+    return new Source(this.path + "/" + path);
   }
 
   /**
-   * Get multiple folders
-   * @param paths - paths to multiple folders
-   * @returns the given folder objects
+   * Get multiple sources
+   * @param paths - paths to multiple sources
+   * @returns the given source objects
    */
-  getFolders(paths?: string[]): Folder[] {
-    this.user.trace("Feed", "getFolders", paths);
-    return (
-      paths?.map((path) => new Folder(this.path + "/" + path)) ??
-      this.getAllFolders()
-    );
+  getSources(paths?: string[]): Source[] {
+    this.user.trace("Feed", "getSources", paths);
+    return paths?.map((path) => this.getSource(path)) ?? this.getAllSources();
+  }
+
+  /**
+   * Get one source status
+   * @param path - path to a single source
+   * @returns an amalgation of the sources post statusses
+   *
+   * if there are no posts, its unknown
+   * if at least one post is failed, its failed
+   * if at least one post is scheduled, its scheduled
+   * if all posts are published, its published
+   * otherwise its unscheduled
+   */
+  getSourceStatus(path: string): PostStatus {
+    this.user.trace("Feed", "getSourceStatus", path);
+    const posts = this.getPosts({ sources: [path] });
+    if (!posts.length) {
+      return PostStatus.UNKNOWN;
+    }
+    let haveScheduled = false;
+    let haveFailed = false;
+    let allPublished = true;
+    for (const post of posts) {
+      if (post.valid && !post.skip) {
+        if (post.status === PostStatus.SCHEDULED) {
+          haveScheduled = true;
+        }
+        if (post.status === PostStatus.FAILED) {
+          haveFailed = true;
+        }
+        if (post.status !== PostStatus.PUBLISHED) {
+          allPublished = false;
+        }
+      }
+    }
+    if (haveFailed) {
+      return PostStatus.FAILED;
+    }
+    if (haveScheduled) {
+      return PostStatus.SCHEDULED;
+    }
+    if (allPublished) {
+      return PostStatus.PUBLISHED;
+    }
+    return PostStatus.UNSCHEDULED;
   }
 
   /**
    * Get one (prepared) post
-   * @param path - path to a single folder
+   * @param path - path to a single source
    * @param platformId - the platform for the post
    * @returns the given post, or undefined if not prepared
    */
   getPost(path: string, platformId: PlatformId): Post | undefined {
     this.user.trace("Feed", "getPost");
-    return this.getPosts({ folders: [path], platforms: [platformId] })[0];
+    const platform = this.getPlatform(platformId);
+    const source = this.getSource(path);
+    return platform.getPost(source);
   }
 
   /**
    * Get multiple (prepared) posts
    * @param filters - object to filter posts by
-   * @param filters.folders - paths to folders to filter on
+   * @param filters.sources - paths to sources to filter on
    * @param filters.platforms - slugs to platforms to filter on
    * @param filters.status - post status to filter on
    * @returns multiple posts
    */
   getPosts(filters?: {
-    folders?: string[];
+    sources?: string[];
     platforms?: PlatformId[];
     status?: PostStatus;
   }): Post[] {
     this.user.trace("Feed", "getPosts");
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
-    const folders = this.getFolders(filters?.folders);
-    for (const folder of folders) {
+    const sources = this.getSources(filters?.sources);
+    for (const source of sources) {
       for (const platform of platforms) {
-        const post = platform.getPost(folder);
+        const post = platform.getPost(source);
         if (
           post &&
           (!filters?.status || filters.status.includes(post.status))
@@ -271,7 +315,7 @@ export default class Feed {
 
   /**
    * Prepare single post
-   * @param path - path to a single folder
+   * @param path - path to a single source
    * @param platformId - the platform for the post
    * @returns the given post, or undefined if failed
    */
@@ -281,7 +325,7 @@ export default class Feed {
   ): Promise<Post | undefined> {
     this.user.trace("Feed", "preparePost", path, platformId);
     return (
-      await this.preparePosts({ folders: [path], platforms: [platformId] })
+      await this.preparePosts({ sources: [path], platforms: [platformId] })
     )[0];
   }
 
@@ -292,18 +336,18 @@ export default class Feed {
    */
 
   async preparePosts(filters?: {
-    folders?: string[];
+    sources?: string[];
     platforms?: PlatformId[];
   }): Promise<Post[]> {
     this.user.trace("Feed", "preparePosts", filters);
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
-    const folders = this.getFolders(filters?.folders);
-    for (const folder of folders) {
+    const sources = this.getSources(filters?.sources);
+    for (const source of sources) {
       for (const platform of platforms) {
-        const post = platform.getPost(folder);
+        const post = platform.getPost(source);
         if (post?.status !== PostStatus.PUBLISHED) {
-          const newPost = await platform.preparePost(folder);
+          const newPost = await platform.preparePost(source);
           if (newPost) {
             posts.push(newPost);
           }
@@ -315,7 +359,7 @@ export default class Feed {
 
   /**
    * Schedule single post
-   * @param path - path to a single folder
+   * @param path - path to a single source
    * @param platformId - the platform for the post
    * @param date - Date to schedule post on
    * @returns the given post
@@ -344,48 +388,54 @@ export default class Feed {
    *
    * Note - this is for consistence only, it is actually unused
    * @param filters - object to filter posts by
-   * @param filters.folders - paths to folders to filter on
+   * @param filters.sources - paths to sources to filter on
    * @param filters.platforms - slugs to platforms to filter on
    * @param date - date to schedule posts on
    * @returns multiple posts
    */
   schedulePosts(
     filters: {
-      folders: string[];
+      sources: string[];
       platforms?: PlatformId[];
     },
     date: Date,
   ): Post[] {
     this.user.trace("Feed", "schedulePosts", filters, date);
-    if (!filters.folders) {
+    if (!filters.sources) {
       if (!filters.platforms) {
         throw this.user.error(
-          "Feed.schedulePosts needs to filter on either folders or platforms",
+          "Feed.schedulePosts needs to filter on either sources or platforms",
         );
       }
     }
-    if (filters.folders && filters.folders.length > 1) {
+    if (filters.sources && filters.sources.length > 1) {
       throw this.user.error(
-        "Feed.schedulePosts will cowardly only operate on one folder",
+        "Feed.schedulePosts will cowardly only operate on one source",
       );
     }
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
-    const folders = this.getFolders(filters?.folders);
-    for (const platform of platforms) {
-      for (const folder of folders) {
-        const post = platform.getPost(folder);
+    const sources = this.getSources(filters?.sources);
+    for (const source of sources) {
+      for (const platform of platforms) {
+        const post = platform.getPost(source);
         if (!post) {
           throw this.user.error("Post not found");
         }
         if (!post.valid) {
-          throw this.user.error("Post is not valid");
+          this.user.warn("Feed", "schedulePosts", "Post is not valid");
+          continue;
         }
         if (post.skip) {
-          throw this.user.error("Post is marked to be skipped");
+          this.user.warn(
+            "Feed",
+            "schedulePosts",
+            "Post is marked to be skipped",
+          );
+          continue;
         }
         if (post.status !== PostStatus.UNSCHEDULED) {
-          throw this.user.error("Post is not unscheduled");
+          this.user.warn("Feed", "schedulePosts", "Rescheduling post");
         }
         post.schedule(date);
         posts.push(post);
@@ -398,7 +448,7 @@ export default class Feed {
    * Publish single post
    *
    * Will publish the post regardless of its status or skip
-   * @param path - path to a single folder
+   * @param path - path to a single source
    * @param platformId - the platform for the post
    * @param dryrun - wether or not to really publish
    * @returns the given post
@@ -412,11 +462,11 @@ export default class Feed {
     this.user.trace("Feed", "publishPost", path, platformId, dryrun);
     const now = new Date();
     const platform = this.getPlatform(platformId);
-    const folder = this.getFolder(path);
-    if (!folder) {
-      throw this.user.error("Folder not found", path);
+    const source = this.getSource(path);
+    if (!source) {
+      throw this.user.error("Source not found", path);
     }
-    const post = platform.getPost(folder);
+    const post = platform.getPost(source);
     if (!post) {
       throw this.user.error("Post not found", path, platformId);
     }
@@ -435,38 +485,38 @@ export default class Feed {
    *
    * Note - this is for consistence only, it is actually unused
    * @param filters - object to filter posts by
-   * @param filters.folders - paths to folders to filter on
+   * @param filters.sources - paths to sources to filter on
    * @param filters.platforms - slugs to platforms to filter on
    * @param dryrun - wether to really publish
    * @returns multiple posts
    */
   async publishPosts(
     filters: {
-      folders: string[];
+      sources: string[];
       platforms?: PlatformId[];
     },
     dryrun: boolean = false,
   ): Promise<Post[]> {
     this.user.trace("Feed", "publishPosts", filters, dryrun);
-    if (!filters.folders) {
+    if (!filters.sources) {
       if (!filters.platforms) {
         throw this.user.error(
-          "Feed.schedulePosts needs to filter on either folders or platforms",
+          "Feed.schedulePosts needs to filter on either sources or platforms",
         );
       }
     }
-    if (filters.folders && filters.folders.length > 1) {
+    if (filters.sources && filters.sources.length > 1) {
       throw this.user.error(
-        "Feed.schedulePosts will cowardly only operate on one folder",
+        "Feed.schedulePosts will cowardly only operate on one source",
       );
     }
     const now = new Date();
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
-    const folders = this.getFolders(filters?.folders);
+    const sources = this.getSources(filters?.sources);
     for (const platform of platforms) {
-      for (const folder of folders) {
-        const post = platform.getPost(folder);
+      for (const source of sources) {
+        const post = platform.getPost(source);
         if (post) {
           if (post.valid) {
             if (!post.skip) {
@@ -481,7 +531,7 @@ export default class Feed {
             this.user.warn("Skipping invalid post", post.id);
           }
         } else {
-          this.user.warn("Skipping post not found", folder.id, platform.id);
+          this.user.warn("Skipping post not found", source.id, platform.id);
         }
       }
     }
@@ -542,26 +592,26 @@ export default class Feed {
   /**
    * Schedule the first unscheduled post for multiple platforms
    *
-   * for each platform, within given folders are all folders,
+   * for each platform, within given sources are all sources,
    * finds the next post date and the first unscheduled post,
    * and schedules that post on that date
    * @param date - use date instead of the next post date
-   * @param filters - limit the process to certain platforms or folders
-   * @param filters.folders - paths to folders to filter on
+   * @param filters - limit the process to certain platforms or sources
+   * @param filters.sources - paths to sources to filter on
    * @param filters.platforms - slugs of platforms to filter on
    * @returns the scheduled posts
    */
   scheduleNextPosts(
     date?: Date,
     filters?: {
-      folders?: string[];
+      sources?: string[];
       platforms?: PlatformId[];
     },
   ): Post[] {
     this.user.trace("Feed", "scheduleNextPosts");
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
-    const folders = this.getFolders(filters?.folders);
+    const sources = this.getSources(filters?.sources);
     for (const platform of platforms) {
       const scheduledPosts = this.getPosts({
         platforms: [platform.id],
@@ -577,8 +627,8 @@ export default class Feed {
         continue;
       }
       const nextDate = date ? date : this.getNextPostDate(platform.id);
-      for (const folder of folders) {
-        const post = platform.getPost(folder);
+      for (const source of sources) {
+        const post = platform.getPost(source);
         if (
           post &&
           post.valid &&
@@ -597,18 +647,18 @@ export default class Feed {
   /**
    * Publish scheduled posts, one for each platform
    *
-   * for each platform, within given folders or all folders,
+   * for each platform, within given sources or all sources,
    * find the first post that is scheduled in the past and
    * publish that.
-   * @param filters - limit the process to certain platforms or folders
-   * @param filters.folders - paths to folder to filter on
+   * @param filters - limit the process to certain platforms or sources
+   * @param filters.sources - paths to source to filter on
    * @param filters.platforms - slugs of platforms to filter on
    * @param dryrun - wether to really publish posts
    * @returns the published posts
    */
   async publishDuePosts(
     filters?: {
-      folders?: string[];
+      sources?: string[];
       platforms?: PlatformId[];
     },
     dryrun: boolean = false,
@@ -617,10 +667,10 @@ export default class Feed {
     const now = new Date();
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
-    const folders = this.getFolders(filters?.folders);
+    const sources = this.getSources(filters?.sources);
     for (const platform of platforms) {
-      for (const folder of folders) {
-        const post = platform.getPost(folder);
+      for (const source of sources) {
+        const post = platform.getPost(source);
         if (post && post.status === PostStatus.SCHEDULED) {
           if (!post.scheduled) {
             this.user.warn(

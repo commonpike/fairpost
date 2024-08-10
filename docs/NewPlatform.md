@@ -7,7 +7,7 @@ you can write your own code to support it.
 
 To add support for a new platform, add a class to `src/platforms`
 extending `src/classes/Platform`. You want to override at least the
-method `preparePost(folder)` and  `publishPost(post,dryrun)`.
+method `preparePost(source)` and  `publishPost(post,dryrun)`.
 
 Make sure not to throw errors in or below publishPost; instead, just 
 return false and let the `Post.processResult()` itself.
@@ -30,8 +30,8 @@ export default class FooBar extends Platform {
     }
     
     /** @inheritdoc */
-    async preparePost(folder: Folder): Promise<Post> {
-        const post = await super.preparePost(folder);
+    async preparePost(source: Source): Promise<Post> {
+        const post = await super.preparePost(source);
         if (post) {
             // prepare your post here
             post.save();

@@ -1,4 +1,4 @@
-import Folder, { FileGroup } from "../../models/Folder";
+import Source, { FileGroup } from "../../models/Source";
 
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
@@ -70,9 +70,9 @@ export default class Twitter extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post> {
-    this.user.trace("Twitter.preparePost", folder.id);
-    const post = await super.preparePost(folder);
+  async preparePost(source: Source): Promise<Post> {
+    this.user.trace("Twitter.preparePost", source.id);
+    const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
         this.user.get("settings", "TWITTER_PLUGIN_SETTINGS", "{}"),
@@ -86,7 +86,8 @@ export default class Twitter extends Platform {
         await plugin.process(post);
       }
       // twitter requires a real body
-      if (!post.body) {
+      if (!post.getCompiledBody()) {
+        this.user.warn("Twitter post has no body");
         post.valid = false;
       }
       post.save();

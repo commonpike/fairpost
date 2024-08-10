@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as pluginClasses from "../plugins";
 
-import Folder, { FileGroup } from "./Folder";
+import Source, { FileGroup } from "./Source";
 
 import { PlatformId } from "../platforms";
 import Plugin from "./Plugin";
@@ -83,28 +83,28 @@ export default class Platform {
 
   /**
    * getPostFilePath
-   * @param folder the folder for the new or existing post
+   * @param source the source for the new or existing post
    * @returns the full path to the post file used
    * to store data for a post of this platform
    */
-  getPostFilePath(folder: Folder): string {
-    return folder.path + "/" + this.assetsFolder + "/" + this.postFileName;
+  getPostFilePath(source: Source): string {
+    return source.path + "/" + this.assetsFolder + "/" + this.postFileName;
   }
 
   /**
    * getPost
-   * @param folder - the folder to get the post for this platform from
-   * @returns {Post} the post for this platform for the given folder, if it exists.
+   * @param source - the source to get the post for this platform from
+   * @returns {Post} the post for this platform for the given source, if it exists.
    */
 
-  getPost(folder: Folder): Post | undefined {
-    this.user.trace("Platform", "getPost");
+  getPost(source: Source): Post | undefined {
+    this.user.trace("Platform", "getPost", this.id, source.id);
 
-    const postFilePath = this.getPostFilePath(folder);
+    const postFilePath = this.getPostFilePath(source);
     if (fs.existsSync(postFilePath)) {
       const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
       if (data) {
-        return new Post(folder, this, data);
+        return new Post(source, this, data);
       }
     }
     return;
@@ -114,7 +114,7 @@ export default class Platform {
    * preparePost
    *
    * Prepare the post for this platform for the
-   * given folder, and save it. Optionally create
+   * given source, and save it. Optionally create
    * derivates of media and save those, too.
    *
    * If the post exists and is published, ignore.
@@ -127,13 +127,13 @@ export default class Platform {
    * Presume the post may have already been prepared
    * before, and manually adapted later. For example,
    * post.skip may have manually been set to true.
-   * @param folder - the folder for which to prepare a post for this platform
+   * @param source - the source for which to prepare a post for this platform
    * @returns the prepared post
    */
-  async preparePost(folder: Folder): Promise<Post> {
+  async preparePost(source: Source): Promise<Post> {
     this.user.trace("Platform", "preparePost");
 
-    const post = this.getPost(folder) ?? new Post(folder, this);
+    const post = this.getPost(source) ?? new Post(source, this);
     if (post.status === PostStatus.PUBLISHED) {
       return post;
     }
@@ -151,7 +151,7 @@ export default class Platform {
     // been changed manually
 
     post.purgeFiles();
-    const files = await folder.getFiles();
+    const files = await source.getFiles();
     files.forEach((file) => {
       if (!post.ignoreFiles?.includes(file.name)) {
         post.putFile(file);
@@ -165,32 +165,32 @@ export default class Platform {
     const textFiles = post.getFiles(FileGroup.TEXT);
 
     if (post.hasFile("body.txt")) {
-      post.body = fs.readFileSync(post.folder.path + "/body.txt", "utf8");
+      post.body = fs.readFileSync(post.source.path + "/body.txt", "utf8");
     } else if (textFiles.length === 1) {
       const bodyFile = textFiles[0].name;
-      post.body = fs.readFileSync(post.folder.path + "/" + bodyFile, "utf8");
+      post.body = fs.readFileSync(post.source.path + "/" + bodyFile, "utf8");
     } else {
       post.body = this.defaultBody;
     }
 
     if (post.hasFile("title.txt")) {
-      post.title = fs.readFileSync(post.folder.path + "/title.txt", "utf8");
+      post.title = fs.readFileSync(post.source.path + "/title.txt", "utf8");
     } else if (post.hasFile("subject.txt")) {
-      post.title = fs.readFileSync(post.folder.path + "/subject.txt", "utf8");
+      post.title = fs.readFileSync(post.source.path + "/subject.txt", "utf8");
     }
 
     if (post.hasFile("tags.txt")) {
       post.tags = fs
-        .readFileSync(post.folder.path + "/tags.txt", "utf8")
+        .readFileSync(post.source.path + "/tags.txt", "utf8")
         .split(/\s/);
     }
     if (post.hasFile("mentions.txt")) {
       post.mentions = fs
-        .readFileSync(post.folder.path + "/mentions.txt", "utf8")
+        .readFileSync(post.source.path + "/mentions.txt", "utf8")
         .split(/\s/);
     }
     if (post.hasFile("geo.txt")) {
-      post.geo = fs.readFileSync(post.folder.path + "/geo.txt", "utf8");
+      post.geo = fs.readFileSync(post.source.path + "/geo.txt", "utf8");
     }
 
     // decompile the body to see if there are

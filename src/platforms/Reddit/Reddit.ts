@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import Folder, { FileGroup } from "../../models/Folder";
+import Source, { FileGroup } from "../../models/Source";
 
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
@@ -64,9 +64,9 @@ export default class Reddit extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post> {
-    this.user.trace("Reddit.preparePost", folder.id);
-    const post = await super.preparePost(folder);
+  async preparePost(source: Source): Promise<Post> {
+    this.user.trace("Reddit.preparePost", source.id);
+    const post = await super.preparePost(source);
     if (post) {
       // TODO: extract video thumbnail
       if (post.hasFiles(FileGroup.VIDEO)) {

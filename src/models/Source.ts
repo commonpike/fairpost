@@ -4,20 +4,20 @@ import * as path from "path";
 import sharp from "sharp";
 
 /**
- * Folder - a folder within a feed
+ * Source - a folder within a feed
  *
- * A folder represents one post on all enabled
+ * A source represents one post on all enabled
  * and applicable platforms. It is also just
  * a folder on a filesystem.
  */
-export default class Folder {
+export default class Source {
   id: string;
   path: string;
   files?: FileInfo[];
 
   constructor(path: string) {
     if (!fs.statSync(path).isDirectory()) {
-      throw new Error("No such folder: " + path);
+      throw new Error("No such source: " + path);
     }
     this.id = path.replace(/^\//, "").split("/").slice(1).join("/");
     this.path = path;
@@ -30,17 +30,17 @@ export default class Folder {
 
   report(): string {
     let report = "";
-    report += "\nFolder: " + this.id;
+    report += "\nSource: " + this.id;
     report += "\n - path: " + this.path;
     report += "\n - files: " + this.getFileNames();
     return report;
   }
 
   /**
-   * Get the files in this folder
+   * Get the files in this source
    *
    * reads info from disk once, then caches that
-   * @returns array of fileinfo for all files in this folder
+   * @returns array of fileinfo for all files in this source
    */
 
   public async getFiles(): Promise<FileInfo[]> {
@@ -57,7 +57,7 @@ export default class Folder {
 
   /**
    * Get info for a single file
-   * @param name - name of the file in this folder
+   * @param name - name of the file in this source
    * @param order - order to set on this file
    * @returns fileinfo object for the file
    */
@@ -87,8 +87,8 @@ export default class Folder {
   }
 
   /**
-   * Get the filenames in this folder
-   * @returns array of filenames relative to folder
+   * Get the filenames in this source
+   * @returns array of filenames relative to source
    */
 
   private getFileNames(): string[] {

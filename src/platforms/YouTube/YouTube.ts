@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import Folder, { FileGroup } from "../../models/Folder";
+import Source, { FileGroup } from "../../models/Source";
 
 import Platform from "../../models/Platform";
 import { PlatformId } from "..";
@@ -54,9 +54,9 @@ export default class YouTube extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post> {
-    this.user.trace("YouTube.preparePost", folder.id);
-    const post = await super.preparePost(folder);
+  async preparePost(source: Source): Promise<Post> {
+    this.user.trace("YouTube.preparePost", source.id);
+    const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
         this.user.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),

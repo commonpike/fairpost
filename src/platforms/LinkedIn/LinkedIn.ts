@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import Folder, { FileGroup } from "../../models/Folder";
+import Source, { FileGroup } from "../../models/Source";
 import { handleApiError, handleEmptyResponse } from "../../utilities";
 
 import LinkedInApi from "./LinkedInApi";
@@ -62,9 +62,9 @@ export default class LinkedIn extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post> {
-    this.user.trace("LinkedIn.preparePost", folder.id);
-    const post = await super.preparePost(folder);
+  async preparePost(source: Source): Promise<Post> {
+    this.user.trace("LinkedIn.preparePost", source.id);
+    const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
         this.user.get("settings", "LINKEDIN_PLUGIN_SETTINGS", "{}"),

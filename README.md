@@ -78,7 +78,7 @@ nano users/foobar/.env
 ```
 fairpost.js prepare-posts
 ```
-Folders need to be `prepared` (iow turned into posts)
+Sources need to be `prepared` (iow turned into posts)
 before they can be published to a platform. 
 Each platform, as defined in src/platforms, will 
 handle the folder contents by itself. It may
@@ -139,21 +139,21 @@ fairpost: @userid refresh-platform --platform=xxx
 fairpost: @userid refresh-platforms [--platforms=xxx,xxx]
 fairpost: @userid get-platform --platform=xxx
 fairpost: @userid get-platforms [--platforms=xxx,xxx]
-fairpost: @userid get-folder --folder=xxx
-fairpost: @userid get-folders [--folders=xxx,xxx]
+fairpost: @userid get-source --source=xxx
+fairpost: @userid get-sources [--sources=xxx,xxx]
 fairpost: @userid get-post --post=xxx:xxx
-fairpost: @userid get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid get-posts [--status=xxx] [--sources=xxx,xxx] [--platforms=xxx,xxx] 
 fairpost: @userid prepare-post --post=xxx:xxx
 fairpost: @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
-fairpost: @userid schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
+fairpost: @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
 fairpost: @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] 
 fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
-fairpost: @userid publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
 
 # feed planning:
-fairpost: @userid prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]
-fairpost: @userid schedule-next-posts [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost: @userid publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+fairpost: @userid prepare-posts  [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
 
 # admin only:
 fairpost: create-user --userid=xxx
@@ -177,7 +177,7 @@ fairpost.js [command] [arguments] --verbose
 
 To add support for a new platform, add a class to `src/platforms`
 extending `src/classes/Platform`. You want to override at least the
-method `preparePost(folder)` and  `publishPost(post,dryrun)`.
+method `preparePost(source)` and  `publishPost(post,dryrun)`.
 
 Then import your class and add a `platformId` for your platform 
 in `src/platforms/index.ts` and enable your platformId in your `.env`.

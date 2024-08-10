@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import Folder, { FileGroup } from "../../models/Folder";
+import Source, { FileGroup } from "../../models/Source";
 
 import InstagramApi from "./InstagramApi";
 import InstagramAuth from "./InstagramAuth";
@@ -57,9 +57,9 @@ export default class Instagram extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post> {
-    this.user.trace("Instagram.preparePost", folder.id);
-    const post = await super.preparePost(folder);
+  async preparePost(source: Source): Promise<Post> {
+    this.user.trace("Instagram.preparePost", source.id);
+    const post = await super.preparePost(source);
     if (post && post.files) {
       // instagram: require media
       if (
