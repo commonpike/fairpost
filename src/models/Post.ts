@@ -1,21 +1,21 @@
 import * as fs from "fs";
 
-import Folder, { FileGroup, FileInfo } from "./Source";
+import Source, { FileGroup, FileInfo } from "./Source";
 
 import Platform from "./Platform";
 import { isSimilarArray } from "../utilities";
 
 /**
- * Post - a post within a folder
+ * Post - a post within a source
  *
- * A post belongs to one platform and one folder;
+ * A post belongs to one platform and one source;
  * it is *prepared* and later *published* by the platform.
- * The post serializes to a json file in the folder,
+ * The post serializes to a json file in the source,
  * where it can be read later for further processing.
  */
 export default class Post {
   id: string;
-  folder: Folder;
+  source: Source;
   platform: Platform;
   valid: boolean = false;
   skip: boolean = false;
@@ -33,10 +33,10 @@ export default class Post {
   link?: string;
   remoteId?: string;
 
-  constructor(folder: Folder, platform: Platform, data?: object) {
-    this.folder = folder;
+  constructor(source: Source, platform: Platform, data?: object) {
+    this.source = source;
     this.platform = platform;
-    this.id = this.folder.id + ":" + this.platform.id;
+    this.id = this.source.id + ":" + this.platform.id;
     if (data) {
       Object.assign(this, data);
       this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
@@ -76,10 +76,10 @@ export default class Post {
     this.platform.user.trace("Post", "save");
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const data = { ...this } as { [key: string]: any };
-    delete data.folder;
+    delete data.source;
     delete data.platform;
     fs.writeFileSync(
-      this.platform.getPostFilePath(this.folder),
+      this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),
     );
   }
@@ -336,7 +336,7 @@ export default class Post {
   async addFile(name: string): Promise<FileInfo | undefined> {
     const index = this.files?.findIndex((file) => file.name === name) ?? -1;
     if (index === -1) {
-      const newFile = await this.folder.getFileInfo(
+      const newFile = await this.source.getFileInfo(
         name,
         this.files?.length ?? 0,
       );
@@ -398,7 +398,7 @@ export default class Post {
     if (index > -1) {
       const oldFile = this.getFile(search);
       if (this.files && oldFile) {
-        const newFile = await this.folder.getFileInfo(replace, oldFile.order);
+        const newFile = await this.source.getFileInfo(replace, oldFile.order);
         newFile.original = oldFile.name;
         this.files[index] = newFile;
         return this.files[index];
@@ -409,11 +409,11 @@ export default class Post {
   }
 
   /**
-   * @param name relative path in this post.folder
+   * @param name relative path in this post.source
    * @returns the full path to that file
    */
   getFilePath(name: string): string {
-    return this.folder.path + "/" + name;
+    return this.source.path + "/" + name;
   }
 
   /**

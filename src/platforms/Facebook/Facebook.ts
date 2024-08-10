@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import Folder, { FileGroup } from "../../models/Source";
+import Source, { FileGroup } from "../../models/Source";
 
 import FacebookApi from "./FacebookApi";
 import FacebookAuth from "./FacebookAuth";
@@ -51,9 +51,9 @@ export default class Facebook extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(folder: Folder): Promise<Post> {
-    this.user.trace("Facebook.preparePost", folder.id);
-    const post = await super.preparePost(folder);
+  async preparePost(source: Source): Promise<Post> {
+    this.user.trace("Facebook.preparePost", source.id);
+    const post = await super.preparePost(source);
     if (post && post.files) {
       const userPluginSettings = JSON.parse(
         this.user.get("settings", "FACEBOOK_PLUGIN_SETTINGS", "{}"),

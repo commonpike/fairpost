@@ -165,39 +165,39 @@ class CommandHandler {
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
-      case "get-folder": {
+      case "get-source": {
         if (!feed) throw user.error("User " + user.id + " has no feed");
-        if (!args.folder) {
+        if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
-            "Missing argument: folder",
+            "Missing argument: source",
           );
         }
-        const folder = feed.getFolder(args.folder);
-        if (folder) {
-          report += folder.report() + "\n";
-          result = folder;
+        const source = feed.getSource(args.source);
+        if (source) {
+          report += source.report() + "\n";
+          result = source;
         } else {
-          report += "not found:" + args.folder + "\n";
+          report += "not found:" + args.source + "\n";
         }
         break;
       }
-      case "get-folders": {
+      case "get-sources": {
         if (!feed) throw user.error("User " + user.id + " has no feed");
-        const folders = feed.getFolders(args.folders);
-        report += folders.length + " Folders\n------\n";
-        folders.forEach((folder) => {
-          report += folder.report() + "\n";
+        const sources = feed.getSources(args.sources);
+        report += sources.length + " Sources\n------\n";
+        sources.forEach((source) => {
+          report += source.report() + "\n";
         });
-        result = folders;
+        result = sources;
         break;
       }
       case "get-post": {
         if (!feed) throw user.error("User " + user.id + " has no feed");
-        if (!args.folder) {
+        if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
-            "Missing argument: folder",
+            "Missing argument: source",
           );
         }
         if (!args.platform) {
@@ -206,19 +206,19 @@ class CommandHandler {
             "Missing argument: platform",
           );
         }
-        const post = feed.getPost(args.folder, args.platform);
+        const post = feed.getPost(args.source, args.platform);
         if (post) {
           report += post.report();
           result = post;
         } else {
-          report += "Not found:" + args.folder + ":" + args.platform;
+          report += "Not found:" + args.source + ":" + args.platform;
         }
         break;
       }
       case "get-posts": {
         if (!feed) throw user.error("User " + user.id + " has no feed");
         const allposts = feed.getPosts({
-          folders: args.folders,
+          sources: args.sources,
           platforms: args.platforms,
           status: args.status,
         });
@@ -231,10 +231,10 @@ class CommandHandler {
       }
       case "prepare-post": {
         if (!feed) throw user.error("User " + user.id + " has no feed");
-        if (!args.folder) {
+        if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
-            "Missing argument: folder",
+            "Missing argument: source",
           );
         }
         if (!args.platform) {
@@ -243,12 +243,12 @@ class CommandHandler {
             "Missing argument: platform",
           );
         }
-        const preppost = await feed.preparePost(args.folder, args.platform);
+        const preppost = await feed.preparePost(args.source, args.platform);
         if (preppost) {
           report += preppost.report();
           result = preppost;
         } else {
-          report += "Failed: " + args.folder + ":" + args.platform;
+          report += "Failed: " + args.source + ":" + args.platform;
         }
         break;
       }
@@ -257,11 +257,11 @@ class CommandHandler {
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
-        if (!args.folders && args.folder) {
-          args.folders = [args.folder];
+        if (!args.sources && args.source) {
+          args.sources = [args.source];
         }
         const prepposts = await feed.preparePosts({
-          folders: args.folders,
+          sources: args.sources,
           platforms: args.platforms,
         });
         prepposts.forEach((post) => {
@@ -272,10 +272,10 @@ class CommandHandler {
       }
       case "schedule-post": {
         if (!feed) throw user.error("User " + user.id + " has no feed");
-        if (!args.folder) {
+        if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
-            "Missing argument: folder",
+            "Missing argument: source",
           );
         }
         if (!args.platform) {
@@ -291,7 +291,7 @@ class CommandHandler {
           );
         }
         const schedpost = feed.schedulePost(
-          args.folder,
+          args.source,
           args.platform,
           args.date,
         );
@@ -304,13 +304,13 @@ class CommandHandler {
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
-        if (!args.folders && args.folder) {
-          args.folders = [args.folder];
+        if (!args.sources && args.source) {
+          args.sources = [args.source];
         }
-        if (!args.folders) {
+        if (!args.sources) {
           throw user.error(
             "CommandHandler " + command,
-            "Missing argument: folders",
+            "Missing argument: sources",
           );
         }
         if (!args.date) {
@@ -321,7 +321,7 @@ class CommandHandler {
         }
         const schedposts = feed.schedulePosts(
           {
-            folders: args.folders,
+            sources: args.sources,
             platforms: args.platforms,
           },
           new Date(args.date),
@@ -357,10 +357,10 @@ class CommandHandler {
       }
       case "publish-post": {
         if (!feed) throw user.error("User " + user.id + " has no feed");
-        if (!args.folder) {
+        if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
-            "Missing argument: folder",
+            "Missing argument: source",
           );
         }
         if (!args.platform) {
@@ -370,7 +370,7 @@ class CommandHandler {
           );
         }
         const pubpost = await feed.publishPost(
-          args.folder,
+          args.source,
           args.platform,
           args.dryrun,
         );
@@ -383,18 +383,18 @@ class CommandHandler {
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
-        if (!args.folders && args.folder) {
-          args.folders = [args.folder];
+        if (!args.sources && args.source) {
+          args.sources = [args.source];
         }
-        if (!args.folders) {
+        if (!args.sources) {
           throw user.error(
             "CommandHandler " + command,
-            "Missing argument: folders",
+            "Missing argument: sources",
           );
         }
         const pubposts = await feed.publishPosts(
           {
-            folders: args.folders,
+            sources: args.sources,
             platforms: args.platforms,
           },
           args.dryrun,
@@ -412,7 +412,7 @@ class CommandHandler {
         const nextposts = feed.scheduleNextPosts(
           args.date ? new Date(args.date) : undefined,
           {
-            folders: args.folders,
+            sources: args.sources,
             platforms: args.platforms,
           },
         );
@@ -426,7 +426,7 @@ class CommandHandler {
         if (!feed) throw user.error("User " + user.id + " has no feed");
         const dueposts = await feed.publishDuePosts(
           {
-            folders: args.folders,
+            sources: args.sources,
             platforms: args.platforms,
           },
           args.dryrun,
@@ -473,20 +473,20 @@ class CommandHandler {
           `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
           `${cmd} @userid get-platform --platform=xxx`,
           `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
-          `${cmd} @userid get-folder --folder=xxx`,
-          `${cmd} @userid get-folders [--folders=xxx,xxx]`,
+          `${cmd} @userid get-source --source=xxx`,
+          `${cmd} @userid get-sources [--sources=xxx,xxx]`,
           `${cmd} @userid get-post --post=xxx:xxx`,
-          `${cmd} @userid get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
+          `${cmd} @userid get-posts [--status=xxx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
           `${cmd} @userid prepare-post --post=xxx:xxx`,
           `${cmd} @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
-          `${cmd} @userid schedule-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
+          `${cmd} @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
           `${cmd} @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] `,
           `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
-          `${cmd} @userid publish-posts [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+          `${cmd} @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
           "\n# feed planning:",
-          `${cmd} @userid prepare-posts  [--folders=xxx,xxx|--folder=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
-          `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] `,
-          `${cmd} @userid publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
+          `${cmd} @userid prepare-posts  [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+          `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
+          `${cmd} @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
           "\n# admin only:",
           `${cmd} create-user --userid=xxx`,
           `${cmd} get-user --userid=xxx`,
@@ -506,8 +506,8 @@ interface CommandArguments {
   userid?: string;
   platforms?: PlatformId[];
   platform?: PlatformId;
-  folders?: string[];
-  folder?: string;
+  sources?: string[];
+  source?: string;
   date?: Date;
   status?: PostStatus;
 }

@@ -49,16 +49,16 @@ export default class Server {
     const userid = parsed.searchParams.get("userid") || undefined;
     const date = parsed.searchParams.get("date");
     const post = parsed.searchParams.get("post");
-    const [folder, platform] = post
+    const [source, platform] = post
       ? (post.split(":") as [string, PlatformId])
       : [
-          parsed.searchParams.get("folder") || undefined,
+          parsed.searchParams.get("source") || undefined,
           (parsed.searchParams.get("platform") as PlatformId) || undefined,
         ];
     const platforms = parsed.searchParams.get("platforms")?.split(",") as
       | PlatformId[]
       | undefined;
-    const folders = parsed.searchParams.get("folders")?.split(",");
+    const sources = parsed.searchParams.get("sources")?.split(",");
     const status =
       (parsed.searchParams.get("status") as PostStatus) || undefined;
 
@@ -67,8 +67,8 @@ export default class Server {
       userid: userid,
       platforms: platforms,
       platform: platform,
-      folders: folders,
-      folder: folder,
+      sources: sources,
+      source: source,
       date: date ? new Date(date) : undefined,
       status: status,
     };

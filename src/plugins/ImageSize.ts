@@ -166,13 +166,13 @@ export default class ImageSize extends Plugin {
           .toFormat("jpg") // default q = 80
           .toFile(post.getFilePath(dst));
         await post.replaceFile(file.name, dst);
-        file = await post.folder.getFileInfo(dst, file.order);
+        file = await post.source.getFileInfo(dst, file.order);
       }
     }
     if (file.width && file.size / 1024 >= maxkb) {
       const newFileName = file.basename + "-small." + file.extension;
       const dst = post.platform.assetsFolder + "/" + newFileName;
-      let newfile = await post.folder.getFileInfo(file.name, file.order);
+      let newfile = await post.source.getFileInfo(file.name, file.order);
       let factor = 1;
       let count = 1;
       while (newfile.size / 1024 >= maxkb) {
@@ -187,7 +187,7 @@ export default class ImageSize extends Plugin {
             width: Math.round(file.width * factor),
           })
           .toFile(post.getFilePath(dst));
-        newfile = await post.folder.getFileInfo(dst, file.order);
+        newfile = await post.source.getFileInfo(dst, file.order);
         if (count++ > 5) {
           throw post.platform.user.error(
             "ImageSize.reduceFileSize",
