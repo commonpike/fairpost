@@ -8,6 +8,7 @@
 import { PlatformId } from "../platforms";
 import { PostStatus } from "../models/Post";
 import Server from "../services/Server";
+import Source from "../models/Source";
 import User from "../models/User";
 
 class CommandHandler {
@@ -190,6 +191,30 @@ class CommandHandler {
           report += source.report() + "\n";
         });
         result = sources;
+        break;
+      }
+      case "get-sources-by-status": {
+        if (!feed) throw user.error("User " + user.id + " has no feed");
+        const sources = feed.getSources(args.sources);
+        const groups = {} as { [status: string]: Source[] };
+        sources.forEach((source) => {
+          const status = feed.getSourceStatus(source.path);
+          if (groups[status] === undefined) {
+            groups[status] = [source];
+          } else {
+            groups[status].push(source);
+          }
+          report += source.report() + "\n";
+        });
+        Object.keys(groups).forEach((status) => {
+          report += " " + status + "\n------\n";
+          const sources = groups[status];
+          report += sources.length + " Sources\n------\n";
+          sources.forEach((source) => {
+            report += source.report() + "\n";
+          });
+        });
+        result = groups;
         break;
       }
       case "get-post": {

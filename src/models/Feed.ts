@@ -209,9 +209,9 @@ export default class Feed {
    * @param path - path to a single source
    * @returns the given source object
    */
-  getSource(path: string): Source | undefined {
+  getSource(path: string): Source {
     this.user.trace("Feed", "getSource", path);
-    return this.getSources([path])[0];
+    return new Source(this.path + "/" + path);
   }
 
   /**
@@ -221,10 +221,52 @@ export default class Feed {
    */
   getSources(paths?: string[]): Source[] {
     this.user.trace("Feed", "getSources", paths);
-    return (
-      paths?.map((path) => new Source(this.path + "/" + path)) ??
-      this.getAllSources()
-    );
+    return paths?.map((path) => this.getSource(path)) ?? this.getAllSources();
+  }
+
+  /**
+   * Get one source status
+   * @param path - path to a single source
+   * @returns an amalgation of the sources post statusses
+   *
+   * if there are no posts, its unknown
+   * if at least one post is failed, its failed
+   * if at least one post is scheduled, its scheduled
+   * if all posts are published, its published
+   * otherwise its unscheduled
+   */
+  getSourceStatus(path: string): PostStatus {
+    this.user.trace("Feed", "getSourceStatus", path);
+    const posts = this.getPosts({ sources: [path] });
+    if (!posts.length) {
+      return PostStatus.UNKNOWN;
+    }
+    let haveScheduled = false;
+    let haveFailed = false;
+    let allPublished = true;
+    for (const post of posts) {
+      if (post.valid && !post.skip) {
+        if (post.status === PostStatus.SCHEDULED) {
+          haveScheduled = true;
+        }
+        if (post.status === PostStatus.FAILED) {
+          haveFailed = true;
+        }
+        if (post.status !== PostStatus.PUBLISHED) {
+          allPublished = false;
+        }
+      }
+    }
+    if (haveFailed) {
+      return PostStatus.FAILED;
+    }
+    if (haveScheduled) {
+      return PostStatus.SCHEDULED;
+    }
+    if (allPublished) {
+      return PostStatus.PUBLISHED;
+    }
+    return PostStatus.UNSCHEDULED;
   }
 
   /**
@@ -235,7 +277,9 @@ export default class Feed {
    */
   getPost(path: string, platformId: PlatformId): Post | undefined {
     this.user.trace("Feed", "getPost");
-    return this.getPosts({ sources: [path], platforms: [platformId] })[0];
+    const platform = this.getPlatform(platformId);
+    const source = this.getSource(path);
+    return platform.getPost(source);
   }
 
   /**
