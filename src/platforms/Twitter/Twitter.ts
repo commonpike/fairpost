@@ -86,7 +86,8 @@ export default class Twitter extends Platform {
         await plugin.process(post);
       }
       // twitter requires a real body
-      if (!post.body) {
+      if (!post.getCompiledBody()) {
+        this.user.warn("Twitter post has no body");
         post.valid = false;
       }
       post.save();

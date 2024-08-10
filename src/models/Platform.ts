@@ -98,7 +98,7 @@ export default class Platform {
    */
 
   getPost(source: Source): Post | undefined {
-    this.user.trace("Platform", "getPost");
+    this.user.trace("Platform", "getPost", this.id, source.id);
 
     const postFilePath = this.getPostFilePath(source);
     if (fs.existsSync(postFilePath)) {

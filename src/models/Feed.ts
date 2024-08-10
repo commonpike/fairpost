@@ -416,20 +416,26 @@ export default class Feed {
     const posts: Post[] = [];
     const platforms = this.getPlatforms(filters?.platforms);
     const sources = this.getSources(filters?.sources);
-    for (const platform of platforms) {
-      for (const source of sources) {
+    for (const source of sources) {
+      for (const platform of platforms) {
         const post = platform.getPost(source);
         if (!post) {
           throw this.user.error("Post not found");
         }
         if (!post.valid) {
-          throw this.user.error("Post is not valid");
+          this.user.warn("Feed", "schedulePosts", "Post is not valid");
+          continue;
         }
         if (post.skip) {
-          throw this.user.error("Post is marked to be skipped");
+          this.user.warn(
+            "Feed",
+            "schedulePosts",
+            "Post is marked to be skipped",
+          );
+          continue;
         }
         if (post.status !== PostStatus.UNSCHEDULED) {
-          throw this.user.error("Post is not unscheduled");
+          this.user.warn("Feed", "schedulePosts", "Rescheduling post");
         }
         post.schedule(date);
         posts.push(post);
