@@ -151,7 +151,7 @@ settings using `User.get(...)`.
 ## A more elaborate setup
 
 As your platform gets bigger, you may want to chunk it
-up in several classes. Create a source `src/platforms/FooBar`,
+up in several classes. Create a folder `src/platforms/FooBar`,
 move your class there, and update the imports.
 
 ### FooBarApi.ts

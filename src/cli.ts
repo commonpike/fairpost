@@ -23,15 +23,15 @@ const USERID = (getOption("userid") as string) ?? "";
 const OUTPUT = (getOption("output") as string) ?? "text";
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
-const FOLDERS = (getOption("sources") as string)?.split(",") ?? undefined;
+const SOURCES = (getOption("sources") as string)?.split(",") ?? undefined;
 const DATE = (getOption("date") as string) ?? undefined;
 const STATUS = (getOption("status") as PostStatus) ?? undefined;
 
 let PLATFORM = (getOption("platform") as string as PlatformId) ?? undefined;
-let FOLDER = (getOption("source") as string) ?? undefined;
+let SOURCE = (getOption("source") as string) ?? undefined;
 const POST = (getOption("post") as string) ?? undefined;
 if (POST) {
-  [FOLDER, PLATFORM] = POST.split(":") as [string, PlatformId];
+  [SOURCE, PLATFORM] = POST.split(":") as [string, PlatformId];
 }
 
 // utilities
@@ -51,8 +51,8 @@ async function main() {
       userid: USERID,
       platforms: PLATFORMS,
       platform: PLATFORM,
-      sources: FOLDERS,
-      source: FOLDER,
+      sources: SOURCES,
+      source: SOURCE,
       date: DATE ? new Date(DATE) : undefined,
       status: STATUS,
     });
