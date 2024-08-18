@@ -69,6 +69,7 @@ export default class Reddit extends Platform {
     const post = await super.preparePost(source);
     if (post) {
       // TODO: extract video thumbnail
+      let videoposter = "";
       if (post.hasFiles(FileGroup.VIDEO)) {
         let srcposter = "";
         const dstposter = this.assetsFolder + "/reddit-poster.png";
@@ -107,7 +108,7 @@ export default class Reddit extends Platform {
             post.getFilePath(dstposter),
           );
           post.removeFiles(FileGroup.IMAGE);
-          await post.addFile(dstposter);
+          videoposter = dstposter;
         }
       }
       const userPluginSettings = JSON.parse(
@@ -120,6 +121,9 @@ export default class Reddit extends Platform {
       const plugins = this.loadPlugins(pluginSettings);
       for (const plugin of plugins) {
         await plugin.process(post);
+      }
+      if (videoposter) {
+        await post.addFile(videoposter);
       }
       post.save();
     }
