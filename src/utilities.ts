@@ -58,6 +58,15 @@ export async function handleJsonResponse(
   response: Response,
   includeHeaders = false,
 ): Promise<object> {
+  if (!response.ok) {
+    // network error in the 3xx–5xx range
+    try {
+      const data = await response.json(); // may throw a syntaxerror
+      throw new ApiResponseError(response, data);
+    } catch (e) {
+      throw new ApiResponseError(response);
+    }
+  }
   const data = await response.json(); // may throw a syntaxerror
   if (includeHeaders) {
     data["headers"] = {};
@@ -65,10 +74,7 @@ export async function handleJsonResponse(
       data["headers"][name] = value;
     }
   }
-  if (!response.ok) {
-    // network error in the 3xx–5xx range
-    throw new ApiResponseError(response, data);
-  }
+
   return data;
 }
 
