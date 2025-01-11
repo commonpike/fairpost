@@ -19,13 +19,13 @@ using the plain graph api - no extensions installed.
 ## Connect the platform to a user
 
 ### Enable the platform
- - Add 'facebook' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
+ - Add 'facebook' to your `FEED_PLATFORMS` in your users `storage.json`
 
 
 ### Find the page id of the page you want the app to manage
   - go to https://business.facebook.com/
   - find your page (currently under 'settings > accounts > pages')
-  - save the page id as `FAIRPOST_FACEBOOK_PAGE_ID` in your users .env
+  - save the page id as `FACEBOOK_PAGE_ID` in your users `storage.json`
 
 ### Get a (long lived) Page Access Token for the page you want the app to manage
 
@@ -90,8 +90,8 @@ One fairpost user can only manage one page. If you create a second user, you can
 
 ## More user settings 
 
- - `FAIRPOST_FACEBOOK_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
- - `FAIRPOST_FACEBOOK_PUBLISH_POSTS` - if false, posts will be posted but not be published
+ - `FACEBOOK_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
+ - `FACEBOOK_PUBLISH_POSTS` - if false, posts will be posted but not be published
 
 # Limitations 
 

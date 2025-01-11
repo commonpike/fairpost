@@ -12,6 +12,7 @@ import * as path from "path";
  * - uses two backends
  *   - 'env' is process.env (.env)
  *   - 'json' is plain json file
+ *   - 'json-env' is plain json file with .env fallback
  *
  * which store uses which backend should be
  * set in the environment

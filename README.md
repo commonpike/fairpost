@@ -64,9 +64,9 @@ but in general, the steps are
 # create a user foobar
 ./fairpost.js create-user --userid=foobar
 
-# edit the users .env, finetune settings
+# edit the users storage.json, finetune settings
 # and enable platform `bla`
-nano users/foobar/.env
+nano users/foobar/var/lib/storage.json
 
 # connect platform `bla` to user `foobar`
 ./fairpost.js @foobar setup-platform --platform=bla

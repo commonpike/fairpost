@@ -48,7 +48,7 @@ To have Fairpost publish **public** videos, your app has to be audited
 ## Connect the platform to a user
 
 ### Enable the platform
- - Add 'youtube' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
+ - Add 'youtube' to your `FEED_PLATFORMS` in your users `storage.json`
 
 ### Get an OAuth2 Access Token for your platform
 
@@ -78,9 +78,9 @@ The refresh token (if given) lasts until it is revoked.
 
 ## More user settings 
 
-- `FAIRPOST_YOUTUBE_PRIVACY` = public | private | unlisted
-- `FAIRPOST_YOUTUBE_CATEGORY` = valid youtube category id
-- `FAIRPOST_YOUTUBE_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
+- `YOUTUBE_PRIVACY` = public | private | unlisted
+- `YOUTUBE_CATEGORY` = valid youtube category id
+- `YOUTUBE_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Limitations 
 

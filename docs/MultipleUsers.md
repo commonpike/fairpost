@@ -6,12 +6,13 @@ If you don't specify a user, Fairpost assumes it's 'admin'. The admin user has n
 
 ## User storage
 
-Both the global .env and the user .env will be read.
-The users .env can override anything 
-from the global config, but likely, you only want
-to enter the feed/page/channel/etc settings for each platform. The rest is set globally.
+The global .env stores global (app) settings.
 
-The other stores, like access tokens, will also be stored in the user directory in the path specified in his .env
+The other stores, like access tokens, will be stored in the user directory 
+in the path specified in the global .env
+
+The users storage can override some things from the global config, but likely, you only want
+to enter the feed/page/channel/etc settings for each platform. The rest is set globally.
 
 ## User logging
 

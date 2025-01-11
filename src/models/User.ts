@@ -72,8 +72,10 @@ export default class User {
       throw new Error("Homedir already exists: " + dst);
     }
     fs.cpSync(src, dst, { recursive: true });
-    fs.renameSync(dst + "/.env.dist", dst + "/.env");
-    return new User(userId);
+
+    const user = new User(userId);
+    user.set("settings", "FEED_PLATFORMS", "");
+    return user;
   }
 
   /**

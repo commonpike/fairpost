@@ -16,7 +16,7 @@
 ## Connect the platform to a user
 
 ### Enable the platform
- - Add 'reddit' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
+ - Add 'reddit' to your `FAIRPOST_FEED_PLATFORMS` in your users `storage.json`
 
 ### Get an OAuth2 Access Token for your Reddit account
 
@@ -31,7 +31,7 @@ This token only lasts for 24 hours and should be refreshed.
    
 ## More user settings 
 
- - `FAIRPOST_REDDIT_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
+ - `REDDIT_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Random documentation
 

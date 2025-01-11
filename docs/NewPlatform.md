@@ -78,9 +78,9 @@ Then in `src/platforms/index.ts`
 - import your class
 - add `PlatformId.FOOBAR` for your platform 
 
-Then in `.env`, enable your platformId
+Then in your users `storage.json`, enable your platformId
 ```
-FAIRPOST_PLATFORMS=foobar,..,..
+PLATFORMS=foobar,..,..
 ```
 
 check if it works:
@@ -113,8 +113,8 @@ usually to refresh the access tokens and save them in Storage.
 
 Your platform is constructed with a User, `FooBar.user`.
 All configuration, including 'global' configuration from 
-Fairpost, is set on (and can be overriden by) the user. 
-The user has two stores, `settings` and `auth`. Depending on the 
+Fairpost, is set on (and some can be overridden by) the user. 
+The user has three stores, `app`, `settings` and `auth`. Depending on the 
 users configuration, these may be stored in different places. If a 
 storage uses `.env`, it is read-only.
 
@@ -129,7 +129,7 @@ storage uses `.env`, it is read-only.
 The user contains wrapper methods around log4js. It is configured 
 in your `.env` and in `log4js.json`. The `error()` method is exceptional 
 in that it not only logs the error, but also returns an error object 
-for you throw:
+for you to throw:
 
 ```php
 <?php
