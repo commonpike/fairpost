@@ -132,5 +132,4 @@ export default class Store {
     }
     fs.writeFileSync(this.jsonPath, JSON.stringify(this.jsonData, null, "\t"));
   }
-
 }

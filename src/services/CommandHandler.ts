@@ -34,6 +34,7 @@ class CommandHandler {
     result: unknown;
     report: string;
   }> {
+    operator.validate();
     const permissions = operator.getPermissions(user);
     let result: unknown;
     let report = "";

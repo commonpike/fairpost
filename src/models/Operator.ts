@@ -5,11 +5,20 @@ export default class Operator {
     private roles: ("admin" | "user" | "anonymous")[] = ["anonymous"],
     private ui: "cli" | "api",
     private authenticated: boolean,
-  ) {
-    // if role = admin && ui != cli throw error
+  ) {}
+  public validate() {
+    if (this.roles.includes("admin") && this.ui !== "cli") {
+      throw new Error("Trying to get permissions as admin from api");
+    }
+
+    if (!this.authenticated) {
+      if (this.roles.includes("admin") || this.roles.includes("user")) {
+        throw new Error("Trying to get permissions while unauthenticated");
+      }
+    }
   }
+
   public getPermissions(user?: User) {
-    // if role != anonymous && !authenticated throw error
     return {
       manageUsers: this.authenticated && this.roles.includes("admin"),
       manageFeed:

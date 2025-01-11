@@ -63,7 +63,6 @@ export default class User {
    */
 
   public static createUser(userId: string): User {
-    
     const src = path.resolve(__dirname, "../../etc/skeleton");
     if (!process.env.FAIRPOST_USER_HOMEDIR) {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
