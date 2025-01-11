@@ -19,7 +19,7 @@ api requires files in posts to have an url.
  - create an Instagram business account
  - connect a Facebook page to your Instagram business account
  - find that pages id and 
-   - save this as `FAIRPOST_INSTAGRAM_PAGE_ID` in your users .env
+   - save this as `INSTAGRAM_PAGE_ID` in your users storage.json
  - go to https://developers.facebook.com/
  - create an app that can manage pages 
  - include the "Instagram Graph API" product as a new product 
@@ -33,10 +33,10 @@ api requires files in posts to have an url.
 ### Find your instagram user id 
   - go to https://www.instagram.com/web/search/topsearch/?query={username}
   - find your fbid_v2 
-  - save this as `FAIRPOST_INSTAGRAM_USER_ID` in your users .env
+  - save this as `INSTAGRAM_USER_ID` in your users storage.json
 
 ### Enable the platform
- - Add 'instagram' to your `FAIRPOST_FEED_PLATFORMS` in your users env `.env`
+ - Add 'instagram' to your `FEED_PLATFORMS` in your users `storage.json`
 
 ### Get a (long lived) Page Access Token for the page you want the app to manage
 
@@ -82,7 +82,7 @@ One fairpost user can only manage one page. If you create a second user, you can
 ### Find your other instagram user id 
   - go to https://www.instagram.com/web/search/topsearch/?query={username}
   - find your fbid_v2 
-  - save this as `FAIRPOST_INSTAGRAM_USER_ID` in your users .env
+  - save this as `INSTAGRAM_USER_ID` in your users storage.json
 
 ### Enable the app on the other page 
 - Go to https://www.facebook.com/settings/?tab=business_tools
@@ -103,7 +103,7 @@ One fairpost user can only manage one page. If you create a second user, you can
 
 ## More user settings 
 
- - `FAIRPOST_INSTAGRAM_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
+ - `INSTAGRAM_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Limitations 
 

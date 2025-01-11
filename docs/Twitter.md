@@ -38,7 +38,7 @@ keys will not be needed anymore.
 ## Connect the platform to a user
 
 ### Enable the platform
- - Add 'twitter' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
+ - Add 'twitter' to your `FEED_PLATFORMS` in your users `storage.json`
 
 ### Get an OAuth2 Access Token for your twitter account
 
@@ -69,12 +69,12 @@ account and requires you to specify an 'additional_owner' for the uploaded media
 
 ### Set the 'additional owner'
 - from the previous `test-platform` result, copy the `oauth2:id`
-- set this as the `FAIRPOST_TWITTER_OA1_ADDITIONAL_OWNER` in your users .env
+- set this as the `TWITTER_OA1_ADDITIONAL_OWNER` in your users storage.json
 
 
 ## More user settings 
 
-- `FAIRPOST_TWITTER_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
+- `TWITTER_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Random documentation
 

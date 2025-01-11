@@ -7,7 +7,7 @@ The LinkedIn platform posts to your companies feed.
 ### Create a new App in your linkedin account
 - create an company your account can manage
 - find your company id (in the url, like , 93841222)
-  - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your users .env
+  - save this as `LINKEDIN_COMPANY_ID` in your users storage.json
 - create an app to manage the company page \
 https://www.linkedin.com/developers/apps/new
 - add 'share on linkedin' product on your app
@@ -25,7 +25,7 @@ https://www.linkedin.com/developers/apps/new
 ## Connect the platform to a user
 
 ### Enable the platform
- - Add 'linkedin' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
+ - Add 'linkedin' to your `FEED_PLATFORMS` in your users `storage.json`
 
 ### Get an OAuth2 Access Token for your platform
 
@@ -46,7 +46,7 @@ One fairpost user can only manage one page. If you create a second user, you can
 - call `./fairpost.js create-user --userid=foo` 
 - add linkedin to its FAIRPOST_PLATFORMS
 - find your company id (in the url, like , 93841222)
-  - save this as `FAIRPOST_LINKEDIN_COMPANY_ID` in your users .env
+  - save this as `LINKEDIN_COMPANY_ID` in your users storage.json
 
 ### Get an OAuth2 Access Token for your other page
 
@@ -58,7 +58,7 @@ One fairpost user can only manage one page. If you create a second user, you can
 
 ## More user settings 
 
- - `FAIRPOST_LINKEDIN_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
+ - `LINKEDIN_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Limitations 
 
