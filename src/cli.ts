@@ -7,6 +7,7 @@ import CommandHandler from "./services/CommandHandler";
 import { JSONReplacer } from "./utilities";
 import { PlatformId } from "./platforms";
 import { PostStatus } from "./models/Post";
+import Operator from "./models/Operator";
 import User from "./models/User";
 
 // arguments
@@ -18,7 +19,8 @@ const COMMAND = process.argv[2]?.includes("@")
   : process.argv[2] ?? "help";
 
 // options
-const DRY_RUN = !!getOption("dry-run") ?? false;
+const DRY_RUN = !!getOption("dry-run");
+const OPERATOR = (getOption("operator") as string) ?? "admin";
 const USERID = (getOption("userid") as string) ?? "";
 const OUTPUT = (getOption("output") as string) ?? "text";
 const PLATFORMS =
@@ -43,19 +45,25 @@ function getOption(key: string): boolean | string | null {
 }
 
 async function main() {
+  const operator = new Operator(["admin"], OPERATOR, "cli", true);
   const user = new User(USER);
 
   try {
-    const { result, report } = await CommandHandler.execute(user, COMMAND, {
-      dryrun: DRY_RUN,
-      userid: USERID,
-      platforms: PLATFORMS,
-      platform: PLATFORM,
-      sources: SOURCES,
-      source: SOURCE,
-      date: DATE ? new Date(DATE) : undefined,
-      status: STATUS,
-    });
+    const { result, report } = await CommandHandler.execute(
+      operator,
+      user,
+      COMMAND,
+      {
+        dryrun: DRY_RUN,
+        userid: USERID,
+        platforms: PLATFORMS,
+        platform: PLATFORM,
+        sources: SOURCES,
+        source: SOURCE,
+        date: DATE ? new Date(DATE) : undefined,
+        status: STATUS,
+      },
+    );
 
     switch (OUTPUT) {
       case "json": {

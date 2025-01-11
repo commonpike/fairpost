@@ -9,6 +9,7 @@ import { PlatformId } from "../platforms";
 import { PostStatus } from "../models/Post";
 import Server from "../services/Server";
 import Source from "../models/Source";
+import Operator from "../models/Operator";
 import User from "../models/User";
 
 class CommandHandler {
@@ -25,55 +26,53 @@ class CommandHandler {
     return CommandHandler.instance;
   }
   async execute(
-    user: User,
+    operator: Operator,
+    user?: User,
     command: string = "help",
     args: CommandArguments = {},
   ): Promise<{
     result: unknown;
     report: string;
   }> {
+    const permissions = operator.getPermissions(user);
     let result: unknown;
     let report = "";
 
-    if (user.id === "admin" && user.get("settings", "UI") !== "cli") {
-      throw user.error(
-        "CommandHandler " + command,
-        "Attempt to access admin from wrong UI",
+    if (user) {
+      user.trace(
+        "Fairpost " + user.id + " " + command,
+        args.dryrun ? " dry-run" : "",
       );
     }
 
-    const feed = user.id !== "admin" ? user.getFeed() : null;
-    user.trace(
-      "Fairpost " + user.id + " " + command,
-      args.dryrun ? " dry-run" : "",
-    );
-
     switch (command) {
       case "create-user": {
-        if (user.id !== "admin") {
-          throw user.error("only admins can create-user");
+        if (!permissions.manageUsers) {
+          throw new Error("Missing permissions for command " + command);
         }
         if (!args.userid) {
-          throw user.error("userid is required");
+          throw new Error("userid is required for command " + command);
         }
         if (!args.userid.match("^[a-z][a-z0-9_\\-\\.]{3,31}$")) {
-          throw user.error(
+          throw new Error(
             "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
           );
         }
-        const newUser = user.createUser(args.userid);
+        const newUser = User.createUser(args.userid);
         result = newUser;
         report = newUser.report();
         break;
       }
       case "get-user": {
         if (args.userid) {
-          if (user.id !== "admin") {
-            throw user.error("only admins can get-user other users");
+          if (!permissions.manageUsers) {
+            throw new Error("Missing permissions for command " + command);
           }
           const other = new User(args.userid);
           result = other;
           report = other.report();
+        } else if (!user) {
+          throw new Error("Missing user for command " + command);
         } else {
           result = user;
           report = user.report();
@@ -81,13 +80,19 @@ class CommandHandler {
         break;
       }
       case "get-feed": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.manageFeed) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         result = feed;
         report = feed.report();
         break;
       }
       case "setup-platform": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.manageFeed) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         if (!args.platform) {
           throw user.error(
             "CommandHandler " + command,
@@ -101,27 +106,36 @@ class CommandHandler {
         break;
       }
       case "setup-platforms": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePlatforms) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         await feed.setupPlatforms(args.platforms);
         result = "Success"; // or error
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "get-platform": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePlatforms) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.platform) {
           throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
         }
+        const feed = user.getFeed();
         const platform = feed.getPlatform(args.platform);
         report += platform.report() + "\n";
         result = platform;
         break;
       }
       case "get-platforms": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePlatforms) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         const platforms = feed.getPlatforms(args.platforms);
         report += platforms.length + " Platforms\n------\n";
         platforms.forEach((platform) => {
@@ -131,49 +145,64 @@ class CommandHandler {
         break;
       }
       case "test-platform": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePlatforms) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.platform) {
           throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
         }
+        const feed = user.getFeed();
         result = await feed.testPlatform(args.platform);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "test-platforms": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePlatforms) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         result = await feed.testPlatforms(args.platforms);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "refresh-platform": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePlatforms) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.platform) {
           throw user.error(
             "CommandHandler " + command,
             "Missing argument: platform",
           );
         }
+        const feed = user.getFeed();
         result = await feed.refreshPlatform(args.platform);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "refresh-platforms": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePlatforms) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         result = await feed.refreshPlatforms(args.platforms);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }
       case "get-source": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.manageSources) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
             "Missing argument: source",
           );
         }
+        const feed = user.getFeed();
         const source = feed.getSource(args.source);
         if (source) {
           report += source.report() + "\n";
@@ -184,7 +213,10 @@ class CommandHandler {
         break;
       }
       case "get-sources": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.manageSources) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         const sources = feed.getSources(args.sources);
         report += sources.length + " Sources\n------\n";
         sources.forEach((source) => {
@@ -194,7 +226,10 @@ class CommandHandler {
         break;
       }
       case "get-sources-by-status": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.manageSources) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         const sources = feed.getSources(args.sources);
         const groups = {} as { [status: string]: Source[] };
         sources.forEach((source) => {
@@ -218,7 +253,9 @@ class CommandHandler {
         break;
       }
       case "get-post": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.readPosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
@@ -231,6 +268,7 @@ class CommandHandler {
             "Missing argument: platform",
           );
         }
+        const feed = user.getFeed();
         const post = feed.getPost(args.source, args.platform);
         if (post) {
           report += post.report();
@@ -241,7 +279,10 @@ class CommandHandler {
         break;
       }
       case "get-posts": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.readPosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         const allposts = feed.getPosts({
           sources: args.sources,
           platforms: args.platforms,
@@ -255,7 +296,9 @@ class CommandHandler {
         break;
       }
       case "prepare-post": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
@@ -268,6 +311,7 @@ class CommandHandler {
             "Missing argument: platform",
           );
         }
+        const feed = user.getFeed();
         const preppost = await feed.preparePost(args.source, args.platform);
         if (preppost) {
           report += preppost.report();
@@ -278,13 +322,16 @@ class CommandHandler {
         break;
       }
       case "prepare-posts": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.managePosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
         if (!args.sources && args.source) {
           args.sources = [args.source];
         }
+        const feed = user.getFeed();
         const prepposts = await feed.preparePosts({
           sources: args.sources,
           platforms: args.platforms,
@@ -296,7 +343,9 @@ class CommandHandler {
         break;
       }
       case "schedule-post": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.schedulePosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
@@ -315,6 +364,7 @@ class CommandHandler {
             "Missing argument: date",
           );
         }
+        const feed = user.getFeed();
         const schedpost = feed.schedulePost(
           args.source,
           args.platform,
@@ -325,7 +375,9 @@ class CommandHandler {
         break;
       }
       case "schedule-posts": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.schedulePosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
@@ -344,6 +396,7 @@ class CommandHandler {
             "Missing argument: date",
           );
         }
+        const feed = user.getFeed();
         const schedposts = feed.schedulePosts(
           {
             sources: args.sources,
@@ -358,7 +411,9 @@ class CommandHandler {
         break;
       }
       case "schedule-next-post": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.schedulePosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
@@ -368,6 +423,7 @@ class CommandHandler {
             "Missing argument: platforms",
           );
         }
+        const feed = user.getFeed();
         const nextposts = feed.scheduleNextPosts(
           args.date ? new Date(args.date) : undefined,
           {
@@ -381,7 +437,9 @@ class CommandHandler {
         break;
       }
       case "publish-post": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.schedulePosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.source) {
           throw user.error(
             "CommandHandler " + command,
@@ -394,6 +452,7 @@ class CommandHandler {
             "Missing argument: platform",
           );
         }
+        const feed = user.getFeed();
         const pubpost = await feed.publishPost(
           args.source,
           args.platform,
@@ -404,7 +463,9 @@ class CommandHandler {
         break;
       }
       case "publish-posts": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.publishPosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
         if (!args.platforms && args.platform) {
           args.platforms = [args.platform];
         }
@@ -417,6 +478,7 @@ class CommandHandler {
             "Missing argument: sources",
           );
         }
+        const feed = user.getFeed();
         const pubposts = await feed.publishPosts(
           {
             sources: args.sources,
@@ -433,7 +495,10 @@ class CommandHandler {
 
       /* feed planning */
       case "schedule-next-posts": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.schedulePosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         const nextposts = feed.scheduleNextPosts(
           args.date ? new Date(args.date) : undefined,
           {
@@ -448,7 +513,10 @@ class CommandHandler {
         break;
       }
       case "publish-due-posts": {
-        if (!feed) throw user.error("User " + user.id + " has no feed");
+        if (!user || !permissions.publishPosts) {
+          throw new Error("Missing permissions for command " + command);
+        }
+        const feed = user.getFeed();
         const dueposts = await feed.publishDuePosts(
           {
             sources: args.sources,
@@ -464,17 +532,8 @@ class CommandHandler {
       }
 
       case "serve": {
-        if (user.get("settings", "UI") !== "cli") {
-          throw user.error(
-            "CommandHandler " + command,
-            "Attempt to launch server from wrong UI",
-          );
-        }
-        if (user.id !== "admin") {
-          throw user.error(
-            "CommandHandler " + command,
-            "Attempt to launch server from wrong account",
-          );
+        if (!user || !permissions.manageServer) {
+          throw new Error("Missing permissions for command " + command);
         }
         await Server.serve().then((res) => {
           result = res;
