@@ -1,6 +1,6 @@
 # Platform: Reddit
 
-## Setting up the Reddit platform
+## Set up the platform
 
 ### Create a new App in your Reddit account
 
@@ -8,20 +8,30 @@
 - create an app ('script')
   - redirect url with host/port from your .env (http://localhost:8000/callback)
 - note the code and secret in your app box
-  - save as `FAIRPOST_REDDIT_CLIENT_ID` in .env
-  - save as `FAIRPOST_REDDIT_CLIENT_SECRET` in .env
+  - save as `FAIRPOST_REDDIT_CLIENT_ID` in your global .env
+  - save as `FAIRPOST_REDDIT_CLIENT_SECRET` in your global .env
 - read the terms here https://www.reddit.com/wiki/api/#wiki_read_the_full_api_terms_and_sign_up_for_usage
 - request access to the API using the request form, and wait until approved
 
+## Connect the platform to a user
+
 ### Enable the platform
- - Add 'reddit' to your `FAIRPOST_FEED_PLATFORMS` in `.env`
+ - Add 'reddit' to your `FAIRPOST_FEED_PLATFORMS` in your users `.env`
 
 ### Get an OAuth2 Access Token for your Reddit account
 
-This token last for 24 hours and should be refreshed.
+This token only lasts for 24 hours and should be refreshed.
 
- - call `./fairpost.js setup-platform --platform=reddit`
+ - call `./fairpost.js @userid setup-platform --platform=reddit`
  - follow instructions from the command line
+
+
+### Test the platform
+ - call `./fairpost.js @userid test-platform --platform=reddit`
+   
+## More user settings 
+
+ - `FAIRPOST_REDDIT_PLUGIN_SETTINGS` - a json object describing / overwriting the plugins used to prepare posts
 
 # Random documentation
 
@@ -75,6 +85,9 @@ https://github.com/rvelasq/scriptable-selig/blob/master/Selig.js#L855
 https://github.com/Pyprohly/reddit-api-doc-notes/blob/main/docs/api-reference/submission.rst#upload-media
 
 upload video
+
+https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
+
 https://www.reddit.com/r/redditdev/comments/9x3a6c/comment/e9p9cet/?utm_source=share&utm_medium=web2x&context=3
 https://oauth.reddit.com/api/v2/image_upload_s3.json
 similar to upload emoji

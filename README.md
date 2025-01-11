@@ -3,30 +3,38 @@
 
 # Fairpost
 
-Fairpost helps you manage your social
-feeds from the command line, using Node.
+Fairpost helps you manage users social media feeds from a single 
+entry point, using Node. It supports Facebook, Instagram, 
+Reddit, Twitter, YouTube and LinkedIn.
 
-Your Feed is just a folder on disk, and all subfolders are Posts, 
+A Feed is just a folder on disk, and all subfolders are Source Posts, 
 containing at least one text file (the post body) and 
-optionally images or video. 
-Fairpost is *opinionated*, meaning, it will decide
-how a folder with contents can best be presented
-as a post on each platform. 
+optionally images or video. The Source Post will be transformed
+into real posts for each connected platform.
 
-Commonly, you would call this script every day or week. 
-Fairpost will then automatically **prepare** the folders,
+Fairpost is *opinionated*, meaning, it will decide
+how a Source Post with contents can best be presented
+as a Post on each platform. 
+
+For each platform, you'll have to register the app on the
+platform. This usually results in an AppId and AppSecret or 
+something similar, which should be stored in global config.
+
+Then for each user, you'll have to allow the app to
+post on their behalf. This is usually done via an
+online (oauth) consent page in a webbrowser.
+
+Commonly, you would call this script every day or week
+for every user. Fairpost can then automatically **prepare** the folders,
 **schedule** the next post using a certain interval and 
-**publish** any post when it is due. All you have to do is 
+**publish** any post when it is due. All the user has to do is 
 add folders with content.
 
 Or, if you prefer, you can manually publish one
-specific post on all supported and enabled 
-platforms at once.
+specific folder as posts on all supported and enabled 
+platforms at once, or just one post on one platform,
+etcetera.
 
-Edit the .env file to manage the platforms
-you want to support, the interval for new posts,
-etcetera. For each platform, you'll have to 
-register the app to post on your behalf.
 
 ## Setting up 
 ```
@@ -36,24 +44,41 @@ npm install
 # compile typescript code
 npm run build
 
-# copy and edit config file
+# copy and edit fairpost config file
 cp .env.dist .env && nano .env
 
 # run
 ./fairpost.js help
 ```
- 
-## Enable platforms
 
-Read how to enable various media platforms in the [docs](docs).
+### Set up platforms
 
+Read how to set up various social media platforms in the [docs](docs).
+
+### Create a user and connect a platform 
+
+Read how to connect various social media platforms in the [docs](docs);
+but in general, the steps are 
+
+```
+# create a user foobar
+./fairpost.js create-user --userid=foobar
+
+# edit the users .env, finetune settings
+# and enable platform `bla`
+nano users/foobar/.env
+
+# connect platform `bla` to user `foobar`
+./fairpost.js @foobar setup-platform --platform=bla
+
+```
 
 ## Feed planning
 ### Prepare
 ```
 fairpost.js prepare-posts
 ```
-Folders need to be `prepared` (iow turned into posts)
+Sources need to be `prepared` (iow turned into posts)
 before they can be published to a platform. 
 Each platform, as defined in src/platforms, will 
 handle the folder contents by itself. It may
@@ -89,46 +114,61 @@ Other commands and `--arguments`
 may help you to, for example, immediately publish
 a certain post to a certain platform if you like.
 
+### Refresh tokens
 
-
+Access and refresh tokens for various platforms may
+expire sooner or later. Before you do anything, try
+`fairpost.js @userid refresh-platforms`. Eventually, even
+refresh tokens may expire, and you will have to run
+`fairpost.js @userid setup-platform --platform=bla` again
+to get a new pair of tokens.
 
 
 ### Cli
 
 ```
 # basic commands:
-fairpost.js help
-fairpost.js get-feed [--config=xxx]
-fairpost.js setup-platform --platform=xxx
-fairpost.js setup-platforms [--platforms=xxx,xxx]
-fairpost.js test-platform --platform=xxx
-fairpost.js test-platforms [--platforms=xxx,xxx]
-fairpost.js get-platform --platform=xxx
-fairpost.js get-platforms [--platforms=xxx,xxx]
-fairpost.js get-folder --folder=xxx
-fairpost.js get-folders [--folders=xxx,xxx]
-fairpost.js get-post --folder=xxx --platform=xxx
-fairpost.js get-posts [--status=xxx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost.js prepare-post --folder=xxx --platform=xxx
-fairpost.js schedule-post --folder=xxx --platform=xxx --date=xxxx-xx-xx 
-fairpost.js schedule-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] --date=xxxx-xx-xx
-fairpost.js publish-post --folder=xxx --platform=xxx [--dry-run]
-fairpost.js publish-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
+fairpost: help
+fairpost: @userid get-user
+fairpost: @userid get-feed
+fairpost: @userid setup-platform --platform=xxx
+fairpost: @userid setup-platforms [--platforms=xxx,xxx]
+fairpost: @userid test-platform --platform=xxx
+fairpost: @userid test-platforms [--platforms=xxx,xxx]
+fairpost: @userid refresh-platform --platform=xxx
+fairpost: @userid refresh-platforms [--platforms=xxx,xxx]
+fairpost: @userid get-platform --platform=xxx
+fairpost: @userid get-platforms [--platforms=xxx,xxx]
+fairpost: @userid get-source --source=xxx
+fairpost: @userid get-sources [--sources=xxx,xxx]
+fairpost: @userid get-post --post=xxx:xxx
+fairpost: @userid get-posts [--status=xxx] [--sources=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid prepare-post --post=xxx:xxx
+fairpost: @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
+fairpost: @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
+fairpost: @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] 
+fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
+fairpost: @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
 
 # feed planning:
-fairpost.js prepare-posts [--folders=xxx,xxx] [--platforms=xxx,xxx]
-fairpost.js schedule-next-post [--date=xxxx-xx-xx] [--folders=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost.js publish-due-posts [--folders=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+fairpost: @userid prepare-posts  [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+
+# admin only:
+fairpost: create-user --userid=xxx
+fairpost: get-user --userid=xxx
+fairpost: serve
 ```
 
 ### Common arguments 
 
 ```
-# Select which config file to use
-fairpost.js [command] [arguments] --config=.env-test
-
 # Set the cli output format to pure json
-fairpost.js [command] [arguments] --report=json
+fairpost.js [command] [arguments] --output=json
+
+# Enable trace logging output to the console (overriding .env)
+fairpost.js [command] [arguments] --verbose
 
 ```
 
@@ -137,13 +177,15 @@ fairpost.js [command] [arguments] --report=json
 
 To add support for a new platform, add a class to `src/platforms`
 extending `src/classes/Platform`. You want to override at least the
-method `preparePost(folder)` and  `publishPost(post,dryrun)`.
+method `preparePost(source)` and  `publishPost(post,dryrun)`.
 
 Then import your class and add a `platformId` for your platform 
 in `src/platforms/index.ts` and enable your platformId in your `.env`.
 
 Similarly, you can copy one platform, rename it and edit it to your
 likings, give it a different `platformId` and enable that.
+
+For more detailed instructions look at [How to add a new platform](./docs/NewPlatform.md)
 
 Oh, and send me a PR if you create anything useful :-) 
 

@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "commonjs",
+    "module": "nodenext",
     "sourceMap": true,
+    "strict" : true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
     "outDir": "build"
   },
   "include": [
-    "index.ts",
-    "fairpost.ts"
+    "src/**/*"
   ]
 }
