@@ -63,15 +63,8 @@ export default class User {
    */
 
   public static createUser(userId: string): User {
-    //if (this.id !== "admin") {
-    //  throw this.error("Only admin can create users");
-    //}
+    
     const src = path.resolve(__dirname, "../../etc/skeleton");
-    //const dst = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
-    //  "%user%",
-    //  userId,
-    //);
-    // TODO: are we using dotenv ?
     if (!process.env.FAIRPOST_USER_HOMEDIR) {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
     }
