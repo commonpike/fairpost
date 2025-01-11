@@ -62,17 +62,14 @@ export default class User {
    * @returns the new user
    */
 
-  public createUser(userId: string): User {
-    if (this.id !== "admin") {
-      throw this.error("Only admin can create users");
-    }
+  public static createUser(userId: string): User {
     const src = path.resolve(__dirname, "../../etc/skeleton");
-    const dst = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
-      "%user%",
-      userId,
-    );
+    if (!process.env.FAIRPOST_USER_HOMEDIR) {
+      throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
+    }
+    const dst = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", userId);
     if (fs.existsSync(dst)) {
-      throw this.error("Homedir already exists: " + dst);
+      throw new Error("Homedir already exists: " + dst);
     }
     fs.cpSync(src, dst, { recursive: true });
     fs.renameSync(dst + "/.env.dist", dst + "/.env");

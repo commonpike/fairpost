@@ -5,6 +5,7 @@ import CommandHandler from "./CommandHandler";
 import { JSONReplacer } from "../utilities";
 import { PlatformId } from "../platforms";
 import { PostStatus } from "../models/Post";
+import Operator from "../models/Operator";
 import User from "../models/User";
 
 /**
@@ -12,9 +13,9 @@ import User from "../models/User";
  */
 export default class Server {
   public static async serve(): Promise<string> {
-    const user = new User("admin");
-    const host = user.get("settings", "SERVER_HOSTNAME");
-    const port = Number(user.get("settings", "SERVER_PORT"));
+    process.env.FAIRPOST_UI = "api";
+    const host = process.env.FAIRPOST_SERVER_HOSTNAME;
+    const port = Number(process.env.FAIRPOST_SERVER_PORT);
 
     return await new Promise((resolve) => {
       const server = http.createServer();
@@ -78,9 +79,15 @@ export default class Server {
     let report = "";
     let error = false as boolean | unknown;
     try {
+      const operator = Server.getOperator(request);
       const user = new User(username.replace("@", ""));
       user.set("settings", "UI", "rest");
-      ({ result, report } = await CommandHandler.execute(user, command, args));
+      ({ result, report } = await CommandHandler.execute(
+        operator,
+        user,
+        command,
+        args,
+      ));
       code = 200;
     } catch (e) {
       code = 500;
@@ -110,5 +117,10 @@ export default class Server {
         JSONReplacer,
       ),
     );
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public static getOperator(request: http.IncomingMessage) {
+    // TODO: get auth and id from request
+    return new Operator("admin", ["admin"], "api", true);
   }
 }
