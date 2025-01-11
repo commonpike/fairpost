@@ -1,4 +1,3 @@
-import * as dotenv from "dotenv";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -18,39 +17,44 @@ import * as path from "path";
  * set in the environment
  */
 
+enum StorageKeys {
+  "app" = "FAIRPOST_STORAGE_APP",
+  "settings" = "FAIRPOST_STORAGE_SETTINGS",
+  "auth" = "FAIRPOST_STORAGE_AUTH",
+}
+
 export default class Store {
   jsonPath: string;
   jsonData: { [key: string]: string } = {};
-  envPath: string;
-  envData: { [key: string]: string } = {};
+
   constructor(userid: string) {
-    this.loadGlobalEnv();
-    if (userid !== "admin") {
-      this.envPath = this.getEnv("USER_ENVPATH", "users/%user%/.env").replace(
-        "%user%",
-        userid,
-      );
-      this.jsonPath = this.getEnv(
-        "USER_JSONPATH",
-        "users/%user%/var/lib/storage.json",
-      ).replace("%user%", userid);
-    } else {
-      this.envPath = path.resolve(__dirname, "../../.env");
-      this.jsonPath = path.resolve(__dirname, "../../var/lib/storage.json");
-    }
-    this.loadUserEnv();
-    this.loadConsoleEnv();
+    this.jsonPath = this.getEnv(
+      "USER_JSONPATH",
+      "users/%user%/var/lib/storage.json",
+    ).replace("%user%", userid);
     this.loadJson();
+    if (process.argv.includes("--verbose")) {
+      process.env.FAIRPOST_LOGGER_LEVEL = "TRACE";
+      process.env.FAIRPOST_LOGGER_CONSOLE = "true";
+    }
   }
 
-  public get(store: "settings" | "auth", key: string, def?: string): string {
-    const storage =
-      store === "settings"
-        ? this.envData["FAIRPOST_STORAGE_SETTINGS"]
-        : this.envData["FAIRPOST_STORAGE_AUTH"];
+  public get(
+    store: "app" | "settings" | "auth",
+    key: string,
+    def?: string,
+  ): string {
+    const storageKey = StorageKeys[store];
+    const storage = process.env[storageKey] ?? "none";
     switch (storage) {
       case "env":
         return this.getEnv(key, def);
+      case "json-env":
+        try {
+          return this.getJson(key);
+        } catch {
+          return this.getEnv(key, def);
+        }
       case "json":
         return this.getJson(key, def);
       default:
@@ -59,7 +63,7 @@ export default class Store {
   }
 
   private getEnv(key: string, def?: string): string {
-    let value = this.envData["FAIRPOST_" + key] ?? "";
+    let value = process.env["FAIRPOST_" + key] ?? "";
     if (!value) {
       if (def === undefined) {
         throw new Error("Storage.getEnv: Value " + key + " not found.");
@@ -81,13 +85,12 @@ export default class Store {
   }
 
   public set(store: "settings" | "auth", key: string, value: string) {
-    const storage =
-      store === "settings"
-        ? this.envData["FAIRPOST_STORAGE_SETTINGS"]
-        : this.envData["FAIRPOST_STORAGE_AUTH"];
+    const storageKey = StorageKeys[store];
+    const storage = process.env[storageKey] ?? "none";
     switch (storage) {
       case "env":
         return this.setEnv(key, value);
+      case "json-env":
       case "json":
         return this.setJson(key, value);
       default:
@@ -96,11 +99,7 @@ export default class Store {
   }
 
   private setEnv(key: string, value: string) {
-    const ui = this.envData["FAIRPOST_UI"];
-    if (key === "UI") {
-      this.envData["FAIRPOST_UI"] = value;
-      return;
-    }
+    const ui = process.env.FAIRPOST_UI ?? "none";
     if (ui === "cli") {
       console.log("Store this value in your users .env file:");
       console.log();
@@ -138,27 +137,28 @@ export default class Store {
    * Load the global, non-user, env
    * into the user store. You can override
    * the path on the cli using --config=[path]
-   */
+   
   private loadGlobalEnv() {
     const configPath =
       process.argv
         .find((element) => element.startsWith(`--config=`))
         ?.replace(`--config=`, "") ?? ".env";
     const configPathResolved = path.resolve(__dirname + "/../../" + configPath);
-
+   
     if (!fs.existsSync(configPathResolved)) {
       throw new Error("Missing global config file: " + configPathResolved);
     }
-
+   
     dotenv.config({ path: configPathResolved, processEnv: this.envData });
   }
+   */
 
   /**
    * Load the personal user env
    * into the user store, optionally overriding
    * global settings. It is located in the users
    * homedir at USER_ENVPATH
-   */
+   
   private loadUserEnv() {
     if (fs.existsSync(this.envPath)) {
       dotenv.config({
@@ -168,14 +168,16 @@ export default class Store {
       });
     }
   }
+   */
 
   /**
    * Allow the cli to override some env settings
-   */
+   
   private loadConsoleEnv() {
     if (process.argv.includes("--verbose")) {
-      this.envData["FAIRPOST_LOGGER_LEVEL"] = "TRACE";
-      this.envData["FAIRPOST_LOGGER_CONSOLE"] = "true";
+      process.env.FAIRPOST_LOGGER_LEVEL = "TRACE";
+      process.env.FAIRPOST_LOGGER_CONSOLE = "true";
     }
   }
+   */
 }
