@@ -45,7 +45,7 @@ function getOption(key: string): boolean | string | null {
 }
 
 async function main() {
-  const operator = new Operator(["admin"], OPERATOR, "cli", true);
+  const operator = new Operator(OPERATOR, ["admin"], "cli", true);
   const user = new User(USER);
 
   try {

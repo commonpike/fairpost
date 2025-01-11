@@ -121,6 +121,6 @@ export default class Server {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public static getOperator(request: http.IncomingMessage) {
     // TODO: get auth and id from request
-    return new Operator(["admin"], "admin", "api", true);
+    return new Operator("admin",["admin"], "api", true);
   }
 }
