@@ -11,9 +11,9 @@ import * as path from "path";
  *   - 'auth' is what fairpost maintains and may be
  *     stored and encrypted somewhere else
  * - it store has a backend, one of
- *   - 'env' is process.env (.env), which specific prefixes for each store
+ *   - 'env' is process.env (.env)
  *   - 'json' is json file, with one key for each store and a flat list below it
- *   - 'json-env' is the above json file with the above .env as fallback
+ *   - 'json-env' is the above json file with .env as fallback
  *
  * which store uses which backend should be
  * set in the environment
