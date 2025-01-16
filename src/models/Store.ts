@@ -25,11 +25,6 @@ enum StorageKeys {
   "settings" = "FAIRPOST_STORAGE_SETTINGS",
   "auth" = "FAIRPOST_STORAGE_AUTH",
 }
-const storagePrefixes = {
-  app: "FAIRPOST_",
-  settings: "USER_",
-  auth: "AUTH_",
-};
 
 export default class Store {
   jsonPath: string;
@@ -58,7 +53,7 @@ export default class Store {
         try {
           return this.getJson(store, key);
         } catch {
-          return this.getEnv("app", key, def); // FIXME should be store
+          return this.getEnv(store, key, def);
         }
       case "json":
         return this.getJson(store, key, def);
@@ -68,14 +63,11 @@ export default class Store {
   }
 
   private getEnv(store: StorageType, key: string, def?: string): string {
-    let value = process.env[storagePrefixes[store] + key] ?? "";
+    let value = process.env["FAIRPOST_" + key] ?? "";
     if (!value) {
       if (def === undefined) {
         throw new Error(
-          "Storage.getEnv: Value " +
-            storagePrefixes[store] +
-            key +
-            " not found.",
+          "Storage.getEnv: Value " + "FAIRPOST_" + key + " not found.",
         );
       }
       value = def;
@@ -113,10 +105,9 @@ export default class Store {
   private setEnv(store: StorageType, key: string, value: string) {
     const ui = process.env.FAIRPOST_UI ?? "none";
     if (ui === "cli") {
-      const prefix = storagePrefixes[store];
       console.log("Store this value in your users .env file:");
       console.log();
-      console.log(prefix + key + "=" + value);
+      console.log("FAIRPOST_" + key + "=" + value);
       console.log();
     } else {
       throw new Error("Storage.setEnv: UI " + ui + " not supported");
