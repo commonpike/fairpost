@@ -19,18 +19,18 @@ export default class FacebookAuth {
 
   async setup() {
     const code = await this.requestCode(
-      this.user.get("settings", "FACEBOOK_APP_ID"),
+      this.user.get("app", "FACEBOOK_APP_ID"),
     );
 
     const accessToken = await this.exchangeCode(
       code,
-      this.user.get("settings", "FACEBOOK_APP_ID"),
-      this.user.get("settings", "FACEBOOK_APP_SECRET"),
+      this.user.get("app", "FACEBOOK_APP_ID"),
+      this.user.get("app", "FACEBOOK_APP_SECRET"),
     );
 
     const pageToken = await this.getLLPageToken(
-      this.user.get("settings", "FACEBOOK_APP_ID"),
-      this.user.get("settings", "FACEBOOK_APP_SECRET"),
+      this.user.get("app", "FACEBOOK_APP_ID"),
+      this.user.get("app", "FACEBOOK_APP_SECRET"),
       this.user.get("settings", "FACEBOOK_PAGE_ID"),
       accessToken,
     );
@@ -40,8 +40,8 @@ export default class FacebookAuth {
 
   protected async requestCode(clientId: string): Promise<string> {
     this.user.trace("FacebookAuth", "requestCode");
-    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
+    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -91,8 +91,8 @@ export default class FacebookAuth {
   ): Promise<string> {
     this.user.trace("FacebookAuth", "exchangeCode");
 
-    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
+    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.get("oauth/access_token", {

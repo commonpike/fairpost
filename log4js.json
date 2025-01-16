@@ -13,7 +13,7 @@
     },
     "user": { 
       "type": "dateFile", 
-      "filename" : "users/%user%/var/log/fairpost.log", 
+      "filename" : "users/%user%/fairpost.log", 
       "compress": true,
       "numBackups" : 7
     }

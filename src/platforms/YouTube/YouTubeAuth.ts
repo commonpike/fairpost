@@ -29,8 +29,8 @@ export default class YouTubeAuth {
   async refresh() {
     this.user.trace("YouTubeAuth", "refresh");
     const auth = new OAuth2Client(
-      this.user.get("settings", "YOUTUBE_CLIENT_ID"),
-      this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
+      this.user.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
     );
     auth.setCredentials({
       access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
@@ -63,8 +63,8 @@ export default class YouTubeAuth {
       return this.client;
     }
     const auth = new OAuth2Client(
-      this.user.get("settings", "YOUTUBE_CLIENT_ID"),
-      this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
+      this.user.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
     );
     auth.setCredentials({
       access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
@@ -84,13 +84,13 @@ export default class YouTubeAuth {
    */
   private async requestCode(): Promise<string> {
     this.user.trace("YouTubeAuth", "requestCode");
-    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
+    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     const auth = new OAuth2Client(
-      this.user.get("settings", "YOUTUBE_CLIENT_ID"),
-      this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
+      this.user.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
     const url = auth.generateAuthUrl({
@@ -132,12 +132,12 @@ export default class YouTubeAuth {
   private async exchangeCode(code: string): Promise<Credentials> {
     this.user.trace("YouTubeAuth", "exchangeCode", code);
 
-    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
+    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
 
     const auth = new OAuth2Client(
-      this.user.get("settings", "YOUTUBE_CLIENT_ID"),
-      this.user.get("settings", "YOUTUBE_CLIENT_SECRET"),
+      this.user.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
 

@@ -112,7 +112,11 @@ export default class User {
     });
   }
 
-  public get(store: "settings" | "auth", key: string, def?: string): string {
+  public get(
+    store: "settings" | "auth" | "app",
+    key: string,
+    def?: string,
+  ): string {
     try {
       return this.store.get(store, key, def);
     } catch (error) {
@@ -120,7 +124,7 @@ export default class User {
     }
   }
 
-  public set(store: "settings" | "auth", key: string, value: string) {
+  public set(store: "settings" | "auth" | "app", key: string, value: string) {
     try {
       return this.store.set(store, key, value);
     } catch (error) {
