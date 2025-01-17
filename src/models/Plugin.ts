@@ -14,7 +14,17 @@ export default class Plugin {
   id: string;
 
   constructor() {
-    this.id = this.constructor.name.toLowerCase();
+    this.id = (this.constructor as typeof Plugin).id();
+  }
+
+  /**
+   * Return the id of this plugin as used in settings.
+   * By default, this is the lowercase name of the class,
+   * but you can override this in your own platform.
+   * @returns the id
+   */
+  static id(): string {
+    return this.name.toLowerCase() as string;
   }
 
   /**
