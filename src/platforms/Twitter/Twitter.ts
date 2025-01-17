@@ -1,7 +1,6 @@
 import Source, { FileGroup } from "../../models/Source";
 
 import Platform from "../../models/Platform";
-import { PlatformId } from "..";
 import Post from "../../models/Post";
 import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth";
@@ -11,7 +10,6 @@ import User from "../../models/User";
  * Twitter: support for twitter platform
  */
 export default class Twitter extends Platform {
-  id = PlatformId.TWITTER;
   assetsFolder = "_twitter";
   postFileName = "post.json";
   pluginSettings = {

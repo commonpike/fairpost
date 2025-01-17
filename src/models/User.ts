@@ -100,15 +100,15 @@ export default class User {
     if (this.id === "admin") {
       throw this.error("Admin does not have platforms");
     }
-    const activePlatformIds = this.get("settings", "FEED_PLATFORMS", "").split(
-      ",",
-    );
+    const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
 
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
-        const platform = new platformClass(this);
-        platform.active = activePlatformIds.includes(platform.id);
-        this.platforms.push(platform);
+        if (platformIds.includes(platformClass.id())) {
+          const platform = new platformClass(this);
+          platform.active = true;
+          this.platforms.push(platform);
+        }
       }
     });
   }

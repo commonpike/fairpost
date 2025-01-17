@@ -6,7 +6,6 @@ import Source, { FileGroup } from "../../models/Source";
 import InstagramApi from "./InstagramApi";
 import InstagramAuth from "./InstagramAuth";
 import Platform from "../../models/Platform";
-import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
 
@@ -18,7 +17,6 @@ import User from "../../models/User";
  * also uses facebook calls to upload files
  */
 export default class Instagram extends Platform {
-  id: PlatformId = PlatformId.INSTAGRAM;
   assetsFolder = "_instagram";
   postFileName = "post.json";
   pluginSettings = {

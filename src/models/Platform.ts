@@ -1,9 +1,9 @@
 import * as fs from "fs";
 import * as pluginClasses from "../plugins";
+import { PlatformId } from "../platforms";
 
 import Source, { FileGroup } from "./Source";
 
-import { PlatformId } from "../platforms";
 import Plugin from "./Plugin";
 import Post from "./Post";
 import { PostStatus } from "./Post";
@@ -16,8 +16,8 @@ import User from "./User";
  * preparePost() and publishPost()
  */
 export default class Platform {
-  active: boolean = false;
   id: PlatformId = PlatformId.UNKNOWN;
+  active: boolean = false;
   user: User;
   defaultBody: string = "Fairpost feed";
   assetsFolder: string = "_fairpost";
@@ -26,8 +26,18 @@ export default class Platform {
 
   constructor(user: User) {
     this.user = user;
+    this.id = (this.constructor as typeof Platform).id();
   }
 
+  /**
+   * Return the id of this platform as used in settings.
+   * By default, this is the lowercase name of the class,
+   * but you can override this in your own platform.
+   * @returns the id
+   */
+  static id(): PlatformId {
+    return this.name.toLowerCase() as PlatformId;
+  }
   /**
    * Return a small report for this feed
    * @returns the report in text

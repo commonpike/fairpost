@@ -3,13 +3,11 @@ import * as fs from "fs";
 import Source, { FileGroup } from "../../models/Source";
 
 import Platform from "../../models/Platform";
-import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
 import YouTubeAuth from "./YouTubeAuth";
 
 export default class YouTube extends Platform {
-  id: PlatformId = PlatformId.YOUTUBE;
   assetsFolder = "_youtube";
   postFileName = "post.json";
   pluginSettings = {

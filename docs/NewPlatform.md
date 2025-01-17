@@ -21,7 +21,6 @@ import Post from "../models/Post";
 
 export default class FooBar extends Platform {
 
-    id: PlatformId = PlatformId.FOOBAR;
     assetsFolder = "_foobar";
     postFileName = "post.json";
     
@@ -76,7 +75,7 @@ export default class FooBar extends Platform {
 
 Then in `src/platforms/index.ts`
 - import your class
-- add `PlatformId.FOOBAR` for your platform 
+- add `PlatformId.FOOBAR` for your platform [^1]
 
 Then in your users `storage.json`, enable your platformId
 ```
@@ -312,3 +311,5 @@ export default class FooBarAuth {
 }
 
 ```
+
+[^1]: By default, the platform id is the classname to lowercase. You can override this implementing a static method `id()` that returns another value.

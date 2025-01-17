@@ -6,12 +6,10 @@ import { handleApiError, handleEmptyResponse } from "../../utilities";
 import LinkedInApi from "./LinkedInApi";
 import LinkedInAuth from "./LinkedInAuth";
 import Platform from "../../models/Platform";
-import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
 
 export default class LinkedIn extends Platform {
-  id: PlatformId = PlatformId.LINKEDIN;
   assetsFolder = "_linkedin";
   postFileName = "post.json";
   pluginSettings = {
