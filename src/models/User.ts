@@ -37,7 +37,7 @@ export default class User {
         !fs.existsSync(this.homedir) ||
         !fs.statSync(this.homedir).isDirectory()
       ) {
-        throw this.error("No such user: " + id);
+        throw new Error("No such user: " + id);
       }
     } else {
       this.homedir = path.resolve(__dirname, "../../");
@@ -62,18 +62,19 @@ export default class User {
    * @returns the new user
    */
 
-  public static createUser(userId: string): User {
+  public static createUser(newUserId: string): User {
     const src = path.resolve(__dirname, "../../etc/skeleton");
     if (!process.env.FAIRPOST_USER_HOMEDIR) {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
     }
-    const dst = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", userId);
+    // username was validated in the commandhandler
+    const dst = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", newUserId);
     if (fs.existsSync(dst)) {
       throw new Error("Homedir already exists: " + dst);
     }
     fs.cpSync(src, dst, { recursive: true });
 
-    const user = new User(userId);
+    const user = new User(newUserId);
     user.set("settings", "FEED_PLATFORMS", "");
     return user;
   }

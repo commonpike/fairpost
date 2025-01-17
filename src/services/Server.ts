@@ -45,9 +45,10 @@ export default class Server {
       "",
       "",
     ];
+    const userid = username.replace("@", "");
     const dryrun = parsed.searchParams.get("dry-run") === "true";
     const output = parsed.searchParams.get("output") ?? "json";
-    const userid = parsed.searchParams.get("userid") || undefined;
+    const targetuser = parsed.searchParams.get("target-user") || undefined;
     const date = parsed.searchParams.get("date");
     const post = parsed.searchParams.get("post");
     const [source, platform] = post
@@ -65,7 +66,7 @@ export default class Server {
 
     const args = {
       dryrun: dryrun || undefined,
-      userid: userid,
+      targetuser: targetuser,
       platforms: platforms,
       platform: platform,
       sources: sources,
@@ -79,8 +80,8 @@ export default class Server {
     let report = "";
     let error = false as boolean | unknown;
     try {
-      const operator = Server.getOperator(request);
-      const user = new User(username.replace("@", ""));
+      const operator = Server.getOperator(userid, request);
+      const user = new User(userid);
       user.set("settings", "UI", "rest");
       ({ result, report } = await CommandHandler.execute(
         operator,
@@ -108,19 +109,21 @@ export default class Server {
             arguments: args,
           },
           result: output === "json" ? result : report,
-          error: !error
-            ? false
-            : error instanceof Error
-            ? error.message
-            : String(error),
+          error:
+            error === false
+              ? false
+              : error instanceof Error
+              ? error.message
+              : JSON.stringify(error),
         },
         JSONReplacer,
       ),
     );
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public static getOperator(request: http.IncomingMessage) {
-    // TODO: get auth and id from request
-    return new Operator("admin", ["admin"], "api", true);
+  public static getOperator(userid: string, request: http.IncomingMessage) {
+    // TODO: validate userid and get roles from request
+    // for now, just assume its the user and has the rights
+    return new Operator(userid, ["user"], "api", true);
   }
 }

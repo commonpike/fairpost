@@ -24,7 +24,7 @@ const COMMAND = process.argv[2]?.includes("@")
 // options
 const DRY_RUN = !!getOption("dry-run");
 const OPERATOR = (getOption("operator") as string) ?? "admin";
-const USERID = (getOption("userid") as string) ?? "";
+const TARGETUSER = (getOption("target-user") as string) ?? "";
 const OUTPUT = (getOption("output") as string) ?? "text";
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
@@ -58,7 +58,7 @@ async function main() {
       COMMAND,
       {
         dryrun: DRY_RUN,
-        userid: USERID,
+        targetuser: TARGETUSER,
         platforms: PLATFORMS,
         platform: PLATFORM,
         sources: SOURCES,

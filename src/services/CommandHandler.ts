@@ -51,25 +51,25 @@ class CommandHandler {
         if (!permissions.manageUsers) {
           throw new Error("Missing permissions for command " + command);
         }
-        if (!args.userid) {
-          throw new Error("userid is required for command " + command);
+        if (!args.targetuser) {
+          throw new Error("user is required for command " + command);
         }
-        if (!args.userid.match("^[a-z][a-z0-9_\\-\\.]{3,31}$")) {
+        if (!args.targetuser.match("^[a-z][a-z0-9_\\-\\.]{3,31}$")) {
           throw new Error(
             "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
           );
         }
-        const newUser = User.createUser(args.userid);
+        const newUser = User.createUser(args.targetuser);
         result = newUser;
         report = newUser.report();
         break;
       }
       case "get-user": {
-        if (args.userid) {
+        if (args.targetuser) {
           if (!permissions.manageUsers) {
             throw new Error("Missing permissions for command " + command);
           }
-          const other = new User(args.userid);
+          const other = new User(args.targetuser);
           result = other;
           report = other.report();
         } else if (!user) {
@@ -571,8 +571,8 @@ class CommandHandler {
           `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
           `${cmd} @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
           "\n# admin only:",
-          `${cmd} create-user --userid=xxx`,
-          `${cmd} get-user --userid=xxx`,
+          `${cmd} create-user --target-user=xxx`,
+          `${cmd} get-user --target-user=xxx`,
           `${cmd} serve`,
         ];
         (result as string[]).forEach((line) => (report += "\n" + line));
@@ -586,7 +586,7 @@ class CommandHandler {
 }
 interface CommandArguments {
   dryrun?: boolean;
-  userid?: string;
+  targetuser?: string;
   platforms?: PlatformId[];
   platform?: PlatformId;
   sources?: string[];
