@@ -20,8 +20,8 @@ export default class Server {
     log4js.configure(process.env.FAIRPOST_LOGGER_CONFIG ?? "");
     const logger = log4js.getLogger("default");
     return await new Promise((resolve) => {
-      const server = http.createServer((req,res) => {
-        Server.handleRequest(req,res,logger);
+      const server = http.createServer((req, res) => {
+        Server.handleRequest(req, res, logger);
       });
       server.listen(port, host, () => {
         resolve(`Fairpost REST Api running on ${host}:${port}`);
@@ -32,9 +32,9 @@ export default class Server {
   public static async handleRequest(
     request: http.IncomingMessage,
     response: http.ServerResponse,
-    logger: log4js.Logger
+    logger: log4js.Logger,
   ) {
-    logger.trace('Server.handleRequest','start',request.url);
+    logger.trace("Server.handleRequest", "start", request.url);
     if (request.url === "/favicon.ico") {
       const fileStream = fs.createReadStream("public/fairpost-icon.png");
       response.writeHead(200, { "Content-Type": "image/png" });
@@ -95,9 +95,9 @@ export default class Server {
         args,
       ));
       code = 200;
-      logger.trace('Server.handleRequest','success',request.url);
+      logger.trace("Server.handleRequest", "success", request.url);
     } catch (e) {
-      logger.error('Server.handleRequest','error',request.url,e);
+      logger.error("Server.handleRequest", "error", request.url, e);
       code = 500;
       error = e;
       result = {};
