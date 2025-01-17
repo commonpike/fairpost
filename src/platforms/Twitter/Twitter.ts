@@ -41,10 +41,10 @@ export default class Twitter extends Platform {
   async test() {
     this.user.trace("Twitter.test: get oauth1 api");
     const client1 = new TwitterApi({
-      appKey: this.user.get("settings", "TWITTER_OA1_API_KEY"),
-      appSecret: this.user.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: this.user.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: this.user.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.get("app", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.get("app", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.get("app", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const creds1 = await client1.v1.verifyCredentials();
     this.user.trace("Twitter.test: get oauth2 api");
@@ -185,10 +185,10 @@ export default class Twitter extends Platform {
     this.user.trace("Twitter.publishImagesPost", post.id, dryrun);
 
     const client1 = new TwitterApi({
-      appKey: this.user.get("settings", "TWITTER_OA1_API_KEY"),
-      appSecret: this.user.get("settings", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: this.user.get("settings", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: this.user.get("settings", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.get("app", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.get("app", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.get("app", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const mediaIds = [];
 

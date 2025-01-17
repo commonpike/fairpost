@@ -69,12 +69,30 @@ export default class Feed {
   /**
    * Set up one platform
    * @param platformId - the slug of the platform
-   * @returns the setup result
+   * @returns object with properties success, test or error
    */
   async setupPlatform(platformId: PlatformId): Promise<unknown> {
     this.user.trace("Feed", "setupPlatform", platformId);
     const platform = this.getPlatform(platformId);
-    return await platform.setup();
+    try {
+      await platform.setup();
+      return {
+        success: true,
+        test: await platform.test(),
+      };
+    } catch (e) {
+      if (e instanceof Error) {
+        return {
+          success: false,
+          error: e.message,
+        };
+      } else {
+        return {
+          success: false,
+          error: JSON.stringify(e),
+        };
+      }
+    }
   }
 
   /**
@@ -89,7 +107,7 @@ export default class Feed {
     const results = {} as { [id: string]: unknown };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
-      results[platformId] = await this.setupPlatform(platformId);
+      results[platformId] = this.setupPlatform(platformId);
     }
     return results;
   }

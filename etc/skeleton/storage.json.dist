@@ -1,0 +1,30 @@
+{
+    "settings" : {
+        "FEED_INTERVAL" : 6,
+        "FEED_PLATFORMS" : "facebook,instagram,twitter,reddit,linkedin,youtube",
+
+        "FACEBOOK_PAGE_ID" : "xxx ",
+        "FACEBOOK_PUBLISH_POSTS" : "true",
+        "FACEBOOK_PLUGIN_SETTINGS" : "{}",
+
+        "INSTAGRAM_USER_ID" : "xxx ",
+        "INSTAGRAM_PAGE_ID" : "xxx ",
+        "INSTAGRAM_PLUGIN_SETTINGS" : "{}",
+
+        "LINKEDIN_COMPANY_ID" : "xxx",
+        "LINKEDIN_PLUGIN_SETTINGS" : "{}",
+
+        "TWITTER_OA1_ADDITIONAL_OWNER" : "xxx",
+        "TWITTER_PLUGIN_SETTINGS" : "{}",
+
+        "REDDIT_SUBREDDIT" : "xxx",
+        "REDDIT_PLUGIN_SETTINGS" : "{}",
+
+        "YOUTUBE_PRIVACY" : "public",
+        "YOUTUBE_CATEGORY" : "test",
+        "YOUTUBE_PLUGIN_SETTINGS" : "{}",
+    },
+    "auth": {
+        
+    }
+}

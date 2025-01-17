@@ -5,19 +5,21 @@ import * as path from "path";
  * Store
  *
  * - sets and gets key / value pairs, all string.
- * - uses two 'stores':
+ * - uses three 'stores':
+ *   - 'app' is typically what the admin maintains
  *   - 'settings' is typically what a user maintains,
  *   - 'auth' is what fairpost maintains and may be
  *     stored and encrypted somewhere else
- * - uses two backends
+ * - it store has a backend, one of
  *   - 'env' is process.env (.env)
- *   - 'json' is plain json file
- *   - 'json-env' is plain json file with .env fallback
+ *   - 'json' is json file, with one key for each store and a flat list below it
+ *   - 'json-env' is the above json file with .env as fallback
  *
  * which store uses which backend should be
  * set in the environment
  */
 
+type StorageType = "app" | "settings" | "auth";
 enum StorageKeys {
   "app" = "FAIRPOST_STORAGE_APP",
   "settings" = "FAIRPOST_STORAGE_SETTINGS",
@@ -26,12 +28,13 @@ enum StorageKeys {
 
 export default class Store {
   jsonPath: string;
-  jsonData: { [key: string]: string } = {};
+  jsonData: { [store: string]: { [key: string]: string } } = {};
 
   constructor(userid: string) {
     this.jsonPath = this.getEnv(
+      "app",
       "USER_JSONPATH",
-      "users/%user%/var/lib/storage.json",
+      "users/%user%/storage.json",
     ).replace("%user%", userid);
     this.loadJson();
     if (process.argv.includes("--verbose")) {
@@ -40,66 +43,66 @@ export default class Store {
     }
   }
 
-  public get(
-    store: "app" | "settings" | "auth",
-    key: string,
-    def?: string,
-  ): string {
+  public get(store: StorageType, key: string, def?: string): string {
     const storageKey = StorageKeys[store];
     const storage = process.env[storageKey] ?? "none";
     switch (storage) {
       case "env":
-        return this.getEnv(key, def);
+        return this.getEnv(store, key, def);
       case "json-env":
         try {
-          return this.getJson(key);
+          return this.getJson(store, key);
         } catch {
-          return this.getEnv(key, def);
+          return this.getEnv(store, key, def);
         }
       case "json":
-        return this.getJson(key, def);
+        return this.getJson(store, key, def);
       default:
         throw new Error("Storage " + storage + " not implemented");
     }
   }
 
-  private getEnv(key: string, def?: string): string {
+  private getEnv(store: StorageType, key: string, def?: string): string {
     let value = process.env["FAIRPOST_" + key] ?? "";
     if (!value) {
       if (def === undefined) {
-        throw new Error("Storage.getEnv: Value " + key + " not found.");
+        throw new Error(
+          "Storage.getEnv: Value " + "FAIRPOST_" + key + " not found.",
+        );
       }
       value = def;
     }
     return value;
   }
 
-  private getJson(key: string, def?: string): string {
-    let value = this.jsonData[key] ?? "";
+  private getJson(store: StorageType, key: string, def?: string): string {
+    let value = this.jsonData[store]?.[key] ?? "";
     if (!value) {
       if (def === undefined) {
-        throw new Error("Storage.getJson: Value " + key + " not found.");
+        throw new Error(
+          "Storage.getJson: Value " + store + "." + key + " not found.",
+        );
       }
       value = def;
     }
     return value;
   }
 
-  public set(store: "settings" | "auth", key: string, value: string) {
+  public set(store: StorageType, key: string, value: string) {
     const storageKey = StorageKeys[store];
     const storage = process.env[storageKey] ?? "none";
     switch (storage) {
       case "env":
-        return this.setEnv(key, value);
+        return this.setEnv(store, key, value);
       case "json-env":
       case "json":
-        return this.setJson(key, value);
+        return this.setJson(store, key, value);
       default:
         throw new Error("Storage " + storage + " not implemented");
     }
   }
 
-  private setEnv(key: string, value: string) {
+  private setEnv(store: StorageType, key: string, value: string) {
     const ui = process.env.FAIRPOST_UI ?? "none";
     if (ui === "cli") {
       console.log("Store this value in your users .env file:");
@@ -111,8 +114,11 @@ export default class Store {
     }
   }
 
-  private setJson(key: string, value: string) {
-    this.jsonData[key] = value;
+  private setJson(store: StorageType, key: string, value: string) {
+    if (!(store in this.jsonData)) {
+      this.jsonData[store] = {};
+    }
+    this.jsonData[store][key] = value;
     this.saveJson();
   }
 

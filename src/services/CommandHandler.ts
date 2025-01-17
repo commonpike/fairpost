@@ -100,8 +100,7 @@ class CommandHandler {
             "Missing argument: platform",
           );
         }
-        await feed.setupPlatform(args.platform);
-        result = "Success"; // or error
+        result = await feed.setupPlatform(args.platform);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
 
         break;
@@ -111,8 +110,7 @@ class CommandHandler {
           throw new Error("Missing permissions for command " + command);
         }
         const feed = user.getFeed();
-        await feed.setupPlatforms(args.platforms);
-        result = "Success"; // or error
+        result = await feed.setupPlatforms(args.platforms);
         report = "Result: \n" + JSON.stringify(result, null, "\t");
         break;
       }

@@ -49,9 +49,9 @@ export default class RedditAuth {
    */
   protected async requestCode(): Promise<string> {
     this.user.trace("RedditAuth", "requestCode");
-    const clientId = this.user.get("settings", "REDDIT_CLIENT_ID");
-    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
+    const clientId = this.user.get("app", "REDDIT_CLIENT_ID");
+    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -95,8 +95,8 @@ export default class RedditAuth {
    */
   protected async exchangeCode(code: string): Promise<TokenResponse> {
     this.user.trace("RedditAuth", "exchangeCode", code);
-    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
+    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.post("access_token", {
@@ -151,8 +151,8 @@ export default class RedditAuth {
     url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     this.user.trace("POST", url.href);
 
-    const clientId = this.user.get("settings", "REDDIT_CLIENT_ID");
-    const clientSecret = this.user.get("settings", "REDDIT_CLIENT_SECRET");
+    const clientId = this.user.get("app", "REDDIT_CLIENT_ID");
+    const clientSecret = this.user.get("app", "REDDIT_CLIENT_SECRET");
     const userpass = clientId + ":" + clientSecret;
     const userpassb64 = Buffer.from(userpass).toString("base64");
 

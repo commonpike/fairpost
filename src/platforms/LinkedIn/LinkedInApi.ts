@@ -45,7 +45,7 @@ export default class LinkedInApi {
         Accept: "application/json",
         Connection: "Keep-Alive",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": this.user.get("settings", "OAUTH_USERAGENT"),
+        "User-Agent": this.user.get("app", "OAUTH_USERAGENT"),
       },
     })
       .then((res) => handleJsonResponse(res, true))
