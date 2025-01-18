@@ -16,7 +16,7 @@ dotenv.config();
 // arguments
 const USER = process.argv[2]?.includes("@")
   ? process.argv[2].replace("@", "")
-  : "admin";
+  : "";
 const COMMAND = process.argv[2]?.includes("@")
   ? process.argv[3] ?? "help"
   : process.argv[2] ?? "help";
@@ -49,7 +49,7 @@ function getOption(key: string): boolean | string | null {
 
 async function main() {
   const operator = new Operator(OPERATOR, ["admin"], "cli", true);
-  const user = new User(USER);
+  const user = USER ? new User(USER) : undefined;
 
   try {
     const { result, report } = await CommandHandler.execute(

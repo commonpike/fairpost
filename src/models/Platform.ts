@@ -44,7 +44,7 @@ export default class Platform {
    */
 
   report(): string {
-    this.user.trace("Platform", "report");
+    this.user.trace(this.id, "report");
     let report = "";
     report += "\nPlatform: " + this.id;
     report += "\n - active: " + this.active;
@@ -108,7 +108,7 @@ export default class Platform {
    */
 
   getPost(source: Source): Post | undefined {
-    this.user.trace("Platform", "getPost", this.id, source.id);
+    this.user.trace(this.id, "getPost", this.id, source.id);
 
     const postFilePath = this.getPostFilePath(source);
     if (fs.existsSync(postFilePath)) {
@@ -141,7 +141,7 @@ export default class Platform {
    * @returns the prepared post
    */
   async preparePost(source: Source): Promise<Post> {
-    this.user.trace("Platform", "preparePost");
+    this.user.trace(this.id, "preparePost");
 
     const post = this.getPost(source) ?? new Post(source, this);
     if (post.status === PostStatus.PUBLISHED) {
@@ -236,7 +236,7 @@ export default class Platform {
    */
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    this.user.trace("Platform", "publishPost", post.id, dryrun);
+    this.user.trace(this.id, "publishPost", post.id, dryrun);
     return post.processResult("-99", "#undefined", {
       date: new Date(),
       dryrun: dryrun,

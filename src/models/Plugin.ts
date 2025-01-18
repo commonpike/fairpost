@@ -44,9 +44,8 @@ export default class Plugin {
 
   async process(post: Post): Promise<void> {
     throw post.platform.user.error(
-      "process() not implemented for Plugin'" +
-        this.id +
-        "'. Read the docs in the docs folder.",
+      this.id,
+      "process() not implemented. Read the docs in the docs folder.",
     );
   }
 }

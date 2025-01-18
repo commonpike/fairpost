@@ -24,23 +24,18 @@ export default class User {
   jsonData: { [key: string]: string } = {};
   envData: { [key: string]: string } = {};
 
-  constructor(id: string = "default") {
+  constructor(id: string) {
     this.id = id;
     this.store = new Store(this.id);
-    if (this.id !== "admin") {
-      this.homedir = this.get(
-        "settings",
-        "USER_HOMEDIR",
-        "users/%user%",
-      ).replace("%user%", this.id);
-      if (
-        !fs.existsSync(this.homedir) ||
-        !fs.statSync(this.homedir).isDirectory()
-      ) {
-        throw new Error("No such user: " + id);
-      }
-    } else {
-      this.homedir = path.resolve(__dirname, "../../");
+    this.homedir = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
+      "%user%",
+      this.id,
+    );
+    if (
+      !fs.existsSync(this.homedir) ||
+      !fs.statSync(this.homedir).isDirectory()
+    ) {
+      throw new Error("No such user: " + id);
     }
     this.logger = this.getLogger();
   }
@@ -63,6 +58,11 @@ export default class User {
    */
 
   public static createUser(newUserId: string): User {
+    if (!newUserId.match("^[a-z][a-z0-9_\\-\\.]{3,31}$")) {
+      throw new Error(
+        "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
+      );
+    }
     const src = path.resolve(__dirname, "../../etc/skeleton");
     if (!process.env.FAIRPOST_USER_HOMEDIR) {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
@@ -76,6 +76,7 @@ export default class User {
 
     const user = new User(newUserId);
     user.set("settings", "FEED_PLATFORMS", "");
+    user.info("User created: " + newUserId);
     return user;
   }
 
@@ -84,9 +85,6 @@ export default class User {
    */
 
   public getFeed(): Feed {
-    if (this.id === "admin") {
-      throw this.error("Admin does not have a feed");
-    }
     this.loadPlatforms();
     return new Feed(this);
   }
@@ -97,11 +95,7 @@ export default class User {
    * active
    */
   private loadPlatforms(): void {
-    if (this.id === "admin") {
-      throw this.error("Admin does not have platforms");
-    }
     const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
-
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
         if (platformIds.includes(platformClass.id())) {
@@ -135,34 +129,42 @@ export default class User {
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public trace(...args: any[]) {
-    this.logger.trace(args);
+    this.logger.trace(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public debug(...args: any[]) {
-    this.logger.debug(args);
+    this.logger.debug(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public info(...args: any[]) {
-    this.logger.info(args);
+    this.logger.info(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public warn(...args: any[]) {
-    this.logger.warn(args);
+    this.logger.warn(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public error(...args: any[]): Error {
-    this.logger.error(args);
+    this.logger.error(this.id, ...args);
     return new Error(
-      "Error: " + args.filter((arg) => typeof arg === "string").join("; "),
+      "Error: " +
+        "(" +
+        this.id +
+        ") " +
+        args.filter((arg) => typeof arg === "string").join("; "),
     );
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public fatal(...args: any[]): Error {
-    this.logger.fatal(args);
+    this.logger.fatal(this.id, ...args);
     const code = parseInt(args[0]);
     process.exitCode = code || 1;
     return new Error(
-      "Fatal: " + args.filter((arg) => typeof arg === "string").join("; "),
+      "Fatal: " +
+        +"(" +
+        this.id +
+        ") " +
+        args.filter((arg) => typeof arg === "string").join("; "),
     );
   }
 
@@ -177,7 +179,6 @@ export default class User {
       "LOGGER_CONFIG",
       "log4js.json",
     );
-    const category = this.id === "admin" ? "default" : "user";
     const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
     const addConsole =
       this.store.get("settings", "LOGGER_CONSOLE", "false") === "true";
@@ -199,9 +200,9 @@ export default class User {
             "utf8",
           ),
         );
-    if (!config.categories[category]) {
+    if (!config.categories["user"]) {
       throw new Error(
-        "Logger: Log4js category " + category + " not found in " + configFile,
+        "Logger: Log4js category user not found in " + configFile,
       );
     }
 
@@ -211,22 +212,18 @@ export default class User {
       ].filename?.replace("%user%", this.id);
     }
 
-    if (this.id === "admin") {
-      config.categories = { default: config.categories["default"] };
-    }
-
     if (
       addConsole &&
-      !config.categories[category]["appenders"].includes("console")
+      !config.categories["user"]["appenders"].includes("console")
     ) {
       if (!config.appenders["console"]) {
         config.appenders["console"] = { type: "console" };
       }
-      config.categories[category]["appenders"].push("console");
+      config.categories["user"]["appenders"].push("console");
     }
 
     log4js.configure(config);
-    const logger = log4js.getLogger(category);
+    const logger = log4js.getLogger("user");
     logger.level = level;
     return logger;
   }
