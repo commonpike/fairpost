@@ -40,10 +40,7 @@ class CommandHandler {
     let report = "";
 
     if (user) {
-      user.trace(
-        "Fairpost " + user.id + " " + command,
-        args.dryrun ? " dry-run" : "",
-      );
+      user.trace("Fairpost " + command, args.dryrun ? " dry-run" : "");
     }
 
     switch (command) {
@@ -53,11 +50,6 @@ class CommandHandler {
         }
         if (!args.targetuser) {
           throw new Error("user is required for command " + command);
-        }
-        if (!args.targetuser.match("^[a-z][a-z0-9_\\-\\.]{3,31}$")) {
-          throw new Error(
-            "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
-          );
         }
         const newUser = User.createUser(args.targetuser);
         result = newUser;
