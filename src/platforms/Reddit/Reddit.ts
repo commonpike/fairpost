@@ -4,7 +4,6 @@ import * as path from "path";
 import Source, { FileGroup } from "../../models/Source";
 
 import Platform from "../../models/Platform";
-import { PlatformId } from "..";
 import Post from "../../models/Post";
 import RedditApi from "./RedditApi";
 import RedditAuth from "./RedditAuth";
@@ -15,7 +14,6 @@ import { XMLParser } from "fast-xml-parser";
  * Reddit: support for reddit platform
  */
 export default class Reddit extends Platform {
-  id = PlatformId.REDDIT;
   assetsFolder = "_reddit";
   postFileName = "post.json";
   pluginSettings = {

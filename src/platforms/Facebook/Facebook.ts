@@ -6,7 +6,6 @@ import Source, { FileGroup } from "../../models/Source";
 import FacebookApi from "./FacebookApi";
 import FacebookAuth from "./FacebookAuth";
 import Platform from "../../models/Platform";
-import { PlatformId } from "..";
 import Post from "../../models/Post";
 import User from "../../models/User";
 
@@ -18,7 +17,6 @@ import User from "../../models/User";
  * also use by the instagram platform.
  */
 export default class Facebook extends Platform {
-  id: PlatformId = PlatformId.FACEBOOK;
   assetsFolder = "_facebook";
   postFileName = "post.json";
   pluginSettings = {

@@ -57,7 +57,8 @@ post.save();
 To write a plugin, extend the `Plugin` class
 and implement the constructor and the `process` method.
 By default, the Plugins `id` will be its classname
-lowercased.
+lowercased, but you can override this by writing 
+a static method `id()`.
 ```php
 <?php
 
