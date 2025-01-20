@@ -1,8 +1,7 @@
 import * as fs from "fs";
 import * as http from "http";
-import * as log4js from "log4js";
 
-import CommandHandler from "./CommandHandler";
+import Fairpost from "./Fairpost";
 import { JSONReplacer } from "../utilities";
 import { PlatformId } from "../platforms";
 import { PostStatus } from "../models/Post";
@@ -17,11 +16,9 @@ export default class Server {
     process.env.FAIRPOST_UI = "api";
     const host = process.env.FAIRPOST_SERVER_HOSTNAME;
     const port = Number(process.env.FAIRPOST_SERVER_PORT);
-    log4js.configure(process.env.FAIRPOST_LOGGER_CONFIG ?? "");
-    const logger = log4js.getLogger("default");
     return await new Promise((resolve) => {
       const server = http.createServer((req, res) => {
-        Server.handleRequest(req, res, logger);
+        Server.handleRequest(req, res);
       });
       server.listen(port, host, () => {
         resolve(`Fairpost REST Api running on ${host}:${port}`);
@@ -32,9 +29,8 @@ export default class Server {
   public static async handleRequest(
     request: http.IncomingMessage,
     response: http.ServerResponse,
-    logger: log4js.Logger,
   ) {
-    logger.trace("Server.handleRequest", "start", request.url);
+    Fairpost.logger.trace("Server.handleRequest", "start", request.url);
     if (request.url === "/favicon.ico") {
       const fileStream = fs.createReadStream("public/fairpost-icon.png");
       response.writeHead(200, { "Content-Type": "image/png" });
@@ -87,17 +83,16 @@ export default class Server {
     try {
       const operator = Server.getOperator(userid, request);
       const user = new User(userid);
-      user.set("settings", "UI", "rest");
-      ({ result, report } = await CommandHandler.execute(
+      ({ result, report } = await Fairpost.execute(
         operator,
         user,
         command,
         args,
       ));
       code = 200;
-      logger.trace("Server.handleRequest", "success", request.url);
+      Fairpost.logger.trace("Server.handleRequest", "success", request.url);
     } catch (e) {
-      logger.error("Server.handleRequest", "error", request.url, e);
+      Fairpost.logger.error("Server.handleRequest", "error", request.url);
       code = 500;
       error = e;
       result = {};
