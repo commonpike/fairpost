@@ -42,8 +42,20 @@ class Fairpost {
       let result: unknown;
       let report = "";
 
+      this.logger.info(
+        "Fairpost ",
+        operator.id,
+        user?.id ?? "",
+        command,
+        args.dryrun ? " dry-run" : "",
+      );
       if (user) {
-        user.trace("Fairpost " + command, args.dryrun ? " dry-run" : "");
+        user.info(
+          "Fairpost ",
+          operator.id,
+          command,
+          args.dryrun ? " dry-run" : "",
+        );
       }
 
       operator.validate();
