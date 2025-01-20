@@ -124,8 +124,9 @@ export default class Server {
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public static getOperator(userid: string, request: http.IncomingMessage) {
-    // TODO: validate userid and get roles from request
-    // for now, just assume its the user and has the rights
-    return new Operator(userid, ["user"], "api", true);
+    if (process.env.FAIRPOST_SERVER_AUTH === "none") {
+      return new Operator(userid, ["user"], "api", true);
+    }
+    return new Operator("anonymous", ["anonymous"], "api", true);
   }
 }
