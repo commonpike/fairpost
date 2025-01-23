@@ -206,12 +206,6 @@ export default class User {
       );
     }
 
-    for (const appender in config.appenders) {
-      config.appenders[appender].filename = config.appenders[
-        appender
-      ].filename?.replace("%user%", this.id);
-    }
-
     if (
       addConsole &&
       !config.categories["user"]["appenders"].includes("console")
@@ -224,6 +218,7 @@ export default class User {
 
     log4js.configure(config);
     const logger = log4js.getLogger("user");
+    logger.addContext("userId", this.id);
     logger.level = level;
     return logger;
   }

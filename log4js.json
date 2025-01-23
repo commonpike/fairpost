@@ -6,20 +6,18 @@
       "compress": true,
       "numBackups" : 7
     },
-    "global-filtered": {
-      "type": "logLevelFilter",
-      "level": "info",
-      "appender": "global"
-    },
-    "user": { 
-      "type": "dateFile", 
-      "filename" : "users/%user%/fairpost.log", 
-      "compress": true,
-      "numBackups" : 7
+    "user": {
+      "type": "multiFile",
+      "base": "var/log/",
+      "property": "userId",
+      "extension": ".log",
+      "maxLogSize": 10485760,
+      "backups": 3,
+      "compress": true
     }
   },
   "categories": {
     "default": { "appenders": ["global"], "level": "info" },
-    "user": { "appenders": ["user","global-filtered"], "level": "info" }
+    "user": { "appenders": ["user"], "level": "info" }
   }
 }

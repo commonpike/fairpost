@@ -1,7 +1,7 @@
 import User from "./User";
 export default class Operator {
   constructor(
-    private id: string = "anonymous",
+    public id: string = "anonymous",
     private roles: ("admin" | "user" | "anonymous")[] = ["anonymous"],
     private ui: "cli" | "api",
     private authenticated: boolean,

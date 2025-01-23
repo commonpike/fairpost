@@ -2,16 +2,16 @@
     202402*pike
     Fairpost cli handler     
 */
+
 import * as dotenv from "dotenv";
-import CommandHandler from "./services/CommandHandler";
+dotenv.config();
+
+import Fairpost from "./services/Fairpost";
 import { JSONReplacer } from "./utilities";
 import { PlatformId } from "./platforms";
 import { PostStatus } from "./models/Post";
 import Operator from "./models/Operator";
 import User from "./models/User";
-
-// read global config
-dotenv.config();
 
 // arguments
 const USER = process.argv[2]?.includes("@")
@@ -47,26 +47,22 @@ function getOption(key: string): boolean | string | null {
   return value.replace(`--${key}=`, "");
 }
 
+// main
 async function main() {
   const operator = new Operator(OPERATOR, ["admin"], "cli", true);
   const user = USER ? new User(USER) : undefined;
 
   try {
-    const { result, report } = await CommandHandler.execute(
-      operator,
-      user,
-      COMMAND,
-      {
-        dryrun: DRY_RUN,
-        targetuser: TARGETUSER,
-        platforms: PLATFORMS,
-        platform: PLATFORM,
-        sources: SOURCES,
-        source: SOURCE,
-        date: DATE ? new Date(DATE) : undefined,
-        status: STATUS,
-      },
-    );
+    const { result, report } = await Fairpost.execute(operator, user, COMMAND, {
+      dryrun: DRY_RUN,
+      targetuser: TARGETUSER,
+      platforms: PLATFORMS,
+      platform: PLATFORM,
+      sources: SOURCES,
+      source: SOURCE,
+      date: DATE ? new Date(DATE) : undefined,
+      status: STATUS,
+    });
 
     switch (OUTPUT) {
       case "json": {
