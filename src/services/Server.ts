@@ -30,13 +30,29 @@ export default class Server {
     request: http.IncomingMessage,
     response: http.ServerResponse,
   ) {
-    Fairpost.logger.trace("Server.handleRequest", "start", request.url);
+    // enable CORS
+    response.setHeader(
+      "Access-Control-Allow-Origin",
+      process.env.FAIRPOST_SERVER_CORS ?? "*",
+    );
+    response.setHeader("Access-Control-Request-Method", "*");
+    response.setHeader("Access-Control-Allow-Methods", "OPTIONS, GET");
+    response.setHeader("Access-Control-Allow-Headers", "*");
+    if (request.method === "OPTIONS") {
+      response.writeHead(200);
+      response.end();
+      return;
+    }
+
+    // handle favico
     if (request.url === "/favicon.ico") {
       const fileStream = fs.createReadStream("public/fairpost-icon.png");
       response.writeHead(200, { "Content-Type": "image/png" });
       fileStream.pipe(response);
       return;
     }
+
+    Fairpost.logger.trace("Server.handleRequest", "start", request.url);
 
     const parsed = new URL(
       request.url ?? "/",
