@@ -1,4 +1,13 @@
 import User from "./User";
+
+/**
+ * Operator - represents the user executing an operation or command.
+ *
+ * It is up to the interface to determine the operator's roles
+ * and check if they are properly authenticated.
+ *
+ */
+
 export default class Operator {
   constructor(
     public id: string = "anonymous",

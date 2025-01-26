@@ -7,10 +7,15 @@ import Feed from "./Feed";
 import Platform from "./Platform";
 import Store from "./Store";
 
+import UserMapper from "../mappers/UserMapper";
+
 /**
- * User - represents one fairpost user with
+ * User - represents one fairpost user with a feed.
  *
- * - getters and setters for key / value pairs, all string.
+ * Contains getters and setters for key / value pairs,
+ * using a store. Contains a mapper to create a dto;
+ * and a private logger for this account, seperate from
+ * the Fairpost logger.
  *
  */
 
@@ -18,6 +23,7 @@ export default class User {
   id: string;
   homedir: string;
   platforms = [] as Platform[];
+  mapper: UserMapper;
   store: Store;
   logger: log4js.Logger;
 
@@ -37,20 +43,8 @@ export default class User {
     ) {
       throw new Error("No such user: " + id);
     }
+    this.mapper = new UserMapper(this);
     this.logger = this.getLogger();
-  }
-
-  /**
-   * Return a small report for this feed
-   * @returns the report in text
-   */
-
-  report(): string {
-    this.trace("User", "report");
-    let report = "";
-    report += "\nUser: " + this.id;
-    report += "\n - homedir: " + this.homedir;
-    return report;
   }
 
   /**
@@ -67,7 +61,6 @@ export default class User {
     if (!process.env.FAIRPOST_USER_HOMEDIR) {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
     }
-    // username was validated in the commandhandler
     const dst = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", newUserId);
     if (fs.existsSync(dst)) {
       throw new Error("Homedir already exists: " + dst);
