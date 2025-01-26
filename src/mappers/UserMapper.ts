@@ -1,5 +1,5 @@
 import AbstractMapper from "./AbstractMapper";
-import { Dto, DtoConfig, OperationType } from "./AbstractMapper";
+import { Dto, FieldMapping } from "./AbstractMapper";
 import Operator from "../models/Operator";
 
 interface UserDto extends Dto {
@@ -8,20 +8,21 @@ interface UserDto extends Dto {
 }
 
 export default class UserMapper extends AbstractMapper {
-  protected dtoConfig: DtoConfig = {
-    any: {
-      id: true,
+  mapping: FieldMapping = {
+    id: {
+      type: "string",
+      label: "ID",
+      get: ["any"],
+      set: ["manageUsers"],
+      required: true,
     },
-    create: {
-      homedir: ["manageUsers"],
+    homedir: {
+      type: "string",
+      label: "Home directory",
+      get: ["manageUsers"],
+      set: ["none"],
+      required: false,
     },
-    read: {
-      homedir: ["manageUsers"],
-    },
-    update: {
-      id: ["manageUsers"],
-    },
-    delete: {},
   };
 
   /**
@@ -40,11 +41,10 @@ export default class UserMapper extends AbstractMapper {
   /**
    * Return a dto based on the operator and operation
    * @param operator
-   * @param operation
    * @returns key/value pairs for the dto
    */
-  getDto(operator: Operator, operation: OperationType): UserDto {
-    const fields = this.getDtoFields(operator, operation);
+  getDto(operator: Operator): UserDto {
+    const fields = this.getDtoFields(operator, "get");
     const dto: UserDto = {};
     fields.forEach((field) => {
       switch (field) {
@@ -57,5 +57,26 @@ export default class UserMapper extends AbstractMapper {
       }
     });
     return dto;
+  }
+
+  /**
+   * Insert a given dto based on the operator
+   * @param operator
+   * @param dto
+   * @returns boolean success
+   */
+  setDto(operator: Operator, dto: Dto): boolean {
+    const fields = this.getDtoFields(operator, "set");
+    Object.keys(dto).forEach((field) => {
+      switch (field) {
+        case "id":
+          if (field in fields)
+            throw this.user.error("Cannot set ID: unimplemented");
+          break;
+        default:
+          throw this.user.error("Unknown field: " + field);
+      }
+    });
+    return true;
   }
 }

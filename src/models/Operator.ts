@@ -9,6 +9,12 @@ import User from "./User";
  */
 
 export default class Operator {
+  private cache: {
+    [userid: string]: {
+      [permission: string]: boolean;
+    };
+  } = {};
+
   constructor(
     public id: string = "anonymous",
     private roles: ("admin" | "user" | "anonymous")[] = ["anonymous"],
@@ -28,7 +34,11 @@ export default class Operator {
   }
 
   public getPermissions(user?: User) {
-    return {
+    const userid = user?.id;
+    if (userid && userid in this.cache) {
+      return this.cache[userid];
+    }
+    const permissions = {
       manageUsers: this.authenticated && this.roles.includes("admin"),
       manageFeed:
         !!user &&
@@ -58,5 +68,9 @@ export default class Operator {
       manageServer:
         this.authenticated && this.ui === "cli" && this.roles.includes("admin"),
     };
+    if (userid) {
+      this.cache[userid] = permissions;
+    }
+    return permissions;
   }
 }

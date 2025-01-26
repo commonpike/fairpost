@@ -1,16 +1,18 @@
 import User from "../models/User";
 import Operator from "../models/Operator";
 
-export type OperationType = "create" | "read" | "update" | "delete";
-
-export type DtoConfig = {
-  [operation in OperationType | "any"]: {
-    [field: string]: true | string[];
+export interface FieldMapping {
+  [field: string]: {
+    type: "string" | "integer" | "float" | "boolean" | "json";
+    label: string;
+    get: string[]; // (permissions | any | none)[]
+    set: string[]; // (permissions | any | none)[]
+    required: boolean;
   };
-};
+}
 
 export interface Dto {
-  [key: string]: boolean | number | number[] | string | string[] | undefined;
+  [key: string]: string | number | boolean | undefined;
 }
 
 /**
@@ -22,10 +24,10 @@ export interface Dto {
  * All mappers require a *user* because the user can optionally
  * configure what data is visible, fe to the operator.
  *
- * For read operations, the mapper shall only return the fields
- * allowed to be read by the operator.
+ * For get operations, the mapper shall only return the fields
+ * allowed to be get by the operator.
  *
- * For create and update operations, the mapper shall return
+ * For set operations, the mapper shall return
  * only the fields allowed to be set by the operator.
  *
  */
@@ -37,21 +39,35 @@ export default abstract class AbstractMapper {
     this.user = user;
   }
 
-  protected abstract dtoConfig: DtoConfig;
+  protected abstract mapping: FieldMapping;
 
   abstract getReport(): string;
 
-  abstract getDto(operator: Operator, operation: OperationType): Dto;
+  /**
+   * Return a dto based on the operator
+   * @param operator
+   * @returns key/value pairs for the dto
+   */
+  abstract getDto(operator: Operator): Dto;
+
+  /**
+   * Insert a given dto based on the operator
+   * @param operator
+   * @param dto
+   * @returns boolean success
+   */
+  abstract setDto(operator: Operator, dto: Dto): boolean;
 
   protected getDtoFields(
     operator: Operator,
-    operation: OperationType,
+    operation: "get" | "set",
   ): string[] {
     const permissions = operator.getPermissions(this.user);
-    const anyFields = Object.keys(this.dtoConfig["any"]).filter((field) => {
-      if (this.dtoConfig["any"][field] === true) return true;
+    const fields = Object.keys(this.mapping).filter((field) => {
+      if (this.mapping[field][operation].includes("none")) return false;
+      if (this.mapping[field][operation].includes("any")) return true;
       if (
-        (this.dtoConfig["any"][field] as string[]).some(
+        this.mapping[field][operation].some(
           (permission) =>
             permission in permissions &&
             permissions[permission as keyof typeof permissions],
@@ -61,22 +77,6 @@ export default abstract class AbstractMapper {
       }
       return false;
     });
-    const operationFields = Object.keys(this.dtoConfig[operation]).filter(
-      (field) => {
-        if (anyFields.includes(field)) return false;
-        if (this.dtoConfig[operation][field] === true) return true;
-        if (
-          (this.dtoConfig[operation][field] as string[]).some(
-            (permission) =>
-              permission in permissions &&
-              permissions[permission as keyof typeof permissions],
-          )
-        ) {
-          return true;
-        }
-        return false;
-      },
-    );
-    return anyFields.concat(operationFields);
+    return fields;
   }
 }

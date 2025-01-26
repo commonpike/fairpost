@@ -70,7 +70,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const newUser = User.createUser(args.targetuser);
-          result = newUser.mapper.getDto(operator, "read");
+          result = newUser.mapper.getDto(operator);
           report = newUser.mapper.getReport();
           break;
         }
@@ -80,12 +80,12 @@ class Fairpost {
               throw new Error("Missing permissions for command " + command);
             }
             const other = new User(args.targetuser);
-            result = other.mapper.getDto(operator, "read");
+            result = other.mapper.getDto(operator);
             report = other.mapper.getReport();
           } else if (!user) {
             throw new Error("Missing user for command " + command);
           } else {
-            result = user.mapper.getDto(operator, "read");
+            result = user.mapper.getDto(operator);
             report = user.mapper.getReport();
           }
           break;
