@@ -71,22 +71,23 @@ class Fairpost {
           }
           const newUser = User.createUser(args.targetuser);
           result = newUser.mapper.getDto(operator);
-          report = newUser.mapper.getReport();
+          report = newUser.mapper.getReport(operator);
           break;
         }
         case "get-user": {
+          // todo: remove target-user option, we have operator now
           if (args.targetuser) {
             if (!permissions.manageUsers) {
               throw new Error("Missing permissions for command " + command);
             }
             const other = new User(args.targetuser);
             result = other.mapper.getDto(operator);
-            report = other.mapper.getReport();
+            report = other.mapper.getReport(operator);
           } else if (!user) {
             throw new Error("Missing user for command " + command);
           } else {
             result = user.mapper.getDto(operator);
-            report = user.mapper.getReport();
+            report = user.mapper.getReport(operator);
           }
           break;
         }
@@ -98,8 +99,8 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          result = feed;
-          report = feed.report();
+          result = feed.mapper.getDto(operator);
+          report = feed.mapper.getReport(operator);
           break;
         }
         case "setup-platform": {

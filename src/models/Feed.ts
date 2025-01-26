@@ -3,6 +3,7 @@ import * as fs from "fs";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
+import FeedMapper from "../mappers/FeedMapper";
 import { PostStatus } from "./Post";
 import Source from "./Source";
 import User from "./User";
@@ -24,6 +25,7 @@ export default class Feed {
   } = {};
   sources: Source[] = [];
   interval: number;
+  mapper: FeedMapper;
 
   /**
    * The constructor reads the dotenv file, then reads all
@@ -45,25 +47,7 @@ export default class Feed {
       .replace("%user%", this.user.id);
     this.id = this.user.id + ":feed";
     this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
-  }
-
-  /**
-   * Return a small report for this feed
-   * @returns the report in text
-   */
-
-  report(): string {
-    this.user.trace("Feed", "report");
-    let report = "";
-    report += "\nFeed: " + this.id;
-    report += "\n - path: " + this.path;
-    report += "\n - platforms: " + Object.keys(this.platforms).join();
-    report +=
-      "\n - sources: " +
-      this.getSources()
-        .map((f) => f.id)
-        .join();
-    return report;
+    this.mapper = new FeedMapper(this);
   }
 
   /**

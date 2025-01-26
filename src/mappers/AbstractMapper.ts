@@ -3,7 +3,7 @@ import Operator from "../models/Operator";
 
 export interface FieldMapping {
   [field: string]: {
-    type: "string" | "integer" | "float" | "boolean" | "json";
+    type: "string" | "string[]" | "integer" | "float" | "boolean" | "json";
     label: string;
     get: string[]; // (permissions | any | none)[]
     set: string[]; // (permissions | any | none)[]
@@ -12,7 +12,7 @@ export interface FieldMapping {
 }
 
 export interface Dto {
-  [key: string]: string | number | boolean | undefined;
+  [key: string]: string | string[] | number | boolean | undefined;
 }
 
 /**
@@ -41,7 +41,28 @@ export default abstract class AbstractMapper {
 
   protected abstract mapping: FieldMapping;
 
-  abstract getReport(): string;
+  public getReport(operator: Operator): string {
+    const dto = this.getDto(operator);
+    const lines: string[] = [];
+    for (const field in dto) {
+      let line = "";
+      if (field in this.mapping) {
+        line += this.mapping[field].label + ":\t";
+      } else {
+        line += field + ":\t";
+      }
+      if (dto instanceof Array) {
+        lines.push(line);
+        dto.forEach((item) => {
+          lines.push(" - " + String(item));
+        });
+      } else {
+        line += String(dto[field]);
+        lines.push(line);
+      }
+    }
+    return lines.join("\n");
+  }
 
   /**
    * Return a dto based on the operator
