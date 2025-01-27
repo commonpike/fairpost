@@ -201,7 +201,9 @@ export default class Feed {
       );
     });
     if (paths) {
-      this.sources = paths.map((path) => new Source(this.path + "/" + path));
+      this.sources = paths.map(
+        (path) => new Source(this, this.path + "/" + path),
+      );
     }
     return this.sources;
   }
@@ -213,7 +215,7 @@ export default class Feed {
    */
   getSource(path: string): Source {
     this.user.trace("Feed", "getSource", path);
-    return new Source(this.path + "/" + path);
+    return new Source(this, this.path + "/" + path);
   }
 
   /**

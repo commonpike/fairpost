@@ -21,7 +21,7 @@ export default class FeedMapper extends AbstractMapper {
     path: {
       type: "string",
       label: "Path",
-      get: ["none"],
+      get: ["manageFeed"],
       set: ["none"],
       required: true,
     },
@@ -91,7 +91,7 @@ export default class FeedMapper extends AbstractMapper {
    */
   setDto(operator: Operator, dto: Dto): boolean {
     const fields = this.getDtoFields(operator, "set");
-    Object.keys(dto).forEach((field) => {
+    for (const field in dto) {
       if (field in fields) {
         switch (field) {
           case "platforms":
@@ -108,7 +108,7 @@ export default class FeedMapper extends AbstractMapper {
       } else {
         throw this.user.error("Unknown field: " + field);
       }
-    });
+    }
     return true;
   }
 }

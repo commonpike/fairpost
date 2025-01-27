@@ -47,13 +47,13 @@ export default abstract class AbstractMapper {
     for (const field in dto) {
       let line = "";
       if (field in this.mapping) {
-        line += this.mapping[field].label + ":\t";
+        line += this.mapping[field].label + ": ";
       } else {
-        line += field + ":\t";
+        line += field + ": ";
       }
-      if (dto instanceof Array) {
+      if (dto[field] instanceof Array) {
         lines.push(line);
-        dto.forEach((item) => {
+        (dto[field] as string[]).forEach((item) => {
           lines.push(" - " + String(item));
         });
       } else {

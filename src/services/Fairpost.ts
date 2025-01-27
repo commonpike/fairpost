@@ -7,6 +7,7 @@
 import * as log4js from "log4js";
 
 import { PlatformId } from "../platforms";
+import { Dto } from "../mappers/AbstractMapper";
 import { PostStatus } from "../models/Post";
 import Server from "../services/Server";
 import Source from "../models/Source";
@@ -245,8 +246,8 @@ class Fairpost {
           const feed = user.getFeed();
           const source = feed.getSource(args.source);
           if (source) {
-            report += source.report() + "\n";
-            result = source;
+            report += source.mapper.getReport(operator);
+            result = source.mapper.getDto(operator);
           } else {
             report += "not found:" + args.source + "\n";
           }
@@ -261,11 +262,13 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const sources = feed.getSources(args.sources);
+          const dtos = [] as Dto[];
           report += sources.length + " Sources\n------\n";
           sources.forEach((source) => {
-            report += source.report() + "\n";
+            report += source.mapper.getReport(operator) + "\n";
+            dtos.push(source.mapper.getDto(operator));
           });
-          result = sources;
+          result = dtos;
           break;
         }
         case "get-sources-by-status": {
@@ -277,25 +280,27 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const sources = feed.getSources(args.sources);
+
           const groups = {} as { [status: string]: Source[] };
           sources.forEach((source) => {
             const status = feed.getSourceStatus(source.path);
             if (groups[status] === undefined) {
-              groups[status] = [source];
-            } else {
-              groups[status].push(source);
+              groups[status] = [];
             }
-            report += source.report() + "\n";
+            groups[status].push(source);
           });
-          Object.keys(groups).forEach((status) => {
+          const groupedDtos = {} as { [status: string]: Dto[] };
+          for (const status in groups) {
             report += " " + status + "\n------\n";
             const sources = groups[status];
             report += sources.length + " Sources\n------\n";
+            groupedDtos[status] = [];
             sources.forEach((source) => {
-              report += source.report() + "\n";
+              report += source.mapper.getReport(operator) + "\n";
+              groupedDtos[status].push(source.mapper.getDto(operator));
             });
-          });
-          result = groups;
+          }
+          result = groupedDtos;
           break;
         }
         case "get-post": {

@@ -64,7 +64,7 @@ export default class UserMapper extends AbstractMapper {
    */
   setDto(operator: Operator, dto: Dto): boolean {
     const fields = this.getDtoFields(operator, "set");
-    Object.keys(dto).forEach((field) => {
+    for (const field in dto) {
       if (field in fields) {
         switch (field) {
           case "id":
@@ -78,7 +78,7 @@ export default class UserMapper extends AbstractMapper {
       } else {
         throw this.user.error("Unknown field: " + field);
       }
-    });
+    }
     return true;
   }
 }
