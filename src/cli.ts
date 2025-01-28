@@ -25,7 +25,7 @@ const COMMAND = process.argv[2]?.includes("@")
 const DRY_RUN = !!getOption("dry-run");
 const OPERATOR = (getOption("operator") as string) ?? "admin";
 const TARGETUSER = (getOption("target-user") as string) ?? "";
-const OUTPUT = (getOption("output") as string) ?? "text";
+const OUTPUT = (getOption("output") as string) ?? "json";
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
 const SOURCES = (getOption("sources") as string)?.split(",") ?? undefined;

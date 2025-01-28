@@ -3,9 +3,12 @@ import { Dto, FieldMapping } from "./AbstractMapper";
 import Operator from "../models/Operator";
 import Feed from "../models/Feed";
 
-interface UserDto extends Dto {
+interface FeedDto extends Dto {
   id?: string;
-  homedir?: string;
+  path?: string;
+  platforms?: string[];
+  sources?: string[];
+  interval?: number;
 }
 
 export default class FeedMapper extends AbstractMapper {
@@ -58,9 +61,9 @@ export default class FeedMapper extends AbstractMapper {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  getDto(operator: Operator): UserDto {
+  getDto(operator: Operator): FeedDto {
     const fields = this.getDtoFields(operator, "get");
-    const dto: UserDto = {};
+    const dto: FeedDto = {};
     fields.forEach((field) => {
       switch (field) {
         case "id":
@@ -89,7 +92,7 @@ export default class FeedMapper extends AbstractMapper {
    * @param dto
    * @returns boolean success
    */
-  setDto(operator: Operator, dto: Dto): boolean {
+  setDto(operator: Operator, dto: FeedDto): boolean {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {
@@ -102,7 +105,11 @@ export default class FeedMapper extends AbstractMapper {
             );
             break;
           case "interval":
-            this.user.set("settings", "FEED_INTERVAL", dto[field] as string);
+            this.user.set(
+              "settings",
+              "FEED_INTERVAL",
+              String(dto[field] || 24),
+            );
             break;
         }
       } else {

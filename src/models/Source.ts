@@ -24,7 +24,7 @@ export default class Source {
       throw new Error("No such source: " + path);
     }
     this.feed = feed;
-    this.id = path.replace(/^\//, "").split("/").slice(1).join("/");
+    this.id = path.replace(feed.path + "/", "");
     this.path = path;
     this.mapper = new SourceMapper(this);
   }
