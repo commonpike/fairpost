@@ -29,7 +29,7 @@ export default class PlatformMapper extends AbstractMapper {
       type: "boolean",
       label: "Active",
       get: ["managePlatforms"],
-      set: ["none"],
+      set: ["managePlatforms"],
     },
     // more fields from platform.settings
     // added in constructor
