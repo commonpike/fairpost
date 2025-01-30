@@ -3,6 +3,11 @@
 If your platform is not yet supported by Fairpost,
 you can write your own code to support it.
 
+The hardest part is possibly registering your 
+instance of the app with the platform, to allow
+it to post on your (or your users) behalf. How
+that works depends on the platform; ymmv.
+
 ## Minimal setup
 
 To add support for a new platform, add a class to `src/platforms`

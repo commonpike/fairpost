@@ -325,8 +325,8 @@ class Fairpost {
           const feed = user.getFeed();
           const post = feed.getPost(args.source, args.platform);
           if (post) {
-            report += post.report();
-            result = post;
+            report += post.mapper.getReport(operator);
+            result = post.mapper.getDto(operator);
           } else {
             report += "Not found:" + args.source + ":" + args.platform;
           }
@@ -346,10 +346,12 @@ class Fairpost {
             status: args.status,
           });
           report += allposts.length + " Posts\n------\n";
+          const dtos = [] as Dto[];
           allposts.forEach((post) => {
-            report += post.report();
+            report += post.mapper.getReport(operator);
+            dtos.push(post.mapper.getDto(operator));
           });
-          result = allposts;
+          result = dtos;
           break;
         }
         case "prepare-post": {

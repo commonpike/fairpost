@@ -4,6 +4,7 @@ import Source, { FileGroup, FileInfo } from "./Source";
 
 import Platform from "./Platform";
 import { isSimilarArray } from "../utilities";
+import PostMapper from "../mappers/PostMapper";
 
 /**
  * Post - a post within a source
@@ -32,6 +33,7 @@ export default class Post {
   ignoreFiles?: string[];
   link?: string;
   remoteId?: string;
+  mapper: PostMapper;
 
   constructor(source: Source, platform: Platform, data?: object) {
     this.source = source;
@@ -49,6 +51,7 @@ export default class Post {
     if (!fs.existsSync(assetsPath)) {
       fs.mkdirSync(assetsPath, { recursive: true });
     }
+    this.mapper = new PostMapper(this);
   }
 
   /**

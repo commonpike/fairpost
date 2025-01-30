@@ -3,17 +3,31 @@ import Operator from "../models/Operator";
 
 export interface FieldMapping {
   [field: string]: {
-    type: "string" | "string[]" | "integer" | "float" | "boolean" | "json";
+    type:
+      | "string"
+      | "string[]"
+      | "integer"
+      | "float"
+      | "boolean"
+      | "date"
+      | "json";
     label: string;
     get: string[]; // (permissions | any | none)[]
     set: string[]; // (permissions | any | none)[]
     required?: boolean; // only if settable
-    default?: string | string[] | number | boolean | object;
+    default?: string | string[] | number | boolean | Date | object;
   };
 }
 
 export interface Dto {
-  [key: string]: string | string[] | number | boolean | undefined;
+  [key: string]:
+    | string
+    | string[]
+    | number
+    | boolean
+    | Date
+    | object
+    | undefined;
 }
 
 /**
