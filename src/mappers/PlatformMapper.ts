@@ -80,12 +80,12 @@ export default class PlatformMapper extends AbstractMapper {
               break;
             case "json":
               if (this.mapping[field].default) {
-                dto[field] = JSON.stringify({
+                dto[field] = {
                   ...(this.mapping[field].default as object),
                   ...JSON.parse(this.user.get("settings", field, "{}")),
-                });
+                };
               } else {
-                dto[field] = this.user.get("settings", field, "{}");
+                dto[field] = JSON.parse(this.user.get("settings", field, "{}"));
               }
               break;
           }
