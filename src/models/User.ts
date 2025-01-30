@@ -7,6 +7,7 @@ import Feed from "./Feed";
 import Platform from "./Platform";
 import Store from "./Store";
 
+import { PlatformId } from "../platforms";
 import UserMapper from "../mappers/UserMapper";
 
 /**
@@ -98,6 +99,51 @@ export default class User {
         }
       }
     });
+  }
+
+  /**
+   * Enable a platform on this user
+   * @param platformId
+   */
+  public addPlatform(platformId: PlatformId): void {
+    if (
+      Object.values(PlatformId).includes(platformId) &&
+      platformId != PlatformId.UNKNOWN
+    ) {
+      const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
+      if (!platformIds.includes(platformId)) {
+        platformIds.push(platformId);
+        this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
+      }
+      this.platforms = [];
+      this.loadPlatforms();
+      this.info(`Platform ${platformId} enabled for user ${this.id}`);
+    } else {
+      throw this.error("addPlatform: no such platform", platformId);
+    }
+  }
+
+  /**
+   * Disable a platform on this user
+   * @param platformId
+   */
+  public removePlatform(platformId: PlatformId): void {
+    if (
+      Object.values(PlatformId).includes(platformId) &&
+      platformId != PlatformId.UNKNOWN
+    ) {
+      const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
+      const index = platformIds.indexOf(platformId);
+      if (index !== -1) {
+        platformIds.splice(index, 1);
+        this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
+      }
+      this.platforms = [];
+      this.loadPlatforms();
+      this.info(`Platform ${platformId} disabled for user ${this.id}`);
+    } else {
+      throw this.error("removePlatform: no such platform", platformId);
+    }
   }
 
   public get(

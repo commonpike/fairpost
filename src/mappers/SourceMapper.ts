@@ -5,6 +5,8 @@ import Source from "../models/Source";
 
 interface SourceDto extends Dto {
   id?: string;
+  user_id?: string;
+  feed_id?: string;
   path?: string;
 }
 
@@ -16,14 +18,24 @@ export default class SourceMapper extends AbstractMapper {
       label: "ID",
       get: ["manageSources"],
       set: ["none"],
-      required: true,
+    },
+    user_id: {
+      type: "string",
+      label: "User ID",
+      get: ["manageSources"],
+      set: ["none"],
+    },
+    feed_id: {
+      type: "string",
+      label: "Feed ID",
+      get: ["manageSources"],
+      set: ["none"],
     },
     path: {
       type: "string",
       label: "Path",
       get: ["manageSources"],
       set: ["none"],
-      required: true,
     },
   };
 
@@ -44,6 +56,12 @@ export default class SourceMapper extends AbstractMapper {
       switch (field) {
         case "id":
           dto[field] = this.source.id;
+          break;
+        case "user_id":
+          dto[field] = this.user.id;
+          break;
+        case "feed_id":
+          dto[field] = this.source.feed.id;
           break;
         case "path":
           dto[field] = this.source.path;

@@ -150,8 +150,8 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const platform = feed.getPlatform(args.platform);
-          report += platform.report() + "\n";
-          result = platform;
+          report += platform.mapper.getReport(operator);
+          result = platform.mapper.getDto(operator);
           break;
         }
         case "get-platforms": {

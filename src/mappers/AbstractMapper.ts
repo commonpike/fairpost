@@ -7,7 +7,8 @@ export interface FieldMapping {
     label: string;
     get: string[]; // (permissions | any | none)[]
     set: string[]; // (permissions | any | none)[]
-    required: boolean;
+    required?: boolean; // only if settable
+    default?: string | string[] | number | boolean | object;
   };
 }
 

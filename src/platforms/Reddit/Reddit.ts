@@ -7,6 +7,8 @@ import Platform from "../../models/Platform";
 import Post from "../../models/Post";
 import RedditApi from "./RedditApi";
 import RedditAuth from "./RedditAuth";
+import { FieldMapping } from "../../mappers/AbstractMapper";
+import PlatformMapper from "../../mappers/PlatformMapper";
 import User from "../../models/User";
 import { XMLParser } from "fast-xml-parser";
 
@@ -25,7 +27,23 @@ export default class Reddit extends Platform {
       max_width: 3000,
     },
   };
-
+  settings: FieldMapping = {
+    REDDIT_SUBREDDIT: {
+      type: "string",
+      label: "Subreddit to post in",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    REDDIT_PLUGIN_SETTINGS: {
+      type: "json",
+      label: "Reddit Plugin settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false,
+      default: this.pluginSettings,
+    },
+  };
   SUBREDDIT: string;
   api: RedditApi;
   auth: RedditAuth;
@@ -35,6 +53,7 @@ export default class Reddit extends Platform {
     this.SUBREDDIT = this.user.get("settings", "REDDIT_SUBREDDIT", "");
     this.api = new RedditApi(user);
     this.auth = new RedditAuth(user);
+    this.mapper = new PlatformMapper(this);
   }
 
   /** @inheritdoc */

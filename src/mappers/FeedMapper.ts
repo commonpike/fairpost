@@ -5,6 +5,7 @@ import Feed from "../models/Feed";
 
 interface FeedDto extends Dto {
   id?: string;
+  user_id?: string;
   path?: string;
   platforms?: string[];
   sources?: string[];
@@ -19,14 +20,18 @@ export default class FeedMapper extends AbstractMapper {
       label: "ID",
       get: ["any"],
       set: ["none"],
-      required: true,
+    },
+    user_id: {
+      type: "string",
+      label: "User ID",
+      get: ["any"],
+      set: ["none"],
     },
     path: {
       type: "string",
       label: "Path",
       get: ["manageFeed"],
       set: ["none"],
-      required: true,
     },
     platforms: {
       type: "string[]",
@@ -68,6 +73,9 @@ export default class FeedMapper extends AbstractMapper {
       switch (field) {
         case "id":
           dto[field] = this.feed.id;
+          break;
+        case "user_id":
+          dto[field] = this.user.id;
           break;
         case "path":
           dto[field] = this.feed.path;
