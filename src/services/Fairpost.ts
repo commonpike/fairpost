@@ -5,7 +5,7 @@
  * Fairpost has its own logger, but the commands user has their own logs too.
  */
 import * as log4js from "log4js";
-import { GenericResult } from "../types";
+import { CombinedResult } from "../types";
 import { PlatformId } from "../platforms";
 import { Dto } from "../mappers/AbstractMapper";
 import Post, { PostStatus } from "../models/Post";
@@ -16,13 +16,9 @@ import User from "../models/User";
 type FairpostOutput =
   | Dto
   | Dto[]
-  | GenericResult
-  | GenericResult[]
+  | CombinedResult[]
   | {
-      [id in PlatformId]: GenericResult;
-    }
-  | {
-      [id in PlatformId]: GenericResult[];
+      [id in PlatformId]: CombinedResult | CombinedResult[];
     };
 
 class Fairpost {
@@ -121,9 +117,11 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
-          const result = await feed.setupPlatform(args.platform);
           output = {
-            [args.platform]: result,
+            [args.platform]: {
+              success: true,
+              result: await feed.setupPlatform(args.platform),
+            },
           };
           break;
         }
@@ -183,7 +181,10 @@ class Fairpost {
           }
           const feed = user.getFeed();
           output = {
-            [args.platform]: await feed.testPlatform(args.platform),
+            [args.platform]: {
+              success: true,
+              result: await feed.testPlatform(args.platform),
+            },
           };
           break;
         }
@@ -212,7 +213,12 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          output = await feed.refreshPlatform(args.platform);
+          output = {
+            [args.platform]: {
+              success: true,
+              result: await feed.refreshPlatform(args.platform),
+            },
+          };
           break;
         }
         case "refresh-platforms": {
@@ -368,15 +374,20 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const result = await feed.preparePost(args.source, args.platform);
 
-          // should really just throw an error or return a post
-          output = {
-            success: result.success,
-            result: (result.result as Post)?.mapper.getDto(operator),
-            message: result.message,
-          };
-
+          try {
+            output = {
+              success: true,
+              result: (
+                await feed.preparePost(args.source, args.platform)
+              ).mapper.getDto(operator),
+            };
+          } catch (e) {
+            output = {
+              success: false,
+              message: e instanceof Error ? e.message : JSON.stringify(e),
+            };
+          }
           break;
         }
         case "prepare-posts": {
@@ -397,10 +408,10 @@ class Fairpost {
             sources: args.sources,
             platforms: args.platforms,
           });
-          const mappedResults: { [id in PlatformId]?: GenericResult[] } = {};
+          const mappedResults: { [id in PlatformId]?: CombinedResult[] } = {};
           for (const platformId in allResults) {
             const platformResults = allResults[platformId as PlatformId];
-            mappedResults[platformId as PlatformId] = [] as GenericResult[];
+            mappedResults[platformId as PlatformId] = [] as CombinedResult[];
             if (platformResults) {
               const mappedResult = platformResults.map((r) => {
                 return {
