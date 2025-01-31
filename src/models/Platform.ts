@@ -24,7 +24,6 @@ export default class Platform {
   defaultBody: string = "Fairpost feed";
   assetsFolder: string = "_fairpost";
   postFileName: string = "post.json";
-  //pluginsKey: string | undefined = undefined;
   mapper: PlatformMapper;
   settings: FieldMapping = {};
 
@@ -42,18 +41,6 @@ export default class Platform {
    */
   static id(): PlatformId {
     return this.name.toLowerCase() as PlatformId;
-  }
-  /**
-   * Return a small report for this feed
-   * @returns the report in text
-   */
-
-  report(): string {
-    this.user.trace(this.id, "report");
-    let report = "";
-    report += "\nPlatform: " + this.id;
-    report += "\n - active: " + this.active;
-    return report;
   }
 
   /**
