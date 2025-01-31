@@ -1,5 +1,6 @@
 import * as fs from "fs";
 
+import { GenericResult } from "../types";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
@@ -55,25 +56,25 @@ export default class Feed {
    * @param platformId - the slug of the platform
    * @returns object with properties success, test or error
    */
-  async setupPlatform(platformId: PlatformId): Promise<unknown> {
+  async setupPlatform(platformId: PlatformId): Promise<GenericResult> {
     this.user.trace("Feed", "setupPlatform", platformId);
     const platform = this.getPlatform(platformId);
     try {
       await platform.setup();
       return {
         success: true,
-        test: await platform.test(),
+        result: await platform.test(),
       };
     } catch (e) {
       if (e instanceof Error) {
         return {
           success: false,
-          error: e.message,
+          message: e.message,
         };
       } else {
         return {
           success: false,
-          error: JSON.stringify(e),
+          message: JSON.stringify(e),
         };
       }
     }
@@ -86,12 +87,18 @@ export default class Feed {
    */
   async setupPlatforms(
     platformsIds?: PlatformId[],
-  ): Promise<{ [id: string]: unknown }> {
+  ): Promise<{ [id in PlatformId]?: GenericResult }> {
     this.user.trace("Feed", "setupPlatforms", platformsIds);
-    const results = {} as { [id: string]: unknown };
+    const results = {} as {
+      [id: string]: {
+        success: boolean;
+        result?: unknown;
+        message?: string;
+      };
+    };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
-      results[platformId] = this.setupPlatform(platformId);
+      results[platformId] = await this.setupPlatform(platformId);
     }
     return results;
   }
@@ -127,9 +134,29 @@ export default class Feed {
    * @param platformId - the slug of the platform
    * @returns the test result
    */
-  async testPlatform(platformId: PlatformId): Promise<unknown> {
+  async testPlatform(platformId: PlatformId): Promise<GenericResult> {
     this.user.trace("Feed", "testPlatform", platformId);
-    return await this.getPlatform(platformId).test();
+    //return await this.getPlatform(platformId).test();
+    const platform = this.getPlatform(platformId);
+    try {
+      await platform.setup();
+      return {
+        success: true,
+        result: await platform.test(),
+      };
+    } catch (e) {
+      if (e instanceof Error) {
+        return {
+          success: false,
+          message: e.message,
+        };
+      } else {
+        return {
+          success: false,
+          message: JSON.stringify(e),
+        };
+      }
+    }
   }
 
   /**
@@ -139,7 +166,7 @@ export default class Feed {
    */
   async testPlatforms(
     platformsIds?: PlatformId[],
-  ): Promise<{ [id: string]: unknown }> {
+  ): Promise<{ [id in PlatformId]?: GenericResult }> {
     this.user.trace("Feed", "testPlatforms", platformsIds);
     const results = {} as { [id: string]: unknown };
     for (const platformId of platformsIds ??
@@ -154,13 +181,26 @@ export default class Feed {
    * @param platformId - the slug of the platform
    * @returns the refresh result
    */
-  async refreshPlatform(platformId: PlatformId): Promise<boolean> {
+  async refreshPlatform(platformId: PlatformId): Promise<GenericResult> {
     this.user.trace("Feed", "refreshPlatform", platformId);
     try {
-      return await this.getPlatform(platformId).refresh();
-    } catch (error) {
-      this.user.error("Feed", "refreshPlatform", error);
-      return false;
+      return {
+        success: true,
+        result: await this.getPlatform(platformId).refresh(),
+      };
+    } catch (e) {
+      this.user.error("Feed", "refreshPlatform", e);
+      if (e instanceof Error) {
+        return {
+          success: false,
+          message: e.message,
+        };
+      } else {
+        return {
+          success: false,
+          message: JSON.stringify(e),
+        };
+      }
     }
   }
 
@@ -171,9 +211,9 @@ export default class Feed {
    */
   async refreshPlatforms(
     platformsIds?: PlatformId[],
-  ): Promise<{ [id: string]: boolean }> {
+  ): Promise<{ [id in PlatformId]?: GenericResult }> {
     this.user.trace("Feed", "refreshPlatforms", platformsIds);
-    const results = {} as { [id: string]: boolean };
+    const results = {} as { [id in PlatformId]?: GenericResult };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
       results[platformId] = await this.refreshPlatform(platformId);
@@ -326,11 +366,15 @@ export default class Feed {
   async preparePost(
     path: string,
     platformId: PlatformId,
-  ): Promise<Post | undefined> {
+  ): Promise<GenericResult> {
     this.user.trace("Feed", "preparePost", path, platformId);
     return (
-      await this.preparePosts({ sources: [path], platforms: [platformId] })
-    )[0];
+      (await this.preparePosts({ sources: [path], platforms: [platformId] }))[
+        platformId
+      ]?.[0] ?? {
+        success: false,
+      }
+    );
   }
 
   /**
@@ -342,23 +386,34 @@ export default class Feed {
   async preparePosts(filters?: {
     sources?: string[];
     platforms?: PlatformId[];
-  }): Promise<Post[]> {
+  }): Promise<{ [id in PlatformId]?: GenericResult[] }> {
     this.user.trace("Feed", "preparePosts", filters);
-    const posts: Post[] = [];
+    const results: { [id in PlatformId]?: GenericResult[] } = {};
     const platforms = this.getPlatforms(filters?.platforms);
     const sources = this.getSources(filters?.sources);
     for (const source of sources) {
       for (const platform of platforms) {
         const post = platform.getPost(source);
         if (post?.status !== PostStatus.PUBLISHED) {
-          const newPost = await platform.preparePost(source);
-          if (newPost) {
-            posts.push(newPost);
+          if (!results[platform.id]) {
+            results[platform.id] = [];
+          }
+          try {
+            results[platform.id]?.push({
+              success: true,
+              result: await platform.preparePost(source),
+            });
+          } catch (e) {
+            this.user.error("Feed", "preparePosts", e);
+            results[platform.id]?.push({
+              success: false,
+              message: e instanceof Error ? e.message : JSON.stringify(e),
+            });
           }
         }
       }
     }
-    return posts;
+    return results;
   }
 
   /**

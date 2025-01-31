@@ -25,7 +25,6 @@ const COMMAND = process.argv[2]?.includes("@")
 const DRY_RUN = !!getOption("dry-run");
 const OPERATOR = (getOption("operator") as string) ?? "admin";
 const TARGETUSER = (getOption("target-user") as string) ?? "";
-const OUTPUT = (getOption("output") as string) ?? "json";
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
 const SOURCES = (getOption("sources") as string)?.split(",") ?? undefined;
@@ -53,7 +52,7 @@ async function main() {
   const user = USER ? new User(USER) : undefined;
 
   try {
-    const { result, report } = await Fairpost.execute(operator, user, COMMAND, {
+    const output = await Fairpost.execute(operator, user, COMMAND, {
       dryrun: DRY_RUN,
       targetuser: TARGETUSER,
       platforms: PLATFORMS,
@@ -64,15 +63,7 @@ async function main() {
       status: STATUS,
     });
 
-    switch (OUTPUT) {
-      case "json": {
-        console.log(JSON.stringify(result, JSONReplacer, "\t"));
-        break;
-      }
-      default: {
-        console.log(report);
-      }
-    }
+    console.info(JSON.stringify(output, JSONReplacer, "\t"));
   } catch (e) {
     console.error((e as Error).message ?? e);
   }

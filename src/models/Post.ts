@@ -55,23 +55,6 @@ export default class Post {
   }
 
   /**
-   * Return a small report for this post
-   * @returns the report in text
-   */
-
-  report(): string {
-    this.platform.user.trace("Post", "report");
-    let report = "";
-    report += "\nPost: " + this.id;
-    report += "\n - valid: " + this.valid;
-    report += "\n - status: " + this.status;
-    report += "\n - scheduled: " + this.scheduled;
-    report += "\n - published: " + this.published;
-    report += "\n - link: " + this.link;
-    return report;
-  }
-
-  /**
    * Save this post to disk
    */
 
@@ -81,6 +64,7 @@ export default class Post {
     const data = { ...this } as { [key: string]: any };
     delete data.source;
     delete data.platform;
+    delete data.mapper;
     fs.writeFileSync(
       this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),
