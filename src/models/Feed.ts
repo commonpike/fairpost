@@ -181,9 +181,20 @@ export default class Feed {
     const results = {} as { [id in PlatformId]?: CombinedResult };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
-      results[platformId] = {
-        success: await this.refreshPlatform(platformId),
-      };
+      try {
+        await this.refreshPlatform(platformId);
+        // if it doesnt throw an error, thats success,
+        // even if it returns false because fe it
+        // didnt need to refresh
+        results[platformId] = {
+          success: true,
+        };
+      } catch (e) {
+        results[platformId] = {
+          success: false,
+          message: e instanceof Error ? e.message : JSON.stringify(e),
+        };
+      }
     }
     return results;
   }

@@ -5,31 +5,39 @@ import Post from "../models/Post";
 import { PostStatus, PostResult } from "../models/Post";
 import { FileInfo } from "../models/Source";
 
-interface PostDto extends Dto {
-  id?: string;
-  user_id?: string;
-  platform_id?: string;
-  source_id?: string;
-  valid?: boolean;
-  skip?: boolean;
-  status?: PostStatus;
-  scheduled?: string; // date
-  published?: string; // date
-  title?: string;
-  body?: string;
-  tags?: string[];
-  mentions?: string[];
-  geo?: string;
-  files?: FileInfo[];
-  ignore_files?: string[];
-  results?: PostResult[];
-  remoteId?: string;
-  link?: string;
-}
+export interface PostDto
+  extends Dto<{
+    model?: string;
+    id?: string;
+    user_id?: string;
+    platform_id?: string;
+    source_id?: string;
+    valid?: boolean;
+    skip?: boolean;
+    status?: PostStatus;
+    scheduled?: string; // date
+    published?: string; // date
+    title?: string;
+    body?: string;
+    tags?: string[];
+    mentions?: string[];
+    geo?: string;
+    files?: FileInfo[];
+    ignore_files?: string[];
+    results?: PostResult[];
+    remote_id?: string;
+    link?: string;
+  }> {}
 
-export default class PostMapper extends AbstractMapper {
+export default class PostMapper extends AbstractMapper<PostDto> {
   private post: Post;
   mapping: FieldMapping = {
+    model: {
+      type: "string",
+      label: "Model",
+      get: ["any"],
+      set: ["none"],
+    },
     id: {
       type: "string",
       label: "ID",
@@ -161,6 +169,9 @@ export default class PostMapper extends AbstractMapper {
     const dto: PostDto = {};
     fields.forEach((field) => {
       switch (field) {
+        case "model":
+          dto[field] = "post";
+          break;
         case "id":
           dto[field] = this.post.id;
           break;
@@ -238,28 +249,28 @@ export default class PostMapper extends AbstractMapper {
             this.post.skip = !!dto[field];
             break;
           case "scheduled":
-            this.post.scheduled = new Date(dto[field] ?? "");
+            this.post.scheduled = new Date((dto.scheduled as string) ?? "");
             break;
           case "title":
-            this.post.title = dto[field] ?? "";
+            this.post.title = (dto[field] as string) ?? "";
             break;
           case "body":
-            this.post.body = dto[field] ?? "";
+            this.post.body = (dto[field] as string) ?? "";
             break;
           case "tags":
-            this.post.tags = dto[field] ?? [];
+            this.post.tags = (dto[field] as string[]) ?? [];
             break;
           case "mentions":
-            this.post.mentions = dto[field] ?? [];
+            this.post.mentions = (dto[field] as string[]) ?? [];
             break;
           case "geo":
-            this.post.geo = dto[field] ?? "";
+            this.post.geo = (dto[field] as string) ?? "";
             break;
           case "files":
-            this.post.files = dto[field] ?? [];
+            this.post.files = (dto[field] as FileInfo[]) ?? [];
             break;
           case "ignore_files":
-            this.post.ignoreFiles = dto[field] ?? [];
+            this.post.ignoreFiles = (dto[field] as string[]) ?? [];
             break;
         }
       } else {

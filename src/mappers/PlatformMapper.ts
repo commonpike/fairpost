@@ -3,16 +3,25 @@ import { Dto, FieldMapping } from "./AbstractMapper";
 import Operator from "../models/Operator";
 import Platform from "../models/Platform";
 
-interface PlatformDto extends Dto {
-  id?: string;
-  user_id?: string;
-  active?: boolean;
-  // more fields added by platform
-}
+export interface PlatformDto
+  extends Dto<{
+    model?: string;
+    id?: string;
+    user_id?: string;
+    active?: boolean;
+    // more fields added by platform
+    [key: string]: string | string[] | number | boolean | undefined;
+  }> {}
 
-export default class PlatformMapper extends AbstractMapper {
+export default class PlatformMapper extends AbstractMapper<PlatformDto> {
   private platform: Platform;
   mapping: FieldMapping = {
+    model: {
+      type: "string",
+      label: "Model",
+      get: ["any"],
+      set: ["none"],
+    },
     id: {
       type: "string",
       label: "ID",
@@ -53,6 +62,9 @@ export default class PlatformMapper extends AbstractMapper {
     const dto: PlatformDto = {};
     fields.forEach((field) => {
       switch (field) {
+        case "model":
+          dto[field] = "platform";
+          break;
         case "id":
           dto[field] = this.platform.id;
           break;
@@ -71,6 +83,9 @@ export default class PlatformMapper extends AbstractMapper {
               dto[field] = String(this.user.get("settings", field, "")).split(
                 ",",
               );
+              break;
+            case "boolean":
+              dto[field] = this.user.get("settings", field, "") === "true";
               break;
             case "integer":
               dto[field] = parseInt(this.user.get("settings", field, ""));
@@ -123,6 +138,9 @@ export default class PlatformMapper extends AbstractMapper {
                   field,
                   (dto[field] as string[]).join(","),
                 );
+                break;
+              case "boolean":
+                this.user.set("settings", field, dto[field] ? "true" : "false");
                 break;
               case "json":
                 this.user.set("settings", field, JSON.stringify(dto[field]));

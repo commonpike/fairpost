@@ -2,13 +2,22 @@ import AbstractMapper from "./AbstractMapper";
 import { Dto, FieldMapping } from "./AbstractMapper";
 import Operator from "../models/Operator";
 
-interface UserDto extends Dto {
-  id?: string;
-  homedir?: string;
-}
+export interface UserDto
+  extends Dto<{
+    model?: string;
+    id?: string;
+    homedir?: string;
+    loglevel?: string;
+  }> {}
 
-export default class UserMapper extends AbstractMapper {
+export default class UserMapper extends AbstractMapper<UserDto> {
   mapping: FieldMapping = {
+    model: {
+      type: "string",
+      label: "Model",
+      get: ["any"],
+      set: ["none"],
+    },
     id: {
       type: "string",
       label: "ID",
@@ -42,6 +51,9 @@ export default class UserMapper extends AbstractMapper {
     const dto: UserDto = {};
     fields.forEach((field) => {
       switch (field) {
+        case "model":
+          dto[field] = "user";
+          break;
         case "id":
           dto[field] = this.user.id;
           break;

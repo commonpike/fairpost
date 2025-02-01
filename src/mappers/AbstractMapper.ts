@@ -1,5 +1,7 @@
 import User from "../models/User";
 import Operator from "../models/Operator";
+import { FileInfo } from "../models/Source";
+import { PostStatus, PostResult } from "../models/Post";
 
 export interface FieldMapping {
   [field: string]: {
@@ -18,17 +20,17 @@ export interface FieldMapping {
     default?: string | string[] | number | boolean | Date | object;
   };
 }
-
-export interface Dto {
-  [key: string]:
+export type Dto<T extends Record<string, unknown> = Record<string, unknown>> = {
+  [K in keyof T]:
     | string
     | string[]
     | number
     | boolean
-    | Date
-    | object
+    | FileInfo[]
+    | PostResult[]
+    | PostStatus
     | undefined;
-}
+};
 
 /**
  * AbstractMapper - base for all mappers
@@ -47,7 +49,7 @@ export interface Dto {
  *
  */
 
-export default abstract class AbstractMapper {
+export default abstract class AbstractMapper<ModelDto extends Dto> {
   protected user: User;
 
   constructor(user: User) {
@@ -84,7 +86,7 @@ export default abstract class AbstractMapper {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  abstract getDto(operator: Operator): Dto;
+  abstract getDto(operator: Operator): ModelDto;
 
   /**
    * Insert a given dto based on the operator
@@ -92,7 +94,7 @@ export default abstract class AbstractMapper {
    * @param dto
    * @returns boolean success
    */
-  abstract setDto(operator: Operator, dto: Dto): boolean;
+  abstract setDto(operator: Operator, dto: ModelDto): boolean;
 
   protected getDtoFields(
     operator: Operator,

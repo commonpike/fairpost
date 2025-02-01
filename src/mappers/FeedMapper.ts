@@ -3,18 +3,26 @@ import { Dto, FieldMapping } from "./AbstractMapper";
 import Operator from "../models/Operator";
 import Feed from "../models/Feed";
 
-interface FeedDto extends Dto {
-  id?: string;
-  user_id?: string;
-  path?: string;
-  platforms?: string[];
-  sources?: string[];
-  interval?: number;
-}
+export interface FeedDto
+  extends Dto<{
+    model?: string;
+    id?: string;
+    user_id?: string;
+    path?: string;
+    platforms?: string[];
+    sources?: string[];
+    interval?: number;
+  }> {}
 
-export default class FeedMapper extends AbstractMapper {
+export default class FeedMapper extends AbstractMapper<FeedDto> {
   private feed: Feed;
   mapping: FieldMapping = {
+    model: {
+      type: "string",
+      label: "Model",
+      get: ["any"],
+      set: ["none"],
+    },
     id: {
       type: "string",
       label: "ID",
@@ -71,6 +79,9 @@ export default class FeedMapper extends AbstractMapper {
     const dto: FeedDto = {};
     fields.forEach((field) => {
       switch (field) {
+        case "model":
+          dto[field] = "feed";
+          break;
         case "id":
           dto[field] = this.feed.id;
           break;

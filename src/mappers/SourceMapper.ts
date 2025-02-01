@@ -3,16 +3,24 @@ import { Dto, FieldMapping } from "./AbstractMapper";
 import Operator from "../models/Operator";
 import Source from "../models/Source";
 
-interface SourceDto extends Dto {
-  id?: string;
-  user_id?: string;
-  feed_id?: string;
-  path?: string;
-}
+export interface SourceDto
+  extends Dto<{
+    model?: string;
+    id?: string;
+    user_id?: string;
+    feed_id?: string;
+    path?: string;
+  }> {}
 
-export default class SourceMapper extends AbstractMapper {
+export default class SourceMapper extends AbstractMapper<SourceDto> {
   private source: Source;
   mapping: FieldMapping = {
+    model: {
+      type: "string",
+      label: "Model",
+      get: ["any"],
+      set: ["none"],
+    },
     id: {
       type: "string",
       label: "ID",
@@ -54,6 +62,9 @@ export default class SourceMapper extends AbstractMapper {
     const dto: SourceDto = {};
     fields.forEach((field) => {
       switch (field) {
+        case "model":
+          dto[field] = "source";
+          break;
         case "id":
           dto[field] = this.source.id;
           break;

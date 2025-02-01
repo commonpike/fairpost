@@ -8,17 +8,31 @@ import * as log4js from "log4js";
 import { CombinedResult } from "../types";
 import { PlatformId } from "../platforms";
 import { Dto } from "../mappers/AbstractMapper";
+import { FeedDto } from "../mappers/FeedMapper";
+import { PlatformDto } from "../mappers/PlatformMapper";
+import { PostDto } from "../mappers/PostMapper";
+import { SourceDto } from "../mappers/SourceMapper";
+import { UserDto } from "../mappers/UserMapper";
+
 import Post, { PostStatus } from "../models/Post";
 import Server from "../services/Server";
 import Operator from "../models/Operator";
 import User from "../models/User";
 
 type FairpostOutput =
-  | Dto
-  | Dto[]
+  | FeedDto
+  | PlatformDto
+  | PostDto
+  | SourceDto
+  | UserDto
+  | FeedDto[]
+  | PlatformDto[]
+  | PostDto[]
+  | SourceDto[]
+  | UserDto[]
   | CombinedResult[]
   | {
-      [id in PlatformId]: CombinedResult | CombinedResult[];
+      [id in PlatformId]?: CombinedResult | CombinedResult[];
     };
 
 class Fairpost {
@@ -247,12 +261,7 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const source = feed.getSource(args.source);
-          if (source) {
-            output = source.mapper.getDto(operator);
-          } else {
-            // feed should fail ?
-            throw new Error("Source not found:" + args.source);
-          }
+          output = source.mapper.getDto(operator);
           break;
         }
         case "get-sources": {
@@ -264,11 +273,7 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const sources = feed.getSources(args.sources);
-          const dtos = [] as Dto[];
-          sources.forEach((source) => {
-            dtos.push(source.mapper.getDto(operator));
-          });
-          output = dtos;
+          output = sources.map((source) => source.mapper.getDto(operator));
           break;
         }
         /* move to feed ?
@@ -374,20 +379,8 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
+          feed.preparePost(args.source, args.platform);
 
-          try {
-            output = {
-              success: true,
-              result: (
-                await feed.preparePost(args.source, args.platform)
-              ).mapper.getDto(operator),
-            };
-          } catch (e) {
-            output = {
-              success: false,
-              message: e instanceof Error ? e.message : JSON.stringify(e),
-            };
-          }
           break;
         }
         case "prepare-posts": {
@@ -623,18 +616,11 @@ class Fairpost {
           if (!permissions.manageServer) {
             throw new Error("Missing permissions for command " + command);
           }
-          try {
-            const result = await Server.serve();
-            output = {
-              success: true,
-              result: result,
-            };
-          } catch (e) {
-            output = {
-              success: false,
-              message: e instanceof Error ? e.message : JSON.stringify(e),
-            };
-          }
+          output = {
+            success: true,
+            result: await Server.serve(),
+          };
+
           break;
         }
 
