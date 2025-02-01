@@ -1,7 +1,7 @@
 import AbstractMapper from "./AbstractMapper";
 import { Dto, FieldMapping } from "./AbstractMapper";
 import Operator from "../models/Operator";
-import Source from "../models/Source";
+import Source, { FileInfo } from "../models/Source";
 
 export interface SourceDto
   extends Dto<{
@@ -10,6 +10,7 @@ export interface SourceDto
     user_id?: string;
     feed_id?: string;
     path?: string;
+    files?: FileInfo;
   }> {}
 
 export default class SourceMapper extends AbstractMapper<SourceDto> {
@@ -45,6 +46,12 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
       get: ["manageSources"],
       set: ["none"],
     },
+    files: {
+      type: "json",
+      label: "Files",
+      get: ["manageSources"],
+      set: ["manageSources"],
+    },
   };
 
   constructor(source: Source) {
@@ -77,6 +84,9 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
         case "path":
           dto[field] = this.source.path;
           break;
+        case "files":
+          // dto[field] = await this.source.getFiles(); // mmm async
+          break;
       }
     });
     return dto;
@@ -92,7 +102,12 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {
-        // no fields are settable yet. upload here ?
+        switch (field) {
+          // upload here ?
+          case "files":
+            this.source.files = (dto[field] as FileInfo[]) ?? [];
+            break;
+        }
       } else {
         throw this.user.error("Unknown field: " + field);
       }
