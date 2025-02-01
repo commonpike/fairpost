@@ -4,6 +4,8 @@ import Platform from "../../models/Platform";
 import Post from "../../models/Post";
 import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth";
+import { FieldMapping } from "../../mappers/AbstractMapper";
+import PlatformMapper from "../../mappers/PlatformMapper";
 import User from "../../models/User";
 
 /**
@@ -22,12 +24,29 @@ export default class Twitter extends Platform {
       max_size: 5000,
     },
   };
-
+  settings: FieldMapping = {
+    TWITTER_OA1_ADDITIONAL_OWNER: {
+      type: "string",
+      label: "Twitter additional owner (for OAuth1 file uploads)",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    TWITTER_PLUGIN_SETTINGS: {
+      type: "json",
+      label: "Twitter Plugin settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false,
+      default: this.pluginSettings,
+    },
+  };
   auth: TwitterAuth;
 
   constructor(user: User) {
     super(user);
     this.auth = new TwitterAuth(user);
+    this.mapper = new PlatformMapper(this);
   }
 
   /** @inheritdoc */

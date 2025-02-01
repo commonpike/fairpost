@@ -64,7 +64,6 @@ export default class Server {
     ];
     const userid = username.replace("@", "");
     const dryrun = parsed.searchParams.get("dry-run") === "true";
-    const output = parsed.searchParams.get("output") ?? "json";
     const targetuser = parsed.searchParams.get("target-user") || undefined;
     const date = parsed.searchParams.get("date");
     const post = parsed.searchParams.get("post");
@@ -93,26 +92,19 @@ export default class Server {
     };
 
     let code = 0;
-    let result = undefined;
-    let report = "";
+    let output = undefined;
     let error = false as boolean | unknown;
     try {
       const operator = Server.getOperator(userid, request);
       const user = new User(userid);
-      ({ result, report } = await Fairpost.execute(
-        operator,
-        user,
-        command,
-        args,
-      ));
+      output = await Fairpost.execute(operator, user, command, args);
       code = 200;
       Fairpost.logger.trace("Server.handleRequest", "success", request.url);
     } catch (e) {
       Fairpost.logger.error("Server.handleRequest", "error", request.url);
       code = 500;
       error = e;
-      result = {};
-      report = "";
+      output = {};
     }
 
     response.setHeader("Content-Type", "application/json");
@@ -126,7 +118,7 @@ export default class Server {
             command: command,
             arguments: args,
           },
-          result: output === "json" ? result : report,
+          result: output,
           error:
             error === false
               ? false

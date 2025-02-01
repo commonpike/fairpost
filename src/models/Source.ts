@@ -2,6 +2,8 @@ import * as fs from "fs";
 import * as path from "path";
 
 import sharp from "sharp";
+import Feed from "./Feed";
+import SourceMapper from "../mappers/SourceMapper";
 
 /**
  * Source - a folder within a feed
@@ -11,29 +13,20 @@ import sharp from "sharp";
  * a folder on a filesystem.
  */
 export default class Source {
+  feed: Feed;
   id: string;
   path: string;
   files?: FileInfo[];
+  mapper: SourceMapper;
 
-  constructor(path: string) {
+  constructor(feed: Feed, path: string) {
     if (!fs.statSync(path).isDirectory()) {
       throw new Error("No such source: " + path);
     }
-    this.id = path.replace(/^\//, "").split("/").slice(1).join("/");
+    this.feed = feed;
+    this.id = path.replace(feed.path + "/", "");
     this.path = path;
-  }
-
-  /**
-   * Return a small report for this feed
-   * @returns the report in text
-   */
-
-  report(): string {
-    let report = "";
-    report += "\nSource: " + this.id;
-    report += "\n - path: " + this.path;
-    report += "\n - files: " + this.getFileNames();
-    return report;
+    this.mapper = new SourceMapper(this);
   }
 
   /**

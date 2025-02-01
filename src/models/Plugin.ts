@@ -28,17 +28,6 @@ export default class Plugin {
   }
 
   /**
-   * Return a small report for this post
-   * @returns the report in text
-   */
-
-  report(): string {
-    let report = "";
-    report += "\nPlugin: " + this.id;
-    return report;
-  }
-
-  /**
    * Process the post
    */
 

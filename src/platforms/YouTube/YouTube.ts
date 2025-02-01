@@ -6,6 +6,8 @@ import Platform from "../../models/Platform";
 import Post from "../../models/Post";
 import User from "../../models/User";
 import YouTubeAuth from "./YouTubeAuth";
+import { FieldMapping } from "../../mappers/AbstractMapper";
+import PlatformMapper from "../../mappers/PlatformMapper";
 
 export default class YouTube extends Platform {
   assetsFolder = "_youtube";
@@ -17,7 +19,31 @@ export default class YouTube extends Platform {
       video_max: 1,
     },
   };
-
+  settings: FieldMapping = {
+    YOUTUBE_CATEGORY: {
+      type: "string",
+      label: "Youtube category",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    YOUTUBE_PRIVACY: {
+      type: "string",
+      label: "Youtube privacy",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false, // ?
+      // default: public
+    },
+    YOUTUBE_PLUGIN_SETTINGS: {
+      type: "json",
+      label: "Youtube Plugin settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false,
+      default: this.pluginSettings,
+    },
+  };
   auth: YouTubeAuth;
 
   // post defaults
@@ -33,6 +59,7 @@ export default class YouTube extends Platform {
   constructor(user: User) {
     super(user);
     this.auth = new YouTubeAuth(user);
+    this.mapper = new PlatformMapper(this);
   }
 
   /** @inheritdoc */

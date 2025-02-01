@@ -4,6 +4,7 @@ import Source, { FileGroup, FileInfo } from "./Source";
 
 import Platform from "./Platform";
 import { isSimilarArray } from "../utilities";
+import PostMapper from "../mappers/PostMapper";
 
 /**
  * Post - a post within a source
@@ -32,6 +33,7 @@ export default class Post {
   ignoreFiles?: string[];
   link?: string;
   remoteId?: string;
+  mapper: PostMapper;
 
   constructor(source: Source, platform: Platform, data?: object) {
     this.source = source;
@@ -49,23 +51,7 @@ export default class Post {
     if (!fs.existsSync(assetsPath)) {
       fs.mkdirSync(assetsPath, { recursive: true });
     }
-  }
-
-  /**
-   * Return a small report for this post
-   * @returns the report in text
-   */
-
-  report(): string {
-    this.platform.user.trace("Post", "report");
-    let report = "";
-    report += "\nPost: " + this.id;
-    report += "\n - valid: " + this.valid;
-    report += "\n - status: " + this.status;
-    report += "\n - scheduled: " + this.scheduled;
-    report += "\n - published: " + this.published;
-    report += "\n - link: " + this.link;
-    return report;
+    this.mapper = new PostMapper(this);
   }
 
   /**
@@ -78,6 +64,7 @@ export default class Post {
     const data = { ...this } as { [key: string]: any };
     delete data.source;
     delete data.platform;
+    delete data.mapper;
     fs.writeFileSync(
       this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),

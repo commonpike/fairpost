@@ -5,6 +5,8 @@ import { handleApiError, handleEmptyResponse } from "../../utilities";
 
 import LinkedInApi from "./LinkedInApi";
 import LinkedInAuth from "./LinkedInAuth";
+import { FieldMapping } from "../../mappers/AbstractMapper";
+import PlatformMapper from "../../mappers/PlatformMapper";
 import Platform from "../../models/Platform";
 import Post from "../../models/Post";
 import User from "../../models/User";
@@ -21,7 +23,23 @@ export default class LinkedIn extends Platform {
       max_size: 5000,
     },
   };
-
+  settings: FieldMapping = {
+    LINKEDIN_COMPANY_ID: {
+      type: "string",
+      label: "LinkedIn Company ID",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    LINKEDIN_PLUGIN_SETTINGS: {
+      type: "json",
+      label: "LinkedIn Plugin settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false,
+      default: this.pluginSettings,
+    },
+  };
   api: LinkedInApi;
   auth: LinkedInAuth;
 
@@ -38,6 +56,7 @@ export default class LinkedIn extends Platform {
     super(user);
     this.api = new LinkedInApi(user);
     this.auth = new LinkedInAuth(user);
+    this.mapper = new PlatformMapper(this);
     this.POST_AUTHOR =
       "urn:li:organization:" +
       this.user.get("settings", "LINKEDIN_COMPANY_ID", "");

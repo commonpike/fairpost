@@ -5,6 +5,9 @@ import Source, { FileGroup } from "../../models/Source";
 
 import FacebookApi from "./FacebookApi";
 import FacebookAuth from "./FacebookAuth";
+import { FieldMapping } from "../../mappers/AbstractMapper";
+import PlatformMapper from "../../mappers/PlatformMapper";
+
 import Platform from "../../models/Platform";
 import Post from "../../models/Post";
 import User from "../../models/User";
@@ -28,6 +31,30 @@ export default class Facebook extends Platform {
       max_size: 4000,
     },
   };
+  settings: FieldMapping = {
+    FACEBOOK_PAGE_ID: {
+      type: "string",
+      label: "Facebook Page ID",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    FACEBOOK_PUBLISH_POSTS: {
+      type: "boolean",
+      label: "Facebook Publish posts automatically",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false,
+    },
+    FACEBOOK_PLUGIN_SETTINGS: {
+      type: "json",
+      label: "Facebook Plugin settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false,
+      default: this.pluginSettings,
+    },
+  };
 
   api: FacebookApi;
   auth: FacebookAuth;
@@ -36,6 +63,7 @@ export default class Facebook extends Platform {
     super(user);
     this.auth = new FacebookAuth(user);
     this.api = new FacebookApi(user);
+    this.mapper = new PlatformMapper(this);
   }
 
   /** @inheritdoc */

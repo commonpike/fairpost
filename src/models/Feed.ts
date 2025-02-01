@@ -1,8 +1,10 @@
 import * as fs from "fs";
 
+import { CombinedResult } from "../types";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
+import FeedMapper from "../mappers/FeedMapper";
 import { PostStatus } from "./Post";
 import Source from "./Source";
 import User from "./User";
@@ -24,6 +26,7 @@ export default class Feed {
   } = {};
   sources: Source[] = [];
   interval: number;
+  mapper: FeedMapper;
 
   /**
    * The constructor reads the dotenv file, then reads all
@@ -45,54 +48,20 @@ export default class Feed {
       .replace("%user%", this.user.id);
     this.id = this.user.id + ":feed";
     this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
-  }
-
-  /**
-   * Return a small report for this feed
-   * @returns the report in text
-   */
-
-  report(): string {
-    this.user.trace("Feed", "report");
-    let report = "";
-    report += "\nFeed: " + this.id;
-    report += "\n - path: " + this.path;
-    report += "\n - platforms: " + Object.keys(this.platforms).join();
-    report +=
-      "\n - sources: " +
-      this.getSources()
-        .map((f) => f.id)
-        .join();
-    return report;
+    this.mapper = new FeedMapper(this);
   }
 
   /**
    * Set up one platform
    * @param platformId - the slug of the platform
-   * @returns object with properties success, test or error
+   * @returns an object resulting from a test - unknown
+   * @throws error if either the setup or the test fail
    */
   async setupPlatform(platformId: PlatformId): Promise<unknown> {
     this.user.trace("Feed", "setupPlatform", platformId);
     const platform = this.getPlatform(platformId);
-    try {
-      await platform.setup();
-      return {
-        success: true,
-        test: await platform.test(),
-      };
-    } catch (e) {
-      if (e instanceof Error) {
-        return {
-          success: false,
-          error: e.message,
-        };
-      } else {
-        return {
-          success: false,
-          error: JSON.stringify(e),
-        };
-      }
-    }
+    await platform.setup();
+    return await platform.test();
   }
 
   /**
@@ -102,12 +71,24 @@ export default class Feed {
    */
   async setupPlatforms(
     platformsIds?: PlatformId[],
-  ): Promise<{ [id: string]: unknown }> {
+  ): Promise<{ [id in PlatformId]?: CombinedResult }> {
     this.user.trace("Feed", "setupPlatforms", platformsIds);
-    const results = {} as { [id: string]: unknown };
+    const results = {} as {
+      [id in PlatformId]: CombinedResult;
+    };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
-      results[platformId] = this.setupPlatform(platformId);
+      try {
+        results[platformId] = {
+          success: true,
+          result: await this.setupPlatform(platformId),
+        };
+      } catch (e) {
+        results[platformId] = {
+          success: false,
+          message: e instanceof Error ? e.message : JSON.stringify(e),
+        };
+      }
     }
     return results;
   }
@@ -142,10 +123,12 @@ export default class Feed {
    * Test one platform
    * @param platformId - the slug of the platform
    * @returns the test result
+   * @throws an error if it fails
    */
   async testPlatform(platformId: PlatformId): Promise<unknown> {
     this.user.trace("Feed", "testPlatform", platformId);
-    return await this.getPlatform(platformId).test();
+    const platform = this.getPlatform(platformId);
+    return await platform.test();
   }
 
   /**
@@ -155,12 +138,22 @@ export default class Feed {
    */
   async testPlatforms(
     platformsIds?: PlatformId[],
-  ): Promise<{ [id: string]: unknown }> {
+  ): Promise<{ [id in PlatformId]?: CombinedResult }> {
     this.user.trace("Feed", "testPlatforms", platformsIds);
-    const results = {} as { [id: string]: unknown };
+    const results = {} as { [id in PlatformId]: CombinedResult };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
-      results[platformId] = await this.testPlatform(platformId);
+      try {
+        results[platformId] = {
+          success: true,
+          result: [await this.testPlatform(platformId)],
+        };
+      } catch (e) {
+        results[platformId] = {
+          success: false,
+          message: e instanceof Error ? e.message : JSON.stringify(e),
+        };
+      }
     }
     return results;
   }
@@ -168,16 +161,12 @@ export default class Feed {
   /**
    * Refresh one platform
    * @param platformId - the slug of the platform
-   * @returns the refresh result
+   * @returns the refresh result boolean
+   * @throws error if it fails
    */
   async refreshPlatform(platformId: PlatformId): Promise<boolean> {
     this.user.trace("Feed", "refreshPlatform", platformId);
-    try {
-      return await this.getPlatform(platformId).refresh();
-    } catch (error) {
-      this.user.error("Feed", "refreshPlatform", error);
-      return false;
-    }
+    return await this.getPlatform(platformId).refresh();
   }
 
   /**
@@ -187,12 +176,25 @@ export default class Feed {
    */
   async refreshPlatforms(
     platformsIds?: PlatformId[],
-  ): Promise<{ [id: string]: boolean }> {
+  ): Promise<{ [id in PlatformId]?: CombinedResult }> {
     this.user.trace("Feed", "refreshPlatforms", platformsIds);
-    const results = {} as { [id: string]: boolean };
+    const results = {} as { [id in PlatformId]?: CombinedResult };
     for (const platformId of platformsIds ??
       (Object.keys(this.platforms) as PlatformId[])) {
-      results[platformId] = await this.refreshPlatform(platformId);
+      try {
+        await this.refreshPlatform(platformId);
+        // if it doesnt throw an error, thats success,
+        // even if it returns false because fe it
+        // didnt need to refresh
+        results[platformId] = {
+          success: true,
+        };
+      } catch (e) {
+        results[platformId] = {
+          success: false,
+          message: e instanceof Error ? e.message : JSON.stringify(e),
+        };
+      }
     }
     return results;
   }
@@ -217,7 +219,9 @@ export default class Feed {
       );
     });
     if (paths) {
-      this.sources = paths.map((path) => new Source(this.path + "/" + path));
+      this.sources = paths.map(
+        (path) => new Source(this, this.path + "/" + path),
+      );
     }
     return this.sources;
   }
@@ -229,7 +233,7 @@ export default class Feed {
    */
   getSource(path: string): Source {
     this.user.trace("Feed", "getSource", path);
-    return new Source(this.path + "/" + path);
+    return new Source(this, this.path + "/" + path);
   }
 
   /**
@@ -333,18 +337,33 @@ export default class Feed {
 
   /**
    * Prepare single post
-   * @param path - path to a single source
+   * @param sourceId
    * @param platformId - the platform for the post
    * @returns the given post, or undefined if failed
+   * @throws error if post is not found, or is published, or if preparing fails
    */
-  async preparePost(
-    path: string,
-    platformId: PlatformId,
-  ): Promise<Post | undefined> {
-    this.user.trace("Feed", "preparePost", path, platformId);
-    return (
-      await this.preparePosts({ sources: [path], platforms: [platformId] })
-    )[0];
+  async preparePost(sourceId: string, platformId: PlatformId): Promise<Post> {
+    this.user.trace("Feed", "preparePost", sourceId, platformId);
+    const platform = this.getPlatform(platformId);
+    const source = this.getSource(sourceId);
+    const post = platform.getPost(source);
+    if (!post) {
+      throw this.user.error(
+        "Feed",
+        "preparePost",
+        "Post not found",
+        sourceId,
+        platformId,
+      );
+    }
+    if (post.status === PostStatus.PUBLISHED) {
+      throw this.user.error(
+        "Feed",
+        "preparePost",
+        "Post " + post.id + " has status published",
+      );
+    }
+    return await platform.preparePost(source);
   }
 
   /**
@@ -356,23 +375,31 @@ export default class Feed {
   async preparePosts(filters?: {
     sources?: string[];
     platforms?: PlatformId[];
-  }): Promise<Post[]> {
+  }): Promise<{ [id in PlatformId]?: CombinedResult[] }> {
     this.user.trace("Feed", "preparePosts", filters);
-    const posts: Post[] = [];
-    const platforms = this.getPlatforms(filters?.platforms);
-    const sources = this.getSources(filters?.sources);
-    for (const source of sources) {
-      for (const platform of platforms) {
-        const post = platform.getPost(source);
-        if (post?.status !== PostStatus.PUBLISHED) {
-          const newPost = await platform.preparePost(source);
-          if (newPost) {
-            posts.push(newPost);
-          }
+    const results: { [id in PlatformId]?: CombinedResult[] } = {};
+    for (const path of filters?.sources ??
+      this.getAllSources().map((s) => s.id)) {
+      for (const platform of filters?.platforms ??
+        (Object.keys(this.platforms) as PlatformId[])) {
+        if (!results[platform]) {
+          results[platform] = [];
+        }
+        try {
+          results[platform]?.push({
+            success: true,
+            result: await this.preparePost(path, platform),
+          });
+        } catch (e) {
+          this.user.error("Feed", "preparePosts", e);
+          results[platform]?.push({
+            success: false,
+            message: e instanceof Error ? e.message : JSON.stringify(e),
+          });
         }
       }
     }
-    return posts;
+    return results;
   }
 
   /**

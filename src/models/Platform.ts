@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import * as pluginClasses from "../plugins";
 import { PlatformId } from "../platforms";
+import PlatformMapper from "../mappers/PlatformMapper";
+import { FieldMapping } from "../mappers/AbstractMapper";
 
 import Source, { FileGroup } from "./Source";
 
@@ -22,11 +24,13 @@ export default class Platform {
   defaultBody: string = "Fairpost feed";
   assetsFolder: string = "_fairpost";
   postFileName: string = "post.json";
-  pluginsKey: string | undefined = undefined;
+  mapper: PlatformMapper;
+  settings: FieldMapping = {};
 
   constructor(user: User) {
     this.user = user;
     this.id = (this.constructor as typeof Platform).id();
+    this.mapper = new PlatformMapper(this);
   }
 
   /**
@@ -37,18 +41,6 @@ export default class Platform {
    */
   static id(): PlatformId {
     return this.name.toLowerCase() as PlatformId;
-  }
-  /**
-   * Return a small report for this feed
-   * @returns the report in text
-   */
-
-  report(): string {
-    this.user.trace(this.id, "report");
-    let report = "";
-    report += "\nPlatform: " + this.id;
-    report += "\n - active: " + this.active;
-    return report;
   }
 
   /**
