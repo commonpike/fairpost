@@ -21,10 +21,12 @@ export default class Feed {
   id: string = "";
   path: string = "";
   user: User;
+  // remove this
   platforms: {
     [id in PlatformId]?: Platform;
   } = {};
   sources: Source[] = [];
+  // remove this
   interval: number;
   mapper: FeedMapper;
 
@@ -45,7 +47,7 @@ export default class Feed {
       .get("settings", "USER_FEEDPATH", "users/%user%/feed")
       .replace("%user%", this.user.id);
     this.id = this.user.id + ":feed";
-    this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
+    this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7")); // TODO remove
     this.mapper = new FeedMapper(this);
   }
 
@@ -600,7 +602,7 @@ export default class Feed {
    * Get last published post for a platform
    * @param platformId - the platform for the post
    * @returns the given post or none
-   */
+   
   getLastPost(platformId: PlatformId): Post | void {
     this.user.trace("Feed", "getLastPost");
     let lastPost: Post | undefined = undefined;
@@ -619,6 +621,7 @@ export default class Feed {
     }
     return lastPost;
   }
+   */
 
   /**
    * Get the next date for a post to be publshed on a platform
@@ -627,11 +630,12 @@ export default class Feed {
    * of the last post for that platform, or now.
    * @param platformId - the platform for the post
    * @returns the next date
-   */
+   
   getNextPostDate(platformId: PlatformId): Date {
     this.user.trace("Feed", "getNextPostDate");
     let nextDate = null;
-    const lastPost = this.getLastPost(platformId);
+    const platform = this.user.getPlatform(platformId);
+    const lastPost = platform.getLastPost();
     if (lastPost && lastPost.published) {
       nextDate = new Date(lastPost.published);
       nextDate.setDate(nextDate.getDate() + this.interval);
@@ -640,6 +644,7 @@ export default class Feed {
     }
     return nextDate;
   }
+   */
 
   /**
    * Schedule the first unscheduled post for multiple platforms
@@ -652,7 +657,7 @@ export default class Feed {
    * @param filters.sources - paths to sources to filter on
    * @param filters.platforms - slugs of platforms to filter on
    * @returns the scheduled posts
-   */
+   
   scheduleNextPosts(
     date?: Date,
     filters?: {
@@ -675,7 +680,7 @@ export default class Feed {
         );
         continue;
       }
-      const nextDate = date ? date : this.getNextPostDate(platform.id);
+      const nextDate = date ? date : platform.getNextPostDate();
       for (const source of sources) {
         const post = platform.getPost(source);
         if (
@@ -692,6 +697,7 @@ export default class Feed {
     }
     return posts;
   }
+   */
 
   /**
    * Publish scheduled posts, one for each platform

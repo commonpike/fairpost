@@ -23,6 +23,7 @@ import UserMapper from "../mappers/UserMapper";
 export default class User {
   id: string;
   homedir: string;
+  feed: Feed | undefined;
   platforms:
     | {
         [id in PlatformId]?: Platform;
@@ -83,7 +84,10 @@ export default class User {
    */
 
   public getFeed(): Feed {
-    return new Feed(this);
+    if (!this.feed) {
+      this.feed = new Feed(this);
+    }
+    return this.feed;
   }
 
   /**
@@ -145,6 +149,7 @@ export default class User {
    * @param platformId
    */
   public addPlatform(platformId: PlatformId): void {
+    this.trace("User", "addPlatform", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
@@ -154,7 +159,6 @@ export default class User {
         platformIds.push(platformId);
         this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
       }
-      this.platforms = {};
       this.loadPlatforms();
       this.info(`Platform ${platformId} enabled for user ${this.id}`);
     } else {
@@ -167,6 +171,7 @@ export default class User {
    * @param platformId
    */
   public removePlatform(platformId: PlatformId): void {
+    this.trace("User", "removePlatforms", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
@@ -177,7 +182,6 @@ export default class User {
         platformIds.splice(index, 1);
         this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
       }
-      this.platforms = {};
       this.loadPlatforms();
       this.info(`Platform ${platformId} disabled for user ${this.id}`);
     } else {

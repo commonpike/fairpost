@@ -26,10 +26,11 @@ export default class Platform {
   postFileName: string = "post.json";
   mapper: PlatformMapper;
   settings: FieldMapping = {};
-
+  interval: number;
   constructor(user: User) {
     this.user = user;
     this.id = (this.constructor as typeof Platform).id();
+    this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
     this.mapper = new PlatformMapper(this);
   }
 
@@ -140,6 +141,28 @@ export default class Platform {
   }
 
   /**
+   * Get last published post for a platform
+   * @returns the given post or none
+   */
+  getLastPost(): Post | void {
+    this.user.trace(this.id, "getLastPost");
+    let lastPost: Post | undefined = undefined;
+    const posts = this.getPosts(undefined, PostStatus.PUBLISHED);
+    for (const post of posts) {
+      if (post.published) {
+        if (
+          !lastPost ||
+          !lastPost.published ||
+          post.published >= lastPost.published
+        ) {
+          lastPost = post;
+        }
+      }
+    }
+    return lastPost;
+  }
+
+  /**
    * preparePost
    *
    * Prepare the post for this platform for the
@@ -244,6 +267,62 @@ export default class Platform {
   }
 
   /**
+   * Get the next date for a post to be published on this platform
+   *
+   * This would be FAIRPOST_INTERVAL days after the date
+   * of the last post for that platform, or now.
+   * @returns the next date
+   */
+  getNextPostDate(): Date {
+    this.user.trace("Feed", "getNextPostDate");
+    let nextDate = null;
+    const lastPost = this.getLastPost();
+    if (lastPost && lastPost.published) {
+      nextDate = new Date(lastPost.published);
+      nextDate.setDate(nextDate.getDate() + this.interval);
+    } else {
+      nextDate = new Date();
+    }
+    return nextDate;
+  }
+
+  /**
+   * Schedule the first unscheduled post for this platforms
+   *
+   * within given sources are all sources,
+   * finds the next post date and the first unscheduled post,
+   * and schedules that post on that date
+   * @param date - use date instead of the next post date
+   * @param sources - paths to sources to filter on
+   * @returns the next scheduled post or undefined if there are no posts to schedule
+   */
+  scheduleNextPost(date?: Date, sources?: Source[]): Post | undefined {
+    this.user.trace(this.id, "scheduleNextPost");
+    if (!sources) {
+      sources = this.user.getFeed().getAllSources();
+    }
+    const scheduledPosts = this.getPosts(sources, PostStatus.SCHEDULED);
+    if (scheduledPosts.length) {
+      this.user.trace(this.id, "scheduleNextPost", "Already scheduled");
+      return scheduledPosts[0];
+    }
+    const nextDate = date ? date : this.getNextPostDate();
+    for (const source of sources) {
+      const post = this.getPost(source);
+      if (
+        post &&
+        post.valid &&
+        !post.skip &&
+        post.status === PostStatus.UNSCHEDULED
+      ) {
+        post.schedule(nextDate);
+        return post;
+      }
+    }
+    this.user.trace(this.id, "scheduleNextPost", "No post left to schedule");
+  }
+
+  /**
    * publishPost
    *
    * - publish the post for this platform, sync.
@@ -271,7 +350,7 @@ export default class Platform {
   loadPlugins(pluginSettings: { [pluginid: string]: object }): Plugin[] {
     const plugins: Plugin[] = [];
     Object.values(pluginClasses).forEach((pluginClass) => {
-      const pluginId = pluginClass.name.toLowerCase();
+      const pluginId = pluginClass.id();
       if (pluginId in pluginSettings) {
         plugins?.push(new pluginClass(pluginSettings[pluginId]));
       }

@@ -1,7 +1,7 @@
 {
   "name": "fairpost",
-  "version": "2.1.0",
-  "description": "Feeds data to social media platforms based on folders in a dir",
+  "version": "3.0.0",
+  "description": "Publishes posts to social media platforms based on a single source feed",
   "main": "index.js",
   "scripts": {
     "build": "npx tsc",

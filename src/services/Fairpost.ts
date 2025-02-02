@@ -493,23 +493,21 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          if (!args.platforms && args.platform) {
-            args.platforms = [args.platform];
-          }
-          if (!args.platforms) {
+          if (!args.platform) {
             throw user.error(
               "CommandHandler " + command,
-              "Missing argument: platforms",
+              "Missing argument: platform",
             );
           }
-          const feed = user.getFeed();
-          const nextposts = feed.scheduleNextPosts(
+          const platform = user.getPlatform(args.platform);
+          const post = platform.scheduleNextPost(
             args.date ? new Date(args.date) : undefined,
-            {
-              platforms: args.platforms,
-            },
           );
-          output = nextposts.map((p) => p.mapper.getDto(operator));
+          if (post) {
+            output = post?.mapper.getDto(operator);
+          } else {
+            output = { success: false, message: "No post left to schedule" };
+          }
           break;
         }
         case "publish-post": {
@@ -580,14 +578,17 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const nextposts = feed.scheduleNextPosts(
-            args.date ? new Date(args.date) : undefined,
-            {
-              sources: args.sources,
-              platforms: args.platforms,
-            },
-          );
-          output = nextposts.map((p) => p.mapper.getDto(operator));
+          const sources = feed.getSources(args.sources);
+          const platforms = user.getPlatforms(args.platforms);
+          const posts = [] as Post[];
+          platforms.forEach((p) => {
+            const post = p.scheduleNextPost(
+              args.date ? new Date(args.date) : undefined,
+              sources,
+            );
+            if (post) posts.push(post);
+          });
+          output = posts.map((p) => p.mapper.getDto(operator));
           break;
         }
         case "publish-due-posts": {
