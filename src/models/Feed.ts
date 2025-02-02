@@ -425,7 +425,7 @@ export default class Feed {
    * @param platformId - the platform for the post
    * @param date - Date to schedule post on
    * @returns the given post
-   */
+   
   schedulePost(path: string, platformId: PlatformId, date: Date): Post {
     this.user.trace("Feed", "schedulePost", path, platformId, date);
     const platform = this.user.getPlatform(platformId);
@@ -446,6 +446,7 @@ export default class Feed {
     post.schedule(date);
     return post;
   }
+   */
 
   /**
    * Schedule multiple posts
@@ -456,7 +457,7 @@ export default class Feed {
    * @param filters.platforms - slugs to platforms to filter on
    * @param date - date to schedule posts on
    * @returns multiple posts
-   */
+   
   schedulePosts(
     filters: {
       sources: string[];
@@ -507,6 +508,7 @@ export default class Feed {
     }
     return posts;
   }
+   */
 
   /**
    * Publish single post

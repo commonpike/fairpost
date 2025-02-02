@@ -80,6 +80,15 @@ export default class Post {
 
   schedule(date: Date): void {
     this.platform.user.trace("Post", "schedule");
+    if (!this.valid) {
+      throw this.platform.user.error("Post is not valid");
+    }
+    if (this.skip) {
+      throw this.platform.user.error("Post is marked to be skipped");
+    }
+    if (this.status !== PostStatus.UNSCHEDULED) {
+      this.platform.user.warn("Rescheduling post");
+    }
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
@@ -94,7 +103,7 @@ export default class Post {
    * @param dryrun - wether or not to really really publish it
    * @returns this
    */
-  async publish(dryrun: boolean): Promise<Post> {
+  async publish(dryrun: boolean) {
     if (!this.valid) {
       throw this.platform.user.error("Post is not valid", this.id);
     }
@@ -105,8 +114,6 @@ export default class Post {
     // if (!dryrun) post.schedule(now);
     this.platform.user.info("Posting", this.id);
     await this.platform.publishPost(this, dryrun);
-
-    return this;
   }
 
   /**

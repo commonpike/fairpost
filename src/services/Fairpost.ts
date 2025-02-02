@@ -437,12 +437,11 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const schedpost = feed.schedulePost(
-            args.source,
-            args.platform,
-            args.date,
-          );
-          output = schedpost.mapper.getDto(operator);
+          const source = feed.getSource(args.source);
+          const platform = user.getPlatform(args.platform);
+          const post = platform.getPost(source);
+          post.schedule(args.date);
+          output = post.mapper.getDto(operator);
           break;
         }
         case "schedule-posts": {
@@ -455,13 +454,13 @@ class Fairpost {
           if (!args.platforms && args.platform) {
             args.platforms = [args.platform];
           }
-          if (!args.sources && args.source) {
-            args.sources = [args.source];
+          if (!args.source && args.sources) {
+            args.source = args.sources[0];
           }
-          if (!args.sources) {
+          if (!args.source) {
             throw user.error(
               "CommandHandler " + command,
-              "Missing argument: sources",
+              "Missing argument: source",
             );
           }
           if (!args.date) {
@@ -471,14 +470,24 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const schedposts = feed.schedulePosts(
-            {
-              sources: args.sources,
-              platforms: args.platforms,
-            },
-            new Date(args.date),
-          );
-          output = schedposts.map((p) => p.mapper.getDto(operator));
+          const source = feed.getSource(args.source);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const platform of platforms) {
+            try {
+              const post = platform.getPost(source);
+              post.schedule(args.date);
+              output[platform.id] = {
+                success: true,
+                result: post.mapper.getDto(operator),
+              };
+            } catch (e) {
+              output[platform.id] = {
+                success: false,
+                message: e instanceof Error ? e.message : JSON.stringify(e),
+              };
+            }
+          }
           break;
         }
         case "schedule-next-post": {
