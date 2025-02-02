@@ -132,7 +132,6 @@ fairpost: help
 fairpost: @userid get-user
 fairpost: @userid get-feed
 fairpost: @userid setup-platform --platform=xxx
-fairpost: @userid setup-platforms [--platforms=xxx,xxx]
 fairpost: @userid test-platform --platform=xxx
 fairpost: @userid test-platforms [--platforms=xxx,xxx]
 fairpost: @userid refresh-platform --platform=xxx
@@ -146,7 +145,7 @@ fairpost: @userid get-posts [--status=xxx] [--sources=xxx,xxx] [--platforms=xxx,
 fairpost: @userid prepare-post --post=xxx:xxx
 fairpost: @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
 fairpost: @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
-fairpost: @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] 
+fairpost: @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] 
 fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
 fairpost: @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
 

@@ -594,6 +594,12 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
+          if (!args.platforms && args.platform) {
+            args.platforms = [args.platform];
+          }
+          if (!args.sources && args.source) {
+            args.sources = [args.source];
+          }
           const feed = user.getFeed();
           const sources = feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
@@ -681,7 +687,7 @@ class Fairpost {
               `${cmd} @userid prepare-post --post=xxx:xxx`,
               `${cmd} @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
               `${cmd} @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
-              `${cmd} @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] `,
+              `${cmd} @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx]`,
               `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
               `${cmd} @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               "\n# feed planning:",
