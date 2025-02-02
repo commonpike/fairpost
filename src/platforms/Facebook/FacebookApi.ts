@@ -121,6 +121,7 @@ export default class FacebookApi {
    * @param error - ApiResponseError
    */
   private async handleFacebookError(error: ApiResponseError): Promise<never> {
+    console.dir(error, { depth: 5, showHidden: true });
     if (error.responseData) {
       if (error.responseData.error) {
         error.message +=

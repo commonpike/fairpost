@@ -537,8 +537,12 @@ class Fairpost {
           const feed = user.getFeed();
           const source = feed.getSource(args.source);
           const post = platform.getPost(source);
-          await post.publish(!!args.dryrun);
-          output = post.mapper.getDto(operator);
+          output = {
+            [platform.id]: {
+              success: await post.publish(!!args.dryrun),
+              result: post.results.slice(-1)[0],
+            },
+          };
           break;
         }
         case "publish-posts": {
@@ -569,8 +573,8 @@ class Fairpost {
               const post = platform.getPost(source);
               await post.publish(!!args.dryrun);
               output[platform.id] = {
-                success: true,
-                result: post,
+                success: await post.publish(!!args.dryrun),
+                result: post.results.slice(-1)[0],
               };
             } catch (e) {
               output[platform.id] = {
@@ -612,14 +616,33 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const dueposts = await feed.publishDuePosts(
-            {
-              sources: args.sources,
-              platforms: args.platforms,
-            },
-            args.dryrun,
-          );
-          output = dueposts.map((p) => p.mapper.getDto(operator));
+          const sources = feed.getSources(args.sources);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const platform of platforms) {
+            try {
+              const post = await platform.publishDuePost(
+                sources,
+                !!args.dryrun,
+              );
+              if (post) {
+                output[platform.id] = {
+                  success: true,
+                  result: post.results.slice(-1)[0],
+                };
+              } else {
+                output[platform.id] = {
+                  success: true,
+                  message: "No posts due",
+                };
+              }
+            } catch (e) {
+              output[platform.id] = {
+                success: false,
+                message: e instanceof Error ? e.message : JSON.stringify(e),
+              };
+            }
+          }
           break;
         }
 

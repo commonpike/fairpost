@@ -142,7 +142,7 @@ export default class Platform {
 
   /**
    * Get last published post for a platform
-   * @returns the given post or none
+   * @returns the above post or none
    */
   getLastPost(): Post | void {
     this.user.trace(this.id, "getLastPost");
@@ -162,6 +162,65 @@ export default class Platform {
     return lastPost;
   }
 
+  /**
+   * Get first post from sources scheduled in the past
+   * @param sources
+   * @returns the above post or none
+   */
+  getDuePost(sources: Source[]): Post | void {
+    const now = new Date();
+    for (const source of sources) {
+      const post = this.getPost(source);
+      if (post && post.status === PostStatus.SCHEDULED) {
+        // some sanity checks
+        if (!post.scheduled) {
+          this.user.warn(
+            "Found scheduled post without date. Unscheduling post.",
+            post.id,
+          );
+          post.status = PostStatus.UNSCHEDULED;
+          post.save();
+          continue;
+        }
+        if (post.skip) {
+          this.user.warn(
+            "Found scheduled post marked skip. Unscheduling post.",
+            post.id,
+          );
+          post.status = PostStatus.UNSCHEDULED;
+          post.save();
+          continue;
+        }
+        if (post.published) {
+          this.user.warn(
+            "Found scheduled post previously published. Marking published.",
+            post.id,
+          );
+          post.status = PostStatus.PUBLISHED;
+          post.save();
+          continue;
+        }
+        if (post.scheduled <= now) {
+          this.user.trace(
+            "Feed",
+            "publishDuePosts",
+            post.id,
+            "Posting; scheduled for",
+            post.scheduled,
+          );
+          return post;
+          break;
+        } else {
+          this.user.trace(
+            "Feed",
+            post.id,
+            "Not due yet; scheduled for",
+            post.scheduled,
+          );
+        }
+      }
+    }
+  }
   /**
    * preparePost
    *
@@ -346,6 +405,25 @@ export default class Platform {
       response: {},
       error: new Error("publishing not implemented for " + this.id),
     });
+  }
+
+  /**
+   * publishDuePost
+   *
+   * - publish the first post scheduled in the past for this platform.
+   * @returns {Promise} the post or none
+   */
+
+  async publishDuePost(
+    sources: Source[],
+    dryrun: boolean = false,
+  ): Promise<Post | undefined> {
+    this.user.trace(this.id, "publishDuePost", dryrun);
+    const post = this.getDuePost(sources);
+    if (post) {
+      await post.publish(dryrun);
+      return post;
+    }
   }
 
   /**

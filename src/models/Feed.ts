@@ -2,9 +2,7 @@ import * as fs from "fs";
 
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
-import Post from "./Post";
 import FeedMapper from "../mappers/FeedMapper";
-import { PostStatus } from "./Post";
 import Source from "./Source";
 import User from "./User";
 
@@ -722,7 +720,7 @@ export default class Feed {
    * @param filters.platforms - slugs of platforms to filter on
    * @param dryrun - wether to really publish posts
    * @returns the published posts
-   */
+   
   async publishDuePosts(
     filters?: {
       sources?: string[];
@@ -790,4 +788,5 @@ export default class Feed {
     }
     return posts;
   }
+   */
 }
