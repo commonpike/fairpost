@@ -368,8 +368,8 @@ class Fairpost {
           const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
           const source = feed.getSource(args.source);
-          const post = platform.preparePost(source);
-          output = (await post).mapper.getDto(operator);
+          const post = await platform.preparePost(source);
+          output = post.mapper.getDto(operator);
           break;
         }
         case "prepare-posts": {
@@ -668,7 +668,6 @@ class Fairpost {
               `${cmd} @userid get-user`,
               `${cmd} @userid get-feed`,
               `${cmd} @userid setup-platform --platform=xxx`,
-              `${cmd} @userid setup-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid test-platform --platform=xxx`,
               `${cmd} @userid test-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid refresh-platform --platform=xxx`,
