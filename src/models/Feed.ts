@@ -40,9 +40,7 @@ export default class Feed {
 
   constructor(user: User) {
     this.user = user;
-    user.platforms
-      .filter((p) => p.active)
-      .forEach((p) => (this.platforms[p.id] = p));
+    this.platforms = user.platforms ?? {}; // TODO remove
     this.path = this.user
       .get("settings", "USER_FEEDPATH", "users/%user%/feed")
       .replace("%user%", this.user.id);
@@ -59,7 +57,7 @@ export default class Feed {
    */
   async setupPlatform(platformId: PlatformId): Promise<unknown> {
     this.user.trace("Feed", "setupPlatform", platformId);
-    const platform = this.getPlatform(platformId);
+    const platform = this.user.getPlatform(platformId);
     await platform.setup();
     return await platform.test();
   }
@@ -97,7 +95,7 @@ export default class Feed {
    * Get one platform
    * @param platformId - the slug of the platform
    * @returns platform given by id
-   */
+   
   getPlatform(platformId: PlatformId): Platform {
     this.user.trace("Feed", "getPlatform", platformId);
     const platform = this.platforms[platformId];
@@ -106,18 +104,20 @@ export default class Feed {
     }
     return platform;
   }
+   */
 
   /**
    * Get multiple platforms
    * @param platformIds - the slug of the platform
    * @returns platforms given by ids
-   */
+   
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
     this.user.trace("Feed", "getPlatforms", platformIds);
     return platformIds
       ? platformIds.map((platformId) => this.getPlatform(platformId))
       : Object.values(this.platforms);
   }
+   */
 
   /**
    * Test one platform
@@ -127,7 +127,7 @@ export default class Feed {
    */
   async testPlatform(platformId: PlatformId): Promise<unknown> {
     this.user.trace("Feed", "testPlatform", platformId);
-    const platform = this.getPlatform(platformId);
+    const platform = this.user.getPlatform(platformId);
     return await platform.test();
   }
 
@@ -166,7 +166,7 @@ export default class Feed {
    */
   async refreshPlatform(platformId: PlatformId): Promise<boolean> {
     this.user.trace("Feed", "refreshPlatform", platformId);
-    return await this.getPlatform(platformId).refresh();
+    return await this.user.getPlatform(platformId).refresh();
   }
 
   /**
@@ -299,7 +299,7 @@ export default class Feed {
    */
   getPost(path: string, platformId: PlatformId): Post | undefined {
     this.user.trace("Feed", "getPost");
-    const platform = this.getPlatform(platformId);
+    const platform = this.user.getPlatform(platformId);
     const source = this.getSource(path);
     return platform.getPost(source);
   }
@@ -319,7 +319,7 @@ export default class Feed {
   }): Post[] {
     this.user.trace("Feed", "getPosts");
     const posts: Post[] = [];
-    const platforms = this.getPlatforms(filters?.platforms);
+    const platforms = this.user.getPlatforms(filters?.platforms);
     const sources = this.getSources(filters?.sources);
     for (const source of sources) {
       for (const platform of platforms) {
@@ -344,7 +344,7 @@ export default class Feed {
    */
   async preparePost(sourceId: string, platformId: PlatformId): Promise<Post> {
     this.user.trace("Feed", "preparePost", sourceId, platformId);
-    const platform = this.getPlatform(platformId);
+    const platform = this.user.getPlatform(platformId);
     const source = this.getSource(sourceId);
     const post = platform.getPost(source);
     if (!post) {
@@ -459,7 +459,7 @@ export default class Feed {
       );
     }
     const posts: Post[] = [];
-    const platforms = this.getPlatforms(filters?.platforms);
+    const platforms = this.user.getPlatforms(filters?.platforms);
     const sources = this.getSources(filters?.sources);
     for (const source of sources) {
       for (const platform of platforms) {
@@ -506,7 +506,7 @@ export default class Feed {
   ): Promise<Post> {
     this.user.trace("Feed", "publishPost", path, platformId, dryrun);
     const now = new Date();
-    const platform = this.getPlatform(platformId);
+    const platform = this.user.getPlatform(platformId);
     const source = this.getSource(path);
     if (!source) {
       throw this.user.error("Source not found", path);
@@ -557,7 +557,7 @@ export default class Feed {
     }
     const now = new Date();
     const posts: Post[] = [];
-    const platforms = this.getPlatforms(filters?.platforms);
+    const platforms = this.user.getPlatforms(filters?.platforms);
     const sources = this.getSources(filters?.sources);
     for (const platform of platforms) {
       for (const source of sources) {
@@ -655,7 +655,7 @@ export default class Feed {
   ): Post[] {
     this.user.trace("Feed", "scheduleNextPosts");
     const posts: Post[] = [];
-    const platforms = this.getPlatforms(filters?.platforms);
+    const platforms = this.user.getPlatforms(filters?.platforms);
     const sources = this.getSources(filters?.sources);
     for (const platform of platforms) {
       const scheduledPosts = this.getPosts({
@@ -711,7 +711,7 @@ export default class Feed {
     this.user.trace("Feed", "publishDuePosts");
     const now = new Date();
     const posts: Post[] = [];
-    const platforms = this.getPlatforms(filters?.platforms);
+    const platforms = this.user.getPlatforms(filters?.platforms);
     const sources = this.getSources(filters?.sources);
     for (const platform of platforms) {
       for (const source of sources) {

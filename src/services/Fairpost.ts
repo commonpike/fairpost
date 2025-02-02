@@ -163,8 +163,7 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
-          const feed = user.getFeed();
-          const platform = feed.getPlatform(args.platform);
+          const platform = user.getPlatform(args.platform);
           output = platform.mapper.getDto(operator);
           break;
         }
@@ -175,8 +174,7 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          const feed = user.getFeed();
-          const platforms = feed.getPlatforms(args.platforms);
+          const platforms = user.getPlatforms(args.platforms);
           output = platforms.map((p) => p.mapper.getDto(operator));
           break;
         }
@@ -345,6 +343,12 @@ class Fairpost {
           }
           if (!user) {
             throw new Error("user is required for command " + command);
+          }
+          if (!args.platforms && args.platform) {
+            args.platforms = [args.platform];
+          }
+          if (!args.sources && args.source) {
+            args.sources = [args.source];
           }
           const feed = user.getFeed();
           const allposts = feed.getPosts({
