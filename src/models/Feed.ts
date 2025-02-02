@@ -516,8 +516,8 @@ export default class Feed {
    * @param platformId - the platform for the post
    * @param dryrun - wether or not to really publish
    * @returns the given post
-   */
-
+   
+   
   async publishPost(
     path: string,
     platformId: PlatformId,
@@ -540,9 +540,10 @@ export default class Feed {
     if (!dryrun) post.schedule(now);
     this.user.info("Posting", platformId, path);
     await platform.publishPost(post, dryrun);
-
+   
     return post;
   }
+   */
 
   /**
    * Publish multiple posts
@@ -553,7 +554,7 @@ export default class Feed {
    * @param filters.platforms - slugs to platforms to filter on
    * @param dryrun - wether to really publish
    * @returns multiple posts
-   */
+   
   async publishPosts(
     filters: {
       sources: string[];
@@ -601,6 +602,7 @@ export default class Feed {
     }
     return posts;
   }
+   */
 
   /* --------------------
         feed planning 

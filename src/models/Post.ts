@@ -86,6 +86,30 @@ export default class Post {
   }
 
   /**
+   * Publish this post and return it
+   *
+   * The post itself is a fixed entity and does not
+   * know how to publish itself, so it calls on its
+   * parent, in userland, to perform the logic.
+   * @param dryrun - wether or not to really really publish it
+   * @returns this
+   */
+  async publish(dryrun: boolean): Promise<Post> {
+    if (!this.valid) {
+      throw this.platform.user.error("Post is not valid", this.id);
+    }
+    if (this.skip) {
+      throw this.platform.user.error("Post is marked skip", this.id);
+    }
+    // why ?
+    // if (!dryrun) post.schedule(now);
+    this.platform.user.info("Posting", this.id);
+    await this.platform.publishPost(this, dryrun);
+
+    return this;
+  }
+
+  /**
    * Check body for title, #tags, @mentions and %geo
    * and store those in separate fields instead.
    * Does not save.

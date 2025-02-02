@@ -506,7 +506,7 @@ class Fairpost {
           break;
         }
         case "publish-post": {
-          if (!permissions.schedulePosts) {
+          if (!permissions.publishPosts) {
             throw new Error("Missing permissions for command " + command);
           }
           if (!user) {
@@ -524,13 +524,12 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
+          const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
-          const pubpost = await feed.publishPost(
-            args.source,
-            args.platform,
-            args.dryrun,
-          );
-          output = pubpost.mapper.getDto(operator);
+          const source = feed.getSource(args.source);
+          const post = platform.getPost(source);
+          await post.publish(!!args.dryrun);
+          output = post.mapper.getDto(operator);
           break;
         }
         case "publish-posts": {
@@ -543,24 +542,34 @@ class Fairpost {
           if (!args.platforms && args.platform) {
             args.platforms = [args.platform];
           }
-          if (!args.sources && args.source) {
-            args.sources = [args.source];
+          if (!args.source && args.sources) {
+            args.source = args.sources[0];
           }
-          if (!args.sources) {
+          if (!args.source) {
             throw user.error(
               "CommandHandler " + command,
-              "Missing argument: sources",
+              "Missing argument: source",
             );
           }
           const feed = user.getFeed();
-          const pubposts = await feed.publishPosts(
-            {
-              sources: args.sources,
-              platforms: args.platforms,
-            },
-            args.dryrun,
-          );
-          output = pubposts.map((p) => p.mapper.getDto(operator));
+          const source = feed.getSource(args.source);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const platform of platforms) {
+            try {
+              const post = platform.getPost(source);
+              await post.publish(!!args.dryrun);
+              output[platform.id] = {
+                success: true,
+                result: post,
+              };
+            } catch (e) {
+              output[platform.id] = {
+                success: false,
+                message: e instanceof Error ? e.message : JSON.stringify(e),
+              };
+            }
+          }
           break;
         }
 
