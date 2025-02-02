@@ -3,6 +3,11 @@
 If your platform is not yet supported by Fairpost,
 you can write your own code to support it.
 
+The hardest part is possibly registering your 
+instance of the app with the platform, to allow
+it to post on your (or your users) behalf. How
+that works depends on the platform; ymmv.
+
 ## Minimal setup
 
 To add support for a new platform, add a class to `src/platforms`
@@ -146,6 +151,15 @@ See [Plugins](Plugins.md) for a more detailed description.
 If you want users to be able to finetune the plugin settings,
 or even enable additional plugins, read the plugin ids and/or
 settings using `User.get(...)`.
+
+### Add input/output for custom settings in your platform
+
+If you want custom settings for your platform to be returned 
+from, and set by, the various interfaces, add a `settings: FieldMapping`
+property to your class describing those settings and in your
+constructor, call `this.mapper = new PlatformMapper(this);`.
+The mapper will handle the Dto's generated for your platform
+using the `settings` you defined.
 
 ## A more elaborate setup
 

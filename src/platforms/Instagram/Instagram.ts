@@ -5,6 +5,8 @@ import Source, { FileGroup } from "../../models/Source";
 
 import InstagramApi from "./InstagramApi";
 import InstagramAuth from "./InstagramAuth";
+import { FieldMapping } from "../../mappers/AbstractMapper";
+import PlatformMapper from "../../mappers/PlatformMapper";
 import Platform from "../../models/Platform";
 import Post from "../../models/Post";
 import User from "../../models/User";
@@ -31,7 +33,30 @@ export default class Instagram extends Platform {
       max_size: 8000,
     },
   };
-
+  settings: FieldMapping = {
+    INSTAGRAM_USER_ID: {
+      type: "string",
+      label: "Instagram User ID",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    INSTAGRAM_PAGE_ID: {
+      type: "string",
+      label: "Instagram/Facebook Page ID",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    INSTAGRAM_PLUGIN_SETTINGS: {
+      type: "json",
+      label: "Instagram Plugin settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false,
+      default: this.pluginSettings,
+    },
+  };
   api: InstagramApi;
   auth: InstagramAuth;
 
@@ -42,6 +67,7 @@ export default class Instagram extends Platform {
     super(user);
     this.auth = new InstagramAuth(user);
     this.api = new InstagramApi(user);
+    this.mapper = new PlatformMapper(this);
   }
 
   /** @inheritdoc */
