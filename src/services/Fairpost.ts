@@ -7,7 +7,6 @@
 import * as log4js from "log4js";
 import { CombinedResult } from "../types";
 import { PlatformId } from "../platforms";
-import { Dto } from "../mappers/AbstractMapper";
 import { FeedDto } from "../mappers/FeedMapper";
 import { PlatformDto } from "../mappers/PlatformMapper";
 import { PostDto } from "../mappers/PostMapper";
@@ -328,13 +327,10 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const post = feed.getPost(args.source, args.platform);
-          if (post) {
-            output = post.mapper.getDto(operator);
-          } else {
-            // feed should fail ?
-            throw new Error("Source not found:" + args.source);
-          }
+          const platform = user.getPlatform(args.platform);
+          const source = feed.getSource(args.source);
+          const post = platform.getPost(source);
+          output = post.mapper.getDto(operator);
           break;
         }
         case "get-posts": {
@@ -351,16 +347,13 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const allposts = feed.getPosts({
-            sources: args.sources,
-            platforms: args.platforms,
-            status: args.status,
+          const sources = feed.getSources(args.sources);
+          const platforms = user.getPlatforms(args.platforms);
+          const posts = [] as Post[];
+          platforms.forEach((p) => {
+            posts.push(...p.getPosts(sources, args.status));
           });
-          const dtos = [] as Dto[];
-          allposts.forEach((post) => {
-            dtos.push(post.mapper.getDto(operator));
-          });
-          output = dtos;
+          output = posts.map((p) => p.mapper.getDto(operator));
           break;
         }
         case "prepare-post": {

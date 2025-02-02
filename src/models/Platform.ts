@@ -97,19 +97,46 @@ export default class Platform {
    * getPost
    * @param source - the source to get the post for this platform from
    * @returns {Post} the post for this platform for the given source, if it exists.
+   * @throws errors if the post does not exist or its data cant be read
    */
 
-  getPost(source: Source): Post | undefined {
+  getPost(source: Source): Post {
     this.user.trace(this.id, "getPost", this.id, source.id);
 
     const postFilePath = this.getPostFilePath(source);
-    if (fs.existsSync(postFilePath)) {
-      const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
-      if (data) {
-        return new Post(source, this, data);
+    if (!fs.existsSync(postFilePath)) {
+      throw this.user.error("No such post ", this.id, source.id);
+    }
+    const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
+    if (!data) {
+      throw this.user.error("Cant parse post ", this.id, source.id);
+    }
+    return new Post(source, this, data);
+  }
+
+  /**
+   * Get multiple (prepared) posts
+   * @param sources - sources to filter on
+   * @param status - post status to filter on
+   * @returns multiple posts
+   */
+  getPosts(sources?: Source[], status?: PostStatus): Post[] {
+    this.user.trace("User", "getPosts");
+    const posts: Post[] = [];
+    if (!sources) {
+      sources = this.user.getFeed().getAllSources();
+    }
+    for (const source of sources) {
+      try {
+        const post = this.getPost(source);
+        if (!status || status === post.status) {
+          posts.push(post);
+        }
+      } catch {
+        continue;
       }
     }
-    return;
+    return posts;
   }
 
   /**

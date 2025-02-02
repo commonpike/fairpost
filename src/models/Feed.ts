@@ -259,7 +259,12 @@ export default class Feed {
    */
   getSourceStatus(path: string): PostStatus {
     this.user.trace("Feed", "getSourceStatus", path);
-    const posts = this.getPosts({ sources: [path] });
+    const platforms = this.user.getPlatforms();
+    const source = this.getSource(path);
+    const posts = [] as Post[];
+    platforms.forEach((p) => {
+      posts.push(p.getPost(source));
+    });
     if (!posts.length) {
       return PostStatus.UNKNOWN;
     }
@@ -296,13 +301,14 @@ export default class Feed {
    * @param path - path to a single source
    * @param platformId - the platform for the post
    * @returns the given post, or undefined if not prepared
-   */
+   
   getPost(path: string, platformId: PlatformId): Post | undefined {
     this.user.trace("Feed", "getPost");
     const platform = this.user.getPlatform(platformId);
     const source = this.getSource(path);
     return platform.getPost(source);
   }
+   */
 
   /**
    * Get multiple (prepared) posts
@@ -311,7 +317,7 @@ export default class Feed {
    * @param filters.platforms - slugs to platforms to filter on
    * @param filters.status - post status to filter on
    * @returns multiple posts
-   */
+   
   getPosts(filters?: {
     sources?: string[];
     platforms?: PlatformId[];
@@ -334,6 +340,7 @@ export default class Feed {
     }
     return posts;
   }
+   */
 
   /**
    * Prepare single post
@@ -411,7 +418,9 @@ export default class Feed {
    */
   schedulePost(path: string, platformId: PlatformId, date: Date): Post {
     this.user.trace("Feed", "schedulePost", path, platformId, date);
-    const post = this.getPost(path, platformId);
+    const platform = this.user.getPlatform(platformId);
+    const source = this.getSource(path);
+    const post = platform.getPost(source);
     if (!post) {
       throw this.user.error("Post not found");
     }
@@ -595,10 +604,8 @@ export default class Feed {
   getLastPost(platformId: PlatformId): Post | void {
     this.user.trace("Feed", "getLastPost");
     let lastPost: Post | undefined = undefined;
-    const posts = this.getPosts({
-      platforms: [platformId],
-      status: PostStatus.PUBLISHED,
-    });
+    const platform = this.user.getPlatform(platformId);
+    const posts = platform.getPosts(this.getAllSources(), PostStatus.PUBLISHED);
     for (const post of posts) {
       if (post.published) {
         if (
@@ -658,10 +665,7 @@ export default class Feed {
     const platforms = this.user.getPlatforms(filters?.platforms);
     const sources = this.getSources(filters?.sources);
     for (const platform of platforms) {
-      const scheduledPosts = this.getPosts({
-        platforms: [platform.id],
-        status: PostStatus.SCHEDULED,
-      });
+      const scheduledPosts = platform.getPosts(sources, PostStatus.SCHEDULED);
       if (scheduledPosts.length) {
         this.user.trace(
           "Feed",

@@ -185,6 +185,10 @@ export default class User {
     }
   }
 
+  /*
+    User Store 
+  */
+
   public get(
     store: "settings" | "auth" | "app",
     key: string,
@@ -204,6 +208,10 @@ export default class User {
       throw this.error(error);
     }
   }
+
+  /*
+    User logging 
+  */
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public trace(...args: any[]) {
