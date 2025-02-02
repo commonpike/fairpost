@@ -184,13 +184,17 @@ export default class Platform {
    */
   async preparePost(source: Source): Promise<Post> {
     this.user.trace(this.id, "preparePost");
-
-    const post = this.getPost(source) ?? new Post(source, this);
-    if (post.status === PostStatus.PUBLISHED) {
-      return post;
-    }
-    if (post.status === PostStatus.FAILED) {
-      post.status = PostStatus.UNSCHEDULED;
+    let post: Post | undefined = undefined;
+    try {
+      post = this.getPost(source);
+      if (post.status === PostStatus.PUBLISHED) {
+        return post;
+      }
+      if (post.status === PostStatus.FAILED) {
+        post.status = PostStatus.UNSCHEDULED;
+      }
+    } catch {
+      post = new Post(source, this);
     }
 
     // some default logic. override this
@@ -205,7 +209,7 @@ export default class Platform {
     post.purgeFiles();
     const files = await source.getFiles();
     files.forEach((file) => {
-      if (!post.ignoreFiles?.includes(file.name)) {
+      if (post && !post.ignoreFiles?.includes(file.name)) {
         post.putFile(file);
       }
     });

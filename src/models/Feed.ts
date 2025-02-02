@@ -1,6 +1,5 @@
 import * as fs from "fs";
 
-import { CombinedResult } from "../types";
 import Platform from "./Platform";
 import { PlatformId } from "../platforms";
 import Post from "./Post";
@@ -56,19 +55,20 @@ export default class Feed {
    * @param platformId - the slug of the platform
    * @returns an object resulting from a test - unknown
    * @throws error if either the setup or the test fail
-   */
+   
   async setupPlatform(platformId: PlatformId): Promise<unknown> {
     this.user.trace("Feed", "setupPlatform", platformId);
     const platform = this.user.getPlatform(platformId);
     await platform.setup();
     return await platform.test();
   }
+   */
 
   /**
    * Set up more platforms
    * @param platformsIds - the slugs of the platforms
    * @returns the setup results indexed by platform ids
-   */
+   
   async setupPlatforms(
     platformsIds?: PlatformId[],
   ): Promise<{ [id in PlatformId]?: CombinedResult }> {
@@ -92,6 +92,7 @@ export default class Feed {
     }
     return results;
   }
+   */
 
   /**
    * Get one platform
@@ -126,18 +127,19 @@ export default class Feed {
    * @param platformId - the slug of the platform
    * @returns the test result
    * @throws an error if it fails
-   */
+   
   async testPlatform(platformId: PlatformId): Promise<unknown> {
     this.user.trace("Feed", "testPlatform", platformId);
     const platform = this.user.getPlatform(platformId);
     return await platform.test();
   }
+   */
 
   /**
    * Test multiple platforms
    * @param platformsIds - the slugs of the platforms
    * @returns the test results indexed by platform ids
-   */
+   
   async testPlatforms(
     platformsIds?: PlatformId[],
   ): Promise<{ [id in PlatformId]?: CombinedResult }> {
@@ -159,23 +161,25 @@ export default class Feed {
     }
     return results;
   }
+   */
 
   /**
    * Refresh one platform
    * @param platformId - the slug of the platform
    * @returns the refresh result boolean
    * @throws error if it fails
-   */
+   
   async refreshPlatform(platformId: PlatformId): Promise<boolean> {
     this.user.trace("Feed", "refreshPlatform", platformId);
     return await this.user.getPlatform(platformId).refresh();
   }
+   */
 
   /**
    * Refresh multiple platforms
    * @param platformsIds - the slugs of the platforms
    * @returns the refresh results indexed by platform ids
-   */
+   
   async refreshPlatforms(
     platformsIds?: PlatformId[],
   ): Promise<{ [id in PlatformId]?: CombinedResult }> {
@@ -200,6 +204,7 @@ export default class Feed {
     }
     return results;
   }
+   */
 
   /**
    * Get all sources
@@ -258,7 +263,7 @@ export default class Feed {
    * if at least one post is scheduled, its scheduled
    * if all posts are published, its published
    * otherwise its unscheduled
-   */
+   
   getSourceStatus(path: string): PostStatus {
     this.user.trace("Feed", "getSourceStatus", path);
     const platforms = this.user.getPlatforms();
@@ -297,6 +302,7 @@ export default class Feed {
     }
     return PostStatus.UNSCHEDULED;
   }
+   */
 
   /**
    * Get one (prepared) post
@@ -350,7 +356,7 @@ export default class Feed {
    * @param platformId - the platform for the post
    * @returns the given post, or undefined if failed
    * @throws error if post is not found, or is published, or if preparing fails
-   */
+   
   async preparePost(sourceId: string, platformId: PlatformId): Promise<Post> {
     this.user.trace("Feed", "preparePost", sourceId, platformId);
     const platform = this.user.getPlatform(platformId);
@@ -374,13 +380,14 @@ export default class Feed {
     }
     return await platform.preparePost(source);
   }
+   */
 
   /**
    * Prepare multiple posts
    * @param filters - object to filter posts by
    * @returns multiple posts
-   */
-
+   
+   
   async preparePosts(filters?: {
     sources?: string[];
     platforms?: PlatformId[];
@@ -410,6 +417,7 @@ export default class Feed {
     }
     return results;
   }
+   */
 
   /**
    * Schedule single post

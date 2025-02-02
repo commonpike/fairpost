@@ -124,7 +124,7 @@ export default class User {
     }
     const platform = this.platforms?.[platformId];
     if (!platform) {
-      throw this.error("Unknown platform: " + platformId);
+      throw this.error("Unknown or disabled platform: " + platformId);
     }
     return platform;
   }
