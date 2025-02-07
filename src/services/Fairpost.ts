@@ -540,7 +540,7 @@ class Fairpost {
           output = {
             [platform.id]: {
               success: await post.publish(!!args.dryrun),
-              result: post.results.slice(-1)[0],
+              result: post.link,
             },
           };
           break;
@@ -574,7 +574,7 @@ class Fairpost {
               await post.publish(!!args.dryrun);
               output[platform.id] = {
                 success: await post.publish(!!args.dryrun),
-                result: post.results.slice(-1)[0],
+                result: post.link,
               };
             } catch (e) {
               output[platform.id] = {
@@ -634,7 +634,7 @@ class Fairpost {
               if (post) {
                 output[platform.id] = {
                   success: true,
-                  result: post.results.slice(-1)[0],
+                  result: post.link,
                 };
               } else {
                 output[platform.id] = {

@@ -9,7 +9,7 @@ import User from "../../models/User";
 import { strict as assert } from "assert";
 
 export default class FacebookAuth {
-  GRAPH_API_VERSION: string = "v18.0";
+  GRAPH_API_VERSION: string = "v22.0";
 
   user: User;
 
@@ -59,6 +59,7 @@ export default class FacebookAuth {
         //'pages_read_user_engagement',
         "publish_video",
         "business_management",
+        "pages_show_list",
       ].join(),
     };
     url.search = new URLSearchParams(query).toString();
