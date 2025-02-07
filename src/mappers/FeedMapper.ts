@@ -9,9 +9,7 @@ export interface FeedDto
     id?: string;
     user_id?: string;
     path?: string;
-    platforms?: string[];
     sources?: string[];
-    interval?: number;
   }> {}
 
 export default class FeedMapper extends AbstractMapper<FeedDto> {
@@ -41,25 +39,11 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
       get: ["manageFeed"],
       set: ["none"],
     },
-    platforms: {
-      type: "string[]",
-      label: "Enabled platforms",
-      get: ["manageFeed"],
-      set: ["manageFeed"],
-      required: false,
-    },
     sources: {
       type: "string[]",
       label: "Feed sources",
       get: ["manageFeed"],
       set: ["none"],
-      required: false,
-    },
-    interval: {
-      type: "float",
-      label: "Post interval",
-      get: ["manageFeed"],
-      set: ["manageFeed"],
       required: false,
     },
   };
@@ -91,14 +75,8 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
         case "path":
           dto[field] = this.feed.path;
           break;
-        case "platforms":
-          dto[field] = Object.keys(this.feed.platforms);
-          break;
         case "sources":
           dto[field] = this.feed.getSources().map((s) => s.id);
-          break;
-        case "interval":
-          dto[field] = this.feed.interval;
           break;
       }
     });
@@ -115,22 +93,7 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {
-        switch (field) {
-          case "platforms":
-            this.user.set(
-              "settings",
-              "FEED_PLATFORMS",
-              (dto[field] as string[]).join(","),
-            );
-            break;
-          case "interval":
-            this.user.set(
-              "settings",
-              "FEED_INTERVAL",
-              String(dto[field] || 24),
-            );
-            break;
-        }
+        // there are no settable fields
       } else {
         throw this.user.error("Unknown field: " + field);
       }

@@ -3,6 +3,8 @@ import * as path from "path";
 
 import sharp from "sharp";
 import Feed from "./Feed";
+import Platform from "./Platform";
+import Post, { PostStatus } from "./Post";
 import SourceMapper from "../mappers/SourceMapper";
 
 /**
@@ -77,6 +79,52 @@ export default class Source {
       file.height = metadata.height;
     }
     return file;
+  }
+
+  /**
+   * preparePost
+   * this is just an alias of Platform.preparePost(source)
+   */
+
+  public async preparePost(platform: Platform): Promise<Post> {
+    this.feed.user.trace(this.id, "preparePost", this.id, platform.id);
+    return platform.preparePost(this);
+  }
+
+  /**
+   * getPost
+   * this is just an alias of Platform.getPost(source)
+   */
+
+  public getPost(platform: Platform): Post {
+    this.feed.user.trace(this.id, "getPost", this.id, platform.id);
+    return platform.getPost(this);
+  }
+
+  /**
+   * Get multiple (prepared) posts.
+   * @param platforms - platforms to filter on
+   * @param status - post status to filter on
+   * @returns multiple posts
+   */
+
+  public getPosts(platforms?: Platform[], status?: PostStatus): Post[] {
+    this.feed.user.trace(this.id, "getPosts", this.id);
+    const posts: Post[] = [];
+    if (!platforms) {
+      platforms = this.feed.user.getPlatforms();
+    }
+    for (const platform of platforms) {
+      try {
+        const post = this.getPost(platform);
+        if (!status || status === post.status) {
+          posts.push(post);
+        }
+      } catch {
+        continue;
+      }
+    }
+    return posts;
   }
 
   /**

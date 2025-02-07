@@ -7,7 +7,6 @@
 import * as log4js from "log4js";
 import { CombinedResult } from "../types";
 import { PlatformId } from "../platforms";
-import { Dto } from "../mappers/AbstractMapper";
 import { FeedDto } from "../mappers/FeedMapper";
 import { PlatformDto } from "../mappers/PlatformMapper";
 import { PostDto } from "../mappers/PostMapper";
@@ -124,32 +123,23 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          const feed = user.getFeed();
           if (!args.platform) {
             throw user.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
           }
+          const platform = user.getPlatform(args.platform);
+          await platform.setup();
           output = {
             [args.platform]: {
               success: true,
-              result: await feed.setupPlatform(args.platform),
+              result: await platform.test(),
             },
           };
           break;
         }
-        case "setup-platforms": {
-          if (!permissions.managePlatforms) {
-            throw new Error("Missing permissions for command " + command);
-          }
-          if (!user) {
-            throw new Error("user is required for command " + command);
-          }
-          const feed = user.getFeed();
-          output = await feed.setupPlatforms(args.platforms);
-          break;
-        }
+
         case "get-platform": {
           if (!permissions.managePlatforms) {
             throw new Error("Missing permissions for command " + command);
@@ -163,8 +153,7 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
-          const feed = user.getFeed();
-          const platform = feed.getPlatform(args.platform);
+          const platform = user.getPlatform(args.platform);
           output = platform.mapper.getDto(operator);
           break;
         }
@@ -175,8 +164,7 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          const feed = user.getFeed();
-          const platforms = feed.getPlatforms(args.platforms);
+          const platforms = user.getPlatforms(args.platforms);
           output = platforms.map((p) => p.mapper.getDto(operator));
           break;
         }
@@ -193,11 +181,11 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
-          const feed = user.getFeed();
+          const platform = user.getPlatform(args.platform);
           output = {
             [args.platform]: {
               success: true,
-              result: await feed.testPlatform(args.platform),
+              result: await platform.test(),
             },
           };
           break;
@@ -209,8 +197,21 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          const feed = user.getFeed();
-          output = await feed.testPlatforms(args.platforms);
+          const platforms = user.getPlatforms();
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const platform of platforms) {
+            try {
+              output[platform.id] = {
+                success: true,
+                result: await platform.test(),
+              };
+            } catch (e) {
+              output[platform.id] = {
+                success: false,
+                message: e instanceof Error ? e.message : JSON.stringify(e),
+              };
+            }
+          }
           break;
         }
         case "refresh-platform": {
@@ -226,11 +227,14 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
-          const feed = user.getFeed();
+          const platform = user.getPlatform(args.platform);
+          const refreshed = await platform.refresh();
           output = {
             [args.platform]: {
               success: true,
-              result: await feed.refreshPlatform(args.platform),
+              message: refreshed
+                ? "Platform refreshed"
+                : "Platform not refreshed",
             },
           };
           break;
@@ -242,8 +246,24 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          const feed = user.getFeed();
-          output = await feed.refreshPlatforms(args.platforms);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const platform of platforms) {
+            try {
+              const refreshed = await platform.refresh();
+              output[platform.id] = {
+                success: true,
+                result: refreshed
+                  ? "Platform refreshed"
+                  : "Platform not refreshed",
+              };
+            } catch (e) {
+              output[platform.id] = {
+                success: false,
+                message: e instanceof Error ? e.message : JSON.stringify(e),
+              };
+            }
+          }
           break;
         }
         case "get-source": {
@@ -276,40 +296,7 @@ class Fairpost {
           output = sources.map((source) => source.mapper.getDto(operator));
           break;
         }
-        /* move to feed ?
-        case "get-sources-by-status": {
-          if (!permissions.manageSources) {
-            throw new Error("Missing permissions for command " + command);
-          }
-          if (!user) {
-            throw new Error("user is required for command " + command);
-          }
-          const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
 
-          const groups = {} as { [status: string]: Source[] };
-          sources.forEach((source) => {
-            const status = feed.getSourceStatus(source.path);
-            if (groups[status] === undefined) {
-              groups[status] = [];
-            }
-            groups[status].push(source);
-          });
-          const groupedDtos = {} as { [status: string]: Dto[] };
-          for (const status in groups) {
-            report += " " + status + "\n------\n";
-            const sources = groups[status];
-            report += sources.length + " Sources\n------\n";
-            groupedDtos[status] = [];
-            sources.forEach((source) => {
-              report += source.mapper.getReport(operator) + "\n";
-              groupedDtos[status].push(source.mapper.getDto(operator));
-            });
-          }
-          output = groupedDtos;
-          break;
-        }
-        */
         case "get-post": {
           if (!permissions.readPosts) {
             throw new Error("Missing permissions for command " + command);
@@ -330,13 +317,10 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const post = feed.getPost(args.source, args.platform);
-          if (post) {
-            output = post.mapper.getDto(operator);
-          } else {
-            // feed should fail ?
-            throw new Error("Source not found:" + args.source);
-          }
+          const platform = user.getPlatform(args.platform);
+          const source = feed.getSource(args.source);
+          const post = platform.getPost(source);
+          output = post.mapper.getDto(operator);
           break;
         }
         case "get-posts": {
@@ -346,17 +330,20 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
+          if (!args.platforms && args.platform) {
+            args.platforms = [args.platform];
+          }
+          if (!args.sources && args.source) {
+            args.sources = [args.source];
+          }
           const feed = user.getFeed();
-          const allposts = feed.getPosts({
-            sources: args.sources,
-            platforms: args.platforms,
-            status: args.status,
+          const sources = feed.getSources(args.sources);
+          const platforms = user.getPlatforms(args.platforms);
+          const posts = [] as Post[];
+          platforms.forEach((p) => {
+            posts.push(...p.getPosts(sources, args.status));
           });
-          const dtos = [] as Dto[];
-          allposts.forEach((post) => {
-            dtos.push(post.mapper.getDto(operator));
-          });
-          output = dtos;
+          output = posts.map((p) => p.mapper.getDto(operator));
           break;
         }
         case "prepare-post": {
@@ -378,9 +365,11 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
+          const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
-          feed.preparePost(args.source, args.platform);
-
+          const source = feed.getSource(args.source);
+          const post = await platform.preparePost(source);
+          output = post.mapper.getDto(operator);
           break;
         }
         case "prepare-posts": {
@@ -397,26 +386,29 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const allResults = await feed.preparePosts({
-            sources: args.sources,
-            platforms: args.platforms,
-          });
-          const mappedResults: { [id in PlatformId]?: CombinedResult[] } = {};
-          for (const platformId in allResults) {
-            const platformResults = allResults[platformId as PlatformId];
-            mappedResults[platformId as PlatformId] = [] as CombinedResult[];
-            if (platformResults) {
-              const mappedResult = platformResults.map((r) => {
-                return {
-                  success: r.success,
-                  message: r.message,
-                  result: (r.result as Post)?.mapper.getDto(operator),
-                };
-              });
-              mappedResults[platformId as PlatformId] = mappedResult;
+          const sources = feed.getSources(args.sources);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]?: CombinedResult[] };
+          for (const platform of platforms) {
+            for (const source of sources) {
+              if (!output[platform.id]) {
+                output[platform.id] = [];
+              }
+              try {
+                const post = await platform.preparePost(source);
+                (output[platform.id] as CombinedResult[]).push({
+                  success: true,
+                  result: post.mapper.getDto(operator),
+                });
+              } catch (e) {
+                user.error("Fairpost", "preparePosts", e);
+                (output[platform.id] as CombinedResult[]).push({
+                  success: false,
+                  message: e instanceof Error ? e.message : JSON.stringify(e),
+                });
+              }
             }
           }
-          output = mappedResults;
           break;
         }
         case "schedule-post": {
@@ -445,12 +437,11 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const schedpost = feed.schedulePost(
-            args.source,
-            args.platform,
-            args.date,
-          );
-          output = schedpost.mapper.getDto(operator);
+          const source = feed.getSource(args.source);
+          const platform = user.getPlatform(args.platform);
+          const post = platform.getPost(source);
+          post.schedule(args.date);
+          output = post.mapper.getDto(operator);
           break;
         }
         case "schedule-posts": {
@@ -463,13 +454,13 @@ class Fairpost {
           if (!args.platforms && args.platform) {
             args.platforms = [args.platform];
           }
-          if (!args.sources && args.source) {
-            args.sources = [args.source];
+          if (!args.source && args.sources) {
+            args.source = args.sources[0];
           }
-          if (!args.sources) {
+          if (!args.source) {
             throw user.error(
               "CommandHandler " + command,
-              "Missing argument: sources",
+              "Missing argument: source",
             );
           }
           if (!args.date) {
@@ -479,14 +470,24 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const schedposts = feed.schedulePosts(
-            {
-              sources: args.sources,
-              platforms: args.platforms,
-            },
-            new Date(args.date),
-          );
-          output = schedposts.map((p) => p.mapper.getDto(operator));
+          const source = feed.getSource(args.source);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const platform of platforms) {
+            try {
+              const post = platform.getPost(source);
+              post.schedule(args.date);
+              output[platform.id] = {
+                success: true,
+                result: post.mapper.getDto(operator),
+              };
+            } catch (e) {
+              output[platform.id] = {
+                success: false,
+                message: e instanceof Error ? e.message : JSON.stringify(e),
+              };
+            }
+          }
           break;
         }
         case "schedule-next-post": {
@@ -496,27 +497,25 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          if (!args.platforms && args.platform) {
-            args.platforms = [args.platform];
-          }
-          if (!args.platforms) {
+          if (!args.platform) {
             throw user.error(
               "CommandHandler " + command,
-              "Missing argument: platforms",
+              "Missing argument: platform",
             );
           }
-          const feed = user.getFeed();
-          const nextposts = feed.scheduleNextPosts(
+          const platform = user.getPlatform(args.platform);
+          const post = platform.scheduleNextPost(
             args.date ? new Date(args.date) : undefined,
-            {
-              platforms: args.platforms,
-            },
           );
-          output = nextposts.map((p) => p.mapper.getDto(operator));
+          if (post) {
+            output = post?.mapper.getDto(operator);
+          } else {
+            output = { success: false, message: "No post left to schedule" };
+          }
           break;
         }
         case "publish-post": {
-          if (!permissions.schedulePosts) {
+          if (!permissions.publishPosts) {
             throw new Error("Missing permissions for command " + command);
           }
           if (!user) {
@@ -534,13 +533,16 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
+          const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
-          const pubpost = await feed.publishPost(
-            args.source,
-            args.platform,
-            args.dryrun,
-          );
-          output = pubpost.mapper.getDto(operator);
+          const source = feed.getSource(args.source);
+          const post = platform.getPost(source);
+          output = {
+            [platform.id]: {
+              success: await post.publish(!!args.dryrun),
+              result: post.link,
+            },
+          };
           break;
         }
         case "publish-posts": {
@@ -553,24 +555,34 @@ class Fairpost {
           if (!args.platforms && args.platform) {
             args.platforms = [args.platform];
           }
-          if (!args.sources && args.source) {
-            args.sources = [args.source];
+          if (!args.source && args.sources) {
+            args.source = args.sources[0];
           }
-          if (!args.sources) {
+          if (!args.source) {
             throw user.error(
               "CommandHandler " + command,
-              "Missing argument: sources",
+              "Missing argument: source",
             );
           }
           const feed = user.getFeed();
-          const pubposts = await feed.publishPosts(
-            {
-              sources: args.sources,
-              platforms: args.platforms,
-            },
-            args.dryrun,
-          );
-          output = pubposts.map((p) => p.mapper.getDto(operator));
+          const source = feed.getSource(args.source);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const platform of platforms) {
+            try {
+              const post = platform.getPost(source);
+              await post.publish(!!args.dryrun);
+              output[platform.id] = {
+                success: await post.publish(!!args.dryrun),
+                result: post.link,
+              };
+            } catch (e) {
+              output[platform.id] = {
+                success: false,
+                message: e instanceof Error ? e.message : JSON.stringify(e),
+              };
+            }
+          }
           break;
         }
 
@@ -582,15 +594,24 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
+          if (!args.platforms && args.platform) {
+            args.platforms = [args.platform];
+          }
+          if (!args.sources && args.source) {
+            args.sources = [args.source];
+          }
           const feed = user.getFeed();
-          const nextposts = feed.scheduleNextPosts(
-            args.date ? new Date(args.date) : undefined,
-            {
-              sources: args.sources,
-              platforms: args.platforms,
-            },
-          );
-          output = nextposts.map((p) => p.mapper.getDto(operator));
+          const sources = feed.getSources(args.sources);
+          const platforms = user.getPlatforms(args.platforms);
+          const posts = [] as Post[];
+          platforms.forEach((p) => {
+            const post = p.scheduleNextPost(
+              args.date ? new Date(args.date) : undefined,
+              sources,
+            );
+            if (post) posts.push(post);
+          });
+          output = posts.map((p) => p.mapper.getDto(operator));
           break;
         }
         case "publish-due-posts": {
@@ -601,14 +622,33 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const dueposts = await feed.publishDuePosts(
-            {
-              sources: args.sources,
-              platforms: args.platforms,
-            },
-            args.dryrun,
-          );
-          output = dueposts.map((p) => p.mapper.getDto(operator));
+          const sources = feed.getSources(args.sources);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const platform of platforms) {
+            try {
+              const post = await platform.publishDuePost(
+                sources,
+                !!args.dryrun,
+              );
+              if (post) {
+                output[platform.id] = {
+                  success: true,
+                  result: post.link,
+                };
+              } else {
+                output[platform.id] = {
+                  success: true,
+                  message: "No posts due",
+                };
+              }
+            } catch (e) {
+              output[platform.id] = {
+                success: false,
+                message: e instanceof Error ? e.message : JSON.stringify(e),
+              };
+            }
+          }
           break;
         }
 
@@ -634,7 +674,6 @@ class Fairpost {
               `${cmd} @userid get-user`,
               `${cmd} @userid get-feed`,
               `${cmd} @userid setup-platform --platform=xxx`,
-              `${cmd} @userid setup-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid test-platform --platform=xxx`,
               `${cmd} @userid test-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid refresh-platform --platform=xxx`,
@@ -648,7 +687,7 @@ class Fairpost {
               `${cmd} @userid prepare-post --post=xxx:xxx`,
               `${cmd} @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
               `${cmd} @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
-              `${cmd} @userid schedule-next-post [--date=xxxx-xx-xx] [--platforms=xxx,xxx|--platform=xxx] `,
+              `${cmd} @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx]`,
               `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
               `${cmd} @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               "\n# feed planning:",

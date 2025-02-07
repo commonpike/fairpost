@@ -11,7 +11,7 @@ import User from "../../models/User";
  */
 
 export default class InstagramApi {
-  GRAPH_API_VERSION = "v18.0";
+  GRAPH_API_VERSION = "v22.0";
 
   user: User;
 

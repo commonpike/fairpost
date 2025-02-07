@@ -26,10 +26,11 @@ export default class Platform {
   postFileName: string = "post.json";
   mapper: PlatformMapper;
   settings: FieldMapping = {};
-
+  interval: number;
   constructor(user: User) {
     this.user = user;
     this.id = (this.constructor as typeof Platform).id();
+    this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
     this.mapper = new PlatformMapper(this);
   }
 
@@ -97,21 +98,129 @@ export default class Platform {
    * getPost
    * @param source - the source to get the post for this platform from
    * @returns {Post} the post for this platform for the given source, if it exists.
+   * @throws errors if the post does not exist or its data cant be read
    */
 
-  getPost(source: Source): Post | undefined {
+  getPost(source: Source): Post {
     this.user.trace(this.id, "getPost", this.id, source.id);
 
     const postFilePath = this.getPostFilePath(source);
-    if (fs.existsSync(postFilePath)) {
-      const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
-      if (data) {
-        return new Post(source, this, data);
-      }
+    if (!fs.existsSync(postFilePath)) {
+      throw this.user.error("No such post ", this.id, source.id);
     }
-    return;
+    const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
+    if (!data) {
+      throw this.user.error("Cant parse post ", this.id, source.id);
+    }
+    return new Post(source, this, data);
   }
 
+  /**
+   * Get multiple (prepared) posts
+   * @param sources - sources to filter on
+   * @param status - post status to filter on
+   * @returns multiple posts
+   */
+  getPosts(sources?: Source[], status?: PostStatus): Post[] {
+    this.user.trace("User", "getPosts");
+    const posts: Post[] = [];
+    if (!sources) {
+      sources = this.user.getFeed().getAllSources();
+    }
+    for (const source of sources) {
+      try {
+        const post = this.getPost(source);
+        if (!status || status === post.status) {
+          posts.push(post);
+        }
+      } catch {
+        continue;
+      }
+    }
+    return posts;
+  }
+
+  /**
+   * Get last published post for a platform
+   * @returns the above post or none
+   */
+  getLastPost(): Post | void {
+    this.user.trace(this.id, "getLastPost");
+    let lastPost: Post | undefined = undefined;
+    const posts = this.getPosts(undefined, PostStatus.PUBLISHED);
+    for (const post of posts) {
+      if (post.published) {
+        if (
+          !lastPost ||
+          !lastPost.published ||
+          post.published >= lastPost.published
+        ) {
+          lastPost = post;
+        }
+      }
+    }
+    return lastPost;
+  }
+
+  /**
+   * Get first post from sources scheduled in the past
+   * @param sources
+   * @returns the above post or none
+   */
+  getDuePost(sources: Source[]): Post | void {
+    const now = new Date();
+    for (const source of sources) {
+      const post = this.getPost(source);
+      if (post && post.status === PostStatus.SCHEDULED) {
+        // some sanity checks
+        if (!post.scheduled) {
+          this.user.warn(
+            "Found scheduled post without date. Unscheduling post.",
+            post.id,
+          );
+          post.status = PostStatus.UNSCHEDULED;
+          post.save();
+          continue;
+        }
+        if (post.skip) {
+          this.user.warn(
+            "Found scheduled post marked skip. Unscheduling post.",
+            post.id,
+          );
+          post.status = PostStatus.UNSCHEDULED;
+          post.save();
+          continue;
+        }
+        if (post.published) {
+          this.user.warn(
+            "Found scheduled post previously published. Marking published.",
+            post.id,
+          );
+          post.status = PostStatus.PUBLISHED;
+          post.save();
+          continue;
+        }
+        if (post.scheduled <= now) {
+          this.user.trace(
+            "Feed",
+            "publishDuePosts",
+            post.id,
+            "Posting; scheduled for",
+            post.scheduled,
+          );
+          return post;
+          break;
+        } else {
+          this.user.trace(
+            "Feed",
+            post.id,
+            "Not due yet; scheduled for",
+            post.scheduled,
+          );
+        }
+      }
+    }
+  }
   /**
    * preparePost
    *
@@ -134,13 +243,17 @@ export default class Platform {
    */
   async preparePost(source: Source): Promise<Post> {
     this.user.trace(this.id, "preparePost");
-
-    const post = this.getPost(source) ?? new Post(source, this);
-    if (post.status === PostStatus.PUBLISHED) {
-      return post;
-    }
-    if (post.status === PostStatus.FAILED) {
-      post.status = PostStatus.UNSCHEDULED;
+    let post: Post | undefined = undefined;
+    try {
+      post = this.getPost(source);
+      if (post.status === PostStatus.PUBLISHED) {
+        return post;
+      }
+      if (post.status === PostStatus.FAILED) {
+        post.status = PostStatus.UNSCHEDULED;
+      }
+    } catch {
+      post = new Post(source, this);
     }
 
     // some default logic. override this
@@ -155,7 +268,7 @@ export default class Platform {
     post.purgeFiles();
     const files = await source.getFiles();
     files.forEach((file) => {
-      if (!post.ignoreFiles?.includes(file.name)) {
+      if (post && !post.ignoreFiles?.includes(file.name)) {
         post.putFile(file);
       }
     });
@@ -217,6 +330,62 @@ export default class Platform {
   }
 
   /**
+   * Get the next date for a post to be published on this platform
+   *
+   * This would be FAIRPOST_INTERVAL days after the date
+   * of the last post for that platform, or now.
+   * @returns the next date
+   */
+  getNextPostDate(): Date {
+    this.user.trace("Feed", "getNextPostDate");
+    let nextDate = null;
+    const lastPost = this.getLastPost();
+    if (lastPost && lastPost.published) {
+      nextDate = new Date(lastPost.published);
+      nextDate.setDate(nextDate.getDate() + this.interval);
+    } else {
+      nextDate = new Date();
+    }
+    return nextDate;
+  }
+
+  /**
+   * Schedule the first unscheduled post for this platforms
+   *
+   * within given sources are all sources,
+   * finds the next post date and the first unscheduled post,
+   * and schedules that post on that date
+   * @param date - use date instead of the next post date
+   * @param sources - paths to sources to filter on
+   * @returns the next scheduled post or undefined if there are no posts to schedule
+   */
+  scheduleNextPost(date?: Date, sources?: Source[]): Post | undefined {
+    this.user.trace(this.id, "scheduleNextPost");
+    if (!sources) {
+      sources = this.user.getFeed().getAllSources();
+    }
+    const scheduledPosts = this.getPosts(sources, PostStatus.SCHEDULED);
+    if (scheduledPosts.length) {
+      this.user.trace(this.id, "scheduleNextPost", "Already scheduled");
+      return scheduledPosts[0];
+    }
+    const nextDate = date ? date : this.getNextPostDate();
+    for (const source of sources) {
+      const post = this.getPost(source);
+      if (
+        post &&
+        post.valid &&
+        !post.skip &&
+        post.status === PostStatus.UNSCHEDULED
+      ) {
+        post.schedule(nextDate);
+        return post;
+      }
+    }
+    this.user.trace(this.id, "scheduleNextPost", "No post left to schedule");
+  }
+
+  /**
    * publishPost
    *
    * - publish the post for this platform, sync.
@@ -239,12 +408,31 @@ export default class Platform {
   }
 
   /**
+   * publishDuePost
+   *
+   * - publish the first post scheduled in the past for this platform.
+   * @returns {Promise} the post or none
+   */
+
+  async publishDuePost(
+    sources: Source[],
+    dryrun: boolean = false,
+  ): Promise<Post | undefined> {
+    this.user.trace(this.id, "publishDuePost", dryrun);
+    const post = this.getDuePost(sources);
+    if (post) {
+      await post.publish(dryrun);
+      return post;
+    }
+  }
+
+  /**
    * @returns array of instances of the plugins given with the settings given.
    */
   loadPlugins(pluginSettings: { [pluginid: string]: object }): Plugin[] {
     const plugins: Plugin[] = [];
     Object.values(pluginClasses).forEach((pluginClass) => {
-      const pluginId = pluginClass.name.toLowerCase();
+      const pluginId = pluginClass.id();
       if (pluginId in pluginSettings) {
         plugins?.push(new pluginClass(pluginSettings[pluginId]));
       }

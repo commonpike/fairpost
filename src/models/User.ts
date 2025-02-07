@@ -23,7 +23,12 @@ import UserMapper from "../mappers/UserMapper";
 export default class User {
   id: string;
   homedir: string;
-  platforms = [] as Platform[];
+  feed: Feed | undefined;
+  platforms:
+    | {
+        [id in PlatformId]?: Platform;
+      }
+    | undefined = undefined;
   mapper: UserMapper;
   store: Store;
   logger: log4js.Logger;
@@ -44,8 +49,8 @@ export default class User {
     ) {
       throw new Error("No such user: " + id);
     }
-    this.mapper = new UserMapper(this);
     this.logger = this.getLogger();
+    this.mapper = new UserMapper(this);
   }
 
   /**
@@ -79,8 +84,10 @@ export default class User {
    */
 
   public getFeed(): Feed {
-    this.loadPlatforms();
-    return new Feed(this);
+    if (!this.feed) {
+      this.feed = new Feed(this);
+    }
+    return this.feed;
   }
 
   /**
@@ -89,16 +96,52 @@ export default class User {
    * active
    */
   private loadPlatforms(): void {
+    this.trace("User", "loadPlatforms");
     const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
         if (platformIds.includes(platformClass.id())) {
           const platform = new platformClass(this);
           platform.active = true;
-          this.platforms.push(platform);
+          if (this.platforms === undefined) {
+            this.platforms = {};
+          }
+          this.platforms[platform.id] = platform;
         }
       }
     });
+  }
+
+  /**
+   * Get one platform
+   * @param platformId - the slug of the platform
+   * @returns platform given by id
+   */
+  getPlatform(platformId: PlatformId): Platform {
+    this.trace("User", "getPlatform", platformId);
+    if (this.platforms === undefined) {
+      this.loadPlatforms();
+    }
+    const platform = this.platforms?.[platformId];
+    if (!platform) {
+      throw this.error("Unknown or disabled platform: " + platformId);
+    }
+    return platform;
+  }
+
+  /**
+   * Get multiple platforms
+   * @param platformIds - the slug of the platform
+   * @returns platforms given by ids
+   */
+  getPlatforms(platformIds?: PlatformId[]): Platform[] {
+    this.trace("User", "getPlatforms", platformIds);
+    if (this.platforms === undefined) {
+      this.loadPlatforms();
+    }
+    return platformIds
+      ? platformIds.map((platformId) => this.getPlatform(platformId))
+      : Object.values(this.platforms ?? {});
   }
 
   /**
@@ -106,6 +149,7 @@ export default class User {
    * @param platformId
    */
   public addPlatform(platformId: PlatformId): void {
+    this.trace("User", "addPlatform", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
@@ -115,7 +159,6 @@ export default class User {
         platformIds.push(platformId);
         this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
       }
-      this.platforms = [];
       this.loadPlatforms();
       this.info(`Platform ${platformId} enabled for user ${this.id}`);
     } else {
@@ -128,6 +171,7 @@ export default class User {
    * @param platformId
    */
   public removePlatform(platformId: PlatformId): void {
+    this.trace("User", "removePlatforms", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
@@ -138,13 +182,16 @@ export default class User {
         platformIds.splice(index, 1);
         this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
       }
-      this.platforms = [];
       this.loadPlatforms();
       this.info(`Platform ${platformId} disabled for user ${this.id}`);
     } else {
       throw this.error("removePlatform: no such platform", platformId);
     }
   }
+
+  /*
+    User Store 
+  */
 
   public get(
     store: "settings" | "auth" | "app",
@@ -165,6 +212,10 @@ export default class User {
       throw this.error(error);
     }
   }
+
+  /*
+    User logging 
+  */
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public trace(...args: any[]) {

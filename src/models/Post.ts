@@ -79,10 +79,45 @@ export default class Post {
    */
 
   schedule(date: Date): void {
-    this.platform.user.trace("Post", "schedule");
+    this.platform.user.trace("Post", "schedule", date);
+    if (!this.valid) {
+      throw this.platform.user.error("Post is not valid");
+    }
+    if (this.skip) {
+      throw this.platform.user.error("Post is marked to be skipped");
+    }
+    if (this.status !== PostStatus.UNSCHEDULED) {
+      this.platform.user.warn("Rescheduling post");
+    }
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
     this.save();
+  }
+
+  /**
+   * Publish this post and return it
+   *
+   * The post itself is a fixed entity and does not
+   * know how to publish itself, so it calls on its
+   * parent, in userland, to perform the logic.
+   * @param dryrun - wether or not to really really publish it
+   * @returns boolean if success
+   */
+  async publish(dryrun: boolean): Promise<boolean> {
+    this.platform.user.trace("Post", "publish");
+    if (!this.valid) {
+      throw this.platform.user.error("Post is not valid", this.id);
+    }
+    if (this.skip) {
+      throw this.platform.user.error("Post is marked skip", this.id);
+    }
+    if (this.published) {
+      throw this.platform.user.error("Post was already published", this.id);
+    }
+    // why ?
+    // if (!dryrun) post.schedule(now);
+    this.platform.user.info("Publishing", this.id);
+    return await this.platform.publishPost(this, dryrun);
   }
 
   /**
