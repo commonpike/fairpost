@@ -35,30 +35,43 @@ export default class Post {
   remoteId?: string;
   mapper: PostMapper;
 
-  constructor(source: Source, platform: Platform, data?: object) {
-    this.source = source;
+  constructor(platform: Platform, source: Source) {
+    this.id = platform.getPostId(source);
     this.platform = platform;
-    this.id = this.source.id + ":" + this.platform.id;
-    if (data) {
-      Object.assign(this, data);
-      this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
-      this.published = this.published ? new Date(this.published) : undefined;
-      this.ignoreFiles = this.ignoreFiles ?? [];
-    } else {
-      this.files = []; // allow optional once strict
+    this.source = source;
+    this.mapper = new PostMapper(this);
+  }
+
+  load() {
+    const postFilePath = this.platform.getPostFilePath(this.source);
+    if (!fs.existsSync(postFilePath)) {
+      throw this.platform.user.error("No such post ", this.id, this.source.id);
     }
-    const assetsPath = this.getFilePath(platform.assetsFolder);
+    const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
+    if (!data) {
+      throw this.platform.user.error(
+        "Cant parse post ",
+        this.id,
+        this.source.id,
+      );
+    }
+    Object.assign(this, data);
+    this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
+    this.published = this.published ? new Date(this.published) : undefined;
+    this.ignoreFiles = this.ignoreFiles ?? [];
+    // the platform will require this folder
+    // to be there, lets make it now
+    const assetsPath = this.getFilePath(this.platform.assetsFolder);
     if (!fs.existsSync(assetsPath)) {
       fs.mkdirSync(assetsPath, { recursive: true });
     }
-    this.mapper = new PostMapper(this);
   }
 
   /**
    * Save this post to disk
    */
 
-  save(): void {
+  save() {
     this.platform.user.trace("Post", "save");
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const data = { ...this } as { [key: string]: any };

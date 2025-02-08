@@ -21,6 +21,7 @@ export default class Platform {
   id: PlatformId = PlatformId.UNKNOWN;
   active: boolean = false;
   user: User;
+  cache: { [id: string]: Post } = {};
   defaultBody: string = "Fairpost feed";
   assetsFolder: string = "_fairpost";
   postFileName: string = "post.json";
@@ -95,6 +96,14 @@ export default class Platform {
   }
 
   /**
+   * getPostId
+   * @param source the source for the new or existing post
+   * @returns the id for the new or existing post
+   */
+  getPostId(source: Source): string {
+    return source.id + ":" + this.id;
+  }
+  /**
    * getPost
    * @param source - the source to get the post for this platform from
    * @returns {Post} the post for this platform for the given source, if it exists.
@@ -104,15 +113,13 @@ export default class Platform {
   getPost(source: Source): Post {
     this.user.trace(this.id, "getPost", this.id, source.id);
 
-    const postFilePath = this.getPostFilePath(source);
-    if (!fs.existsSync(postFilePath)) {
-      throw this.user.error("No such post ", this.id, source.id);
+    const postId = this.getPostId(source);
+    if (!(postId in this.cache)) {
+      const post = new Post(this, source);
+      post.load(); // or throw an error
+      this.cache[postId] = post;
     }
-    const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
-    if (!data) {
-      throw this.user.error("Cant parse post ", this.id, source.id);
-    }
-    return new Post(source, this, data);
+    return this.cache[postId];
   }
 
   /**
@@ -253,7 +260,8 @@ export default class Platform {
         post.status = PostStatus.UNSCHEDULED;
       }
     } catch {
-      post = new Post(source, this);
+      post = new Post(this, source);
+      this.cache[post.id] = post;
     }
 
     // some default logic. override this
