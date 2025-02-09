@@ -109,13 +109,13 @@ export default class Platform {
    * @throws errors if the post does not exist or its data cant be read
    */
 
-  getPost(source: Source): Post {
+  async getPost(source: Source): Promise<Post> {
     this.user.trace(this.id, "getPost", this.id, source.id);
 
     const postId = this.getPostId(source);
     if (!(postId in this.cache)) {
       const post = new Post(this, source);
-      post.load(); // or throw an error
+      await post.load(); // or throw an error
       this.cache[postId] = post;
     }
     return this.cache[postId];
@@ -127,15 +127,15 @@ export default class Platform {
    * @param status - post status to filter on
    * @returns multiple posts
    */
-  getPosts(sources?: Source[], status?: PostStatus): Post[] {
+  async getPosts(sources?: Source[], status?: PostStatus): Promise<Post[]> {
     this.user.trace("User", "getPosts");
     const posts: Post[] = [];
     if (!sources) {
-      sources = this.user.getFeed().getAllSources();
+      sources = await this.user.getFeed().getAllSources();
     }
     for (const source of sources) {
       try {
-        const post = this.getPost(source);
+        const post = await this.getPost(source);
         if (!status || status === post.status) {
           posts.push(post);
         }
@@ -150,10 +150,10 @@ export default class Platform {
    * Get last published post for a platform
    * @returns the above post or none
    */
-  getLastPost(): Post | void {
+  async getLastPost(): Promise<Post | void> {
     this.user.trace(this.id, "getLastPost");
     let lastPost: Post | undefined = undefined;
-    const posts = this.getPosts(undefined, PostStatus.PUBLISHED);
+    const posts = await this.getPosts(undefined, PostStatus.PUBLISHED);
     for (const post of posts) {
       if (post.published) {
         if (
@@ -173,10 +173,10 @@ export default class Platform {
    * @param sources
    * @returns the above post or none
    */
-  getDuePost(sources: Source[]): Post | void {
+  async getDuePost(sources: Source[]): Promise<Post | void> {
     const now = new Date();
     for (const source of sources) {
-      const post = this.getPost(source);
+      const post = await this.getPost(source);
       if (post && post.status === PostStatus.SCHEDULED) {
         // some sanity checks
         if (!post.scheduled) {
@@ -254,7 +254,7 @@ export default class Platform {
     this.user.trace(this.id, "preparePost");
     let post: Post | undefined = undefined;
     try {
-      post = this.getPost(source);
+      post = await this.getPost(source);
       if (post.status === PostStatus.PUBLISHED) {
         return post;
       }
@@ -265,7 +265,7 @@ export default class Platform {
       this.cache[post.id] = post;
     }
     if (save) {
-      post.save();
+      await post.save();
     }
 
     return post;
@@ -278,10 +278,10 @@ export default class Platform {
    * of the last post for that platform, or now.
    * @returns the next date
    */
-  getNextPostDate(): Date {
+  async getNextPostDate(): Promise<Date> {
     this.user.trace("Feed", "getNextPostDate");
     let nextDate = null;
-    const lastPost = this.getLastPost();
+    const lastPost = await this.getLastPost();
     if (lastPost && lastPost.published) {
       nextDate = new Date(lastPost.published);
       nextDate.setDate(nextDate.getDate() + this.interval);
@@ -301,19 +301,22 @@ export default class Platform {
    * @param sources - paths to sources to filter on
    * @returns the next scheduled post or undefined if there are no posts to schedule
    */
-  scheduleNextPost(date?: Date, sources?: Source[]): Post | undefined {
+  async scheduleNextPost(
+    date?: Date,
+    sources?: Source[],
+  ): Promise<Post | undefined> {
     this.user.trace(this.id, "scheduleNextPost");
     if (!sources) {
-      sources = this.user.getFeed().getAllSources();
+      sources = await this.user.getFeed().getAllSources();
     }
-    const scheduledPosts = this.getPosts(sources, PostStatus.SCHEDULED);
+    const scheduledPosts = await this.getPosts(sources, PostStatus.SCHEDULED);
     if (scheduledPosts.length) {
       this.user.trace(this.id, "scheduleNextPost", "Already scheduled");
       return scheduledPosts[0];
     }
-    const nextDate = date ? date : this.getNextPostDate();
+    const nextDate = date ? date : await this.getNextPostDate();
     for (const source of sources) {
-      const post = this.getPost(source);
+      const post = await this.getPost(source);
       if (
         post &&
         post.valid &&
@@ -340,7 +343,7 @@ export default class Platform {
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
     this.user.trace(this.id, "publishPost", post.id, dryrun);
-    return post.processResult("-99", "#undefined", {
+    return await post.processResult("-99", "#undefined", {
       date: new Date(),
       dryrun: dryrun,
       success: false,
@@ -361,7 +364,7 @@ export default class Platform {
     dryrun: boolean = false,
   ): Promise<Post | undefined> {
     this.user.trace(this.id, "publishDuePost", dryrun);
-    const post = this.getDuePost(sources);
+    const post = await this.getDuePost(sources);
     if (post) {
       await post.publish(dryrun);
       return post;

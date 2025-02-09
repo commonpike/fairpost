@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 import * as path from "path";
 
 import sharp from "sharp";
@@ -30,10 +30,13 @@ export default class Source {
     this.id = this.feed.getSourceId(path);
     this.path = feed.path + "/" + path;
     this.mapper = new SourceMapper(this);
+  }
+
+  public async load() {
     try {
-      fs.statSync(this.path).isDirectory();
+      (await fs.lstat(this.path)).isDirectory();
     } catch {
-      throw feed.user.error("No such source: " + path);
+      throw this.feed.user.error("No such source: " + path);
     }
   }
 
@@ -48,7 +51,7 @@ export default class Source {
     if (this.files !== undefined) {
       return structuredClone(this.files);
     }
-    const fileNames = this.getFileNames();
+    const fileNames = await this.getFileNames();
     this.files = [];
     for (let index = 0; index < fileNames.length; index++) {
       this.files.push(await this.getFileInfo(fileNames[index], index));
@@ -66,7 +69,7 @@ export default class Source {
     const filepath = this.path + "/" + name;
     const mime = this.guessMimeType(name);
     const group = mime.split("/")[0];
-    const stats = fs.statSync(filepath);
+    const stats = await fs.stat(filepath);
     const extension = path.extname(name);
     const file = {
       name: name,
@@ -94,7 +97,7 @@ export default class Source {
 
   public async preparePost(platform: Platform): Promise<Post> {
     this.feed.user.trace(this.id, "preparePost", this.id, platform.id);
-    return platform.preparePost(this);
+    return await platform.preparePost(this);
   }
 
   /**
@@ -102,9 +105,9 @@ export default class Source {
    * this is just an alias of Platform.getPost(source)
    */
 
-  public getPost(platform: Platform): Post {
+  public async getPost(platform: Platform): Promise<Post> {
     this.feed.user.trace(this.id, "getPost", this.id, platform.id);
-    return platform.getPost(this);
+    return await platform.getPost(this);
   }
 
   /**
@@ -114,7 +117,10 @@ export default class Source {
    * @returns multiple posts
    */
 
-  public getPosts(platforms?: Platform[], status?: PostStatus): Post[] {
+  public async getPosts(
+    platforms?: Platform[],
+    status?: PostStatus,
+  ): Promise<Post[]> {
     this.feed.user.trace(this.id, "getPosts", this.id);
     const posts: Post[] = [];
     if (!platforms) {
@@ -122,7 +128,7 @@ export default class Source {
     }
     for (const platform of platforms) {
       try {
-        const post = this.getPost(platform);
+        const post = await this.getPost(platform);
         if (!status || status === post.status) {
           posts.push(post);
         }
@@ -138,13 +144,15 @@ export default class Source {
    * @returns array of filenames relative to source
    */
 
-  private getFileNames(): string[] {
+  private async getFileNames(): Promise<string[]> {
     if (this.files !== undefined) {
       return this.files.map((file) => file.name);
     }
-    const files = fs.readdirSync(this.path).filter((file) => {
+    const files = (await fs.readdir(this.path)).filter(async (file) => {
       const regex = /^[^._]/;
-      return fs.statSync(this.path + "/" + file).isFile() && file.match(regex);
+      return (
+        (await fs.stat(this.path + "/" + file)).isFile() && file.match(regex)
+      );
     });
     return files;
   }

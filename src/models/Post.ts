@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 
 import Source, { FileGroup, FileInfo } from "./Source";
 
@@ -42,12 +42,12 @@ export default class Post {
     this.mapper = new PostMapper(this);
   }
 
-  load() {
+  async load() {
     const postFilePath = this.platform.getPostFilePath(this.source);
-    if (!fs.existsSync(postFilePath)) {
+    if (!(await this.fileExists(postFilePath))) {
       throw this.platform.user.error("No such post ", this.id, this.source.id);
     }
-    const data = JSON.parse(fs.readFileSync(postFilePath, "utf8"));
+    const data = JSON.parse(await fs.readFile(postFilePath, "utf8"));
     if (!data) {
       throw this.platform.user.error(
         "Cant parse post ",
@@ -65,14 +65,14 @@ export default class Post {
    * Save this post to disk
    */
 
-  save() {
+  async save() {
     this.platform.user.trace("Post", "save");
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const data = { ...this } as { [key: string]: any };
     delete data.source;
     delete data.platform;
     delete data.mapper;
-    fs.writeFileSync(
+    await fs.writeFile(
       this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),
     );
@@ -100,11 +100,11 @@ export default class Post {
     // update existing files
 
     if (!isnew) {
-      this.purgeFiles();
+      await this.purgeFiles();
     } else {
       const assetsPath = this.getFilePath(this.platform.assetsFolder);
-      if (!fs.existsSync(assetsPath)) {
-        fs.mkdirSync(assetsPath, { recursive: true });
+      if (!(await this.fileExists(assetsPath))) {
+        await fs.mkdir(assetsPath, { recursive: true });
       }
     }
 
@@ -124,32 +124,32 @@ export default class Post {
     const textFiles = this.getFiles(FileGroup.TEXT);
 
     if (this.hasFile("body.txt")) {
-      this.body = fs.readFileSync(this.source.path + "/body.txt", "utf8");
+      this.body = await fs.readFile(this.source.path + "/body.txt", "utf8");
     } else if (textFiles.length === 1) {
       const bodyFile = textFiles[0].name;
-      this.body = fs.readFileSync(this.source.path + "/" + bodyFile, "utf8");
+      this.body = await fs.readFile(this.source.path + "/" + bodyFile, "utf8");
     } else {
       this.body = this.platform.defaultBody;
     }
 
     if (this.hasFile("title.txt")) {
-      this.title = fs.readFileSync(this.source.path + "/title.txt", "utf8");
+      this.title = await fs.readFile(this.source.path + "/title.txt", "utf8");
     } else if (this.hasFile("subject.txt")) {
-      this.title = fs.readFileSync(this.source.path + "/subject.txt", "utf8");
+      this.title = await fs.readFile(this.source.path + "/subject.txt", "utf8");
     }
 
     if (this.hasFile("tags.txt")) {
-      this.tags = fs
-        .readFileSync(this.source.path + "/tags.txt", "utf8")
-        .split(/\s/);
+      this.tags = (
+        await fs.readFile(this.source.path + "/tags.txt", "utf8")
+      ).split(/\s/);
     }
     if (this.hasFile("mentions.txt")) {
-      this.mentions = fs
-        .readFileSync(this.source.path + "/mentions.txt", "utf8")
-        .split(/\s/);
+      this.mentions = (
+        await fs.readFile(this.source.path + "/mentions.txt", "utf8")
+      ).split(/\s/);
     }
     if (this.hasFile("geo.txt")) {
-      this.geo = fs.readFileSync(this.source.path + "/geo.txt", "utf8");
+      this.geo = await fs.readFile(this.source.path + "/geo.txt", "utf8");
     }
 
     // decompile the body to see if there are
@@ -180,7 +180,7 @@ export default class Post {
    * @param date - the date to schedule it on
    */
 
-  schedule(date: Date): void {
+  async schedule(date: Date) {
     this.platform.user.trace("Post", "schedule", date);
     if (!this.valid) {
       throw this.platform.user.error("Post is not valid");
@@ -193,7 +193,7 @@ export default class Post {
     }
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
-    this.save();
+    await this.save();
   }
 
   /**
@@ -398,9 +398,12 @@ export default class Post {
    * Remove all the files that do not exist (anymore).
    * Does not save.
    */
-  purgeFiles() {
-    this.getFiles().forEach((file) => {
-      if (file.original && !fs.existsSync(this.getFilePath(file.original))) {
+  async purgeFiles() {
+    this.getFiles().forEach(async (file) => {
+      if (
+        file.original &&
+        !(await this.fileExists(this.getFilePath(file.original)))
+      ) {
         this.platform.user.info(
           "Post",
           "purgeFiles",
@@ -409,7 +412,7 @@ export default class Post {
         );
         this.removeFile(file.name);
       }
-      if (!fs.existsSync(this.getFilePath(file.name))) {
+      if (!(await this.fileExists(this.getFilePath(file.name)))) {
         this.platform.user.info(
           "Post",
           "purgeFiles",
@@ -550,7 +553,11 @@ export default class Post {
    * @returns boolean if success
    */
 
-  processResult(remoteId: string, link: string, result: PostResult): boolean {
+  async processResult(
+    remoteId: string,
+    link: string,
+    result: PostResult,
+  ): Promise<boolean> {
     this.results.push(result);
 
     if (result.error) {
@@ -574,8 +581,17 @@ export default class Post {
       }
     }
 
-    this.save();
+    await this.save();
     return result.success;
+  }
+
+  async fileExists(path: string): Promise<boolean> {
+    try {
+      await fs.access(path);
+    } catch {
+      return false;
+    }
+    return true;
   }
 }
 

@@ -52,7 +52,7 @@ export default class Feed {
    * Get all sources
    * @returns all source in the feed
    */
-  getAllSources(): Source[] {
+  async getAllSources(): Promise<Source[]> {
     this.user.trace("Feed", "getAllSources");
     if (this.allCached) {
       return Object.values(this.cache);
@@ -67,7 +67,7 @@ export default class Feed {
         !path.startsWith(".")
       );
     });
-    paths.forEach((path) => this.getSource(path));
+    paths.forEach(async (path) => await this.getSource(path));
     this.allCached = true;
     return Object.values(this.cache);
   }
@@ -77,13 +77,14 @@ export default class Feed {
    * @param path - path to a single source
    * @returns the given source object
    */
-  getSource(path: string): Source {
+  async getSource(path: string): Promise<Source> {
     this.user.trace("Feed", "getSource", path);
     const sourceId = this.getSourceId(path);
     if (sourceId in this.cache) {
       return this.cache[sourceId];
     }
     const source = new Source(this, path);
+    await source.load();
     this.cache[source.id] = source;
     return source;
   }
@@ -93,9 +94,14 @@ export default class Feed {
    * @param paths - paths to multiple sources
    * @returns the given source objects
    */
-  getSources(paths?: string[]): Source[] {
+  async getSources(paths?: string[]): Promise<Source[]> {
     this.user.trace("Feed", "getSources", paths);
-    return paths?.map((path) => this.getSource(path)) ?? this.getAllSources();
+    if (!paths || !paths.length) {
+      return await this.getAllSources();
+    }
+    const sources = [] as Source[];
+    paths.forEach(async (path) => sources.push(await this.getSource(path)));
+    return sources;
   }
 
   /**

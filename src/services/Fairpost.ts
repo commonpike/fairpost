@@ -280,7 +280,7 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           output = source.mapper.getDto(operator);
           break;
         }
@@ -292,7 +292,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources);
           output = sources.map((source) => source.mapper.getDto(operator));
           break;
         }
@@ -318,8 +318,8 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const platform = user.getPlatform(args.platform);
-          const source = feed.getSource(args.source);
-          const post = platform.getPost(source);
+          const source = await feed.getSource(args.source);
+          const post = await platform.getPost(source);
           output = post.mapper.getDto(operator);
           break;
         }
@@ -337,11 +337,11 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
+          const sources = await feed.getSources(args.sources);
           const posts = [] as Post[];
-          platforms.forEach((p) => {
-            posts.push(...p.getPosts(sources, args.status));
+          platforms.forEach(async (p) => {
+            posts.push(...(await p.getPosts(sources, args.status)));
           });
           output = posts.map((p) => p.mapper.getDto(operator));
           break;
@@ -367,7 +367,7 @@ class Fairpost {
           }
           const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           const post = await platform.preparePost(source);
           output = post.mapper.getDto(operator);
           break;
@@ -386,7 +386,7 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]?: CombinedResult[] };
           for (const platform of platforms) {
@@ -437,9 +437,9 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           const platform = user.getPlatform(args.platform);
-          const post = platform.getPost(source);
+          const post = await platform.getPost(source);
           post.schedule(args.date);
           output = post.mapper.getDto(operator);
           break;
@@ -470,12 +470,12 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
             try {
-              const post = platform.getPost(source);
+              const post = await platform.getPost(source);
               post.schedule(args.date);
               output[platform.id] = {
                 success: true,
@@ -504,7 +504,7 @@ class Fairpost {
             );
           }
           const platform = user.getPlatform(args.platform);
-          const post = platform.scheduleNextPost(
+          const post = await platform.scheduleNextPost(
             args.date ? new Date(args.date) : undefined,
           );
           if (post) {
@@ -535,8 +535,8 @@ class Fairpost {
           }
           const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
-          const post = platform.getPost(source);
+          const source = await feed.getSource(args.source);
+          const post = await platform.getPost(source);
           output = {
             [platform.id]: {
               success: await post.publish(!!args.dryrun),
@@ -565,12 +565,12 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
             try {
-              const post = platform.getPost(source);
+              const post = await platform.getPost(source);
               await post.publish(!!args.dryrun);
               output[platform.id] = {
                 success: await post.publish(!!args.dryrun),
@@ -601,11 +601,11 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
           const posts = [] as Post[];
-          platforms.forEach((p) => {
-            const post = p.scheduleNextPost(
+          platforms.forEach(async (p) => {
+            const post = await p.scheduleNextPost(
               args.date ? new Date(args.date) : undefined,
               sources,
             );
@@ -622,7 +622,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
