@@ -1,10 +1,9 @@
-import * as fs from "fs";
 import * as pluginClasses from "../plugins";
 import { PlatformId } from "../platforms";
 import PlatformMapper from "../mappers/PlatformMapper";
 import { FieldMapping } from "../mappers/AbstractMapper";
 
-import Source, { FileGroup } from "./Source";
+import Source from "./Source";
 
 import Plugin from "./Plugin";
 import Post from "./Post";
@@ -231,12 +230,14 @@ export default class Platform {
   /**
    * preparePost
    *
-   * Prepare the post for this platform for the
-   * given source, and save it. Optionally create
-   * derivates of media and save those, too.
+   * Prepare a post for this platform for the
+   * given source. If it doesn't exist, create it.
    *
-   * If the post exists and is published, ignore.
-   * If the post exists and is failed, set it back to
+   * Override this in your own platform, but
+   * always call super.preparePost()
+   *
+   * If the post exists and is published, ignores it.
+   * If the post exists and is failed, sets it back to
    * unscheduled.
    *
    * Do not throw errors. Instead, catch and log them,
@@ -246,9 +247,10 @@ export default class Platform {
    * before, and manually adapted later. For example,
    * post.skip may have manually been set to true.
    * @param source - the source for which to prepare a post for this platform
+   * @param save - wether to save the post already
    * @returns the prepared post
    */
-  async preparePost(source: Source): Promise<Post> {
+  async preparePost(source: Source, save?: true): Promise<Post> {
     this.user.trace(this.id, "preparePost");
     let post: Post | undefined = undefined;
     try {
@@ -256,83 +258,15 @@ export default class Platform {
       if (post.status === PostStatus.PUBLISHED) {
         return post;
       }
-      if (post.status === PostStatus.FAILED) {
-        post.status = PostStatus.UNSCHEDULED;
-      }
+      await post.prepare(false);
     } catch {
       post = new Post(this, source);
+      await post.prepare(true);
       this.cache[post.id] = post;
     }
-
-    // some default logic. override this
-    // in your own platform if you want;
-    // but more likely, call super.preparePost
-    // before adding your own logic.
-
-    // always update the files, they may have changed
-    // on disk; but also maintain some properties that may have
-    // been changed manually
-
-    post.purgeFiles();
-    const files = await source.getFiles();
-    files.forEach((file) => {
-      if (post && !post.ignoreFiles?.includes(file.name)) {
-        post.putFile(file);
-      }
-    });
-    post.reorderFiles();
-
-    // read textfiles and stick their contents
-    // into appropriate properties - body, title, etc
-
-    const textFiles = post.getFiles(FileGroup.TEXT);
-
-    if (post.hasFile("body.txt")) {
-      post.body = fs.readFileSync(post.source.path + "/body.txt", "utf8");
-    } else if (textFiles.length === 1) {
-      const bodyFile = textFiles[0].name;
-      post.body = fs.readFileSync(post.source.path + "/" + bodyFile, "utf8");
-    } else {
-      post.body = this.defaultBody;
+    if (save) {
+      post.save();
     }
-
-    if (post.hasFile("title.txt")) {
-      post.title = fs.readFileSync(post.source.path + "/title.txt", "utf8");
-    } else if (post.hasFile("subject.txt")) {
-      post.title = fs.readFileSync(post.source.path + "/subject.txt", "utf8");
-    }
-
-    if (post.hasFile("tags.txt")) {
-      post.tags = fs
-        .readFileSync(post.source.path + "/tags.txt", "utf8")
-        .split(/\s/);
-    }
-    if (post.hasFile("mentions.txt")) {
-      post.mentions = fs
-        .readFileSync(post.source.path + "/mentions.txt", "utf8")
-        .split(/\s/);
-    }
-    if (post.hasFile("geo.txt")) {
-      post.geo = fs.readFileSync(post.source.path + "/geo.txt", "utf8");
-    }
-
-    // decompile the body to see if there are
-    // appropriate metadata in there - title, tags, ..
-
-    post.decompileBody();
-
-    // validate and set status
-
-    if (post.title) {
-      post.valid = true;
-    }
-
-    if (post.status === PostStatus.UNKNOWN) {
-      post.status = PostStatus.UNSCHEDULED;
-    }
-
-    // save
-    post.save();
 
     return post;
   }

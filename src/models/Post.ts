@@ -85,6 +85,96 @@ export default class Post {
   }
 
   /**
+   * Prepare this post
+   *
+   * Called from Platform.preparePost;
+   *
+   * The post may already be prepared before,
+   * but then things may have changed.
+   *
+   * always updates the files, they may have changed
+   * on disk; but also maintains some properties that may have
+   * been changed manually
+   *
+   * Does not save the post.
+   */
+
+  async prepare(isnew: boolean) {
+    this.platform.user.trace("Post", "prepare");
+
+    // purge non-existing files and
+    // update existing files
+
+    if (!isnew) {
+      this.purgeFiles();
+    }
+
+    // get all files and process them
+
+    const files = await this.getFiles();
+    files.forEach((file) => {
+      if (!this.ignoreFiles?.includes(file.name)) {
+        this.putFile(file);
+      }
+    });
+    this.reorderFiles();
+
+    // read textfiles and stick their contents
+    // into appropriate properties - body, title, etc
+
+    const textFiles = this.getFiles(FileGroup.TEXT);
+
+    if (this.hasFile("body.txt")) {
+      this.body = fs.readFileSync(this.source.path + "/body.txt", "utf8");
+    } else if (textFiles.length === 1) {
+      const bodyFile = textFiles[0].name;
+      this.body = fs.readFileSync(this.source.path + "/" + bodyFile, "utf8");
+    } else {
+      this.body = this.platform.defaultBody;
+    }
+
+    if (this.hasFile("title.txt")) {
+      this.title = fs.readFileSync(this.source.path + "/title.txt", "utf8");
+    } else if (this.hasFile("subject.txt")) {
+      this.title = fs.readFileSync(this.source.path + "/subject.txt", "utf8");
+    }
+
+    if (this.hasFile("tags.txt")) {
+      this.tags = fs
+        .readFileSync(this.source.path + "/tags.txt", "utf8")
+        .split(/\s/);
+    }
+    if (this.hasFile("mentions.txt")) {
+      this.mentions = fs
+        .readFileSync(this.source.path + "/mentions.txt", "utf8")
+        .split(/\s/);
+    }
+    if (this.hasFile("geo.txt")) {
+      this.geo = fs.readFileSync(this.source.path + "/geo.txt", "utf8");
+    }
+
+    // decompile the body to see if there are
+    // appropriate metadata in there - title, tags, ..
+
+    this.decompileBody();
+
+    // validate and set status
+
+    if (this.title) {
+      this.valid = true;
+    }
+
+    if (this.status === PostStatus.UNKNOWN) {
+      this.status = PostStatus.UNSCHEDULED;
+    }
+    if (this.status === PostStatus.FAILED) {
+      this.status = PostStatus.UNSCHEDULED;
+    }
+
+    // done
+  }
+
+  /**
    * Schedule this post and save it
    *
    * this just sets the 'scheduled' date
