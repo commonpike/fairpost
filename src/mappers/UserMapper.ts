@@ -46,7 +46,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  getDto(operator: Operator): UserDto {
+  async getDto(operator: Operator): Promise<UserDto> {
     const fields = this.getDtoFields(operator, "get");
     const dto: UserDto = {};
     fields.forEach((field) => {
@@ -74,7 +74,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
    * @param dto
    * @returns boolean success
    */
-  setDto(operator: Operator, dto: Dto): boolean {
+  async setDto(operator: Operator, dto: Dto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {

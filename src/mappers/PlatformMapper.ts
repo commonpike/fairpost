@@ -57,7 +57,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  getDto(operator: Operator): PlatformDto {
+  async getDto(operator: Operator): Promise<PlatformDto> {
     const fields = this.getDtoFields(operator, "get");
     const dto: PlatformDto = {};
     fields.forEach((field) => {
@@ -115,7 +115,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
    * @param dto
    * @returns boolean success
    */
-  setDto(operator: Operator, dto: PlatformDto): boolean {
+  async setDto(operator: Operator, dto: PlatformDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {

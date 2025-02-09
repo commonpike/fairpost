@@ -87,7 +87,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const newUser = User.createUser(args.targetuser);
-          output = newUser.mapper.getDto(operator);
+          output = await newUser.mapper.getDto(operator);
           break;
         }
         case "get-user": {
@@ -97,11 +97,11 @@ class Fairpost {
               throw new Error("Missing permissions for command " + command);
             }
             const other = new User(args.targetuser);
-            output = other.mapper.getDto(operator);
+            output = await other.mapper.getDto(operator);
           } else if (!user) {
             throw new Error("Missing user for command " + command);
           } else {
-            output = user.mapper.getDto(operator);
+            output = await user.mapper.getDto(operator);
           }
           break;
         }
@@ -113,7 +113,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          output = feed.mapper.getDto(operator);
+          output = await feed.mapper.getDto(operator);
           break;
         }
         case "setup-platform": {
@@ -154,7 +154,7 @@ class Fairpost {
             );
           }
           const platform = user.getPlatform(args.platform);
-          output = platform.mapper.getDto(operator);
+          output = await platform.mapper.getDto(operator);
           break;
         }
         case "get-platforms": {
@@ -165,7 +165,10 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const platforms = user.getPlatforms(args.platforms);
-          output = platforms.map((p) => p.mapper.getDto(operator));
+          output = await Promise.all(
+            platforms.map((p) => p.mapper.getDto(operator)),
+          );
+
           break;
         }
         case "test-platform": {
@@ -281,7 +284,7 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const source = await feed.getSource(args.source);
-          output = source.mapper.getDto(operator);
+          output = await source.mapper.getDto(operator);
           break;
         }
         case "get-sources": {
@@ -293,7 +296,9 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const sources = await feed.getSources(args.sources);
-          output = sources.map((source) => source.mapper.getDto(operator));
+          output = await Promise.all(
+            sources.map((source) => source.mapper.getDto(operator)),
+          );
           break;
         }
 
@@ -320,7 +325,7 @@ class Fairpost {
           const platform = user.getPlatform(args.platform);
           const source = await feed.getSource(args.source);
           const post = await platform.getPost(source);
-          output = post.mapper.getDto(operator);
+          output = await post.mapper.getDto(operator);
           break;
         }
         case "get-posts": {
@@ -343,7 +348,9 @@ class Fairpost {
           platforms.forEach(async (p) => {
             posts.push(...(await p.getPosts(sources, args.status)));
           });
-          output = posts.map((p) => p.mapper.getDto(operator));
+          output = await Promise.all(
+            posts.map((p) => p.mapper.getDto(operator)),
+          );
           break;
         }
         case "prepare-post": {
@@ -369,7 +376,7 @@ class Fairpost {
           const feed = user.getFeed();
           const source = await feed.getSource(args.source);
           const post = await platform.preparePost(source);
-          output = post.mapper.getDto(operator);
+          output = await post.mapper.getDto(operator);
           break;
         }
         case "prepare-posts": {
@@ -441,7 +448,7 @@ class Fairpost {
           const platform = user.getPlatform(args.platform);
           const post = await platform.getPost(source);
           post.schedule(args.date);
-          output = post.mapper.getDto(operator);
+          output = await post.mapper.getDto(operator);
           break;
         }
         case "schedule-posts": {
@@ -508,7 +515,7 @@ class Fairpost {
             args.date ? new Date(args.date) : undefined,
           );
           if (post) {
-            output = post?.mapper.getDto(operator);
+            output = await post.mapper.getDto(operator);
           } else {
             output = { success: false, message: "No post left to schedule" };
           }
@@ -611,7 +618,9 @@ class Fairpost {
             );
             if (post) posts.push(post);
           });
-          output = posts.map((p) => p.mapper.getDto(operator));
+          output = await Promise.all(
+            posts.map((p) => p.mapper.getDto(operator)),
+          );
           break;
         }
         case "publish-due-posts": {

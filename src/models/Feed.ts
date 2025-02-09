@@ -99,9 +99,7 @@ export default class Feed {
     if (!paths || !paths.length) {
       return await this.getAllSources();
     }
-    const sources = [] as Source[];
-    paths.forEach(async (path) => sources.push(await this.getSource(path)));
-    return sources;
+    return Promise.all(paths.map((path) => this.getSource(path)));
   }
 
   /**
