@@ -22,13 +22,15 @@ export default class Source {
   mapper: SourceMapper;
 
   constructor(feed: Feed, path: string) {
-    if (!fs.statSync(path).isDirectory()) {
-      throw new Error("No such source: " + path);
-    }
     this.feed = feed;
-    this.id = path.replace(feed.path + "/", "");
-    this.path = path;
+    this.id = this.feed.getSourceId(path);
+    this.path = feed.path + "/" + path;
     this.mapper = new SourceMapper(this);
+    try {
+      fs.statSync(this.path).isDirectory();
+    } catch {
+      throw feed.user.error("No such source: " + path);
+    }
   }
 
   /**

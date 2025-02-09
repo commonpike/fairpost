@@ -16,7 +16,8 @@ export default class Feed {
   id: string = "";
   path: string = "";
   user: User;
-  sources: Source[] = [];
+  cache: { [id: string]: Source } = {};
+  allCached: boolean = false;
   mapper: FeedMapper;
 
   /**
@@ -39,13 +40,22 @@ export default class Feed {
   }
 
   /**
+   * getSourceId
+   * @param path the path for the new or existing source
+   * @returns the id for the new or existing source
+   */
+  getSourceId(path: string): string {
+    return path; // ah, simple
+  }
+
+  /**
    * Get all sources
    * @returns all source in the feed
    */
   getAllSources(): Source[] {
     this.user.trace("Feed", "getAllSources");
-    if (this.sources.length) {
-      return this.sources;
+    if (this.allCached) {
+      return Object.values(this.cache);
     }
     if (!fs.existsSync(this.path)) {
       fs.mkdirSync(this.path);
@@ -57,12 +67,9 @@ export default class Feed {
         !path.startsWith(".")
       );
     });
-    if (paths) {
-      this.sources = paths.map(
-        (path) => new Source(this, this.path + "/" + path),
-      );
-    }
-    return this.sources;
+    paths.forEach((path) => this.getSource(path));
+    this.allCached = true;
+    return Object.values(this.cache);
   }
 
   /**
@@ -72,7 +79,13 @@ export default class Feed {
    */
   getSource(path: string): Source {
     this.user.trace("Feed", "getSource", path);
-    return new Source(this, this.path + "/" + path);
+    const sourceId = this.getSourceId(path);
+    if (sourceId in this.cache) {
+      return this.cache[sourceId];
+    }
+    const source = new Source(this, path);
+    this.cache[source.id] = source;
+    return source;
   }
 
   /**
