@@ -5,12 +5,14 @@ import Source from "./Source";
 import User from "./User";
 
 /**
- * Feed - the core handler of fairpost
+ * Feed - the sources handler of fairpost
  *
- * You start a feed with a config, by default .env, which
- * defines the feed folder and platform settings. From the feed,
- * you are able to get platforms, sources and posts, and
- * manage and publish those.
+ * The feed is a container of sources. The sources
+ * path is set by USER_FEEDPATH. Every dir in there,
+ * if not starting with _ or ., is a source.
+ *
+ * Every source can be prepared to become a post
+ * for a platform; but it's the platform that handles that.
  */
 export default class Feed {
   id: string = "";
@@ -19,16 +21,6 @@ export default class Feed {
   cache: { [id: string]: Source } = {};
   allCached: boolean = false;
   mapper: FeedMapper;
-
-  /**
-   * The constructor reads the dotenv file, then reads all
-   * the classes in the platform folder and assumes their filenames
-   * are the names of their constructor.
-   * From platforms/index.ts, if the platform is exported there,
-   * it constructs it and if that platform is enabled
-   * in the feed config, the platform is added to the feed.
-   * @param configPath - path to file for dotenv to parse
-   */
 
   constructor(user: User) {
     this.user = user;

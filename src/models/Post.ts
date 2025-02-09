@@ -13,6 +13,13 @@ import PostMapper from "../mappers/PostMapper";
  * it is *prepared* and later *published* by the platform.
  * The post serializes to a json file in the source,
  * where it can be read later for further processing.
+ *
+ * The post does not actually handle files; it handles
+ * its index which is finally written to disk. It does
+ * read the file contents and check if the files
+ * actually exist. If you want to add files to a post,
+ * copy them in place yourself (in your platform class)
+ * and add it to the post using methods below.
  */
 export default class Post {
   id: string;
@@ -40,6 +47,7 @@ export default class Post {
     this.platform = platform;
     this.source = source;
     this.mapper = new PostMapper(this);
+    // dont forget to async load() this now
   }
 
   async load() {

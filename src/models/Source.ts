@@ -30,8 +30,15 @@ export default class Source {
     this.id = this.feed.getSourceId(path);
     this.path = feed.path + "/" + path;
     this.mapper = new SourceMapper(this);
+    // dont forget to async load() this now
   }
 
+  /**
+   * load()
+   *
+   * source load() does very little, but throws
+   * an error if the source isnt found.
+   */
   public async load() {
     try {
       (await fs.lstat(this.path)).isDirectory();
