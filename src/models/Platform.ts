@@ -128,7 +128,7 @@ export default class Platform {
    * @returns multiple posts
    */
   async getPosts(sources?: Source[], status?: PostStatus): Promise<Post[]> {
-    this.user.trace("User", "getPosts");
+    this.user.trace(this.id, "getPosts");
     const posts: Post[] = [];
     if (!sources) {
       sources = await this.user.getFeed().getAllSources();

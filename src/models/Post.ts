@@ -399,7 +399,7 @@ export default class Post {
    * Does not save.
    */
   async purgeFiles() {
-    this.getFiles().forEach(async (file) => {
+    for (const file of this.getFiles()) {
       if (
         file.original &&
         !(await this.fileExists(this.getFilePath(file.original)))
@@ -421,7 +421,7 @@ export default class Post {
         );
         this.removeFile(file.name);
       }
-    });
+    }
   }
 
   /**

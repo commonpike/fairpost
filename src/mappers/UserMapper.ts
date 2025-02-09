@@ -49,7 +49,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
   async getDto(operator: Operator): Promise<UserDto> {
     const fields = this.getDtoFields(operator, "get");
     const dto: UserDto = {};
-    fields.forEach((field) => {
+    for (const field of fields) {
       switch (field) {
         case "model":
           dto[field] = "user";
@@ -64,7 +64,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
           dto[field] = this.user.get("settings", "LOGGER_LEVEL");
           break;
       }
-    });
+    }
     return dto;
   }
 

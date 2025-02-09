@@ -345,9 +345,9 @@ class Fairpost {
           const platforms = user.getPlatforms(args.platforms);
           const sources = await feed.getSources(args.sources);
           const posts = [] as Post[];
-          platforms.forEach(async (p) => {
-            posts.push(...(await p.getPosts(sources, args.status)));
-          });
+          for (const platform of platforms) {
+            posts.push(...(await platform.getPosts(sources, args.status)));
+          }
           output = await Promise.all(
             posts.map((p) => p.mapper.getDto(operator)),
           );
@@ -611,13 +611,13 @@ class Fairpost {
           const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
           const posts = [] as Post[];
-          platforms.forEach(async (p) => {
-            const post = await p.scheduleNextPost(
+          for (const platform of platforms) {
+            const post = await platform.scheduleNextPost(
               args.date ? new Date(args.date) : undefined,
               sources,
             );
             if (post) posts.push(post);
-          });
+          }
           output = await Promise.all(
             posts.map((p) => p.mapper.getDto(operator)),
           );

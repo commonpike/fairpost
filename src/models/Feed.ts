@@ -67,7 +67,9 @@ export default class Feed {
         !path.startsWith(".")
       );
     });
-    paths.forEach(async (path) => await this.getSource(path));
+    for (const path of paths) {
+      await this.getSource(path);
+    }
     this.allCached = true;
     return Object.values(this.cache);
   }

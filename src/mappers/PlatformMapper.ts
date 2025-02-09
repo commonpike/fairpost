@@ -60,7 +60,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
   async getDto(operator: Operator): Promise<PlatformDto> {
     const fields = this.getDtoFields(operator, "get");
     const dto: PlatformDto = {};
-    fields.forEach((field) => {
+    for (const field of fields) {
       switch (field) {
         case "model":
           dto[field] = "platform";
@@ -105,7 +105,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
               break;
           }
       }
-    });
+    }
     return dto;
   }
 
