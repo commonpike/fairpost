@@ -13,6 +13,10 @@ import SourceMapper from "../mappers/SourceMapper";
  * A source represents one post on all enabled
  * and applicable platforms. It is also just
  * a folder on a filesystem.
+ *
+ * be sure not to do much heavy lifting in the constructor.
+ * source objects should be light, because they
+ * are often just hubs to get to posts.
  */
 export default class Source {
   feed: Feed;
