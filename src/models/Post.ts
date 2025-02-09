@@ -59,12 +59,6 @@ export default class Post {
     this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
     this.published = this.published ? new Date(this.published) : undefined;
     this.ignoreFiles = this.ignoreFiles ?? [];
-    // the platform will require this folder
-    // to be there, lets make it now
-    const assetsPath = this.getFilePath(this.platform.assetsFolder);
-    if (!fs.existsSync(assetsPath)) {
-      fs.mkdirSync(assetsPath, { recursive: true });
-    }
   }
 
   /**
@@ -107,11 +101,16 @@ export default class Post {
 
     if (!isnew) {
       this.purgeFiles();
+    } else {
+      const assetsPath = this.getFilePath(this.platform.assetsFolder);
+      if (!fs.existsSync(assetsPath)) {
+        fs.mkdirSync(assetsPath, { recursive: true });
+      }
     }
 
     // get all files and process them
 
-    const files = await this.getFiles();
+    const files = await this.source.getFiles();
     files.forEach((file) => {
       if (!this.ignoreFiles?.includes(file.name)) {
         this.putFile(file);
