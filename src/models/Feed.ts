@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 
 import FeedMapper from "../mappers/FeedMapper";
 import Source from "./Source";
@@ -57,18 +57,21 @@ export default class Feed {
     if (this.allCached) {
       return Object.values(this.cache);
     }
-    if (!fs.existsSync(this.path)) {
-      fs.mkdirSync(this.path);
+    try {
+      (await fs.lstat(this.path)).isDirectory();
+    } catch {
+      await fs.mkdir(this.path);
     }
-    const paths = fs.readdirSync(this.path).filter((path) => {
-      return (
-        fs.statSync(this.path + "/" + path).isDirectory() &&
-        !path.startsWith("_") &&
-        !path.startsWith(".")
-      );
+    const paths = (await fs.readdir(this.path)).filter((path) => {
+      return !path.startsWith("_") && !path.startsWith(".");
     });
     for (const path of paths) {
-      await this.getSource(path);
+      try {
+        (await fs.lstat(this.path)).isDirectory();
+        await this.getSource(path);
+      } catch {
+        // skip non-directories
+      }
     }
     this.allCached = true;
     return Object.values(this.cache);
