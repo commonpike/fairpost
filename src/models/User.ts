@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 import * as log4js from "log4js";
 import * as path from "path";
 import * as platformClasses from "../platforms";
@@ -11,18 +11,22 @@ import { PlatformId } from "../platforms";
 import UserMapper from "../mappers/UserMapper";
 
 /**
- * User - represents one fairpost user with a feed.
+ * User - represents one fairpost user
  *
- * Contains getters and setters for key / value pairs,
- * using a store. Contains a mapper to create a dto;
- * and a private logger for this account, seperate from
- * the Fairpost logger.
+ * - with one feed
+ * - with zero or more platforms
+ * - with a private logger for this account, seperate from
+ *   the Fairpost logger.
+ * - with a mapper to create a dto;
+ *
+ * Also contains getters and setters for key / value pairs,
+ * using a store.
  *
  */
 
 export default class User {
   id: string;
-  homedir: string;
+  homedir: string = "";
   feed: Feed | undefined;
   platforms:
     | {
@@ -30,34 +34,62 @@ export default class User {
       }
     | undefined = undefined;
   mapper: UserMapper;
-  store: Store;
-  logger: log4js.Logger;
+  store: Store | undefined;
+  logger: log4js.Logger | undefined = undefined;
 
   jsonData: { [key: string]: string } = {};
   envData: { [key: string]: string } = {};
 
+  /**
+   * Dont call the constructor yourself;
+   * instead, call `await User.getUser()`
+   * @param id
+   */
   constructor(id: string) {
     this.id = id;
-    this.store = new Store(this.id);
-    this.homedir = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
-      "%user%",
-      this.id,
-    );
-    if (
-      !fs.existsSync(this.homedir) ||
-      !fs.statSync(this.homedir).isDirectory()
-    ) {
+    this.mapper = new UserMapper(this);
+  }
+
+  /**
+   * getUser
+   *
+   * get a new user and do some async checks and loads.
+   * @param id - user id
+   * @returns new user object
+   */
+  public static async getUser(id: string): Promise<User> {
+    const user = new User(id);
+    user.store = await Store.getStore(id);
+    user.homedir = user
+      .get("settings", "USER_HOMEDIR", "users/%user%")
+      .replace("%user%", id);
+    try {
+      const stat = await fs.stat(user.homedir);
+      if (!stat.isDirectory()) {
+        throw new Error();
+      }
+    } catch {
       throw new Error("No such user: " + id);
     }
-    this.logger = this.getLogger();
-    this.mapper = new UserMapper(this);
+    user.logger = await user.getLogger();
+    return user;
+  }
+
+  // tmp
+  public static async fileExists(path: string): Promise<boolean> {
+    try {
+      await fs.access(path);
+    } catch {
+      return false;
+    }
+    return true;
   }
 
   /**
    * @returns the new user
    */
 
-  public static createUser(newUserId: string): User {
+  public static async createUser(newUserId: string): Promise<User> {
     if (!newUserId.match("^[a-z][a-z0-9_\\-\\.]{3,31}$")) {
       throw new Error(
         "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
@@ -68,13 +100,14 @@ export default class User {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
     }
     const dst = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", newUserId);
-    if (fs.existsSync(dst)) {
+    if (await User.fileExists(dst)) {
       throw new Error("Homedir already exists: " + dst);
     }
-    fs.cpSync(src, dst, { recursive: true });
+    await fs.cp(src, dst, { recursive: true });
 
     const user = new User(newUserId);
     user.set("settings", "FEED_PLATFORMS", "");
+    await user.save();
     user.info("User created: " + newUserId);
     return user;
   }
@@ -198,6 +231,9 @@ export default class User {
     key: string,
     def?: string,
   ): string {
+    if (!this.store) {
+      throw new Error("User.get: No store");
+    }
     try {
       return this.store.get(store, key, def);
     } catch (error) {
@@ -206,8 +242,22 @@ export default class User {
   }
 
   public set(store: "settings" | "auth" | "app", key: string, value: string) {
+    if (!this.store) {
+      throw new Error("User.set: No store");
+    }
     try {
       return this.store.set(store, key, value);
+    } catch (error) {
+      throw this.error(error);
+    }
+  }
+
+  public async save() {
+    if (!this.store) {
+      throw new Error("User.save: No store");
+    }
+    try {
+      return await this.store.save();
     } catch (error) {
       throw this.error(error);
     }
@@ -219,23 +269,23 @@ export default class User {
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public trace(...args: any[]) {
-    this.logger.trace(this.id, ...args);
+    this.logger?.trace(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public debug(...args: any[]) {
-    this.logger.debug(this.id, ...args);
+    this.logger?.debug(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public info(...args: any[]) {
-    this.logger.info(this.id, ...args);
+    this.logger?.info(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public warn(...args: any[]) {
-    this.logger.warn(this.id, ...args);
+    this.logger?.warn(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public error(...args: any[]): Error {
-    this.logger.error(this.id, ...args);
+    this.logger?.error(this.id, ...args);
     return new Error(
       "Error: " +
         "(" +
@@ -246,7 +296,7 @@ export default class User {
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public fatal(...args: any[]): Error {
-    this.logger.fatal(this.id, ...args);
+    this.logger?.fatal(this.id, ...args);
     const code = parseInt(args[0]);
     process.exitCode = code || 1;
     return new Error(
@@ -263,20 +313,27 @@ export default class User {
    *
    * allow cli/env to override level and console
    */
-  private getLogger(): log4js.Logger {
+  private async getLogger(): Promise<log4js.Logger> {
+    if (!this.store) {
+      throw new Error("User.getLogger: No store");
+    }
     const configFile = this.store.get(
       "settings",
       "LOGGER_CONFIG",
       "log4js.json",
     );
+    if (process.argv.includes("--verbose")) {
+      process.env.FAIRPOST_LOGGER_LEVEL = "TRACE";
+      process.env.FAIRPOST_LOGGER_CONSOLE = "true";
+    }
     const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
     const addConsole =
-      this.store.get("settings", "LOGGER_CONSOLE", "false") === "true";
+      this.store!.get("settings", "LOGGER_CONSOLE", "false") === "true";
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const config = fs.existsSync(this.homedir + "/" + configFile)
+    const config = (await User.fileExists(this.homedir + "/" + configFile))
       ? JSON.parse(
-          fs.readFileSync(
+          await fs.readFile(
             path.resolve(
               __dirname + "/../../",
               this.homedir + "/" + configFile,
@@ -285,7 +342,7 @@ export default class User {
           ),
         )
       : JSON.parse(
-          fs.readFileSync(
+          await fs.readFile(
             path.resolve(__dirname + "/../../", configFile),
             "utf8",
           ),

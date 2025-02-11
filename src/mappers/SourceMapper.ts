@@ -64,10 +64,10 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  getDto(operator: Operator): SourceDto {
+  async getDto(operator: Operator): Promise<SourceDto> {
     const fields = this.getDtoFields(operator, "get");
     const dto: SourceDto = {};
-    fields.forEach((field) => {
+    for (const field of fields) {
       switch (field) {
         case "model":
           dto[field] = "source";
@@ -85,10 +85,10 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
           dto[field] = this.source.path;
           break;
         case "files":
-          // dto[field] = await this.source.getFiles(); // mmm async
+          dto[field] = await this.source.getFiles();
           break;
       }
-    });
+    }
     return dto;
   }
 
@@ -98,7 +98,7 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
    * @param dto
    * @returns boolean success
    */
-  setDto(operator: Operator, dto: SourceDto): boolean {
+  async setDto(operator: Operator, dto: SourceDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {

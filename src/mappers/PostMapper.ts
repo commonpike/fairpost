@@ -164,10 +164,10 @@ export default class PostMapper extends AbstractMapper<PostDto> {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  getDto(operator: Operator): PostDto {
+  async getDto(operator: Operator): Promise<PostDto> {
     const fields = this.getDtoFields(operator, "get");
     const dto: PostDto = {};
-    fields.forEach((field) => {
+    for (const field of fields) {
       switch (field) {
         case "model":
           dto[field] = "post";
@@ -230,7 +230,7 @@ export default class PostMapper extends AbstractMapper<PostDto> {
           dto[field] = this.post.link;
           break;
       }
-    });
+    }
     return dto;
   }
 
@@ -240,7 +240,7 @@ export default class PostMapper extends AbstractMapper<PostDto> {
    * @param dto
    * @returns boolean success
    */
-  setDto(operator: Operator, dto: PostDto): boolean {
+  async setDto(operator: Operator, dto: PostDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {

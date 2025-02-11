@@ -58,8 +58,8 @@ export default abstract class AbstractMapper<ModelDto extends Dto> {
 
   protected abstract mapping: FieldMapping;
 
-  public getReport(operator: Operator): string {
-    const dto = this.getDto(operator);
+  public async getReport(operator: Operator): Promise<string> {
+    const dto = await this.getDto(operator);
     const lines: string[] = [];
     for (const field in dto) {
       let line = "";
@@ -86,7 +86,7 @@ export default abstract class AbstractMapper<ModelDto extends Dto> {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  abstract getDto(operator: Operator): ModelDto;
+  abstract getDto(operator: Operator): Promise<ModelDto>;
 
   /**
    * Insert a given dto based on the operator
@@ -94,7 +94,7 @@ export default abstract class AbstractMapper<ModelDto extends Dto> {
    * @param dto
    * @returns boolean success
    */
-  abstract setDto(operator: Operator, dto: ModelDto): boolean;
+  abstract setDto(operator: Operator, dto: ModelDto): Promise<boolean>;
 
   protected getDtoFields(
     operator: Operator,

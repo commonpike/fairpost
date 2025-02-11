@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 
 import Source, { FileGroup, FileInfo } from "./Source";
 
@@ -13,6 +13,13 @@ import PostMapper from "../mappers/PostMapper";
  * it is *prepared* and later *published* by the platform.
  * The post serializes to a json file in the source,
  * where it can be read later for further processing.
+ *
+ * The post does not actually handle files; it handles
+ * its index which is finally written to disk. It does
+ * read the file contents and check if the files
+ * actually exist. If you want to add files to a post,
+ * copy them in place yourself (in your platform class)
+ * and add it to the post using methods below.
  */
 export default class Post {
   id: string;
@@ -35,40 +42,161 @@ export default class Post {
   remoteId?: string;
   mapper: PostMapper;
 
-  constructor(source: Source, platform: Platform, data?: object) {
-    this.source = source;
+  /**
+   * Dont call the constructor yourself;
+   * instead, call `await Post.getPost()`
+   * @param platform
+   * @param source
+   */
+  constructor(platform: Platform, source: Source) {
+    this.id = platform.getPostId(source);
     this.platform = platform;
-    this.id = this.source.id + ":" + this.platform.id;
-    if (data) {
-      Object.assign(this, data);
-      this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
-      this.published = this.published ? new Date(this.published) : undefined;
-      this.ignoreFiles = this.ignoreFiles ?? [];
-    } else {
-      this.files = []; // allow optional once strict
-    }
-    const assetsPath = this.getFilePath(platform.assetsFolder);
-    if (!fs.existsSync(assetsPath)) {
-      fs.mkdirSync(assetsPath, { recursive: true });
-    }
+    this.source = source;
     this.mapper = new PostMapper(this);
+  }
+
+  /**
+   * getPost
+   *
+   * get a new post and load the async data.
+   * @param platform - the platform this post belongs to
+   * @param source - the source this post is derived from
+   * @param load
+   * @returns new post object
+   */
+  static async getPost(
+    platform: Platform,
+    source: Source,
+    load: boolean = true,
+  ): Promise<Post> {
+    const post = new Post(platform, source);
+    if (load) {
+      const postFilePath = platform.getPostFilePath(source);
+      if (!(await post.fileExists(postFilePath))) {
+        throw platform.user.error("No such post ", platform.id, post.source.id);
+      }
+      const data = JSON.parse(await fs.readFile(postFilePath, "utf8"));
+      if (!data) {
+        throw platform.user.error("Cant parse post ", post.id, post.source.id);
+      }
+      Object.assign(post, data);
+      post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
+      post.published = post.published ? new Date(post.published) : undefined;
+      post.ignoreFiles = post.ignoreFiles ?? [];
+    }
+    return post;
   }
 
   /**
    * Save this post to disk
    */
 
-  save(): void {
+  async save() {
     this.platform.user.trace("Post", "save");
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const data = { ...this } as { [key: string]: any };
     delete data.source;
     delete data.platform;
     delete data.mapper;
-    fs.writeFileSync(
+    await fs.writeFile(
       this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),
     );
+  }
+
+  /**
+   * Prepare this post
+   *
+   * Called from Platform.preparePost;
+   *
+   * The post may already be prepared before,
+   * but then things may have changed.
+   *
+   * always updates the files, they may have changed
+   * on disk; but also maintains some properties that may have
+   * been changed manually
+   *
+   * Does not save the post.
+   */
+
+  async prepare(isnew: boolean) {
+    this.platform.user.trace("Post", "prepare");
+
+    // purge non-existing files and
+    // update existing files
+
+    if (!isnew) {
+      await this.purgeFiles();
+    } else {
+      const assetsPath = this.getFilePath(this.platform.assetsFolder);
+      if (!(await this.fileExists(assetsPath))) {
+        await fs.mkdir(assetsPath, { recursive: true });
+      }
+    }
+
+    // get all files and process them
+
+    const files = await this.source.getFiles();
+    files.forEach((file) => {
+      if (!this.ignoreFiles?.includes(file.name)) {
+        this.putFile(file);
+      }
+    });
+    this.reorderFiles();
+
+    // read textfiles and stick their contents
+    // into appropriate properties - body, title, etc
+
+    const textFiles = this.getFiles(FileGroup.TEXT);
+
+    if (this.hasFile("body.txt")) {
+      this.body = await fs.readFile(this.source.path + "/body.txt", "utf8");
+    } else if (textFiles.length === 1) {
+      const bodyFile = textFiles[0].name;
+      this.body = await fs.readFile(this.source.path + "/" + bodyFile, "utf8");
+    } else {
+      this.body = this.platform.defaultBody;
+    }
+
+    if (this.hasFile("title.txt")) {
+      this.title = await fs.readFile(this.source.path + "/title.txt", "utf8");
+    } else if (this.hasFile("subject.txt")) {
+      this.title = await fs.readFile(this.source.path + "/subject.txt", "utf8");
+    }
+
+    if (this.hasFile("tags.txt")) {
+      this.tags = (
+        await fs.readFile(this.source.path + "/tags.txt", "utf8")
+      ).split(/\s/);
+    }
+    if (this.hasFile("mentions.txt")) {
+      this.mentions = (
+        await fs.readFile(this.source.path + "/mentions.txt", "utf8")
+      ).split(/\s/);
+    }
+    if (this.hasFile("geo.txt")) {
+      this.geo = await fs.readFile(this.source.path + "/geo.txt", "utf8");
+    }
+
+    // decompile the body to see if there are
+    // appropriate metadata in there - title, tags, ..
+
+    this.decompileBody();
+
+    // validate and set status
+
+    if (this.title) {
+      this.valid = true;
+    }
+
+    if (this.status === PostStatus.UNKNOWN) {
+      this.status = PostStatus.UNSCHEDULED;
+    }
+    if (this.status === PostStatus.FAILED) {
+      this.status = PostStatus.UNSCHEDULED;
+    }
+
+    // done
   }
 
   /**
@@ -78,7 +206,7 @@ export default class Post {
    * @param date - the date to schedule it on
    */
 
-  schedule(date: Date): void {
+  async schedule(date: Date) {
     this.platform.user.trace("Post", "schedule", date);
     if (!this.valid) {
       throw this.platform.user.error("Post is not valid");
@@ -91,7 +219,7 @@ export default class Post {
     }
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
-    this.save();
+    await this.save();
   }
 
   /**
@@ -296,9 +424,12 @@ export default class Post {
    * Remove all the files that do not exist (anymore).
    * Does not save.
    */
-  purgeFiles() {
-    this.getFiles().forEach((file) => {
-      if (file.original && !fs.existsSync(this.getFilePath(file.original))) {
+  async purgeFiles() {
+    for (const file of this.getFiles()) {
+      if (
+        file.original &&
+        !(await this.fileExists(this.getFilePath(file.original)))
+      ) {
         this.platform.user.info(
           "Post",
           "purgeFiles",
@@ -307,7 +438,7 @@ export default class Post {
         );
         this.removeFile(file.name);
       }
-      if (!fs.existsSync(this.getFilePath(file.name))) {
+      if (!(await this.fileExists(this.getFilePath(file.name)))) {
         this.platform.user.info(
           "Post",
           "purgeFiles",
@@ -316,7 +447,7 @@ export default class Post {
         );
         this.removeFile(file.name);
       }
-    });
+    }
   }
 
   /**
@@ -448,7 +579,11 @@ export default class Post {
    * @returns boolean if success
    */
 
-  processResult(remoteId: string, link: string, result: PostResult): boolean {
+  async processResult(
+    remoteId: string,
+    link: string,
+    result: PostResult,
+  ): Promise<boolean> {
     this.results.push(result);
 
     if (result.error) {
@@ -472,8 +607,17 @@ export default class Post {
       }
     }
 
-    this.save();
+    await this.save();
     return result.success;
+  }
+
+  async fileExists(path: string): Promise<boolean> {
+    try {
+      await fs.access(path);
+    } catch {
+      return false;
+    }
+    return true;
   }
 }
 
