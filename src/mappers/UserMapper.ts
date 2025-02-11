@@ -91,6 +91,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
         throw this.user.error("Unknown field: " + field);
       }
     }
+    await this.user.save();
     return true;
   }
 }

@@ -22,7 +22,7 @@ import UserMapper from "../mappers/UserMapper";
 
 export default class User {
   id: string;
-  homedir: string;
+  homedir: string = "";
   feed: Feed | undefined;
   platforms:
     | {
@@ -30,7 +30,7 @@ export default class User {
       }
     | undefined = undefined;
   mapper: UserMapper;
-  store: Store;
+  store: Store | undefined;
   logger: log4js.Logger | undefined = undefined;
 
   jsonData: { [key: string]: string } = {};
@@ -43,11 +43,6 @@ export default class User {
    */
   constructor(id: string) {
     this.id = id;
-    this.store = new Store(this.id);
-    this.homedir = this.get("settings", "USER_HOMEDIR", "users/%user%").replace(
-      "%user%",
-      this.id,
-    );
     this.mapper = new UserMapper(this);
   }
 
@@ -60,6 +55,10 @@ export default class User {
    */
   public static async getUser(id: string): Promise<User> {
     const user = new User(id);
+    user.store = await Store.getStore(id);
+    user.homedir = user
+      .get("settings", "USER_HOMEDIR", "users/%user%")
+      .replace("%user%", id);
     try {
       const stat = await fs.stat(user.homedir);
       if (!stat.isDirectory()) {
@@ -72,6 +71,7 @@ export default class User {
     return user;
   }
 
+  // tmp
   public static async fileExists(path: string): Promise<boolean> {
     try {
       await fs.access(path);
@@ -103,6 +103,7 @@ export default class User {
 
     const user = new User(newUserId);
     user.set("settings", "FEED_PLATFORMS", "");
+    await user.save();
     user.info("User created: " + newUserId);
     return user;
   }
@@ -226,6 +227,9 @@ export default class User {
     key: string,
     def?: string,
   ): string {
+    if (!this.store) {
+      throw new Error("User.get: No store");
+    }
     try {
       return this.store.get(store, key, def);
     } catch (error) {
@@ -234,8 +238,22 @@ export default class User {
   }
 
   public set(store: "settings" | "auth" | "app", key: string, value: string) {
+    if (!this.store) {
+      throw new Error("User.set: No store");
+    }
     try {
       return this.store.set(store, key, value);
+    } catch (error) {
+      throw this.error(error);
+    }
+  }
+
+  public async save() {
+    if (!this.store) {
+      throw new Error("User.save: No store");
+    }
+    try {
+      return await this.store.save();
     } catch (error) {
       throw this.error(error);
     }
@@ -292,6 +310,9 @@ export default class User {
    * allow cli/env to override level and console
    */
   private async getLogger(): Promise<log4js.Logger> {
+    if (!this.store) {
+      throw new Error("User.getLogger: No store");
+    }
     const configFile = this.store.get(
       "settings",
       "LOGGER_CONFIG",
@@ -299,7 +320,7 @@ export default class User {
     );
     const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
     const addConsole =
-      this.store.get("settings", "LOGGER_CONSOLE", "false") === "true";
+      this.store!.get("settings", "LOGGER_CONSOLE", "false") === "true";
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const config = (await User.fileExists(this.homedir + "/" + configFile))

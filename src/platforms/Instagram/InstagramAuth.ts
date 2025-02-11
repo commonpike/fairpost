@@ -26,6 +26,7 @@ export default class InstagramAuth extends FacebookAuth {
     );
 
     this.user.set("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN", pageToken);
+    await this.user.save();
   }
 
   protected async requestCode(clientId: string): Promise<string> {
