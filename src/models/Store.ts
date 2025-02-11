@@ -53,18 +53,14 @@ export default class Store {
   public static async getStore(userid: string): Promise<Store> {
     const store = new Store(userid);
     await store.load();
-    if (process.argv.includes("--verbose")) {
-      store.set("app", "LOGGER_LEVEL", "TRACE");
-      store.set("app", "LOGGER_CONSOLE", "true");
-    }
     return store;
   }
 
   public async load() {
-    this.loadJson();
+    await this.loadJson();
   }
   public async save() {
-    this.saveJson();
+    await this.saveJson();
   }
 
   public get(store: StorageType, key: string, def?: string): string {

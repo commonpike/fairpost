@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 import * as path from "path";
 
 import Source, { FileGroup } from "../../models/Source";
@@ -120,7 +120,7 @@ export default class Reddit extends Platform {
             srcposter,
             dstposter,
           );
-          fs.copyFileSync(
+          await fs.copyFile(
             post.getFilePath(srcposter),
             post.getFilePath(dstposter),
           );
@@ -376,7 +376,7 @@ export default class Reddit extends Platform {
     },
     file: string,
   ): Promise<string> {
-    const buffer = fs.readFileSync(file);
+    const buffer = await fs.readFile(file);
     const filename = path.basename(file);
 
     const form = new FormData();

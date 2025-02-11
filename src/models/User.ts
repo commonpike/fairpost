@@ -11,12 +11,16 @@ import { PlatformId } from "../platforms";
 import UserMapper from "../mappers/UserMapper";
 
 /**
- * User - represents one fairpost user with a feed.
+ * User - represents one fairpost user
  *
- * Contains getters and setters for key / value pairs,
- * using a store. Contains a mapper to create a dto;
- * and a private logger for this account, seperate from
- * the Fairpost logger.
+ * - with one feed
+ * - with zero or more platforms
+ * - with a private logger for this account, seperate from
+ *   the Fairpost logger.
+ * - with a mapper to create a dto;
+ *
+ * Also contains getters and setters for key / value pairs,
+ * using a store.
  *
  */
 
@@ -318,6 +322,10 @@ export default class User {
       "LOGGER_CONFIG",
       "log4js.json",
     );
+    if (process.argv.includes("--verbose")) {
+      process.env.FAIRPOST_LOGGER_LEVEL = "TRACE";
+      process.env.FAIRPOST_LOGGER_CONSOLE = "true";
+    }
     const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
     const addConsole =
       this.store!.get("settings", "LOGGER_CONSOLE", "false") === "true";

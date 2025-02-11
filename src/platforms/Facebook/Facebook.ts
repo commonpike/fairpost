@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 import * as path from "path";
 
 import Source, { FileGroup } from "../../models/Source";
@@ -204,7 +204,7 @@ export default class Facebook extends Platform {
     const description = post.getCompiledBody("!title");
 
     this.user.trace("Reading file", file);
-    const rawData = fs.readFileSync(file);
+    const rawData = await fs.readFile(file);
     const blob = new Blob([rawData]);
 
     const body = new FormData();
@@ -236,7 +236,7 @@ export default class Facebook extends Platform {
     published = false,
   ): Promise<{ id: string }> {
     this.user.trace("Reading file", file);
-    const rawData = fs.readFileSync(file);
+    const rawData = await fs.readFile(file);
     const blob = new Blob([rawData]);
 
     const body = new FormData();
