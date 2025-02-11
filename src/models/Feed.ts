@@ -78,8 +78,7 @@ export default class Feed {
     if (sourceId in this.cache) {
       return this.cache[sourceId];
     }
-    const source = new Source(this, path);
-    await source.load();
+    const source = await Source.getSource(this, path);
     this.cache[source.id] = source;
     return source;
   }

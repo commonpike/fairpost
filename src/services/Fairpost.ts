@@ -405,7 +405,7 @@ class Fairpost {
                 const post = await platform.preparePost(source);
                 (output[platform.id] as CombinedResult[]).push({
                   success: true,
-                  result: post.mapper.getDto(operator),
+                  result: await post.mapper.getDto(operator),
                 });
               } catch (e) {
                 user.error("Fairpost", "preparePosts", e);
@@ -486,7 +486,7 @@ class Fairpost {
               post.schedule(args.date);
               output[platform.id] = {
                 success: true,
-                result: post.mapper.getDto(operator),
+                result: await post.mapper.getDto(operator),
               };
             } catch (e) {
               output[platform.id] = {
@@ -547,7 +547,7 @@ class Fairpost {
           output = {
             [platform.id]: {
               success: await post.publish(!!args.dryrun),
-              result: post.link,
+              result: post.link ?? "#nolink",
             },
           };
           break;

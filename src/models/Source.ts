@@ -25,29 +25,38 @@ export default class Source {
   files?: FileInfo[];
   mapper: SourceMapper;
 
+  /**
+   * Dont call the constructor yourself;
+   * instead, call `await Source.getSource()`
+   * @param feed
+   * @param path
+   */
   constructor(feed: Feed, path: string) {
     this.feed = feed;
     this.id = this.feed.getSourceId(path);
     this.path = feed.path + "/" + path;
     this.mapper = new SourceMapper(this);
-    // dont forget to async load() this now
   }
 
   /**
-   * load()
+   * getSource
    *
-   * source load() does very little, but throws
-   * an error if the source isnt found.
+   * get a new source and do some async checks.
+   * @param feed - the feed this source belongs to
+   * @param path - the path within that feed
+   * @returns new source object
    */
-  public async load() {
+  public static async getSource(feed: Feed, path: string): Promise<Source> {
+    const source = new Source(feed, path);
     try {
-      const stat = await fs.stat(this.path);
+      const stat = await fs.stat(source.path);
       if (!stat.isDirectory()) {
         throw new Error();
       }
     } catch {
-      throw this.feed.user.error("Not a valid source: " + this.path);
+      throw feed.user.error("Not a valid source: " + path);
     }
+    return source;
   }
 
   /**

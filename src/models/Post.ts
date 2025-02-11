@@ -42,31 +42,49 @@ export default class Post {
   remoteId?: string;
   mapper: PostMapper;
 
+  /**
+   * Dont call the constructor yourself;
+   * instead, call `await Post.getPost()`
+   * @param platform
+   * @param source
+   */
   constructor(platform: Platform, source: Source) {
     this.id = platform.getPostId(source);
     this.platform = platform;
     this.source = source;
     this.mapper = new PostMapper(this);
-    // dont forget to async load() this now
   }
 
-  async load() {
-    const postFilePath = this.platform.getPostFilePath(this.source);
-    if (!(await this.fileExists(postFilePath))) {
-      throw this.platform.user.error("No such post ", this.id, this.source.id);
+  /**
+   * getPost
+   *
+   * get a new post and load the async data.
+   * @param platform - the platform this post belongs to
+   * @param source - the source this post is derived from
+   * @param load
+   * @returns new post object
+   */
+  static async getPost(
+    platform: Platform,
+    source: Source,
+    load: boolean = true,
+  ): Promise<Post> {
+    const post = new Post(platform, source);
+    if (load) {
+      const postFilePath = platform.getPostFilePath(source);
+      if (!(await post.fileExists(postFilePath))) {
+        throw platform.user.error("No such post ", platform.id, post.source.id);
+      }
+      const data = JSON.parse(await fs.readFile(postFilePath, "utf8"));
+      if (!data) {
+        throw platform.user.error("Cant parse post ", post.id, post.source.id);
+      }
+      Object.assign(post, data);
+      post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
+      post.published = post.published ? new Date(post.published) : undefined;
+      post.ignoreFiles = post.ignoreFiles ?? [];
     }
-    const data = JSON.parse(await fs.readFile(postFilePath, "utf8"));
-    if (!data) {
-      throw this.platform.user.error(
-        "Cant parse post ",
-        this.id,
-        this.source.id,
-      );
-    }
-    Object.assign(this, data);
-    this.scheduled = this.scheduled ? new Date(this.scheduled) : undefined;
-    this.published = this.published ? new Date(this.published) : undefined;
-    this.ignoreFiles = this.ignoreFiles ?? [];
+    return post;
   }
 
   /**

@@ -36,6 +36,11 @@ export default class User {
   jsonData: { [key: string]: string } = {};
   envData: { [key: string]: string } = {};
 
+  /**
+   * Dont call the constructor yourself;
+   * instead, call `await User.getUser()`
+   * @param id
+   */
   constructor(id: string) {
     this.id = id;
     this.store = new Store(this.id);
@@ -44,25 +49,27 @@ export default class User {
       this.id,
     );
     this.mapper = new UserMapper(this);
-    // now dont forget to load()
   }
 
   /**
-   * load()
+   * getUser
    *
-   * source load() does very little, but throws
-   * an error if the hoemdir isnt found.
+   * get a new user and do some async checks and loads.
+   * @param id - user id
+   * @returns new user object
    */
-  public async load() {
+  public static async getUser(id: string): Promise<User> {
+    const user = new User(id);
     try {
-      const stat = await fs.stat(this.homedir);
+      const stat = await fs.stat(user.homedir);
       if (!stat.isDirectory()) {
         throw new Error();
       }
     } catch {
-      throw new Error("No such user: " + this.id);
+      throw new Error("No such user: " + id);
     }
-    this.logger = await this.getLogger();
+    user.logger = await user.getLogger();
+    return user;
   }
 
   public static async fileExists(path: string): Promise<boolean> {

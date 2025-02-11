@@ -114,8 +114,7 @@ export default class Platform {
 
     const postId = this.getPostId(source);
     if (!(postId in this.cache)) {
-      const post = new Post(this, source);
-      await post.load(); // or throw an error
+      const post = await Post.getPost(this, source); // or throw an error
       this.cache[postId] = post;
     }
     return this.cache[postId];
@@ -260,7 +259,7 @@ export default class Platform {
       }
       await post.prepare(false);
     } catch {
-      post = new Post(this, source);
+      post = await Post.getPost(this, source, false);
       await post.prepare(true);
       this.cache[post.id] = post;
     }

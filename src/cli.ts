@@ -49,10 +49,9 @@ function getOption(key: string): boolean | string | null {
 // main
 async function main() {
   const operator = new Operator(OPERATOR, ["admin"], "cli", true);
-  const user = USER ? new User(USER) : undefined;
+  const user = USER ? await User.getUser(USER) : undefined;
 
   try {
-    await user?.load();
     const output = await Fairpost.execute(operator, user, COMMAND, {
       dryrun: DRY_RUN,
       targetuser: TARGETUSER,
