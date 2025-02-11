@@ -41,9 +41,12 @@ export default class Source {
    */
   public async load() {
     try {
-      (await fs.lstat(this.path)).isDirectory();
+      const stat = await fs.stat(this.path);
+      if (!stat.isDirectory()) {
+        throw new Error();
+      }
     } catch {
-      throw this.feed.user.error("No such source: " + path);
+      throw this.feed.user.error("Not a valid source: " + this.path);
     }
   }
 
@@ -155,12 +158,19 @@ export default class Source {
     if (this.files !== undefined) {
       return this.files.map((file) => file.name);
     }
-    const files = (await fs.readdir(this.path)).filter(async (file) => {
-      const regex = /^[^._]/;
-      return (
-        (await fs.stat(this.path + "/" + file)).isFile() && file.match(regex)
-      );
-    });
+    const allFiles = await fs.readdir(this.path);
+    const files = [] as string[];
+    const regex = /^[^._]/;
+    for (const file of allFiles) {
+      let valid = file.match(regex) !== null;
+      if (valid) {
+        const stat = await fs.stat(this.path + "/" + file);
+        valid = stat.isFile();
+        if (valid) {
+          files.push(file);
+        }
+      }
+    }
     return files;
   }
 

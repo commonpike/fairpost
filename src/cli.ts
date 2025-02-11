@@ -52,6 +52,7 @@ async function main() {
   const user = USER ? new User(USER) : undefined;
 
   try {
+    await user?.load();
     const output = await Fairpost.execute(operator, user, COMMAND, {
       dryrun: DRY_RUN,
       targetuser: TARGETUSER,

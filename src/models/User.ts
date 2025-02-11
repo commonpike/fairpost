@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 import * as log4js from "log4js";
 import * as path from "path";
 import * as platformClasses from "../platforms";
@@ -31,7 +31,7 @@ export default class User {
     | undefined = undefined;
   mapper: UserMapper;
   store: Store;
-  logger: log4js.Logger;
+  logger: log4js.Logger | undefined = undefined;
 
   jsonData: { [key: string]: string } = {};
   envData: { [key: string]: string } = {};
@@ -43,21 +43,42 @@ export default class User {
       "%user%",
       this.id,
     );
-    if (
-      !fs.existsSync(this.homedir) ||
-      !fs.statSync(this.homedir).isDirectory()
-    ) {
-      throw new Error("No such user: " + id);
-    }
-    this.logger = this.getLogger();
     this.mapper = new UserMapper(this);
+    // now dont forget to load()
+  }
+
+  /**
+   * load()
+   *
+   * source load() does very little, but throws
+   * an error if the hoemdir isnt found.
+   */
+  public async load() {
+    try {
+      const stat = await fs.stat(this.homedir);
+      if (!stat.isDirectory()) {
+        throw new Error();
+      }
+    } catch {
+      throw new Error("No such user: " + this.id);
+    }
+    this.logger = await this.getLogger();
+  }
+
+  public static async fileExists(path: string): Promise<boolean> {
+    try {
+      await fs.access(path);
+    } catch {
+      return false;
+    }
+    return true;
   }
 
   /**
    * @returns the new user
    */
 
-  public static createUser(newUserId: string): User {
+  public static async createUser(newUserId: string): Promise<User> {
     if (!newUserId.match("^[a-z][a-z0-9_\\-\\.]{3,31}$")) {
       throw new Error(
         "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
@@ -68,10 +89,10 @@ export default class User {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
     }
     const dst = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", newUserId);
-    if (fs.existsSync(dst)) {
+    if (await User.fileExists(dst)) {
       throw new Error("Homedir already exists: " + dst);
     }
-    fs.cpSync(src, dst, { recursive: true });
+    await fs.cp(src, dst, { recursive: true });
 
     const user = new User(newUserId);
     user.set("settings", "FEED_PLATFORMS", "");
@@ -219,23 +240,23 @@ export default class User {
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public trace(...args: any[]) {
-    this.logger.trace(this.id, ...args);
+    this.logger?.trace(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public debug(...args: any[]) {
-    this.logger.debug(this.id, ...args);
+    this.logger?.debug(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public info(...args: any[]) {
-    this.logger.info(this.id, ...args);
+    this.logger?.info(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public warn(...args: any[]) {
-    this.logger.warn(this.id, ...args);
+    this.logger?.warn(this.id, ...args);
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public error(...args: any[]): Error {
-    this.logger.error(this.id, ...args);
+    this.logger?.error(this.id, ...args);
     return new Error(
       "Error: " +
         "(" +
@@ -246,7 +267,7 @@ export default class User {
   }
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   public fatal(...args: any[]): Error {
-    this.logger.fatal(this.id, ...args);
+    this.logger?.fatal(this.id, ...args);
     const code = parseInt(args[0]);
     process.exitCode = code || 1;
     return new Error(
@@ -263,7 +284,7 @@ export default class User {
    *
    * allow cli/env to override level and console
    */
-  private getLogger(): log4js.Logger {
+  private async getLogger(): Promise<log4js.Logger> {
     const configFile = this.store.get(
       "settings",
       "LOGGER_CONFIG",
@@ -274,9 +295,9 @@ export default class User {
       this.store.get("settings", "LOGGER_CONSOLE", "false") === "true";
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const config = fs.existsSync(this.homedir + "/" + configFile)
+    const config = (await User.fileExists(this.homedir + "/" + configFile))
       ? JSON.parse(
-          fs.readFileSync(
+          await fs.readFile(
             path.resolve(
               __dirname + "/../../",
               this.homedir + "/" + configFile,
@@ -285,7 +306,7 @@ export default class User {
           ),
         )
       : JSON.parse(
-          fs.readFileSync(
+          await fs.readFile(
             path.resolve(__dirname + "/../../", configFile),
             "utf8",
           ),

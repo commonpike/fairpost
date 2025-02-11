@@ -50,7 +50,7 @@ export default class Feed {
       return Object.values(this.cache);
     }
     try {
-      (await fs.lstat(this.path)).isDirectory();
+      (await fs.stat(this.path)).isDirectory();
     } catch {
       await fs.mkdir(this.path);
     }
@@ -58,11 +58,9 @@ export default class Feed {
       return !path.startsWith("_") && !path.startsWith(".");
     });
     for (const path of paths) {
-      try {
-        (await fs.lstat(this.path)).isDirectory();
+      const stat = await fs.stat(this.path + "/" + path);
+      if (stat.isDirectory()) {
         await this.getSource(path);
-      } catch {
-        // skip non-directories
       }
     }
     this.allCached = true;

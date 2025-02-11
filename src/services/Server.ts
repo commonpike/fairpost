@@ -97,6 +97,7 @@ export default class Server {
     try {
       const operator = Server.getOperator(userid, request);
       const user = new User(userid);
+      await user.load();
       output = await Fairpost.execute(operator, user, command, args);
       code = 200;
       Fairpost.logger.trace("Server.handleRequest", "success", request.url);

@@ -86,7 +86,7 @@ class Fairpost {
           if (!args.targetuser) {
             throw new Error("user is required for command " + command);
           }
-          const newUser = User.createUser(args.targetuser);
+          const newUser = await User.createUser(args.targetuser);
           output = await newUser.mapper.getDto(operator);
           break;
         }
