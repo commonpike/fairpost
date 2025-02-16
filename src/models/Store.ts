@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 import * as path from "path";
 
 /**
@@ -30,17 +30,37 @@ export default class Store {
   jsonPath: string;
   jsonData: { [store: string]: { [key: string]: string } } = {};
 
+  /**
+   * Dont call the constructor yourself;
+   * instead, call `await Store.getStore()`
+   * @param userid
+   */
   constructor(userid: string) {
     this.jsonPath = this.getEnv(
       "app",
       "USER_JSONPATH",
       "users/%user%/storage.json",
     ).replace("%user%", userid);
-    this.loadJson();
-    if (process.argv.includes("--verbose")) {
-      process.env.FAIRPOST_LOGGER_LEVEL = "TRACE";
-      process.env.FAIRPOST_LOGGER_CONSOLE = "true";
-    }
+  }
+
+  /**
+   * getStore
+   *
+   * get a new store and do some async checks and loads.
+   * @param userid - user id
+   * @returns new store object
+   */
+  public static async getStore(userid: string): Promise<Store> {
+    const store = new Store(userid);
+    await store.load();
+    return store;
+  }
+
+  public async load() {
+    await this.loadJson();
+  }
+  public async save() {
+    await this.saveJson();
   }
 
   public get(store: StorageType, key: string, def?: string): string {
@@ -119,12 +139,12 @@ export default class Store {
       this.jsonData[store] = {};
     }
     this.jsonData[store][key] = value;
-    this.saveJson();
+    // dont forget to call save()
   }
 
-  private loadJson() {
-    if (fs.existsSync(this.jsonPath)) {
-      const jsonData = JSON.parse(fs.readFileSync(this.jsonPath, "utf8"));
+  private async loadJson() {
+    if (await this.fileExists(this.jsonPath)) {
+      const jsonData = JSON.parse(await fs.readFile(this.jsonPath, "utf8"));
       if (jsonData) {
         this.jsonData = jsonData;
       } else {
@@ -133,10 +153,23 @@ export default class Store {
     }
   }
 
-  private saveJson() {
-    if (!fs.existsSync(this.jsonPath)) {
-      fs.mkdirSync(path.dirname(this.jsonPath), { recursive: true });
+  private async saveJson() {
+    if (!(await this.fileExists(this.jsonPath))) {
+      await fs.mkdir(path.dirname(this.jsonPath), { recursive: true });
     }
-    fs.writeFileSync(this.jsonPath, JSON.stringify(this.jsonData, null, "\t"));
+    await fs.writeFile(
+      this.jsonPath,
+      JSON.stringify(this.jsonData, null, "\t"),
+    );
+  }
+
+  // tmp
+  public async fileExists(path: string): Promise<boolean> {
+    try {
+      await fs.access(path);
+    } catch {
+      return false;
+    }
+    return true;
   }
 }

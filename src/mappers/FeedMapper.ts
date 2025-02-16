@@ -58,10 +58,10 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  getDto(operator: Operator): FeedDto {
+  async getDto(operator: Operator): Promise<FeedDto> {
     const fields = this.getDtoFields(operator, "get");
     const dto: FeedDto = {};
-    fields.forEach((field) => {
+    for (const field of fields) {
       switch (field) {
         case "model":
           dto[field] = "feed";
@@ -76,10 +76,10 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
           dto[field] = this.feed.path;
           break;
         case "sources":
-          dto[field] = this.feed.getSources().map((s) => s.id);
+          dto[field] = (await this.feed.getSources()).map((s) => s.id);
           break;
       }
-    });
+    }
     return dto;
   }
 
@@ -89,7 +89,7 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
    * @param dto
    * @returns boolean success
    */
-  setDto(operator: Operator, dto: FeedDto): boolean {
+  async setDto(operator: Operator, dto: FeedDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {

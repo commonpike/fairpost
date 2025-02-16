@@ -1,33 +1,26 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 
 import FeedMapper from "../mappers/FeedMapper";
 import Source from "./Source";
 import User from "./User";
 
 /**
- * Feed - the core handler of fairpost
+ * Feed - the sources handler of fairpost
  *
- * You start a feed with a config, by default .env, which
- * defines the feed folder and platform settings. From the feed,
- * you are able to get platforms, sources and posts, and
- * manage and publish those.
+ * The feed is a container of sources. The sources
+ * path is set by USER_FEEDPATH. Every dir in there,
+ * if not starting with _ or ., is a source.
+ *
+ * Every source can be prepared to become a post
+ * for a platform; but it's the platform that handles that.
  */
 export default class Feed {
   id: string = "";
   path: string = "";
   user: User;
-  sources: Source[] = [];
+  cache: { [id: string]: Source } = {};
+  allCached: boolean = false;
   mapper: FeedMapper;
-
-  /**
-   * The constructor reads the dotenv file, then reads all
-   * the classes in the platform folder and assumes their filenames
-   * are the names of their constructor.
-   * From platforms/index.ts, if the platform is exported there,
-   * it constructs it and if that platform is enabled
-   * in the feed config, the platform is added to the feed.
-   * @param configPath - path to file for dotenv to parse
-   */
 
   constructor(user: User) {
     this.user = user;
@@ -39,30 +32,39 @@ export default class Feed {
   }
 
   /**
+   * getSourceId
+   * @param path the path for the new or existing source
+   * @returns the id for the new or existing source
+   */
+  getSourceId(path: string): string {
+    return path; // ah, simple
+  }
+
+  /**
    * Get all sources
    * @returns all source in the feed
    */
-  getAllSources(): Source[] {
+  async getAllSources(): Promise<Source[]> {
     this.user.trace("Feed", "getAllSources");
-    if (this.sources.length) {
-      return this.sources;
+    if (this.allCached) {
+      return Object.values(this.cache);
     }
-    if (!fs.existsSync(this.path)) {
-      fs.mkdirSync(this.path);
+    try {
+      (await fs.stat(this.path)).isDirectory();
+    } catch {
+      await fs.mkdir(this.path);
     }
-    const paths = fs.readdirSync(this.path).filter((path) => {
-      return (
-        fs.statSync(this.path + "/" + path).isDirectory() &&
-        !path.startsWith("_") &&
-        !path.startsWith(".")
-      );
+    const paths = (await fs.readdir(this.path)).filter((path) => {
+      return !path.startsWith("_") && !path.startsWith(".");
     });
-    if (paths) {
-      this.sources = paths.map(
-        (path) => new Source(this, this.path + "/" + path),
-      );
+    for (const path of paths) {
+      const stat = await fs.stat(this.path + "/" + path);
+      if (stat.isDirectory()) {
+        await this.getSource(path);
+      }
     }
-    return this.sources;
+    this.allCached = true;
+    return Object.values(this.cache);
   }
 
   /**
@@ -70,9 +72,15 @@ export default class Feed {
    * @param path - path to a single source
    * @returns the given source object
    */
-  getSource(path: string): Source {
+  async getSource(path: string): Promise<Source> {
     this.user.trace("Feed", "getSource", path);
-    return new Source(this, this.path + "/" + path);
+    const sourceId = this.getSourceId(path);
+    if (sourceId in this.cache) {
+      return this.cache[sourceId];
+    }
+    const source = await Source.getSource(this, path);
+    this.cache[source.id] = source;
+    return source;
   }
 
   /**
@@ -80,9 +88,12 @@ export default class Feed {
    * @param paths - paths to multiple sources
    * @returns the given source objects
    */
-  getSources(paths?: string[]): Source[] {
+  async getSources(paths?: string[]): Promise<Source[]> {
     this.user.trace("Feed", "getSources", paths);
-    return paths?.map((path) => this.getSource(path)) ?? this.getAllSources();
+    if (!paths || !paths.length) {
+      return await this.getAllSources();
+    }
+    return Promise.all(paths.map((path) => this.getSource(path)));
   }
 
   /**

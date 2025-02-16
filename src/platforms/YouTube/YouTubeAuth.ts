@@ -20,7 +20,7 @@ export default class YouTubeAuth {
   async setup() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
-    this.store(tokens);
+    await this.store(tokens);
   }
 
   /**
@@ -41,10 +41,10 @@ export default class YouTubeAuth {
       credentials?: Credentials;
     };
     if (response["res"]?.["data"] && isCredentials(response["res"]["data"])) {
-      this.store(response["res"]["data"]);
+      await this.store(response["res"]["data"]);
       return;
     } else if (response.credentials) {
-      this.store(response.credentials);
+      await this.store(response.credentials);
       return;
     }
     throw this.user.error(
@@ -70,9 +70,9 @@ export default class YouTubeAuth {
       access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
       refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
-    auth.on("tokens", (creds) => {
+    auth.on("tokens", async (creds) => {
       this.user.trace("YouTubeAuth", "tokens event received");
-      this.store(creds);
+      await this.store(creds);
     });
     this.client = new youtube_v3.Youtube({ auth });
     return this.client;
@@ -152,7 +152,7 @@ export default class YouTubeAuth {
    * Save all tokens in auth store
    * @param creds - contains the tokens to store
    */
-  private store(creds: Credentials) {
+  private async store(creds: Credentials) {
     this.user.trace("YouTubeAuth", "store");
     if (creds.access_token) {
       this.user.set("auth", "YOUTUBE_ACCESS_TOKEN", creds.access_token);
@@ -167,6 +167,7 @@ export default class YouTubeAuth {
     if (creds.refresh_token) {
       this.user.set("auth", "YOUTUBE_REFRESH_TOKEN", creds.refresh_token);
     }
+    await this.user.save();
   }
 }
 

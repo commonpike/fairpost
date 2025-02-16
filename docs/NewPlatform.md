@@ -127,6 +127,7 @@ storage uses `.env`, it is read-only.
     ...
     this.user.set('auth', 'foo', 'bar');
     console.log(this.user.get('auth', 'foo')); // bar
+    await this.user.save(); 
 ```
 ### Using User.trace(), User.info(), User.error() etc.
 
@@ -242,7 +243,7 @@ export default class FooBarAuth {
   async setup() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
-    this.store(tokens);
+    await this.store(tokens);
   }
   ...
   /**
@@ -318,8 +319,9 @@ export default class FooBarAuth {
    * Save all tokens in auth store
    * @param tokens - the tokens to store
    */
-  private store(tokens) {
+  private async store(tokens) {
     this.user.set("auth", "FOOBAR_ACCESS_TOKEN", tokens["access_token"]);
+    await this.user.save();
   }
 
 }

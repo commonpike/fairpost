@@ -19,7 +19,7 @@ export default class RedditAuth {
   async setup() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
-    this.store(tokens);
+    await this.store(tokens);
   }
 
   /**
@@ -40,7 +40,7 @@ export default class RedditAuth {
         tokens,
       );
     }
-    this.store(tokens);
+    await this.store(tokens);
   }
 
   /**
@@ -125,7 +125,7 @@ export default class RedditAuth {
    * Save all tokens in auth store
    * @param tokens - the tokens to store
    */
-  private store(tokens: TokenResponse) {
+  private async store(tokens: TokenResponse) {
     this.user.set("auth", "REDDIT_ACCESS_TOKEN", tokens["access_token"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expires_in"] * 1000,
@@ -133,6 +133,7 @@ export default class RedditAuth {
     this.user.set("auth", "REDDIT_ACCESS_EXPIRY", accessExpiry);
     this.user.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
     this.user.set("auth", "REDDIT_SCOPE", tokens["scope"]);
+    await this.user.save();
   }
 
   // API implementation -------------------

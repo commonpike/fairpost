@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { promises as fs } from "fs";
 import * as path from "path";
 
 import sharp from "sharp";
@@ -13,6 +13,10 @@ import SourceMapper from "../mappers/SourceMapper";
  * A source represents one post on all enabled
  * and applicable platforms. It is also just
  * a folder on a filesystem.
+ *
+ * be sure not to do much heavy lifting in the constructor.
+ * source objects should be light, because they
+ * are often just hubs to get to posts.
  */
 export default class Source {
   feed: Feed;
@@ -21,14 +25,38 @@ export default class Source {
   files?: FileInfo[];
   mapper: SourceMapper;
 
+  /**
+   * Dont call the constructor yourself;
+   * instead, call `await Source.getSource()`
+   * @param feed
+   * @param path
+   */
   constructor(feed: Feed, path: string) {
-    if (!fs.statSync(path).isDirectory()) {
-      throw new Error("No such source: " + path);
-    }
     this.feed = feed;
-    this.id = path.replace(feed.path + "/", "");
-    this.path = path;
+    this.id = this.feed.getSourceId(path);
+    this.path = feed.path + "/" + path;
     this.mapper = new SourceMapper(this);
+  }
+
+  /**
+   * getSource
+   *
+   * get a new source and do some async checks.
+   * @param feed - the feed this source belongs to
+   * @param path - the path within that feed
+   * @returns new source object
+   */
+  public static async getSource(feed: Feed, path: string): Promise<Source> {
+    const source = new Source(feed, path);
+    try {
+      const stat = await fs.stat(source.path);
+      if (!stat.isDirectory()) {
+        throw new Error();
+      }
+    } catch {
+      throw feed.user.error("Not a valid source: " + path);
+    }
+    return source;
   }
 
   /**
@@ -42,7 +70,7 @@ export default class Source {
     if (this.files !== undefined) {
       return structuredClone(this.files);
     }
-    const fileNames = this.getFileNames();
+    const fileNames = await this.getFileNames();
     this.files = [];
     for (let index = 0; index < fileNames.length; index++) {
       this.files.push(await this.getFileInfo(fileNames[index], index));
@@ -60,7 +88,7 @@ export default class Source {
     const filepath = this.path + "/" + name;
     const mime = this.guessMimeType(name);
     const group = mime.split("/")[0];
-    const stats = fs.statSync(filepath);
+    const stats = await fs.stat(filepath);
     const extension = path.extname(name);
     const file = {
       name: name,
@@ -88,7 +116,7 @@ export default class Source {
 
   public async preparePost(platform: Platform): Promise<Post> {
     this.feed.user.trace(this.id, "preparePost", this.id, platform.id);
-    return platform.preparePost(this);
+    return await platform.preparePost(this);
   }
 
   /**
@@ -96,9 +124,9 @@ export default class Source {
    * this is just an alias of Platform.getPost(source)
    */
 
-  public getPost(platform: Platform): Post {
+  public async getPost(platform: Platform): Promise<Post> {
     this.feed.user.trace(this.id, "getPost", this.id, platform.id);
-    return platform.getPost(this);
+    return await platform.getPost(this);
   }
 
   /**
@@ -108,7 +136,10 @@ export default class Source {
    * @returns multiple posts
    */
 
-  public getPosts(platforms?: Platform[], status?: PostStatus): Post[] {
+  public async getPosts(
+    platforms?: Platform[],
+    status?: PostStatus,
+  ): Promise<Post[]> {
     this.feed.user.trace(this.id, "getPosts", this.id);
     const posts: Post[] = [];
     if (!platforms) {
@@ -116,7 +147,7 @@ export default class Source {
     }
     for (const platform of platforms) {
       try {
-        const post = this.getPost(platform);
+        const post = await this.getPost(platform);
         if (!status || status === post.status) {
           posts.push(post);
         }
@@ -132,14 +163,23 @@ export default class Source {
    * @returns array of filenames relative to source
    */
 
-  private getFileNames(): string[] {
+  private async getFileNames(): Promise<string[]> {
     if (this.files !== undefined) {
       return this.files.map((file) => file.name);
     }
-    const files = fs.readdirSync(this.path).filter((file) => {
-      const regex = /^[^._]/;
-      return fs.statSync(this.path + "/" + file).isFile() && file.match(regex);
-    });
+    const allFiles = await fs.readdir(this.path);
+    const files = [] as string[];
+    const regex = /^[^._]/;
+    for (const file of allFiles) {
+      let valid = file.match(regex) !== null;
+      if (valid) {
+        const stat = await fs.stat(this.path + "/" + file);
+        valid = stat.isFile();
+        if (valid) {
+          files.push(file);
+        }
+      }
+    }
     return files;
   }
 

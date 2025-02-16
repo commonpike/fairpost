@@ -18,7 +18,7 @@ export default class TwitterAuth {
   async setup() {
     const { code, verifier } = await this.requestCode();
     const tokens = await this.exchangeCode(code, verifier);
-    this.store(tokens);
+    await this.store(tokens);
   }
 
   /**
@@ -34,7 +34,7 @@ export default class TwitterAuth {
         tokens,
       );
     }
-    this.store(tokens);
+    await this.store(tokens);
   }
 
   /**
@@ -120,7 +120,7 @@ export default class TwitterAuth {
    * Save all tokens in auth store
    * @param tokens - the tokens to store
    */
-  private store(tokens: TokenResponse) {
+  private async store(tokens: TokenResponse) {
     this.user.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expiresIn"] * 1000,
@@ -128,6 +128,7 @@ export default class TwitterAuth {
     this.user.set("auth", "TWITTER_ACCESS_EXPIRY", accessExpiry);
 
     this.user.set("auth", "TWITTER_REFRESH_TOKEN", tokens["refreshToken"]);
+    await this.user.save();
   }
 }
 

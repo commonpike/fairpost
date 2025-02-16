@@ -36,6 +36,7 @@ export default class FacebookAuth {
     );
 
     this.user.set("auth", "FACEBOOK_PAGE_ACCESS_TOKEN", pageToken);
+    await this.user.save();
   }
 
   protected async requestCode(clientId: string): Promise<string> {

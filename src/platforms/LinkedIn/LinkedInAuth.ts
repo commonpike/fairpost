@@ -23,7 +23,7 @@ export default class LinkedInAuth {
   async setup() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
-    this.store(tokens);
+    await this.store(tokens);
   }
 
   /**
@@ -43,7 +43,7 @@ export default class LinkedInAuth {
         tokens,
       );
     }
-    this.store(tokens);
+    await this.store(tokens);
   }
 
   /**
@@ -125,7 +125,7 @@ export default class LinkedInAuth {
    * Save all tokens in auth store
    * @param tokens - the tokens to store
    */
-  private store(tokens: TokenResponse) {
+  private async store(tokens: TokenResponse) {
     this.user.set("auth", "LINKEDIN_ACCESS_TOKEN", tokens["access_token"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expires_in"] * 1000,
@@ -139,6 +139,7 @@ export default class LinkedInAuth {
     this.user.set("auth", "LINKEDIN_REFRESH_EXPIRY", refreshExpiry);
 
     this.user.set("auth", "LINKEDIN_SCOPE", tokens["scope"]);
+    await this.user.save();
   }
 
   // API implementation -------------------

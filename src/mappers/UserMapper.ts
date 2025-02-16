@@ -46,10 +46,10 @@ export default class UserMapper extends AbstractMapper<UserDto> {
    * @param operator
    * @returns key/value pairs for the dto
    */
-  getDto(operator: Operator): UserDto {
+  async getDto(operator: Operator): Promise<UserDto> {
     const fields = this.getDtoFields(operator, "get");
     const dto: UserDto = {};
-    fields.forEach((field) => {
+    for (const field of fields) {
       switch (field) {
         case "model":
           dto[field] = "user";
@@ -64,7 +64,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
           dto[field] = this.user.get("settings", "LOGGER_LEVEL");
           break;
       }
-    });
+    }
     return dto;
   }
 
@@ -74,7 +74,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
    * @param dto
    * @returns boolean success
    */
-  setDto(operator: Operator, dto: Dto): boolean {
+  async setDto(operator: Operator, dto: Dto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {
@@ -91,6 +91,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
         throw this.user.error("Unknown field: " + field);
       }
     }
+    await this.user.save();
     return true;
   }
 }

@@ -86,8 +86,8 @@ class Fairpost {
           if (!args.targetuser) {
             throw new Error("user is required for command " + command);
           }
-          const newUser = User.createUser(args.targetuser);
-          output = newUser.mapper.getDto(operator);
+          const newUser = await User.createUser(args.targetuser);
+          output = await newUser.mapper.getDto(operator);
           break;
         }
         case "get-user": {
@@ -97,11 +97,11 @@ class Fairpost {
               throw new Error("Missing permissions for command " + command);
             }
             const other = new User(args.targetuser);
-            output = other.mapper.getDto(operator);
+            output = await other.mapper.getDto(operator);
           } else if (!user) {
             throw new Error("Missing user for command " + command);
           } else {
-            output = user.mapper.getDto(operator);
+            output = await user.mapper.getDto(operator);
           }
           break;
         }
@@ -113,7 +113,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          output = feed.mapper.getDto(operator);
+          output = await feed.mapper.getDto(operator);
           break;
         }
         case "setup-platform": {
@@ -154,7 +154,7 @@ class Fairpost {
             );
           }
           const platform = user.getPlatform(args.platform);
-          output = platform.mapper.getDto(operator);
+          output = await platform.mapper.getDto(operator);
           break;
         }
         case "get-platforms": {
@@ -165,7 +165,10 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const platforms = user.getPlatforms(args.platforms);
-          output = platforms.map((p) => p.mapper.getDto(operator));
+          output = await Promise.all(
+            platforms.map((p) => p.mapper.getDto(operator)),
+          );
+
           break;
         }
         case "test-platform": {
@@ -280,8 +283,8 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
-          output = source.mapper.getDto(operator);
+          const source = await feed.getSource(args.source);
+          output = await source.mapper.getDto(operator);
           break;
         }
         case "get-sources": {
@@ -292,8 +295,10 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
-          output = sources.map((source) => source.mapper.getDto(operator));
+          const sources = await feed.getSources(args.sources);
+          output = await Promise.all(
+            sources.map((source) => source.mapper.getDto(operator)),
+          );
           break;
         }
 
@@ -318,9 +323,9 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const platform = user.getPlatform(args.platform);
-          const source = feed.getSource(args.source);
-          const post = platform.getPost(source);
-          output = post.mapper.getDto(operator);
+          const source = await feed.getSource(args.source);
+          const post = await platform.getPost(source);
+          output = await post.mapper.getDto(operator);
           break;
         }
         case "get-posts": {
@@ -337,13 +342,15 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
+          const sources = await feed.getSources(args.sources);
           const posts = [] as Post[];
-          platforms.forEach((p) => {
-            posts.push(...p.getPosts(sources, args.status));
-          });
-          output = posts.map((p) => p.mapper.getDto(operator));
+          for (const platform of platforms) {
+            posts.push(...(await platform.getPosts(sources, args.status)));
+          }
+          output = await Promise.all(
+            posts.map((p) => p.mapper.getDto(operator)),
+          );
           break;
         }
         case "prepare-post": {
@@ -367,9 +374,9 @@ class Fairpost {
           }
           const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           const post = await platform.preparePost(source);
-          output = post.mapper.getDto(operator);
+          output = await post.mapper.getDto(operator);
           break;
         }
         case "prepare-posts": {
@@ -386,7 +393,7 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]?: CombinedResult[] };
           for (const platform of platforms) {
@@ -398,7 +405,7 @@ class Fairpost {
                 const post = await platform.preparePost(source);
                 (output[platform.id] as CombinedResult[]).push({
                   success: true,
-                  result: post.mapper.getDto(operator),
+                  result: await post.mapper.getDto(operator),
                 });
               } catch (e) {
                 user.error("Fairpost", "preparePosts", e);
@@ -437,11 +444,11 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           const platform = user.getPlatform(args.platform);
-          const post = platform.getPost(source);
+          const post = await platform.getPost(source);
           post.schedule(args.date);
-          output = post.mapper.getDto(operator);
+          output = await post.mapper.getDto(operator);
           break;
         }
         case "schedule-posts": {
@@ -470,16 +477,16 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
             try {
-              const post = platform.getPost(source);
+              const post = await platform.getPost(source);
               post.schedule(args.date);
               output[platform.id] = {
                 success: true,
-                result: post.mapper.getDto(operator),
+                result: await post.mapper.getDto(operator),
               };
             } catch (e) {
               output[platform.id] = {
@@ -504,11 +511,11 @@ class Fairpost {
             );
           }
           const platform = user.getPlatform(args.platform);
-          const post = platform.scheduleNextPost(
+          const post = await platform.scheduleNextPost(
             args.date ? new Date(args.date) : undefined,
           );
           if (post) {
-            output = post?.mapper.getDto(operator);
+            output = await post.mapper.getDto(operator);
           } else {
             output = { success: false, message: "No post left to schedule" };
           }
@@ -535,12 +542,12 @@ class Fairpost {
           }
           const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
-          const post = platform.getPost(source);
+          const source = await feed.getSource(args.source);
+          const post = await platform.getPost(source);
           output = {
             [platform.id]: {
               success: await post.publish(!!args.dryrun),
-              result: post.link,
+              result: post.link ?? "#nolink",
             },
           };
           break;
@@ -565,12 +572,12 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = feed.getSource(args.source);
+          const source = await feed.getSource(args.source);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
             try {
-              const post = platform.getPost(source);
+              const post = await platform.getPost(source);
               await post.publish(!!args.dryrun);
               output[platform.id] = {
                 success: await post.publish(!!args.dryrun),
@@ -601,17 +608,19 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
           const posts = [] as Post[];
-          platforms.forEach((p) => {
-            const post = p.scheduleNextPost(
+          for (const platform of platforms) {
+            const post = await platform.scheduleNextPost(
               args.date ? new Date(args.date) : undefined,
               sources,
             );
             if (post) posts.push(post);
-          });
-          output = posts.map((p) => p.mapper.getDto(operator));
+          }
+          output = await Promise.all(
+            posts.map((p) => p.mapper.getDto(operator)),
+          );
           break;
         }
         case "publish-due-posts": {
@@ -622,7 +631,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const sources = feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
