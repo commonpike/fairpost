@@ -207,14 +207,18 @@ export default class Twitter extends Platform {
       accessToken: this.user.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
       accessSecret: this.user.get("app", "TWITTER_OA1_ACCESS_SECRET"),
     });
-    const mediaIds = new Array() as [string] | [string,string] | [string,string,string]| [string, string, string, string];
+    const mediaIds = [] as
+      | [string]
+      | [string, string]
+      | [string, string, string]
+      | [string, string, string, string];
 
     const additionalOwner = this.user.get(
       "settings",
       "TWITTER_OA1_ADDITIONAL_OWNER",
       "",
     );
-    for (const image of post.getFiles(FileGroup.IMAGE).splice(0,4)) {
+    for (const image of post.getFiles(FileGroup.IMAGE).splice(0, 4)) {
       const path = post.getFilePath(image.name);
       this.user.trace("Uploading " + path + "...");
       try {
@@ -241,8 +245,8 @@ export default class Twitter extends Platform {
       this.user.trace("Tweeting " + post.id + "...");
       const result = await client2.v2.tweet({
         text: post.getCompiledBody(),
-        media: { 
-          media_ids: mediaIds
+        media: {
+          media_ids: mediaIds,
         },
       });
       if (result.errors) {
