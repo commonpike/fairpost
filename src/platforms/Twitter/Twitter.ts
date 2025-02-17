@@ -207,7 +207,8 @@ export default class Twitter extends Platform {
       accessToken: this.user.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
       accessSecret: this.user.get("app", "TWITTER_OA1_ACCESS_SECRET"),
     });
-    const mediaIds = [] as
+    // eslint-disable-next-line
+    const mediaIds = new Array() as
       | [string]
       | [string, string]
       | [string, string, string]
