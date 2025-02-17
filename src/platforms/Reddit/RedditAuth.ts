@@ -198,7 +198,7 @@ function isTokenResponse(tokens: TokenResponse) {
     assert("expires_in" in tokens);
     assert("scope" in tokens);
     assert("refresh_token" in tokens);
-  } catch (e) {
+  } catch {
     return false;
   }
   return true;

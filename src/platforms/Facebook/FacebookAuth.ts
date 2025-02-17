@@ -281,7 +281,7 @@ interface TokenResponse {
 function isTokenResponse(tokens: TokenResponse) {
   try {
     assert("access_token" in tokens);
-  } catch (e) {
+  } catch {
     return false;
   }
   return true;

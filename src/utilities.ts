@@ -63,7 +63,7 @@ export async function handleJsonResponse(
     try {
       const data = await response.json(); // may throw a syntaxerror
       throw new ApiResponseError(response, data);
-    } catch (e) {
+    } catch {
       throw new ApiResponseError(response);
     }
   }

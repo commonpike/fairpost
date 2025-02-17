@@ -108,7 +108,7 @@ export default class Reddit extends Platform {
             // const video = post.getFiles('video')[0];
             // this.user.trace("Reddit.preparePost", "creating thumbnail", video.name, dstposter);
             // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(dstposter));
-          } catch (e) {
+          } catch {
             post.valid = false;
           }
         }

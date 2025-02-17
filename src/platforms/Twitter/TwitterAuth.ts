@@ -144,7 +144,7 @@ function isTokenResponse(tokens: TokenResponse) {
     assert("accessToken" in tokens);
     assert("expiresIn" in tokens);
     assert("refreshToken" in tokens);
-  } catch (e) {
+  } catch {
     return false;
   }
   return true;

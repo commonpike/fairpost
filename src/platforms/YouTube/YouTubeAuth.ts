@@ -174,7 +174,7 @@ export default class YouTubeAuth {
 function isCredentials(creds: Credentials) {
   try {
     assert("access_token" in creds || "refresh_token" in creds);
-  } catch (e) {
+  } catch {
     return false;
   }
   return true;

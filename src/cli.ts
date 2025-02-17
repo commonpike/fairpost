@@ -18,8 +18,8 @@ const USER = process.argv[2]?.includes("@")
   ? process.argv[2].replace("@", "")
   : "";
 const COMMAND = process.argv[2]?.includes("@")
-  ? process.argv[3] ?? "help"
-  : process.argv[2] ?? "help";
+  ? (process.argv[3] ?? "help")
+  : (process.argv[2] ?? "help");
 
 // options
 const DRY_RUN = !!getOption("dry-run");

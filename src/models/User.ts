@@ -330,7 +330,6 @@ export default class User {
     const addConsole =
       this.store!.get("settings", "LOGGER_CONSOLE", "false") === "true";
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const config = (await User.fileExists(this.homedir + "/" + configFile))
       ? JSON.parse(
           await fs.readFile(

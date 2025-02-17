@@ -121,9 +121,8 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       if (field in fields) {
         switch (field) {
           case "active":
-            dto[field]
-              ? this.user.addPlatform(this.platform.id)
-              : this.user.removePlatform(this.platform.id);
+            if (dto[field]) this.user.addPlatform(this.platform.id);
+            else this.user.removePlatform(this.platform.id);
             break;
           default: {
             switch (this.mapping[field].type) {
