@@ -1,4 +1,4 @@
-import Post from "./Post";
+import Post from "./Post.ts";
 
 /**
  * Plugin - base class to extend plugins from

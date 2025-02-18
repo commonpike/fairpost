@@ -1,15 +1,15 @@
 import { promises as fs } from "fs";
 
-import Source, { FileGroup } from "../../models/Source";
-import { handleApiError, handleEmptyResponse } from "../../utilities";
+import Source, { FileGroup } from "../../models/Source.ts";
+import { handleApiError, handleEmptyResponse } from "../../utilities.ts";
 
-import LinkedInApi from "./LinkedInApi";
-import LinkedInAuth from "./LinkedInAuth";
-import { FieldMapping } from "../../mappers/AbstractMapper";
-import PlatformMapper from "../../mappers/PlatformMapper";
-import Platform from "../../models/Platform";
-import Post from "../../models/Post";
-import User from "../../models/User";
+import LinkedInApi from "./LinkedInApi.ts";
+import LinkedInAuth from "./LinkedInAuth.ts";
+import { FieldMapping } from "../../mappers/AbstractMapper.ts";
+import PlatformMapper from "../../mappers/PlatformMapper.ts";
+import Platform from "../../models/Platform.ts";
+import Post from "../../models/Post.ts";
+import User from "../../models/User.ts";
 
 export default class LinkedIn extends Platform {
   assetsFolder = "_linkedin";

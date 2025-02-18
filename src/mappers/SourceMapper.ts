@@ -1,7 +1,7 @@
-import AbstractMapper from "./AbstractMapper";
-import { Dto, FieldMapping } from "./AbstractMapper";
-import Operator from "../models/Operator";
-import Source, { FileInfo } from "../models/Source";
+import AbstractMapper from "./AbstractMapper.ts";
+import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import Operator from "../models/Operator.ts";
+import Source, { FileInfo } from "../models/Source.ts";
 
 export interface SourceDto
   extends Dto<{

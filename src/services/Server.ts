@@ -1,12 +1,12 @@
 import * as fs from "fs";
 import * as http from "http";
 
-import Fairpost from "./Fairpost";
-import { JSONReplacer } from "../utilities";
-import { PlatformId } from "../platforms";
-import { PostStatus } from "../models/Post";
-import Operator from "../models/Operator";
-import User from "../models/User";
+import Fairpost from "./Fairpost.ts";
+import { JSONReplacer } from "../utilities.ts";
+import { PlatformId } from "../platforms/index.ts";
+import { PostStatus } from "../models/Post.ts";
+import Operator from "../models/Operator.ts";
+import User from "../models/User.ts";
 
 /**
  * Server: start a webserver for an REST api

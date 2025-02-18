@@ -1,7 +1,7 @@
 import { Credentials, OAuth2Client } from "google-auth-library";
 
-import OAuth2Service from "../../services/OAuth2Service";
-import User from "../../models/User";
+import OAuth2Service from "../../services/OAuth2Service.ts";
+import User from "../../models/User.ts";
 import { strict as assert } from "assert";
 import { youtube_v3 } from "@googleapis/youtube";
 

@@ -2,10 +2,10 @@ import { promises as fs } from "fs";
 import * as path from "path";
 
 import sharp from "sharp";
-import Feed from "./Feed";
-import Platform from "./Platform";
-import Post, { PostStatus } from "./Post";
-import SourceMapper from "../mappers/SourceMapper";
+import Feed from "./Feed.ts";
+import Platform from "./Platform.ts";
+import Post, { PostStatus } from "./Post.ts";
+import SourceMapper from "../mappers/SourceMapper.ts";
 
 /**
  * Source - a folder within a feed

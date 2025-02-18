@@ -1,7 +1,7 @@
-import { FileGroup, FileInfo } from "../models/Source";
+import { FileGroup, FileInfo } from "../models/Source.ts";
 
-import Plugin from "../models/Plugin";
-import Post from "../models/Post";
+import Plugin from "../models/Plugin.ts";
+import Post from "../models/Post.ts";
 import sharp from "sharp";
 
 /**

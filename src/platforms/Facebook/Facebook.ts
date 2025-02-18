@@ -1,16 +1,16 @@
 import { promises as fs } from "fs";
 import * as path from "path";
 
-import Source, { FileGroup } from "../../models/Source";
+import Source, { FileGroup } from "../../models/Source.ts";
 
-import FacebookApi from "./FacebookApi";
-import FacebookAuth from "./FacebookAuth";
-import { FieldMapping } from "../../mappers/AbstractMapper";
-import PlatformMapper from "../../mappers/PlatformMapper";
+import FacebookApi from "./FacebookApi.ts";
+import FacebookAuth from "./FacebookAuth.ts";
+import { FieldMapping } from "../../mappers/AbstractMapper.ts";
+import PlatformMapper from "../../mappers/PlatformMapper.ts";
 
-import Platform from "../../models/Platform";
-import Post from "../../models/Post";
-import User from "../../models/User";
+import Platform from "../../models/Platform.ts";
+import Post from "../../models/Post.ts";
+import User from "../../models/User.ts";
 
 /**
  * Facebook: support for facebook platform.

@@ -1,12 +1,12 @@
-import Source, { FileGroup } from "../../models/Source";
+import Source, { FileGroup } from "../../models/Source.ts";
 
-import Platform from "../../models/Platform";
-import Post from "../../models/Post";
+import Platform from "../../models/Platform.ts";
+import Post from "../../models/Post.ts";
 import { TwitterApi } from "twitter-api-v2";
-import TwitterAuth from "./TwitterAuth";
-import { FieldMapping } from "../../mappers/AbstractMapper";
-import PlatformMapper from "../../mappers/PlatformMapper";
-import User from "../../models/User";
+import TwitterAuth from "./TwitterAuth.ts";
+import { FieldMapping } from "../../mappers/AbstractMapper.ts";
+import PlatformMapper from "../../mappers/PlatformMapper.ts";
+import User from "../../models/User.ts";
 
 /**
  * Twitter: support for twitter platform

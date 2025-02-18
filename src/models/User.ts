@@ -1,14 +1,14 @@
 import { promises as fs } from "fs";
 import * as log4js from "log4js";
 import * as path from "path";
-import * as platformClasses from "../platforms";
+import * as platformClasses from "../platforms/index.ts";
+import { PlatformId } from "../platforms/index.ts";
 
-import Feed from "./Feed";
-import Platform from "./Platform";
-import Store from "./Store";
+import Feed from "./Feed.ts";
+import Platform from "./Platform.ts";
+import Store from "./Store.ts";
 
-import { PlatformId } from "../platforms";
-import UserMapper from "../mappers/UserMapper";
+import UserMapper from "../mappers/UserMapper.ts";
 
 /**
  * User - represents one fairpost user

@@ -1,10 +1,10 @@
 import { promises as fs } from "fs";
 
-import Source, { FileGroup, FileInfo } from "./Source";
+import Source, { FileGroup, FileInfo } from "./Source.ts";
 
-import Platform from "./Platform";
-import { isSimilarArray } from "../utilities";
-import PostMapper from "../mappers/PostMapper";
+import Platform from "./Platform.ts";
+import { isSimilarArray } from "../utilities.ts";
+import PostMapper from "../mappers/PostMapper.ts";
 
 /**
  * Post - a post within a source

@@ -1,8 +1,8 @@
 import { promises as fs } from "fs";
 
-import FeedMapper from "../mappers/FeedMapper";
-import Source from "./Source";
-import User from "./User";
+import FeedMapper from "../mappers/FeedMapper.ts";
+import Source from "./Source.ts";
+import User from "./User.ts";
 
 /**
  * Feed - the sources handler of fairpost

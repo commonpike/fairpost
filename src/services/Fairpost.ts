@@ -5,18 +5,18 @@
  * Fairpost has its own logger, but the commands user has their own logs too.
  */
 import * as log4js from "log4js";
-import { CombinedResult } from "../types";
-import { PlatformId } from "../platforms";
-import { FeedDto } from "../mappers/FeedMapper";
-import { PlatformDto } from "../mappers/PlatformMapper";
-import { PostDto } from "../mappers/PostMapper";
-import { SourceDto } from "../mappers/SourceMapper";
-import { UserDto } from "../mappers/UserMapper";
+import { CombinedResult } from "../types/index.ts";
+import { PlatformId } from "../platforms/index.ts";
+import { FeedDto } from "../mappers/FeedMapper.ts";
+import { PlatformDto } from "../mappers/PlatformMapper.ts";
+import { PostDto } from "../mappers/PostMapper.ts";
+import { SourceDto } from "../mappers/SourceMapper.ts";
+import { UserDto } from "../mappers/UserMapper.ts";
 
-import Post, { PostStatus } from "../models/Post";
-import Server from "../services/Server";
-import Operator from "../models/Operator";
-import User from "../models/User";
+import Post, { PostStatus } from "../models/Post.ts";
+import Server from "../services/Server.ts";
+import Operator from "../models/Operator.ts";
+import User from "../models/User.ts";
 
 type FairpostOutput =
   | FeedDto

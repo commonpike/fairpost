@@ -6,12 +6,12 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import Fairpost from "./services/Fairpost";
-import { JSONReplacer } from "./utilities";
-import { PlatformId } from "./platforms";
-import { PostStatus } from "./models/Post";
-import Operator from "./models/Operator";
-import User from "./models/User";
+import Fairpost from "./services/Fairpost.ts";
+import { JSONReplacer } from "./utilities.ts";
+import { PlatformId } from "./platforms/index.ts";
+import { PostStatus } from "./models/Post.ts";
+import Operator from "./models/Operator.ts";
+import User from "./models/User.ts";
 
 // arguments
 const USER = process.argv[2]?.includes("@")

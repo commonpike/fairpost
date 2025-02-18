@@ -1,7 +1,7 @@
-import AbstractMapper from "./AbstractMapper";
-import { Dto, FieldMapping } from "./AbstractMapper";
-import Operator from "../models/Operator";
-import Platform from "../models/Platform";
+import AbstractMapper from "./AbstractMapper.ts";
+import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import Operator from "../models/Operator.ts";
+import Platform from "../models/Platform.ts";
 
 export interface PlatformDto
   extends Dto<{
