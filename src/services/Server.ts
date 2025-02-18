@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as http from "http";
+import { createReadStream } from "fs";
+import { createServer, IncomingMessage, ServerResponse } from "http";
 
 import Fairpost from "./Fairpost.ts";
 import { JSONReplacer } from "../utilities.ts";
@@ -17,7 +17,7 @@ export default class Server {
     const host = process.env.FAIRPOST_SERVER_HOSTNAME;
     const port = Number(process.env.FAIRPOST_SERVER_PORT);
     return await new Promise((resolve) => {
-      const server = http.createServer((req, res) => {
+      const server = createServer((req, res) => {
         Server.handleRequest(req, res);
       });
       server.listen(port, host, () => {
@@ -27,8 +27,8 @@ export default class Server {
   }
 
   public static async handleRequest(
-    request: http.IncomingMessage,
-    response: http.ServerResponse,
+    request: IncomingMessage,
+    response: ServerResponse,
   ) {
     // enable CORS
     response.setHeader(
@@ -46,7 +46,7 @@ export default class Server {
 
     // handle favico
     if (request.url === "/favicon.ico") {
-      const fileStream = fs.createReadStream("public/fairpost-icon.png");
+      const fileStream = createReadStream("public/fairpost-icon.png");
       response.writeHead(200, { "Content-Type": "image/png" });
       fileStream.pipe(response);
       return;
@@ -131,7 +131,7 @@ export default class Server {
     );
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public static getOperator(userid: string, request: http.IncomingMessage) {
+  public static getOperator(userid: string, request: IncomingMessage) {
     if (process.env.FAIRPOST_SERVER_AUTH === "none") {
       return new Operator(userid, ["user"], "api", true);
     }

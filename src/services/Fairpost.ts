@@ -4,7 +4,7 @@
  * A command handler for the Fairpost framework
  * Fairpost has its own logger, but the commands user has their own logs too.
  */
-import * as log4js from "log4js";
+import log4js from "log4js";
 import { CombinedResult } from "../types/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 import { FeedDto } from "../mappers/FeedMapper.ts";

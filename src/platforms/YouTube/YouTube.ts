@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import { createReadStream } from "fs";
 
 import Source, { FileGroup } from "../../models/Source.ts";
 
@@ -209,7 +209,7 @@ export default class YouTube extends Platform {
       },
       media: {
         mimeType: file.mimetype,
-        body: fs.createReadStream(post.getFilePath(file.name)),
+        body: createReadStream(post.getFilePath(file.name)),
       },
     })) as {
       data: {

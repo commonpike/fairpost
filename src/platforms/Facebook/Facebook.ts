@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import * as path from "path";
+import { basename } from "path";
 
 import Source, { FileGroup } from "../../models/Source.ts";
 
@@ -211,7 +211,7 @@ export default class Facebook extends Platform {
     body.set("title", title);
     body.set("description", description);
     body.set("published", this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"));
-    body.set("source", blob, path.basename(file));
+    body.set("source", blob, basename(file));
 
     if (!dryrun) {
       const result = (await this.api.postForm("%PAGE%/videos", body)) as {
@@ -241,7 +241,7 @@ export default class Facebook extends Platform {
 
     const body = new FormData();
     body.set("published", published ? "true" : "false");
-    body.set("source", blob, path.basename(file));
+    body.set("source", blob, basename(file));
 
     const result = (await this.api.postForm("%PAGE%/photos", body)) as {
       id: "string";

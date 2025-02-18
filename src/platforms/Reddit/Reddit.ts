@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import * as path from "path";
+import { basename } from "path";
 
 import Source, { FileGroup } from "../../models/Source.ts";
 
@@ -330,7 +330,7 @@ export default class Reddit extends Platform {
       [name: string]: string;
     };
   }> {
-    const filename = path.basename(file);
+    const filename = basename(file);
 
     const form = new FormData();
     form.append("filepath", filename);
@@ -377,7 +377,7 @@ export default class Reddit extends Platform {
     file: string,
   ): Promise<string> {
     const buffer = await fs.readFile(file);
-    const filename = path.basename(file);
+    const filename = basename(file);
 
     const form = new FormData();
     for (const fieldname in leash.fields) {

@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import * as path from "path";
+import { basename, extname } from "path";
 
 import sharp from "sharp";
 import Feed from "./Feed.ts";
@@ -89,10 +89,10 @@ export default class Source {
     const mime = this.guessMimeType(name);
     const group = mime.split("/")[0];
     const stats = await fs.stat(filepath);
-    const extension = path.extname(name);
+    const extension = extname(name);
     const file = {
       name: name,
-      basename: path.basename(name, extension || ""),
+      basename: basename(name, extension || ""),
       extension: extension.substring(1),
       group: Object.values(FileGroup).includes(group as FileGroup)
         ? group
@@ -184,7 +184,7 @@ export default class Source {
   }
 
   private guessMimeType(filename: string): string {
-    const extension = path.extname(filename).toLowerCase();
+    const extension = extname(filename).toLowerCase();
     const mimeTypes = {
       ".txt": "text/plain",
       ".png": "image/png",

@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import * as path from "path";
+import { basename } from "path";
 
 import Source, { FileGroup } from "../../models/Source.ts";
 
@@ -363,7 +363,7 @@ export default class Instagram extends Platform {
 
     const body = new FormData();
     body.set("published", "false");
-    body.set("source", blob, path.basename(file));
+    body.set("source", blob, basename(file));
 
     const result = (await this.api.postForm("%PAGE%/photos", body)) as {
       id: "string";
@@ -423,7 +423,7 @@ export default class Instagram extends Platform {
     const body = new FormData();
     body.set("title", "Fairpost temp instagram upload");
     body.set("published", "false");
-    body.set("source", blob, path.basename(file));
+    body.set("source", blob, basename(file));
 
     const result = (await this.api.postForm("%PAGE%/videos", body)) as {
       id: string;

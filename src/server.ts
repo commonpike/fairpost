@@ -3,8 +3,7 @@
     Fairpost cli to start server     
 */
 
-import * as dotenv from "dotenv";
-dotenv.config();
+import "./bootstrap.ts";
 
 import Fairpost from "./services/Fairpost.ts";
 import { JSONReplacer } from "./utilities.ts";
