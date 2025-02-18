@@ -11,9 +11,6 @@
     "resolveJsonModule": true,
     "outDir": "build"
   },
-  "paths": {
-      "*.ts": ["*"]
-  },
   "include": [
     "src/**/*"
   ]
