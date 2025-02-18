@@ -1,15 +1,15 @@
 import { promises as fs } from "fs";
-import * as path from "path";
+import { basename } from "path";
 
-import Source, { FileGroup } from "../../models/Source";
+import Source, { FileGroup } from "../../models/Source.ts";
 
-import Platform from "../../models/Platform";
-import Post from "../../models/Post";
-import RedditApi from "./RedditApi";
-import RedditAuth from "./RedditAuth";
-import { FieldMapping } from "../../mappers/AbstractMapper";
-import PlatformMapper from "../../mappers/PlatformMapper";
-import User from "../../models/User";
+import Platform from "../../models/Platform.ts";
+import Post from "../../models/Post.ts";
+import RedditApi from "./RedditApi.ts";
+import RedditAuth from "./RedditAuth.ts";
+import { FieldMapping } from "../../mappers/AbstractMapper.ts";
+import PlatformMapper from "../../mappers/PlatformMapper.ts";
+import User from "../../models/User.ts";
 import { XMLParser } from "fast-xml-parser";
 
 /**
@@ -330,7 +330,7 @@ export default class Reddit extends Platform {
       [name: string]: string;
     };
   }> {
-    const filename = path.basename(file);
+    const filename = basename(file);
 
     const form = new FormData();
     form.append("filepath", filename);
@@ -377,7 +377,7 @@ export default class Reddit extends Platform {
     file: string,
   ): Promise<string> {
     const buffer = await fs.readFile(file);
-    const filename = path.basename(file);
+    const filename = basename(file);
 
     const form = new FormData();
     for (const fieldname in leash.fields) {

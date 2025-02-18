@@ -1,4 +1,4 @@
-import User from "./User";
+import User from "./User.ts";
 
 /**
  * Operator - represents the user executing an operation or command.

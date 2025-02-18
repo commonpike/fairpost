@@ -1,14 +1,14 @@
 import { promises as fs } from "fs";
-import * as log4js from "log4js";
-import * as path from "path";
-import * as platformClasses from "../platforms";
+import log4js from "log4js";
+import { resolve } from "path";
+import * as platformClasses from "../platforms/index.ts";
+import { PlatformId } from "../platforms/index.ts";
 
-import Feed from "./Feed";
-import Platform from "./Platform";
-import Store from "./Store";
+import Feed from "./Feed.ts";
+import Platform from "./Platform.ts";
+import Store from "./Store.ts";
 
-import { PlatformId } from "../platforms";
-import UserMapper from "../mappers/UserMapper";
+import UserMapper from "../mappers/UserMapper.ts";
 
 /**
  * User - represents one fairpost user
@@ -95,7 +95,7 @@ export default class User {
         "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
       );
     }
-    const src = path.resolve(__dirname, "../../etc/skeleton");
+    const src = resolve(import.meta.dirname, "../../etc/skeleton");
     if (!process.env.FAIRPOST_USER_HOMEDIR) {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
     }
@@ -333,8 +333,8 @@ export default class User {
     const config = (await User.fileExists(this.homedir + "/" + configFile))
       ? JSON.parse(
           await fs.readFile(
-            path.resolve(
-              __dirname + "/../../",
+            resolve(
+              import.meta.dirname + "/../../",
               this.homedir + "/" + configFile,
             ),
             "utf8",
@@ -342,7 +342,7 @@ export default class User {
         )
       : JSON.parse(
           await fs.readFile(
-            path.resolve(__dirname + "/../../", configFile),
+            resolve(import.meta.dirname + "/../../", configFile),
             "utf8",
           ),
         );

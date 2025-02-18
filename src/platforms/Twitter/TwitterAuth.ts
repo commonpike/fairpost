@@ -1,6 +1,6 @@
-import OAuth2Service from "../../services/OAuth2Service";
+import OAuth2Service from "../../services/OAuth2Service.ts";
 import { TwitterApi } from "twitter-api-v2";
-import User from "../../models/User";
+import User from "../../models/User.ts";
 import { strict as assert } from "assert";
 
 export default class TwitterAuth {

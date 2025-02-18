@@ -1,16 +1,16 @@
 import { promises as fs } from "fs";
-import * as path from "path";
+import { basename } from "path";
 
-import Source, { FileGroup } from "../../models/Source";
+import Source, { FileGroup } from "../../models/Source.ts";
 
-import FacebookApi from "./FacebookApi";
-import FacebookAuth from "./FacebookAuth";
-import { FieldMapping } from "../../mappers/AbstractMapper";
-import PlatformMapper from "../../mappers/PlatformMapper";
+import FacebookApi from "./FacebookApi.ts";
+import FacebookAuth from "./FacebookAuth.ts";
+import { FieldMapping } from "../../mappers/AbstractMapper.ts";
+import PlatformMapper from "../../mappers/PlatformMapper.ts";
 
-import Platform from "../../models/Platform";
-import Post from "../../models/Post";
-import User from "../../models/User";
+import Platform from "../../models/Platform.ts";
+import Post from "../../models/Post.ts";
+import User from "../../models/User.ts";
 
 /**
  * Facebook: support for facebook platform.
@@ -211,7 +211,7 @@ export default class Facebook extends Platform {
     body.set("title", title);
     body.set("description", description);
     body.set("published", this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"));
-    body.set("source", blob, path.basename(file));
+    body.set("source", blob, basename(file));
 
     if (!dryrun) {
       const result = (await this.api.postForm("%PAGE%/videos", body)) as {
@@ -241,7 +241,7 @@ export default class Facebook extends Platform {
 
     const body = new FormData();
     body.set("published", published ? "true" : "false");
-    body.set("source", blob, path.basename(file));
+    body.set("source", blob, basename(file));
 
     const result = (await this.api.postForm("%PAGE%/photos", body)) as {
       id: "string";

@@ -1,7 +1,7 @@
-import User from "../models/User";
-import Operator from "../models/Operator";
-import { FileInfo } from "../models/Source";
-import { PostStatus, PostResult } from "../models/Post";
+import User from "../models/User.ts";
+import Operator from "../models/Operator.ts";
+import { FileInfo } from "../models/Source.ts";
+import { PostStatus, PostResult } from "../models/Post.ts";
 
 export interface FieldMapping {
   [field: string]: {

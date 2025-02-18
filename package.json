@@ -1,11 +1,20 @@
 {
   "name": "fairpost",
   "version": "3.0.0",
+  "type": "module",
   "description": "Publishes posts to social media platforms based on a single source feed",
   "main": "index.js",
   "scripts": {
-    "build": "npx tsc",
-    "test": "npm run lint",
+    "build": "npm run build:test && npm run build:exec && npm run build:post",
+    "build:test": "npx tsc",
+    "build:exec": "rm -rf build/* && ( npx tsc --noEmit false 1>/dev/null || true )",
+    "build:post": "npm run build:fix-imports",
+    "build:fix-imports": "sh -c 'if [ \"$(uname)\" = \"Darwin\" ]; then npm run build:fix-imports-mac; npm run build:fix-exports-mac; else npm run build:fix-imports-linux; npm run build:fix-exports-linux; fi'",
+    "build:fix-imports-mac": "find build -name '*.js' -exec  sed -i '' 's/import \\(.*\\)\"\\(\\..*\\)\\.ts\"/import \\1\"\\2.js\"/g' {} +",
+    "build:fix-exports-mac": "find build -name '*.js' -exec  sed -i '' 's/export \\(.*\\)\"\\(\\..*\\)\\.ts\"/export \\1\"\\2.js\"/g' {} +",
+    "build:fix-imports-linux": "find build -name '*.js' -exec  sed -i 's/import \\(.*\\)\"\\(\\..*\\)\\.ts\"/import \\1\"\\2.js\"/g' {} +",
+    "build:fix-exports-linux": "find build -name '*.js' -exec  sed -i 's/export \\(.*\\)\"\\(\\..*\\)\\.ts\"/export \\1\"\\2.js\"/g' {} +",
+    "test": "npx tsc && npm run lint",
     "prettier": "prettier --config .prettierrc 'src/**/*.ts' --write",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

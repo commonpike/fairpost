@@ -2,10 +2,10 @@ import {
   ApiResponseError,
   handleApiError,
   handleJsonResponse,
-} from "../../utilities";
+} from "../../utilities.ts";
 
-import OAuth2Service from "../../services/OAuth2Service";
-import User from "../../models/User";
+import OAuth2Service from "../../services/OAuth2Service.ts";
+import User from "../../models/User.ts";
 import { strict as assert } from "assert";
 
 export default class FacebookAuth {

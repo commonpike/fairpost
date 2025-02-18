@@ -3,12 +3,11 @@
     Fairpost cli to start server     
 */
 
-import * as dotenv from "dotenv";
-dotenv.config();
+import "./bootstrap.ts";
 
-import Fairpost from "./services/Fairpost";
-import { JSONReplacer } from "./utilities";
-import Operator from "./models/Operator";
+import Fairpost from "./services/Fairpost.ts";
+import { JSONReplacer } from "./utilities.ts";
+import Operator from "./models/Operator.ts";
 
 async function main() {
   const operator = new Operator("admin", ["admin"], "cli", true);

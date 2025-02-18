@@ -2,9 +2,9 @@ import {
   ApiResponseError,
   handleApiError,
   handleJsonResponse,
-} from "../../utilities";
+} from "../../utilities.ts";
 
-import User from "../../models/User";
+import User from "../../models/User.ts";
 
 /**
  * InstagramApi: support for instagram platform.

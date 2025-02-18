@@ -1,4 +1,4 @@
-import User from "./models/User";
+import User from "./models/User.ts";
 
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 export function JSONReplacer(key: string, value: any): any {

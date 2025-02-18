@@ -1,14 +1,14 @@
-import * as pluginClasses from "../plugins";
-import { PlatformId } from "../platforms";
-import PlatformMapper from "../mappers/PlatformMapper";
-import { FieldMapping } from "../mappers/AbstractMapper";
+import * as pluginClasses from "../plugins/index.ts";
+import { PlatformId } from "../platforms/index.ts";
+import PlatformMapper from "../mappers/PlatformMapper.ts";
+import { FieldMapping } from "../mappers/AbstractMapper.ts";
 
-import Source from "./Source";
+import Source from "./Source.ts";
 
-import Plugin from "./Plugin";
-import Post from "./Post";
-import { PostStatus } from "./Post";
-import User from "./User";
+import Plugin from "./Plugin.ts";
+import Post from "./Post.ts";
+import { PostStatus } from "./Post.ts";
+import User from "./User.ts";
 
 /**
  * Platform base class to extend all platforms on

@@ -1,6 +1,6 @@
-import FacebookAuth from "../Facebook/FacebookAuth";
-import OAuth2Service from "../../services/OAuth2Service";
-import User from "../../models/User";
+import FacebookAuth from "../Facebook/FacebookAuth.ts";
+import OAuth2Service from "../../services/OAuth2Service.ts";
+import User from "../../models/User.ts";
 
 export default class InstagramAuth extends FacebookAuth {
   constructor(user: User) {

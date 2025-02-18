@@ -1,9 +1,9 @@
-import AbstractMapper from "./AbstractMapper";
-import { Dto, FieldMapping } from "./AbstractMapper";
-import Operator from "../models/Operator";
-import Post from "../models/Post";
-import { PostStatus, PostResult } from "../models/Post";
-import { FileInfo } from "../models/Source";
+import AbstractMapper from "./AbstractMapper.ts";
+import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import Operator from "../models/Operator.ts";
+import Post from "../models/Post.ts";
+import { PostStatus, PostResult } from "../models/Post.ts";
+import { FileInfo } from "../models/Source.ts";
 
 export interface PostDto
   extends Dto<{

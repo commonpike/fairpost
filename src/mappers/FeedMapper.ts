@@ -1,7 +1,7 @@
-import AbstractMapper from "./AbstractMapper";
-import { Dto, FieldMapping } from "./AbstractMapper";
-import Operator from "../models/Operator";
-import Feed from "../models/Feed";
+import AbstractMapper from "./AbstractMapper.ts";
+import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import Operator from "../models/Operator.ts";
+import Feed from "../models/Feed.ts";
 
 export interface FeedDto
   extends Dto<{

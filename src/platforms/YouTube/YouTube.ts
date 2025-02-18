@@ -1,13 +1,13 @@
-import * as fs from "fs";
+import { createReadStream } from "fs";
 
-import Source, { FileGroup } from "../../models/Source";
+import Source, { FileGroup } from "../../models/Source.ts";
 
-import Platform from "../../models/Platform";
-import Post from "../../models/Post";
-import User from "../../models/User";
-import YouTubeAuth from "./YouTubeAuth";
-import { FieldMapping } from "../../mappers/AbstractMapper";
-import PlatformMapper from "../../mappers/PlatformMapper";
+import Platform from "../../models/Platform.ts";
+import Post from "../../models/Post.ts";
+import User from "../../models/User.ts";
+import YouTubeAuth from "./YouTubeAuth.ts";
+import { FieldMapping } from "../../mappers/AbstractMapper.ts";
+import PlatformMapper from "../../mappers/PlatformMapper.ts";
 
 export default class YouTube extends Platform {
   assetsFolder = "_youtube";
@@ -209,7 +209,7 @@ export default class YouTube extends Platform {
       },
       media: {
         mimeType: file.mimetype,
-        body: fs.createReadStream(post.getFilePath(file.name)),
+        body: createReadStream(post.getFilePath(file.name)),
       },
     })) as {
       data: {

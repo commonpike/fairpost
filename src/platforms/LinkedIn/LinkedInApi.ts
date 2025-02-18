@@ -3,9 +3,9 @@ import {
   handleApiError,
   handleEmptyResponse,
   handleJsonResponse,
-} from "../../utilities";
+} from "../../utilities.ts";
 
-import User from "../../models/User";
+import User from "../../models/User.ts";
 
 /**
  * LinkedInApi: support for linkedin platform.

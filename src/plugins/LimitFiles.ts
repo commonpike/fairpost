@@ -1,6 +1,6 @@
-import { FileGroup } from "../models/Source";
-import Plugin from "../models/Plugin";
-import Post from "../models/Post";
+import { FileGroup } from "../models/Source.ts";
+import Plugin from "../models/Plugin.ts";
+import Post from "../models/Post.ts";
 
 /**
  * Plugin LimitFiles.

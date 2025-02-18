@@ -1,6 +1,6 @@
-import * as fs from "fs";
-import * as http from "http";
-import * as url from "url";
+import { readFileSync } from "fs";
+import { createServer, IncomingMessage, ServerResponse } from "http";
+import { parse } from "url";
 
 class DeferredResponseQuery {
   promise: Promise<{ [key: string]: string | string[] }>;
@@ -45,7 +45,7 @@ export default class OAuth2Service {
     clientHost: string,
     clientPort: number,
   ): Promise<{ [key: string]: string | string[] }> {
-    const server = http.createServer();
+    const server = createServer();
     const deferred = new DeferredResponseQuery();
 
     server.listen(clientPort, clientHost, () => {
@@ -57,16 +57,16 @@ export default class OAuth2Service {
       );
     });
     const requestListener = async function (
-      request: http.IncomingMessage,
-      response: http.ServerResponse,
+      request: IncomingMessage,
+      response: ServerResponse,
     ) {
-      const parsed = url.parse(request.url ?? "/", true);
+      const parsed = parse(request.url ?? "/", true);
       if (parsed.pathname === "/callback") {
         let result = "";
         for (const key in parsed.query) {
           result += key + " : " + String(parsed.query[key]) + "\n";
         }
-        let body = fs.readFileSync("public/auth/callback.html", "utf8");
+        let body = readFileSync("public/auth/callback.html", "utf8");
         body = body.replace(/{{serviceName}}/g, serviceName);
         body = body.replace(/{{result}}/g, result ?? "UNKNOWN");
         response.setHeader("Content-Type", "text/html");
@@ -76,7 +76,7 @@ export default class OAuth2Service {
         server.close();
         deferred.resolve(parsed.query);
       } else {
-        let body = fs.readFileSync("public/auth/request.html", "utf8");
+        let body = readFileSync("public/auth/request.html", "utf8");
         body = body.replace(/{{serviceLink}}/g, serviceLink);
         body = body.replace(/{{serviceName}}/g, serviceName);
         response.setHeader("Content-Type", "text/html");

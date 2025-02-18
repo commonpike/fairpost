@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import * as path from "path";
+import { dirname } from "path";
 
 /**
  * Store
@@ -155,7 +155,7 @@ export default class Store {
 
   private async saveJson() {
     if (!(await this.fileExists(this.jsonPath))) {
-      await fs.mkdir(path.dirname(this.jsonPath), { recursive: true });
+      await fs.mkdir(dirname(this.jsonPath), { recursive: true });
     }
     await fs.writeFile(
       this.jsonPath,
