@@ -5,7 +5,9 @@
  * Fairpost has its own logger, but the commands user has their own logs too.
  */
 import log4js from "log4js";
-import { CombinedResult } from "../types/index.ts";
+import log4jsConfig from "../config/log4js.json" with { type: "json" };
+
+import { CommandArguments, CombinedResult } from "../types/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 import { FeedDto } from "../mappers/FeedMapper.ts";
 import { PlatformDto } from "../mappers/PlatformMapper.ts";
@@ -13,7 +15,7 @@ import { PostDto } from "../mappers/PostMapper.ts";
 import { SourceDto } from "../mappers/SourceMapper.ts";
 import { UserDto } from "../mappers/UserMapper.ts";
 
-import Post, { PostStatus } from "../models/Post.ts";
+import Post from "../models/Post.ts";
 import Server from "../services/Server.ts";
 import Operator from "../models/Operator.ts";
 import User from "../models/User.ts";
@@ -41,7 +43,7 @@ class Fairpost {
     if (Fairpost.instance) {
       throw new Error("CommandHandler: call getInstance() instead");
     }
-    log4js.configure(process.env.FAIRPOST_LOGGER_CONFIG ?? "");
+    log4js.configure(log4jsConfig);
     this.logger = log4js.getLogger("default");
   }
   static getInstance(): Fairpost {
@@ -83,22 +85,15 @@ class Fairpost {
           if (!permissions.manageUsers) {
             throw new Error("Missing permissions for command " + command);
           }
-          if (!args.targetuser) {
+          if (!args.user) {
             throw new Error("user is required for command " + command);
           }
-          const newUser = await User.createUser(args.targetuser);
+          const newUser = await User.createUser(args.user);
           output = await newUser.mapper.getDto(operator);
           break;
         }
         case "get-user": {
-          // todo: remove target-user option, we have operator now
-          if (args.targetuser) {
-            if (!permissions.manageUsers) {
-              throw new Error("Missing permissions for command " + command);
-            }
-            const other = new User(args.targetuser);
-            output = await other.mapper.getDto(operator);
-          } else if (!user) {
+          if (!user) {
             throw new Error("Missing user for command " + command);
           } else {
             output = await user.mapper.getDto(operator);
@@ -704,8 +699,7 @@ class Fairpost {
               `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
               `${cmd} @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
               "\n# admin only:",
-              `${cmd} create-user --target-user=xxx`,
-              `${cmd} get-user --target-user=xxx`,
+              `${cmd} @userid create-user`,
               `${cmd} serve`,
             ],
           };
@@ -723,16 +717,6 @@ class Fairpost {
       throw e;
     }
   }
-}
-interface CommandArguments {
-  dryrun?: boolean;
-  targetuser?: string;
-  platforms?: PlatformId[];
-  platform?: PlatformId;
-  sources?: string[];
-  source?: string;
-  date?: Date;
-  status?: PostStatus;
 }
 
 export default Fairpost.getInstance();

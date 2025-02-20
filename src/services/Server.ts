@@ -64,7 +64,6 @@ export default class Server {
     ];
     const userid = username.replace("@", "");
     const dryrun = parsed.searchParams.get("dry-run") === "true";
-    const targetuser = parsed.searchParams.get("target-user") || undefined;
     const date = parsed.searchParams.get("date");
     const post = parsed.searchParams.get("post");
     const [source, platform] = post
@@ -82,7 +81,6 @@ export default class Server {
 
     const args = {
       dryrun: dryrun || undefined,
-      targetuser: targetuser,
       platforms: platforms,
       platform: platform,
       sources: sources,
