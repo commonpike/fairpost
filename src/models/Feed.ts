@@ -1,8 +1,7 @@
-import { promises as fs } from "fs";
-
 import FeedMapper from "../mappers/FeedMapper.ts";
 import Source from "./Source.ts";
 import User from "./User.ts";
+import { basename } from "path";
 
 /**
  * Feed - the sources handler of fairpost
@@ -24,9 +23,7 @@ export default class Feed {
 
   constructor(user: User) {
     this.user = user;
-    this.path = this.user
-      .get("settings", "USER_FEEDPATH", "users/%user%/feed")
-      .replace("%user%", this.user.id);
+    this.path = this.user.get("settings", "USER_FEEDPATH", "feed");
     this.id = this.user.id + ":feed";
     this.mapper = new FeedMapper(this);
   }
@@ -37,7 +34,7 @@ export default class Feed {
    * @returns the id for the new or existing source
    */
   getSourceId(path: string): string {
-    return path; // ah, simple
+    return basename(path); // ah, simple
   }
 
   /**
@@ -49,20 +46,30 @@ export default class Feed {
     if (this.allCached) {
       return Object.values(this.cache);
     }
-    try {
-      (await fs.stat(this.path)).isDirectory();
-    } catch {
-      await fs.mkdir(this.path);
+    if (!(await this.user.files.directoryExists(this.path))) {
+      this.user.info("creating dir " + this.path);
+      await this.user.files.createDirectory(this.path);
     }
-    const paths = (await fs.readdir(this.path)).filter((path) => {
-      return !path.startsWith("_") && !path.startsWith(".");
+    const files = this.user.files.list(this.path).filter((entry) => {
+      if (entry.type === "file" || entry.isFile) return false;
+      const filename = basename(entry.path);
+      if (filename.startsWith("_")) return false;
+      if (filename.startsWith(".")) return false;
+      return true;
     });
-    for (const path of paths) {
-      const stat = await fs.stat(this.path + "/" + path);
-      if (stat.isDirectory()) {
-        await this.getSource(path);
-      }
+    for await (const file of files) {
+      const source = await Source.getSource(this, basename(file.path));
+      this.cache[source.id] = source;
     }
+    //const paths = (await fs.readdir(this.path)).filter((path) => {
+    //  return !path.startsWith("_") && !path.startsWith(".");
+    //});
+    //for (const path of paths) {
+    //  const stat = await fs.stat(this.path + "/" + path);
+    //  if (stat.isDirectory()) {
+    //    await this.getSource(path);
+    //  }
+    //}
     this.allCached = true;
     return Object.values(this.cache);
   }

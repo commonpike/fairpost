@@ -1,4 +1,3 @@
-import { promises as fs } from "fs";
 import { basename, extname } from "path";
 
 import sharp from "sharp";
@@ -34,7 +33,7 @@ export default class Source {
   constructor(feed: Feed, path: string) {
     this.feed = feed;
     this.id = this.feed.getSourceId(path);
-    this.path = feed.path + "/" + path;
+    this.path = path;
     this.mapper = new SourceMapper(this);
   }
 
@@ -47,15 +46,23 @@ export default class Source {
    * @returns new source object
    */
   public static async getSource(feed: Feed, path: string): Promise<Source> {
-    const source = new Source(feed, path);
-    try {
-      const stat = await fs.stat(source.path);
-      if (!stat.isDirectory()) {
-        throw new Error();
-      }
-    } catch {
-      throw feed.user.error("Not a valid source: " + path);
+    const source = new Source(feed, feed.path + "/" + path);
+    const stat = await feed.user.files.stat(feed.path + "/" + path);
+    if (stat.type !== "directory" && !stat.isDirectory) {
+      throw feed.user.error(
+        source.id,
+        "getSource",
+        "Not a valid source: " + path,
+      );
     }
+    //try {
+    //  const stat = await fs.stat(feed.user.homedir+'/'+source.path);
+    //  if (!stat.isDirectory()) {
+    //    throw new Error();
+    //  }
+    //} catch {
+    //  throw feed.user.error(source.id,"getSource","Not a valid source: " + path);
+    //}
     return source;
   }
 
@@ -68,7 +75,7 @@ export default class Source {
 
   public async getFiles(): Promise<FileInfo[]> {
     if (this.files !== undefined) {
-      return structuredClone(this.files);
+      return structuredClone(this.files); // todo clone where this is called
     }
     const fileNames = await this.getFileNames();
     this.files = [];
@@ -86,10 +93,10 @@ export default class Source {
    */
   public async getFileInfo(name: string, order: number): Promise<FileInfo> {
     const filepath = this.path + "/" + name;
-    const mime = this.guessMimeType(name);
+    const mime = await this.feed.user.files.mimeType(filepath);
     const group = mime.split("/")[0];
-    const stats = await fs.stat(filepath);
     const extension = extname(name);
+    const size = await this.feed.user.files.fileSize(filepath);
     const file = {
       name: name,
       basename: basename(name, extension || ""),
@@ -98,11 +105,12 @@ export default class Source {
         ? group
         : FileGroup.OTHER,
       mimetype: mime,
-      size: stats.size,
+      size: size,
       order: order,
     } as FileInfo;
     if (group === FileGroup.IMAGE) {
-      const metadata = await sharp(filepath).metadata();
+      const buffer = await this.feed.user.files.readToBuffer(filepath);
+      const metadata = await sharp(buffer).metadata();
       file.width = metadata.width;
       file.height = metadata.height;
     }
@@ -159,7 +167,8 @@ export default class Source {
   }
 
   /**
-   * Get the filenames in this source
+   * Get the filenames in this source;
+   * no directories, no hidden files
    * @returns array of filenames relative to source
    */
 
@@ -167,20 +176,29 @@ export default class Source {
     if (this.files !== undefined) {
       return this.files.map((file) => file.name);
     }
-    const allFiles = await fs.readdir(this.path);
-    const files = [] as string[];
-    const regex = /^[^._]/;
-    for (const file of allFiles) {
-      let valid = file.match(regex) !== null;
-      if (valid) {
-        const stat = await fs.stat(this.path + "/" + file);
-        valid = stat.isFile();
-        if (valid) {
-          files.push(file);
-        }
-      }
-    }
-    return files;
+    const files = this.feed.user.files.list(this.path).filter((file) => {
+      if (file.type === "directory" || file.isDirectory) return false;
+      const filename = basename(file.path);
+      if (filename.startsWith("_")) return false;
+      if (filename.startsWith(".")) return false;
+      return true;
+    });
+    return (await files.toArray()).map((file) => basename(file.path));
+
+    //const allFiles = await fs.readdir(this.path);
+    //const files = [] as string[];
+    //const regex = /^[^._]/;
+    //for (const file of allFiles) {
+    //  let valid = file.match(regex) !== null;
+    //  if (valid) {
+    //    const stat = await fs.stat(this.path + "/" + file);
+    //    valid = stat.isFile();
+    //    if (valid) {
+    //      files.push(file);
+    //    }
+    //  }
+    //}
+    //return files;
   }
 
   private guessMimeType(filename: string): string {
