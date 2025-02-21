@@ -1,5 +1,3 @@
-import { createReadStream } from "fs";
-
 import Source, { FileGroup } from "../../models/Source.ts";
 
 import Platform from "../../models/Platform.ts";
@@ -182,6 +180,13 @@ export default class YouTube extends Platform {
       "YouTube.publishVideoPost",
       "uploading " + file.name + " ...",
     );
+
+    // ideally, we would get a ReadStream here,
+    // so we dont have to load the whole file into memory
+    // but FlyStorage does not support that (yet)
+    const buffer = await this.user.files.readToBuffer(
+      post.getFilePath(file.name),
+    );
     const result = (await client.videos.insert({
       part: ["snippet", "status"],
       notifySubscribers: this.notifySubscribers,
@@ -209,7 +214,8 @@ export default class YouTube extends Platform {
       },
       media: {
         mimeType: file.mimetype,
-        body: createReadStream(post.getFilePath(file.name)),
+        //body: createReadStream(post.getFilePath(file.name)),
+        body: buffer,
       },
     })) as {
       data: {

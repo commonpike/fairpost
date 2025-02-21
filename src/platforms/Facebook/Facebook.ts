@@ -1,4 +1,3 @@
-import { promises as fs } from "fs";
 import { basename } from "path";
 
 import Source, { FileGroup } from "../../models/Source.ts";
@@ -204,8 +203,9 @@ export default class Facebook extends Platform {
     const description = post.getCompiledBody("!title");
 
     this.user.trace("Reading file", file);
-    const rawData = await fs.readFile(file);
-    const blob = new Blob([rawData]);
+    //const rawData = await fs.readFile(file);
+    const buffer = await this.user.files.readToBuffer(file);
+    const blob = new Blob([buffer]);
 
     const body = new FormData();
     body.set("title", title);
@@ -236,8 +236,9 @@ export default class Facebook extends Platform {
     published = false,
   ): Promise<{ id: string }> {
     this.user.trace("Reading file", file);
-    const rawData = await fs.readFile(file);
-    const blob = new Blob([rawData]);
+    //const rawData = await fs.readFile(file);
+    const buffer = await this.user.files.readToBuffer(file);
+    const blob = new Blob([buffer]);
 
     const body = new FormData();
     body.set("published", published ? "true" : "false");

@@ -1,4 +1,3 @@
-import { promises as fs } from "fs";
 import { basename } from "path";
 
 import Source, { FileGroup } from "../../models/Source.ts";
@@ -358,8 +357,9 @@ export default class Instagram extends Platform {
    */
   private async uploadImage(file: string = ""): Promise<{ id: string }> {
     this.user.trace("Reading file", file);
-    const rawData = await fs.readFile(file);
-    const blob = new Blob([rawData]);
+    //const rawData = await fs.readFile(file);
+    const buffer = await this.user.files.readToBuffer(file);
+    const blob = new Blob([buffer]);
 
     const body = new FormData();
     body.set("published", "false");
@@ -417,8 +417,9 @@ export default class Instagram extends Platform {
 
   private async uploadVideo(file: string): Promise<{ id: string }> {
     this.user.trace("Reading file", file);
-    const rawData = await fs.readFile(file);
-    const blob = new Blob([rawData]);
+    //const rawData = await fs.readFile(file);
+    const buffer = await this.user.files.readToBuffer(file);
+    const blob = new Blob([buffer]);
 
     const body = new FormData();
     body.set("title", "Fairpost temp instagram upload");

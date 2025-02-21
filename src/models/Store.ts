@@ -1,5 +1,5 @@
-import { promises as fs } from "fs";
 import { dirname } from "path";
+import User from "./User.ts";
 
 /**
  * Store
@@ -29,29 +29,29 @@ enum StorageKeys {
 export default class Store {
   jsonPath: string;
   jsonData: { [store: string]: { [key: string]: string } } = {};
-
+  user: User;
   /**
    * Dont call the constructor yourself;
    * instead, call `await Store.getStore()`
-   * @param userid
+   * @param user
    */
-  constructor(userid: string) {
-    this.jsonPath = this.getEnv(
-      "app",
-      "USER_JSONPATH",
-      "users/%user%/storage.json",
-    ).replace("%user%", userid);
+  constructor(user: User) {
+    this.user = user;
+    this.jsonPath = this.getEnv("app", "USER_JSONPATH", "storage.json").replace(
+      "%user%",
+      user.id,
+    );
   }
 
   /**
    * getStore
    *
    * get a new store and do some async checks and loads.
-   * @param userid - user id
+   * @param user
    * @returns new store object
    */
-  public static async getStore(userid: string): Promise<Store> {
-    const store = new Store(userid);
+  public static async getStore(user: User): Promise<Store> {
+    const store = new Store(user);
     await store.load();
     return store;
   }
@@ -143,33 +143,28 @@ export default class Store {
   }
 
   private async loadJson() {
-    if (await this.fileExists(this.jsonPath)) {
-      const jsonData = JSON.parse(await fs.readFile(this.jsonPath, "utf8"));
+    if (await this.user.files.fileExists(this.jsonPath)) {
+      const contents = await this.user.files.readToString(this.jsonPath);
+      const jsonData = JSON.parse(contents);
       if (jsonData) {
         this.jsonData = jsonData;
       } else {
-        throw new Error("Storage.loadJson: cant parse " + this.jsonPath);
+        throw new Error("Store.loadJson: cant parse " + this.jsonPath);
       }
+    } else {
+      throw new Error("Store.loadJson: cant read " + this.jsonPath);
     }
   }
 
   private async saveJson() {
-    if (!(await this.fileExists(this.jsonPath))) {
-      await fs.mkdir(dirname(this.jsonPath), { recursive: true });
+    if (!(await this.user.files.fileExists(this.jsonPath))) {
+      await this.user.files.createDirectory(dirname(this.jsonPath));
     }
-    await fs.writeFile(
-      this.jsonPath,
-      JSON.stringify(this.jsonData, null, "\t"),
-    );
-  }
-
-  // tmp
-  public async fileExists(path: string): Promise<boolean> {
     try {
-      await fs.access(path);
+      const contents = JSON.stringify(this.jsonData, null, "\t");
+      await this.user.files.write(this.jsonPath, contents);
     } catch {
-      return false;
+      throw new Error("Store.saveJson: cant write " + this.jsonPath);
     }
-    return true;
   }
 }

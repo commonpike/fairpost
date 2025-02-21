@@ -78,7 +78,7 @@ export default class User {
     if (!(await user.files.directoryExists("."))) {
       throw new Error("No such user: " + id);
     }
-    user.data = await Store.getStore(id);
+    user.data = await Store.getStore(user);
     user.logger = await user.getLogger();
     return user;
   }

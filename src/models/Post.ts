@@ -180,17 +180,17 @@ export default class Post {
     }
 
     if (this.hasFile("tags.txt")) {
-      this.tags = // await fs.readFile(this.source.path + "/tags.txt", "utf8")
-        (
-          await this.platform.user.files.readToString(
-            this.getFilePath("tags.txt"),
-          )
-        ).split(/\s/);
+      //this.tags = await fs.readFile(this.source.path + "/tags.txt", "utf8")
+      this.tags = (
+        await this.platform.user.files.readToString(
+          this.getFilePath("tags.txt"),
+        )
+      ).split(/\s/);
     }
     if (this.hasFile("mentions.txt")) {
       this.mentions =
-        //await fs.readFile(this.source.path + "/mentions.txt", "utf8")
-        (
+        // this.mentions = await fs.readFile(this.source.path + "/mentions.txt", "utf8")
+        this.mentions = (
           await this.platform.user.files.readToString(
             this.getFilePath("mentions.txt"),
           )
