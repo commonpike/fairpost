@@ -111,7 +111,11 @@ export default class ImageSize extends Plugin {
         const dst = post.platform.assetsFolder + "/" + newFileName;
         const padh = Math.floor((canh - imgh) / 2);
         const padw = Math.floor((canw - imgw) / 2);
-        await sharp(post.getFilePath(file.name))
+        const fileIn = post.getFilePath(src);
+        const fileOut = post.getFilePath(dst);
+        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferOut = await sharp(bufferIn)
+          .withMetadata()
           .resize({
             width: imgw,
             height: imgh,
@@ -123,7 +127,8 @@ export default class ImageSize extends Plugin {
             right: padw,
             background: this.settings.bgcolor,
           })
-          .toFile(post.getFilePath(dst));
+          .toBuffer();
+        await post.platform.user.files.write(fileOut, bufferOut);
         await post.replaceFile(src, dst);
       }
     }
@@ -149,7 +154,7 @@ export default class ImageSize extends Plugin {
   ): Promise<void> {
     if (file.width && file.size / 1024 >= maxkb) {
       if (file.mimetype !== "image/jpeg") {
-        console.log(file.mimetype);
+        //console.log(file.mimetype);
         const dst =
           post.platform.assetsFolder +
           "/" +
@@ -161,10 +166,14 @@ export default class ImageSize extends Plugin {
           "ImageSize.reduceFileSize",
           post.id + ":" + file.name + ": to jpg",
         );
-        await sharp(post.getFilePath(file.name))
+        const fileIn = post.getFilePath(file.name);
+        const fileOut = post.getFilePath(dst);
+        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferOut = await sharp(bufferIn)
           .keepExif()
           .toFormat("jpg") // default q = 80
-          .toFile(post.getFilePath(dst));
+          .toBuffer();
+        await post.platform.user.files.write(fileOut, bufferOut);
         await post.replaceFile(file.name, dst);
         file = await post.source.getFileInfo(dst, file.order);
       }
@@ -181,12 +190,16 @@ export default class ImageSize extends Plugin {
           "ImageSize.reduceFileSize",
           post.id + ":" + file.name + ": scale " + factor,
         );
-        await sharp(post.getFilePath(file.name))
+        const fileIn = post.getFilePath(file.name);
+        const fileOut = post.getFilePath(dst);
+        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferOut = await sharp(bufferIn)
           .keepExif()
           .resize({
             width: Math.round(file.width * factor),
           })
-          .toFile(post.getFilePath(dst));
+          .toBuffer();
+        await post.platform.user.files.write(fileOut, bufferOut);
         newfile = await post.source.getFileInfo(dst, file.order);
         if (count++ > 5) {
           throw post.platform.user.error(

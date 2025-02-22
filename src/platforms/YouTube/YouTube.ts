@@ -184,6 +184,7 @@ export default class YouTube extends Platform {
     // ideally, we would get a ReadStream here,
     // so we dont have to load the whole file into memory
     // but FlyStorage does not support that (yet)
+    // https://github.com/duna-oss/flystorage/issues/108
     const buffer = await this.user.files.readToBuffer(
       post.getFilePath(file.name),
     );

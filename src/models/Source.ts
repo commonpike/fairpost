@@ -201,22 +201,22 @@ export default class Source {
     //return files;
   }
 
-  private guessMimeType(filename: string): string {
-    const extension = extname(filename).toLowerCase();
-    const mimeTypes = {
-      ".txt": "text/plain",
-      ".png": "image/png",
-      ".mov": "video/quicktime",
-      ".mp4": "video/mp4",
-      ".jpg": "image/jpeg",
-      ".jpeg": "image/jpeg",
-      ".gif": "image/gif",
-    } as { [ext: string]: string };
-    if (extension in mimeTypes) {
-      return mimeTypes[extension];
-    }
-    return "application/unknown";
-  }
+  //private guessMimeType(filename: string): string {
+  //  const extension = extname(filename).toLowerCase();
+  //  const mimeTypes = {
+  //    ".txt": "text/plain",
+  //    ".png": "image/png",
+  //    ".mov": "video/quicktime",
+  //    ".mp4": "video/mp4",
+  //    ".jpg": "image/jpeg",
+  //    ".jpeg": "image/jpeg",
+  //    ".gif": "image/gif",
+  //  } as { [ext: string]: string };
+  //  if (extension in mimeTypes) {
+  //    return mimeTypes[extension];
+  //  }
+  //  return "application/unknown";
+  //}
 }
 
 export interface FileInfo {
