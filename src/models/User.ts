@@ -166,7 +166,9 @@ export default class User {
    */
   private loadPlatforms(): void {
     this.trace("User", "loadPlatforms");
-    const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
+    const platformIds = this.data
+      .get("settings", "FEED_PLATFORMS", "")
+      .split(",");
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
         if (platformIds.includes(platformClass.id())) {
@@ -223,10 +225,12 @@ export default class User {
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
     ) {
-      const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
+      const platformIds = this.data
+        .get("settings", "FEED_PLATFORMS", "")
+        .split(",");
       if (!platformIds.includes(platformId)) {
         platformIds.push(platformId);
-        this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
+        this.data.set("settings", "FEED_PLATFORMS", platformIds.join(","));
       }
       this.loadPlatforms();
       this.info(`Platform ${platformId} enabled for user ${this.id}`);
@@ -245,57 +249,18 @@ export default class User {
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
     ) {
-      const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
+      const platformIds = this.data
+        .get("settings", "FEED_PLATFORMS", "")
+        .split(",");
       const index = platformIds.indexOf(platformId);
       if (index !== -1) {
         platformIds.splice(index, 1);
-        this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
+        this.data.set("settings", "FEED_PLATFORMS", platformIds.join(","));
       }
       this.loadPlatforms();
       this.info(`Platform ${platformId} disabled for user ${this.id}`);
     } else {
       throw this.error("removePlatform: no such platform", platformId);
-    }
-  }
-
-  /*
-    User Store 
-  */
-
-  public get(
-    store: "settings" | "auth" | "app",
-    key: string,
-    def?: string,
-  ): string {
-    if (!this.data) {
-      throw new Error("User.get: No store");
-    }
-    try {
-      return this.data.get(store, key, def);
-    } catch (error) {
-      throw this.error(error);
-    }
-  }
-
-  public set(store: "settings" | "auth" | "app", key: string, value: string) {
-    if (!this.data) {
-      throw new Error("User.set: No store");
-    }
-    try {
-      return this.data.set(store, key, value);
-    } catch (error) {
-      throw this.error(error);
-    }
-  }
-
-  public async save() {
-    if (!this.data) {
-      throw new Error("User.save: No store");
-    }
-    try {
-      return await this.data.save();
-    } catch (error) {
-      throw this.error(error);
     }
   }
 
