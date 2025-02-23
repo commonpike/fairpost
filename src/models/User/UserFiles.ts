@@ -1,7 +1,7 @@
 import { resolve } from "path";
 import { Readable } from "stream";
 
-import User from "./User.ts";
+import User from "../User.ts";
 
 import {
   FileStorage,
@@ -24,7 +24,7 @@ export default class UserFiles {
     switch (process.env.FAIRPOST_FILE_SYSTEM) {
       default: {
         const adapter = new LocalStorageAdapter(
-          resolve(import.meta.dirname + "/../../", user.homedir),
+          resolve(import.meta.dirname + "/../../../", user.homedir),
         );
         this.storage = new FileStorage(adapter);
       }

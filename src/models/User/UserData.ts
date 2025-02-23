@@ -1,5 +1,5 @@
 import { dirname } from "path";
-import User from "./User.ts";
+import User from "../User.ts";
 
 /**
  * UserData

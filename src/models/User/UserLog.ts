@@ -1,7 +1,7 @@
-import User from "./User.ts";
+import User from "../User.ts";
 
 import log4js from "log4js";
-import log4jsConfig from "../config/log4js.json" with { type: "json" };
+import log4jsConfig from "../../config/log4js.json" with { type: "json" };
 
 /**
  * UserLog is a wrapper around Log4js, tied to a user;

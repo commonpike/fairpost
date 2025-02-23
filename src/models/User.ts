@@ -8,9 +8,9 @@ import { PlatformId } from "../platforms/index.ts";
 
 import Feed from "./Feed.ts";
 import Platform from "./Platform.ts";
-import UserData from "./UserData.ts";
-import UserFiles from "./UserFiles.ts";
-import UserLog from "./UserLog.ts";
+import UserData from "./User/UserData.ts";
+import UserFiles from "./User/UserFiles.ts";
+import UserLog from "./User/UserLog.ts";
 import UserMapper from "../mappers/UserMapper.ts";
 
 /**
@@ -20,10 +20,10 @@ import UserMapper from "../mappers/UserMapper.ts";
  * - with zero or more platforms
  * - with a private logger for this account, seperate from
  *   the Fairpost logger.
- * - with a mapper to create a dto;
+ * - with a data store for key / value pairs
+ * - with a file storage for the homedir
+ * - with a mapper to create a dto
  *
- * Also contains getters and setters for key / value pairs,
- * using a store.
  *
  */
 
