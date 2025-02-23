@@ -11,6 +11,17 @@ import User from "../../models/User.ts";
 /**
  * Twitter: support for twitter platform
  */
+
+enum EUploadMimeType {
+  Jpeg = "image/jpeg",
+  Mp4 = "video/mp4",
+  Mov = "video/quicktime",
+  Gif = "image/gif",
+  Png = "image/png",
+  Srt = "text/plain",
+  Webp = "image/webp",
+}
+
 export default class Twitter extends Platform {
   assetsFolder = "_twitter";
   postFileName = "post.json";
@@ -102,6 +113,20 @@ export default class Twitter extends Platform {
       for (const plugin of plugins) {
         await plugin.process(post);
       }
+
+      // remove files whose mime are not supported,
+      // this could be a plugin
+      for (const file of post.getFiles()) {
+        if (
+          !Object.values(EUploadMimeType).includes(
+            file.mimetype as EUploadMimeType,
+          )
+        ) {
+          this.user.trace("Removing unsupported file type: " + file.mimetype);
+          post.removeFile(file.name);
+        }
+      }
+
       // twitter requires a real body or images
       if (!post.body && !post.hasFiles(FileGroup.IMAGE)) {
         this.user.warn("Twitter post has no body");
@@ -221,10 +246,12 @@ export default class Twitter extends Platform {
     );
     for (const image of post.getFiles(FileGroup.IMAGE).splice(0, 4)) {
       const path = post.getFilePath(image.name);
+      const buffer = await post.platform.user.files.readToBuffer(path);
       this.user.trace("Uploading " + path + "...");
       try {
         mediaIds.push(
-          await client1.v1.uploadMedia(path, {
+          await client1.v1.uploadMedia(buffer, {
+            mimeType: image.mimetype,
             // mimeType : '' //MIME type as a string. To help you across allowed MIME types, enum EUploadMimeType is here for you. This option is required if file is not specified as string.
             // target: 'tweet' //Target type tweet or dm. Defaults to tweet. You must specify it if you send a media to use in DMs.
             // longVideo : false //Specify true here if you're sending a video and it can exceed 120 seconds. Otherwise, this option has no effet.

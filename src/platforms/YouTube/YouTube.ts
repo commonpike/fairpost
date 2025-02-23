@@ -181,13 +181,9 @@ export default class YouTube extends Platform {
       "uploading " + file.name + " ...",
     );
 
-    // ideally, we would get a ReadStream here,
-    // so we dont have to load the whole file into memory
-    // but FlyStorage does not support that (yet)
+    // is this indeed a stream ?
     // https://github.com/duna-oss/flystorage/issues/108
-    const buffer = await this.user.files.readToBuffer(
-      post.getFilePath(file.name),
-    );
+    const stream = await this.user.files.read(post.getFilePath(file.name));
     const result = (await client.videos.insert({
       part: ["snippet", "status"],
       notifySubscribers: this.notifySubscribers,
@@ -215,8 +211,7 @@ export default class YouTube extends Platform {
       },
       media: {
         mimeType: file.mimetype,
-        //body: createReadStream(post.getFilePath(file.name)),
-        body: buffer,
+        body: stream,
       },
     })) as {
       data: {
