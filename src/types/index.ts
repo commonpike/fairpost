@@ -27,6 +27,7 @@ export interface CommandArguments {
 
 export interface CombinedResult {
   success: boolean;
+  dryrun?: boolean;
   message?: string;
   result?: unknown;
 }

@@ -542,6 +542,7 @@ class Fairpost {
           output = {
             [platform.id]: {
               success: await post.publish(!!args.dryrun),
+              dryrun: !!args.dryrun,
               result: post.link ?? "#nolink",
             },
           };
@@ -576,11 +577,13 @@ class Fairpost {
               await post.publish(!!args.dryrun);
               output[platform.id] = {
                 success: await post.publish(!!args.dryrun),
+                dryrun: !!args.dryrun,
                 result: post.link,
               };
             } catch (e) {
               output[platform.id] = {
                 success: false,
+                dryrun: !!args.dryrun,
                 message: e instanceof Error ? e.message : JSON.stringify(e),
               };
             }
