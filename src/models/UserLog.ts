@@ -3,6 +3,11 @@ import User from "./User.ts";
 import log4js from "log4js";
 import log4jsConfig from "../config/log4js.json" with { type: "json" };
 
+/**
+ * UserLog is a wrapper around Log4js, tied to a user;
+ * it has exceptional methods for error() and fatal in that
+ * they return an Error object.
+ */
 export default class UserLog {
   private user: User;
   private logger: log4js.Logger | undefined = undefined;
@@ -76,8 +81,8 @@ export default class UserLog {
     const addConsole =
       this.user.data!.get("settings", "LOGGER_CONSOLE", "false") === "true";
 
-    const config = (await this.user.files.fileExists(configFile))
-      ? JSON.parse(await this.user.files.readToString(configFile))
+    const config = (await this.user.files.isFile(configFile))
+      ? JSON.parse(await this.user.files.readFile(configFile))
       : log4jsConfig;
     if (!config.categories["user"]) {
       throw new Error(

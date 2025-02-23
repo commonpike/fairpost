@@ -113,7 +113,7 @@ export default class ImageSize extends Plugin {
         const padw = Math.floor((canw - imgw) / 2);
         const fileIn = post.getFilePath(src);
         const fileOut = post.getFilePath(dst);
-        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferIn = await post.platform.user.files.readBuffer(fileIn);
         const bufferOut = await sharp(bufferIn)
           .withMetadata()
           .resize({
@@ -167,7 +167,7 @@ export default class ImageSize extends Plugin {
         );
         const fileIn = post.getFilePath(file.name);
         const fileOut = post.getFilePath(dst);
-        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferIn = await post.platform.user.files.readBuffer(fileIn);
         const bufferOut = await sharp(bufferIn)
           .keepExif()
           .toFormat("jpg") // default q = 80
@@ -191,7 +191,7 @@ export default class ImageSize extends Plugin {
         );
         const fileIn = post.getFilePath(file.name);
         const fileOut = post.getFilePath(dst);
-        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferIn = await post.platform.user.files.readBuffer(fileIn);
         const bufferOut = await sharp(bufferIn)
           .keepExif()
           .resize({

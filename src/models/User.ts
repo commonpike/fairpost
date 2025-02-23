@@ -9,8 +9,8 @@ import { PlatformId } from "../platforms/index.ts";
 import Feed from "./Feed.ts";
 import Platform from "./Platform.ts";
 import UserData from "./UserData.ts";
+import UserFiles from "./UserFiles.ts";
 import UserLog from "./UserLog.ts";
-
 import UserMapper from "../mappers/UserMapper.ts";
 
 /**
@@ -30,13 +30,13 @@ import UserMapper from "../mappers/UserMapper.ts";
 export default class User {
   public id: string;
   public homedir: string = "";
-  public feed: Feed | undefined;
-  public platforms:
+  private feed: Feed | undefined;
+  private platforms:
     | {
         [id in PlatformId]?: Platform;
       }
     | undefined = undefined;
-  public files: FileStorage;
+  public files: UserFiles;
   public mapper: UserMapper;
 
   public data: UserData;
@@ -56,16 +56,8 @@ export default class User {
 
     this.data = new UserData(this);
     this.log = new UserLog(this);
-
-    switch (process.env.FAIRPOST_FILE_SYSTEM) {
-      default: {
-        const adapter = new LocalStorageAdapter(
-          resolve(import.meta.dirname + "/../../", this.homedir),
-        );
-        this.files = new FileStorage(adapter);
-        this.mapper = new UserMapper(this);
-      }
-    }
+    this.files = new UserFiles(this);
+    this.mapper = new UserMapper(this);
   }
 
   /**
@@ -77,9 +69,7 @@ export default class User {
    */
   public static async getUser(id: string): Promise<User> {
     const user = new User(id);
-    if (!(await user.files.directoryExists("."))) {
-      throw new Error("No such user: " + id);
-    }
+    await user.files.init();
     await user.data.init();
     await user.log.init();
     return user;

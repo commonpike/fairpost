@@ -135,8 +135,8 @@ export default class UserData {
   }
 
   private async loadJson() {
-    if (await this.user.files.fileExists(this.jsonPath)) {
-      const contents = await this.user.files.readToString(this.jsonPath);
+    if (await this.user.files.isFile(this.jsonPath)) {
+      const contents = await this.user.files.readFile(this.jsonPath);
       const jsonData = JSON.parse(contents);
       if (jsonData) {
         this.jsonData = jsonData;
@@ -149,8 +149,8 @@ export default class UserData {
   }
 
   private async saveJson() {
-    if (!(await this.user.files.fileExists(this.jsonPath))) {
-      await this.user.files.createDirectory(dirname(this.jsonPath));
+    if (!(await this.user.files.exists(this.jsonPath))) {
+      await this.user.files.mkdir(dirname(this.jsonPath));
     }
     try {
       const contents = JSON.stringify(this.jsonData, null, "\t");

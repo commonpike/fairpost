@@ -69,14 +69,14 @@ export default class Post {
     const post = new Post(platform, source);
     if (load) {
       const postFilePath = platform.getPostFilePath(source);
-      if (!(await platform.user.files.fileExists(postFilePath))) {
+      if (!(await platform.user.files.exists(postFilePath))) {
         throw platform.user.log.error(
           "No such post ",
           platform.id,
           post.source.id,
         );
       }
-      const contents = await platform.user.files.readToString(postFilePath);
+      const contents = await platform.user.files.readFile(postFilePath);
       const data = JSON.parse(contents);
       if (!data) {
         throw platform.user.log.error(
@@ -135,8 +135,8 @@ export default class Post {
       await this.purgeFiles();
     } else {
       const assetsPath = this.getFilePath(this.platform.assetsFolder);
-      if (!(await this.platform.user.files.directoryExists(assetsPath))) {
-        await this.platform.user.files.createDirectory(assetsPath);
+      if (!(await this.platform.user.files.exists(assetsPath))) {
+        await this.platform.user.files.mkdir(assetsPath);
       }
     }
 
@@ -156,12 +156,12 @@ export default class Post {
     const textFiles = this.getFiles(FileGroup.TEXT);
 
     if (this.hasFile("body.txt")) {
-      this.body = await this.platform.user.files.readToString(
+      this.body = await this.platform.user.files.readFile(
         this.getFilePath("body.txt"),
       );
     } else if (textFiles.length === 1) {
       const bodyFile = textFiles[0].name;
-      this.body = await this.platform.user.files.readToString(
+      this.body = await this.platform.user.files.readFile(
         this.getFilePath(bodyFile),
       );
     } else {
@@ -169,31 +169,29 @@ export default class Post {
     }
 
     if (this.hasFile("title.txt")) {
-      this.title = await this.platform.user.files.readToString(
+      this.title = await this.platform.user.files.readFile(
         this.getFilePath("title.txt"),
       );
     } else if (this.hasFile("subject.txt")) {
-      this.title = await this.platform.user.files.readToString(
+      this.title = await this.platform.user.files.readFile(
         this.getFilePath("subject.txt"),
       );
     }
 
     if (this.hasFile("tags.txt")) {
       this.tags = (
-        await this.platform.user.files.readToString(
-          this.getFilePath("tags.txt"),
-        )
+        await this.platform.user.files.readFile(this.getFilePath("tags.txt"))
       ).split(/\s/);
     }
     if (this.hasFile("mentions.txt")) {
       this.mentions = this.mentions = (
-        await this.platform.user.files.readToString(
+        await this.platform.user.files.readFile(
           this.getFilePath("mentions.txt"),
         )
       ).split(/\s/);
     }
     if (this.hasFile("geo.txt")) {
-      this.geo = await this.platform.user.files.readToString(
+      this.geo = await this.platform.user.files.readFile(
         this.getFilePath("geo.txt"),
       );
     }
@@ -448,7 +446,7 @@ export default class Post {
     for (const file of this.getFiles()) {
       if (
         file.original &&
-        !(await this.platform.user.files.fileExists(file.original))
+        !(await this.platform.user.files.exists(file.original))
       ) {
         this.platform.user.log.info(
           "Post",
@@ -459,9 +457,7 @@ export default class Post {
         this.removeFile(file.name);
       }
       if (
-        !(await this.platform.user.files.fileExists(
-          this.getFilePath(file.name),
-        ))
+        !(await this.platform.user.files.exists(this.getFilePath(file.name)))
       ) {
         this.platform.user.log.info(
           "Post",

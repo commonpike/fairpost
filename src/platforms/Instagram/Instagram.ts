@@ -374,7 +374,7 @@ export default class Instagram extends Platform {
    */
   private async uploadImage(file: string = ""): Promise<{ id: string }> {
     this.user.log.trace("Reading file", file);
-    const buffer = await this.user.files.readToBuffer(file);
+    const buffer = await this.user.files.readBuffer(file);
     const blob = new Blob([buffer]);
 
     const body = new FormData();
@@ -433,7 +433,7 @@ export default class Instagram extends Platform {
 
   private async uploadVideo(file: string): Promise<{ id: string }> {
     this.user.log.trace("Reading file", file);
-    const buffer = await this.user.files.readToBuffer(file);
+    const buffer = await this.user.files.readBuffer(file);
     const blob = new Blob([buffer]);
 
     const body = new FormData();

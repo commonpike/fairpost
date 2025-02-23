@@ -46,16 +46,10 @@ export default class Source {
    * @returns new source object
    */
   public static async getSource(feed: Feed, path: string): Promise<Source> {
-    const source = new Source(feed, feed.path + "/" + path);
-    const stat = await feed.user.files.stat(feed.path + "/" + path);
-    if (stat.type !== "directory" && !stat.isDirectory) {
-      throw feed.user.log.error(
-        source.id,
-        "getSource",
-        "Not a valid source: " + path,
-      );
+    if (!(await feed.user.files.isDir(feed.path + "/" + path))) {
+      throw feed.user.log.error("getSource", "Not a valid source: " + path);
     }
-    return source;
+    return new Source(feed, feed.path + "/" + path);
   }
 
   /**
@@ -85,10 +79,10 @@ export default class Source {
    */
   public async getFileInfo(name: string, order: number): Promise<FileInfo> {
     const filepath = this.path + "/" + name;
-    const mime = await this.feed.user.files.mimeType(filepath);
+    const mime = await this.feed.user.files.getMimeType(filepath);
     const group = mime.split("/")[0];
     const extension = extname(name);
-    const size = await this.feed.user.files.fileSize(filepath);
+    const size = await this.feed.user.files.getSize(filepath);
     const file = {
       name: name,
       basename: basename(name, extension || ""),
@@ -101,7 +95,7 @@ export default class Source {
       order: order,
     } as FileInfo;
     if (group === FileGroup.IMAGE) {
-      const buffer = await this.feed.user.files.readToBuffer(filepath);
+      const buffer = await this.feed.user.files.readBuffer(filepath);
       const metadata = await sharp(buffer).metadata();
       file.width = metadata.width;
       file.height = metadata.height;

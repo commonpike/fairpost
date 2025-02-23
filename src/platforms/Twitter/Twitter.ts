@@ -248,7 +248,7 @@ export default class Twitter extends Platform {
     );
     for (const image of post.getFiles(FileGroup.IMAGE).splice(0, 4)) {
       const path = post.getFilePath(image.name);
-      const buffer = await post.platform.user.files.readToBuffer(path);
+      const buffer = await post.platform.user.files.readBuffer(path);
       this.user.log.trace("Uploading " + path + "...");
       try {
         mediaIds.push(

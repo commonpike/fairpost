@@ -46,9 +46,9 @@ export default class Feed {
     if (this.allCached) {
       return Object.values(this.cache);
     }
-    if (!(await this.user.files.directoryExists(this.path))) {
+    if (!(await this.user.files.exists(this.path))) {
       this.user.log.info("creating dir " + this.path);
-      await this.user.files.createDirectory(this.path);
+      await this.user.files.mkdir(this.path);
     }
     const files = this.user.files.list(this.path).filter((entry) => {
       if (entry.type === "file" || entry.isFile) return false;
