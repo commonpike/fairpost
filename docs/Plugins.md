@@ -9,9 +9,10 @@ All plugins have an `id` and `settings` and
 a static `defaults`. The format of the 
 defaults/settings differs per plugin.
 
-It's the platform that selects the plugins and its 
-settings; some platform may allow you to add more 
-plugins and/or change the settings.
+It's the platform source that defines the required
+plugins and its default settings; some platform may 
+allow a user to add more plugins and/or change the 
+settings.
 
 ## Calling a plugin
 
@@ -79,3 +80,7 @@ export default class DoStuff extends Plugin {
     // no need to save the post.
   }
   ```
+
+  Once you created the plugin, you can use it in all
+  platforms that allow you to manage plugins, and/or 
+  in a new platform you're implementing.
