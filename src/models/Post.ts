@@ -178,12 +178,11 @@ export default class Post {
       ).split(/\s/);
     }
     if (this.hasFile("mentions.txt")) {
-      this.mentions =
-        this.mentions = (
-          await this.platform.user.files.readToString(
-            this.getFilePath("mentions.txt"),
-          )
-        ).split(/\s/);
+      this.mentions = this.mentions = (
+        await this.platform.user.files.readToString(
+          this.getFilePath("mentions.txt"),
+        )
+      ).split(/\s/);
     }
     if (this.hasFile("geo.txt")) {
       this.geo = await this.platform.user.files.readToString(

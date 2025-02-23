@@ -177,7 +177,6 @@ export default class Source {
     });
     return (await files.toArray()).map((file) => basename(file.path));
   }
-
 }
 
 export interface FileInfo {
