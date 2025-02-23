@@ -23,7 +23,6 @@ const COMMAND = process.argv[2]?.includes("@")
 // options
 const DRY_RUN = !!getOption("dry-run");
 const OPERATOR = (getOption("operator") as string) ?? "admin";
-const TARGETUSER = (getOption("target-user") as string) ?? "";
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
 const SOURCES = (getOption("sources") as string)?.split(",") ?? undefined;
@@ -48,12 +47,13 @@ function getOption(key: string): boolean | string | null {
 // main
 async function main() {
   const operator = new Operator(OPERATOR, ["admin"], "cli", true);
-  const user = USER ? await User.getUser(USER) : undefined;
+  const user =
+    USER && COMMAND !== "create-user" ? await User.getUser(USER) : undefined;
 
   try {
     const output = await Fairpost.execute(operator, user, COMMAND, {
       dryrun: DRY_RUN,
-      targetuser: TARGETUSER,
+      user: USER,
       platforms: PLATFORMS,
       platform: PLATFORM,
       sources: SOURCES,

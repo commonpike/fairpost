@@ -1,4 +1,3 @@
-import { promises as fs } from "fs";
 import { basename } from "path";
 
 import Source, { FileGroup } from "../../models/Source.ts";
@@ -120,7 +119,7 @@ export default class Reddit extends Platform {
             srcposter,
             dstposter,
           );
-          await fs.copyFile(
+          await this.user.files.copyFile(
             post.getFilePath(srcposter),
             post.getFilePath(dstposter),
           );
@@ -376,14 +375,15 @@ export default class Reddit extends Platform {
     },
     file: string,
   ): Promise<string> {
-    const buffer = await fs.readFile(file);
+    const buffer = await this.user.files.readToBuffer(file);
+    const blob = new Blob([buffer]);
     const filename = basename(file);
 
     const form = new FormData();
     for (const fieldname in leash.fields) {
       form.append(fieldname, leash.fields[fieldname]);
     }
-    form.append("file", new Blob([buffer]), filename);
+    form.append("file", blob, filename);
     this.user.trace("POST", leash.action);
 
     const responseRaw = await fetch(leash.action, {

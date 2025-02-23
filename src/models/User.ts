@@ -1,6 +1,11 @@
-import { promises as fs } from "fs";
-import log4js from "log4js";
 import { resolve } from "path";
+
+import log4js from "log4js";
+import log4jsConfig from "../config/log4js.json" with { type: "json" };
+
+import { FileStorage } from "@flystorage/file-storage";
+import { LocalStorageAdapter } from "@flystorage/local-fs";
+
 import * as platformClasses from "../platforms/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 
@@ -25,20 +30,20 @@ import UserMapper from "../mappers/UserMapper.ts";
  */
 
 export default class User {
-  id: string;
-  homedir: string = "";
-  feed: Feed | undefined;
-  platforms:
+  public id: string;
+  public homedir: string = "";
+  public feed: Feed | undefined;
+  public platforms:
     | {
         [id in PlatformId]?: Platform;
       }
     | undefined = undefined;
-  mapper: UserMapper;
-  store: Store | undefined;
-  logger: log4js.Logger | undefined = undefined;
+  public files: FileStorage;
+  public mapper: UserMapper;
 
-  jsonData: { [key: string]: string } = {};
-  envData: { [key: string]: string } = {};
+  private data: Store | undefined;
+  private logger: log4js.Logger | undefined = undefined;
+  private static globalFS: FileStorage | undefined = undefined;
 
   /**
    * Dont call the constructor yourself;
@@ -47,7 +52,18 @@ export default class User {
    */
   constructor(id: string) {
     this.id = id;
-    this.mapper = new UserMapper(this);
+    this.homedir = (
+      process.env.FAIRPOST_USER_HOMEDIR ?? "users/%user%"
+    ).replace("%user%", id);
+    switch (process.env.FAIRPOST_FILE_SYSTEM) {
+      default: {
+        const adapter = new LocalStorageAdapter(
+          resolve(import.meta.dirname + "/../../", this.homedir),
+        );
+        this.files = new FileStorage(adapter);
+        this.mapper = new UserMapper(this);
+      }
+    }
   }
 
   /**
@@ -59,30 +75,12 @@ export default class User {
    */
   public static async getUser(id: string): Promise<User> {
     const user = new User(id);
-    user.store = await Store.getStore(id);
-    user.homedir = user
-      .get("settings", "USER_HOMEDIR", "users/%user%")
-      .replace("%user%", id);
-    try {
-      const stat = await fs.stat(user.homedir);
-      if (!stat.isDirectory()) {
-        throw new Error();
-      }
-    } catch {
+    if (!(await user.files.directoryExists("."))) {
       throw new Error("No such user: " + id);
     }
+    user.data = await Store.getStore(user);
     user.logger = await user.getLogger();
     return user;
-  }
-
-  // tmp
-  public static async fileExists(path: string): Promise<boolean> {
-    try {
-      await fs.access(path);
-    } catch {
-      return false;
-    }
-    return true;
   }
 
   /**
@@ -95,19 +93,54 @@ export default class User {
         "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
       );
     }
-    const src = resolve(import.meta.dirname, "../../etc/skeleton");
-    if (!process.env.FAIRPOST_USER_HOMEDIR) {
-      throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
+    if (!User.globalFS) {
+      switch (process.env.FAIRPOST_FILE_SYSTEM) {
+        default: {
+          const adapter = new LocalStorageAdapter(
+            resolve(import.meta.dirname + "/../../"),
+          );
+          User.globalFS = new FileStorage(adapter);
+        }
+      }
     }
-    const dst = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", newUserId);
-    if (await User.fileExists(dst)) {
-      throw new Error("Homedir already exists: " + dst);
+    const log = [] as string[];
+    switch (process.env.FAIRPOST_FILE_SYSTEM) {
+      default: {
+        if (!process.env.FAIRPOST_USER_HOMEDIR) {
+          throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
+        }
+        const src = "etc/skeleton";
+        const dst = process.env.FAIRPOST_USER_HOMEDIR.replace(
+          "%user%",
+          newUserId,
+        );
+        if (await User.globalFS.directoryExists(dst)) {
+          throw new Error("Homedir already exists: " + dst);
+        }
+        const listing = await User.globalFS.list(src, { deep: true }).toArray();
+        for await (const entry of listing) {
+          if (entry.type === "directory" || entry.isDirectory) {
+            const entrydst = entry.path.replace("etc/skeleton", dst);
+            log.push("creating dir " + entrydst);
+            await User.globalFS.createDirectory(entrydst);
+          }
+        }
+        for await (const entry of listing) {
+          if (entry.type === "file" || entry.isFile) {
+            const entrydst = entry.path.replace("etc/skeleton", dst);
+            log.push("copying file " + entry.path + " -> " + entrydst);
+            await User.globalFS.copyFile(entry.path, entrydst);
+          }
+        }
+      }
     }
-    await fs.cp(src, dst, { recursive: true });
 
-    const user = new User(newUserId);
+    const user = await User.getUser(newUserId);
     user.set("settings", "FEED_PLATFORMS", "");
     await user.save();
+    for (const msg of log) {
+      user.info(msg);
+    }
     user.info("User created: " + newUserId);
     return user;
   }
@@ -231,33 +264,33 @@ export default class User {
     key: string,
     def?: string,
   ): string {
-    if (!this.store) {
+    if (!this.data) {
       throw new Error("User.get: No store");
     }
     try {
-      return this.store.get(store, key, def);
+      return this.data.get(store, key, def);
     } catch (error) {
       throw this.error(error);
     }
   }
 
   public set(store: "settings" | "auth" | "app", key: string, value: string) {
-    if (!this.store) {
+    if (!this.data) {
       throw new Error("User.set: No store");
     }
     try {
-      return this.store.set(store, key, value);
+      return this.data.set(store, key, value);
     } catch (error) {
       throw this.error(error);
     }
   }
 
   public async save() {
-    if (!this.store) {
+    if (!this.data) {
       throw new Error("User.save: No store");
     }
     try {
-      return await this.store.save();
+      return await this.data.save();
     } catch (error) {
       throw this.error(error);
     }
@@ -314,10 +347,10 @@ export default class User {
    * allow cli/env to override level and console
    */
   private async getLogger(): Promise<log4js.Logger> {
-    if (!this.store) {
+    if (!this.data) {
       throw new Error("User.getLogger: No store");
     }
-    const configFile = this.store.get(
+    const configFile = this.data.get(
       "settings",
       "LOGGER_CONFIG",
       "log4js.json",
@@ -326,26 +359,13 @@ export default class User {
       process.env.FAIRPOST_LOGGER_LEVEL = "TRACE";
       process.env.FAIRPOST_LOGGER_CONSOLE = "true";
     }
-    const level = this.store.get("settings", "LOGGER_LEVEL", "INFO");
+    const level = this.data!.get("settings", "LOGGER_LEVEL", "INFO");
     const addConsole =
-      this.store!.get("settings", "LOGGER_CONSOLE", "false") === "true";
+      this.data!.get("settings", "LOGGER_CONSOLE", "false") === "true";
 
-    const config = (await User.fileExists(this.homedir + "/" + configFile))
-      ? JSON.parse(
-          await fs.readFile(
-            resolve(
-              import.meta.dirname + "/../../",
-              this.homedir + "/" + configFile,
-            ),
-            "utf8",
-          ),
-        )
-      : JSON.parse(
-          await fs.readFile(
-            resolve(import.meta.dirname + "/../../", configFile),
-            "utf8",
-          ),
-        );
+    const config = (await this.files.fileExists(configFile))
+      ? JSON.parse(await this.files.readToString(configFile))
+      : log4jsConfig;
     if (!config.categories["user"]) {
       throw new Error(
         "Logger: Log4js category user not found in " + configFile,

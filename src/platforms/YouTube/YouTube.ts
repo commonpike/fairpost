@@ -1,5 +1,3 @@
-import { createReadStream } from "fs";
-
 import Source, { FileGroup } from "../../models/Source.ts";
 
 import Platform from "../../models/Platform.ts";
@@ -182,6 +180,10 @@ export default class YouTube extends Platform {
       "YouTube.publishVideoPost",
       "uploading " + file.name + " ...",
     );
+
+    // is this indeed a stream ?
+    // https://github.com/duna-oss/flystorage/issues/108
+    const stream = await this.user.files.read(post.getFilePath(file.name));
     const result = (await client.videos.insert({
       part: ["snippet", "status"],
       notifySubscribers: this.notifySubscribers,
@@ -209,7 +211,7 @@ export default class YouTube extends Platform {
       },
       media: {
         mimeType: file.mimetype,
-        body: createReadStream(post.getFilePath(file.name)),
+        body: stream,
       },
     })) as {
       data: {

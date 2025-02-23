@@ -55,7 +55,10 @@ export default class ImageFrame extends Plugin {
       const src = file.name;
       const dst = post.platform.assetsFolder + "/" + newFileName;
 
-      const source = sharp(post.getFilePath(src));
+      const fileIn = post.getFilePath(src);
+      const fileOut = post.getFilePath(dst);
+      const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+      const source = sharp(bufferIn);
 
       let innerBuffer = await source.toBuffer();
       if (this.settings.inner_width) {
@@ -106,7 +109,7 @@ export default class ImageFrame extends Plugin {
           })
           .toBuffer();
       }
-      await sharp(outerBuffer).toFile(post.getFilePath(dst));
+      await post.platform.user.files.write(fileOut, outerBuffer);
       await post.replaceFile(src, dst);
     }
   }

@@ -1,5 +1,3 @@
-import { promises as fs } from "fs";
-
 import Source, { FileGroup } from "../../models/Source.ts";
 import { handleApiError, handleEmptyResponse } from "../../utilities.ts";
 
@@ -379,7 +377,7 @@ export default class LinkedIn extends Platform {
    */
   private async uploadImage(leashUrl: string, file: string) {
     this.user.trace("LinkedIn.uploadImage");
-    const rawData = await fs.readFile(file);
+    const rawData = await this.user.files.readToBuffer(file);
     this.user.trace("PUT", leashUrl);
     const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
     return await fetch(leashUrl, {
@@ -412,13 +410,13 @@ export default class LinkedIn extends Platform {
     };
   }> {
     this.user.trace("LinkedIn.getVideoLeash");
-    const stats = await fs.stat(file);
+    const size = await this.user.files.fileSize(file);
     const response = (await this.api.postJson(
       "videos?action=initializeUpload",
       {
         initializeUploadRequest: {
           owner: this.POST_AUTHOR,
-          fileSizeBytes: stats.size,
+          fileSizeBytes: size,
           uploadCaptions: false,
           uploadThumbnail: false,
         },
@@ -449,7 +447,7 @@ export default class LinkedIn extends Platform {
    */
   private async uploadVideo(leashUrl: string, file: string): Promise<string> {
     this.user.trace("LinkedIn.uploadVideo");
-    const rawData = await fs.readFile(file);
+    const rawData = await this.user.files.readToBuffer(file);
     this.user.trace("PUT", leashUrl);
     const result = (await fetch(leashUrl, {
       method: "PUT",
@@ -484,7 +482,7 @@ export default class LinkedIn extends Platform {
     file: string,
   ): Promise<string[]> {
     this.user.trace("LinkedIn.uploadVideoChunks");
-    const buffer = await fs.readFile(file);
+    const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
     const results = [];
     for (const leash of leashes) {

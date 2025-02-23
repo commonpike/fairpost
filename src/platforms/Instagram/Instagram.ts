@@ -1,4 +1,3 @@
-import { promises as fs } from "fs";
 import { basename } from "path";
 
 import Source, { FileGroup } from "../../models/Source.ts";
@@ -145,10 +144,16 @@ export default class Instagram extends Platform {
       }
     }
 
-    const details = await this.api.get(response.id, {
-      fields: "id,media_type,permalink,thumbnail_url,timestamp,username",
-    });
-    response = { ...response, ...details };
+    if (!error && !dryrun) {
+      try {
+        const details = await this.api.get(response.id, {
+          fields: "id,media_type,permalink,thumbnail_url,timestamp,username",
+        });
+        response = { ...response, ...details };
+      } catch (e) {
+        error = e as Error;
+      }
+    }
 
     return post.processResult(response.id, response.permalink ?? "#unknown", {
       date: new Date(),
@@ -172,6 +177,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
+    this.user.trace("publishImagePost", post.id, dryrun);
     const file = post.getFilePath(post.getFiles(FileGroup.IMAGE)[0].name);
     const caption = post.getCompiledBody();
     const photoId = (await this.uploadImage(file))["id"];
@@ -223,6 +229,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
+    this.user.trace("publishVideoPost", post.id, dryrun);
     const file = post.getFilePath(post.getFiles(FileGroup.VIDEO)[0].name);
     const caption = post.getCompiledBody();
     const videoId = (await this.uploadVideo(file))["id"];
@@ -275,10 +282,12 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
+    this.user.trace("publishMixedPost", post.id, dryrun);
     const uploadIds = [] as string[];
 
     for (const file of post.getFiles(FileGroup.VIDEO, FileGroup.IMAGE)) {
       if (file.group === "video") {
+        this.user.trace("publishMixedPost", "Processing video", file.name);
         const videoId = (await this.uploadVideo(post.getFilePath(file.name)))[
           "id"
         ];
@@ -294,6 +303,7 @@ export default class Instagram extends Platform {
         );
       }
       if (file.group === "image") {
+        this.user.trace("publishMixedPost", "Processing image", file.name);
         const photoId = (await this.uploadImage(post.getFilePath(file.name)))[
           "id"
         ];
@@ -310,6 +320,7 @@ export default class Instagram extends Platform {
     }
 
     // create carousel
+    this.user.trace("publishMixedPost", "Preparing carousel", uploadIds);
     const container = (await this.api.postJson("%USER%/media", {
       media_type: "CAROUSEL",
       caption: post.getCompiledBody(),
@@ -333,6 +344,11 @@ export default class Instagram extends Platform {
 
     // publish carousel
     if (!dryrun) {
+      this.user.trace(
+        "publishMixedPost",
+        "Publishing carousel",
+        container["id"],
+      );
       const response = (await this.api.postJson("%USER%/media_publish", {
         creation_id: container["id"],
       })) as {
@@ -358,8 +374,8 @@ export default class Instagram extends Platform {
    */
   private async uploadImage(file: string = ""): Promise<{ id: string }> {
     this.user.trace("Reading file", file);
-    const rawData = await fs.readFile(file);
-    const blob = new Blob([rawData]);
+    const buffer = await this.user.files.readToBuffer(file);
+    const blob = new Blob([buffer]);
 
     const body = new FormData();
     body.set("published", "false");
@@ -417,8 +433,8 @@ export default class Instagram extends Platform {
 
   private async uploadVideo(file: string): Promise<{ id: string }> {
     this.user.trace("Reading file", file);
-    const rawData = await fs.readFile(file);
-    const blob = new Blob([rawData]);
+    const buffer = await this.user.files.readToBuffer(file);
+    const blob = new Blob([buffer]);
 
     const body = new FormData();
     body.set("title", "Fairpost temp instagram upload");
@@ -489,23 +505,24 @@ export default class Instagram extends Platform {
     return new Promise((resolve, reject) => {
       const poll = async () => {
         counter++;
-        this.user.trace("checkStatus", "Polling post status " + counter);
+        this.user.trace("checkPostStatus", "Polling post status " + counter);
         const response = (await api.get(id, {
           fields: "status_code",
         })) as {
           status_code: string;
         };
         if (response.status_code === "FINISHED") {
-          this.user.trace("checkStatus", "Post status FINISHED");
+          this.user.trace("checkPostStatus", "Post status FINISHED");
           resolve(true);
         } else if (response.status_code === "IN_PROGRESS") {
           if (counter < limit) {
             setTimeout(poll, delay);
           } else {
-            reject("checkStatus: Failed after max polls " + counter);
+            reject("checkPostStatus: Failed after max polls " + counter);
           }
         } else {
-          reject("checkStatus: Failed with status " + response.status_code);
+          reject("checkPostStatus: Failed with status " + response.status_code);
+          console.log(response);
         }
       };
       poll();
