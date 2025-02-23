@@ -69,7 +69,7 @@ class Fairpost {
         args.dryrun ? " dry-run" : "",
       );
       if (user) {
-        user.info(
+        user.log.info(
           "Fairpost ",
           operator.id,
           command,
@@ -119,7 +119,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
@@ -143,7 +143,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
@@ -174,7 +174,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
@@ -220,7 +220,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
@@ -272,7 +272,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.source) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: source",
             );
@@ -305,13 +305,13 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.source) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: source",
             );
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
@@ -356,13 +356,13 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.source) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: source",
             );
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
@@ -403,7 +403,7 @@ class Fairpost {
                   result: await post.mapper.getDto(operator),
                 });
               } catch (e) {
-                user.error("Fairpost", "preparePosts", e);
+                user.log.error("Fairpost", "preparePosts", e);
                 (output[platform.id] as CombinedResult[]).push({
                   success: false,
                   message: e instanceof Error ? e.message : JSON.stringify(e),
@@ -421,19 +421,19 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.source) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: source",
             );
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
           }
           if (!args.date) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: date",
             );
@@ -460,13 +460,13 @@ class Fairpost {
             args.source = args.sources[0];
           }
           if (!args.source) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: source",
             );
           }
           if (!args.date) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: date",
             );
@@ -500,7 +500,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
@@ -524,13 +524,13 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           if (!args.source) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: source",
             );
           }
           if (!args.platform) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: platform",
             );
@@ -562,7 +562,7 @@ class Fairpost {
             args.source = args.sources[0];
           }
           if (!args.source) {
-            throw user.error(
+            throw user.log.error(
               "CommandHandler " + command,
               "Missing argument: source",
             );

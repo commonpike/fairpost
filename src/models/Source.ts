@@ -49,7 +49,7 @@ export default class Source {
     const source = new Source(feed, feed.path + "/" + path);
     const stat = await feed.user.files.stat(feed.path + "/" + path);
     if (stat.type !== "directory" && !stat.isDirectory) {
-      throw feed.user.error(
+      throw feed.user.log.error(
         source.id,
         "getSource",
         "Not a valid source: " + path,
@@ -115,7 +115,7 @@ export default class Source {
    */
 
   public async preparePost(platform: Platform): Promise<Post> {
-    this.feed.user.trace(this.id, "preparePost", this.id, platform.id);
+    this.feed.user.log.trace(this.id, "preparePost", this.id, platform.id);
     return await platform.preparePost(this);
   }
 
@@ -125,7 +125,7 @@ export default class Source {
    */
 
   public async getPost(platform: Platform): Promise<Post> {
-    this.feed.user.trace(this.id, "getPost", this.id, platform.id);
+    this.feed.user.log.trace(this.id, "getPost", this.id, platform.id);
     return await platform.getPost(this);
   }
 
@@ -140,7 +140,7 @@ export default class Source {
     platforms?: Platform[],
     status?: PostStatus,
   ): Promise<Post[]> {
-    this.feed.user.trace(this.id, "getPosts", this.id);
+    this.feed.user.log.trace(this.id, "getPosts", this.id);
     const posts: Post[] = [];
     if (!platforms) {
       platforms = this.feed.user.getPlatforms();

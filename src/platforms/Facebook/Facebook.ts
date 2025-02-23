@@ -77,7 +77,7 @@ export default class Facebook extends Platform {
 
   /** @inheritdoc */
   async preparePost(source: Source): Promise<Post> {
-    this.user.trace("Facebook.preparePost", source.id);
+    this.user.log.trace("Facebook.preparePost", source.id);
     const post = await super.preparePost(source);
     if (post && post.files) {
       const userPluginSettings = JSON.parse(
@@ -98,7 +98,7 @@ export default class Facebook extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    this.user.trace("Facebook.publishPost", post.id, dryrun);
+    this.user.log.trace("Facebook.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as { id: string };
     let error = undefined as Error | undefined;
@@ -202,7 +202,7 @@ export default class Facebook extends Platform {
     const title = post.title;
     const description = post.getCompiledBody("!title");
 
-    this.user.trace("Reading file", file);
+    this.user.log.trace("Reading file", file);
     const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
 
@@ -220,7 +220,7 @@ export default class Facebook extends Platform {
         id: string;
       };
       if (!result["id"]) {
-        throw this.user.error("No id returned when uploading video");
+        throw this.user.log.error("No id returned when uploading video");
       }
       return result;
     }
@@ -237,7 +237,7 @@ export default class Facebook extends Platform {
     file: string = "",
     published = false,
   ): Promise<{ id: string }> {
-    this.user.trace("Reading file", file);
+    this.user.log.trace("Reading file", file);
     const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
 
@@ -250,7 +250,7 @@ export default class Facebook extends Platform {
     };
 
     if (!result["id"]) {
-      throw this.user.error("No id returned when uploading photo");
+      throw this.user.log.error("No id returned when uploading photo");
     }
     return result;
   }

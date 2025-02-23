@@ -38,7 +38,7 @@ export default class LinkedInApi {
 
     const accessToken = this.user.data.get("auth", "LINKEDIN_ACCESS_TOKEN");
 
-    this.user.trace("GET", url.href);
+    this.user.log.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {
@@ -72,7 +72,7 @@ export default class LinkedInApi {
       url.search = search;
     }
     const accessToken = this.user.data.get("auth", "LINKEDIN_ACCESS_TOKEN");
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",

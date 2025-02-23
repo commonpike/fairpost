@@ -140,8 +140,8 @@ for you to throw:
 <?php
 
     ...
-    this.user.trace('foo', 'bar', 'quz');
-    throw this.user.error('foo', 'bar', 'quz');
+    this.user.log.trace('foo', 'bar', 'quz');
+    throw this.user.log.error('foo', 'bar', 'quz');
 ```
 
 ### Using Plugins to prepare your Post

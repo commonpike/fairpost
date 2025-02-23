@@ -274,7 +274,7 @@ export default class PostMapper extends AbstractMapper<PostDto> {
             break;
         }
       } else {
-        throw this.user.error("Unknown field: " + field);
+        throw this.user.log.error("Unknown field: " + field);
       }
     }
     return true;

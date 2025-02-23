@@ -42,7 +42,7 @@ export default class ImageFrame extends Plugin {
    */
 
   async process(post: Post): Promise<void> {
-    post.platform.user.trace(this.id, post.id, "process");
+    post.platform.user.log.trace(this.id, post.id, "process");
     for (const file of post.getFiles(FileGroup.IMAGE)) {
       await this.addImageFrame(post, file);
     }

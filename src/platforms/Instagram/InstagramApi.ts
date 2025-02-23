@@ -46,7 +46,7 @@ export default class InstagramApi {
       "auth",
       "INSTAGRAM_PAGE_ACCESS_TOKEN",
     );
-    this.user.trace("GET", url.href);
+    this.user.log.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: accessToken
@@ -85,7 +85,7 @@ export default class InstagramApi {
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
     return await fetch(url, {
       method: "POST",
       headers: {
@@ -120,7 +120,7 @@ export default class InstagramApi {
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",

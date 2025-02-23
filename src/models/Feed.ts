@@ -42,12 +42,12 @@ export default class Feed {
    * @returns all source in the feed
    */
   async getAllSources(): Promise<Source[]> {
-    this.user.trace("Feed", "getAllSources");
+    this.user.log.trace("Feed", "getAllSources");
     if (this.allCached) {
       return Object.values(this.cache);
     }
     if (!(await this.user.files.directoryExists(this.path))) {
-      this.user.info("creating dir " + this.path);
+      this.user.log.info("creating dir " + this.path);
       await this.user.files.createDirectory(this.path);
     }
     const files = this.user.files.list(this.path).filter((entry) => {
@@ -71,7 +71,7 @@ export default class Feed {
    * @returns the given source object
    */
   async getSource(path: string): Promise<Source> {
-    this.user.trace("Feed", "getSource", path);
+    this.user.log.trace("Feed", "getSource", path);
     const sourceId = this.getSourceId(path);
     if (sourceId in this.cache) {
       return this.cache[sourceId];
@@ -87,7 +87,7 @@ export default class Feed {
    * @returns the given source objects
    */
   async getSources(paths?: string[]): Promise<Source[]> {
-    this.user.trace("Feed", "getSources", paths);
+    this.user.log.trace("Feed", "getSources", paths);
     if (!paths || !paths.length) {
       return await this.getAllSources();
     }
@@ -106,7 +106,7 @@ export default class Feed {
    * otherwise its unscheduled
    
   getSourceStatus(path: string): PostStatus {
-    this.user.trace("Feed", "getSourceStatus", path);
+    this.user.log.trace("Feed", "getSourceStatus", path);
     const platforms = this.user.getPlatforms();
     const source = this.getSource(path);
     const posts = [] as Post[];

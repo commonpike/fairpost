@@ -95,7 +95,7 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
       if (field in fields) {
         // there are no settable fields
       } else {
-        throw this.user.error("Unknown field: " + field);
+        throw this.user.log.error("Unknown field: " + field);
       }
     }
     return true;

@@ -78,7 +78,7 @@ export default class LinkedIn extends Platform {
 
   /** @inheritdoc */
   async preparePost(source: Source): Promise<Post> {
-    this.user.trace("LinkedIn.preparePost", source.id);
+    this.user.log.trace("LinkedIn.preparePost", source.id);
     const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
@@ -99,7 +99,7 @@ export default class LinkedIn extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    this.user.trace("LinkedIn.publishPost", post.id, dryrun);
+    this.user.log.trace("LinkedIn.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as {
       id?: string;
@@ -176,7 +176,7 @@ export default class LinkedIn extends Platform {
    * @returns object, incl. id of the created post
    */
   private async publishTextPost(post: Post, dryrun: boolean = false) {
-    this.user.trace("LinkedIn.publishTextPost");
+    this.user.log.trace("LinkedIn.publishTextPost");
     const body = {
       author: this.POST_AUTHOR,
       commentary: post.getCompiledBody(),
@@ -200,7 +200,7 @@ export default class LinkedIn extends Platform {
    * @returns object, incl. id of the created post
    */
   private async publishImagePost(post: Post, dryrun: boolean = false) {
-    this.user.trace("LinkedIn.publishImagePost");
+    this.user.log.trace("LinkedIn.publishImagePost");
     const title = post.title;
     const image = post.getFilePath(post.getFiles(FileGroup.IMAGE)[0].name);
     const leash = await this.getImageLeash();
@@ -237,7 +237,7 @@ export default class LinkedIn extends Platform {
    */
 
   private async publishImagesPost(post: Post, dryrun: boolean = false) {
-    this.user.trace("LinkedIn.publishImagesPost");
+    this.user.log.trace("LinkedIn.publishImagesPost");
     const images = post
       .getFiles(FileGroup.IMAGE)
       .map((image) => post.getFilePath(image.name));
@@ -283,7 +283,7 @@ export default class LinkedIn extends Platform {
    * @returns object, incl. id of the created post
    */
   private async publishVideoPost(post: Post, dryrun: boolean = false) {
-    this.user.trace("LinkedIn.publishVideoPost");
+    this.user.log.trace("LinkedIn.publishVideoPost");
 
     const title = post.title;
     const video = post.getFilePath(post.getFiles(FileGroup.VIDEO)[0].name);
@@ -348,7 +348,7 @@ export default class LinkedIn extends Platform {
       image: string;
     };
   }> {
-    this.user.trace("LinkedIn.getImageLeash");
+    this.user.log.trace("LinkedIn.getImageLeash");
     const response = (await this.api.postJson(
       "images?action=initializeUpload",
       {
@@ -364,7 +364,7 @@ export default class LinkedIn extends Platform {
       };
     };
     if (!response.value) {
-      throw this.user.error("LinkedIn.getImageUploadLease: Bad response");
+      throw this.user.log.error("LinkedIn.getImageUploadLease: Bad response");
     }
     return response;
   }
@@ -376,9 +376,9 @@ export default class LinkedIn extends Platform {
    * @returns empty
    */
   private async uploadImage(leashUrl: string, file: string) {
-    this.user.trace("LinkedIn.uploadImage");
+    this.user.log.trace("LinkedIn.uploadImage");
     const rawData = await this.user.files.readToBuffer(file);
-    this.user.trace("PUT", leashUrl);
+    this.user.log.trace("PUT", leashUrl);
     const accessToken = this.user.data.get("auth", "LINKEDIN_ACCESS_TOKEN");
     return await fetch(leashUrl, {
       method: "PUT",
@@ -409,7 +409,7 @@ export default class LinkedIn extends Platform {
       uploadToken: string;
     };
   }> {
-    this.user.trace("LinkedIn.getVideoLeash");
+    this.user.log.trace("LinkedIn.getVideoLeash");
     const size = await this.user.files.fileSize(file);
     const response = (await this.api.postJson(
       "videos?action=initializeUpload",
@@ -434,7 +434,7 @@ export default class LinkedIn extends Platform {
       };
     };
     if (!response.value) {
-      throw this.user.error("LinkedIn.getVideoUploadLease: Bad response");
+      throw this.user.log.error("LinkedIn.getVideoUploadLease: Bad response");
     }
     return response;
   }
@@ -446,9 +446,9 @@ export default class LinkedIn extends Platform {
    * @returns string : chunkId
    */
   private async uploadVideo(leashUrl: string, file: string): Promise<string> {
-    this.user.trace("LinkedIn.uploadVideo");
+    this.user.log.trace("LinkedIn.uploadVideo");
     const rawData = await this.user.files.readToBuffer(file);
-    this.user.trace("PUT", leashUrl);
+    this.user.log.trace("PUT", leashUrl);
     const result = (await fetch(leashUrl, {
       method: "PUT",
       headers: {
@@ -481,13 +481,13 @@ export default class LinkedIn extends Platform {
     }[],
     file: string,
   ): Promise<string[]> {
-    this.user.trace("LinkedIn.uploadVideoChunks");
+    this.user.log.trace("LinkedIn.uploadVideoChunks");
     const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
     const results = [];
     for (const leash of leashes) {
       const chunk = blob.slice(leash.start, leash.end + 1);
-      this.user.trace("PUT", leash.url, leash.start, leash.end + 1);
+      this.user.log.trace("PUT", leash.url, leash.start, leash.end + 1);
       results.push(
         (await fetch(leash.url, {
           method: "PUT",
@@ -513,7 +513,7 @@ export default class LinkedIn extends Platform {
     uploadToken: string,
     chunkIds: string[],
   ) {
-    this.user.trace("LinkedIn.uploadVideoFinish");
+    this.user.log.trace("LinkedIn.uploadVideoFinish");
     return await this.api.postJson(
       "videos?action=finalizeUpload",
       {

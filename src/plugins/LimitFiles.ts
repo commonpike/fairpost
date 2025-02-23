@@ -58,11 +58,11 @@ export default class LimitFiles extends Plugin {
    */
 
   async process(post: Post): Promise<void> {
-    post.platform.user.trace(this.id, post.id, "process");
+    post.platform.user.log.trace(this.id, post.id, "process");
 
     if (this.settings.total_min) {
       if (post.getFiles().length < this.settings.total_min) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "total_min",
@@ -74,7 +74,7 @@ export default class LimitFiles extends Plugin {
     }
     if (this.settings.image_min) {
       if (post.getFiles(FileGroup.IMAGE).length < this.settings.image_min) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "image_min",
@@ -86,7 +86,7 @@ export default class LimitFiles extends Plugin {
     }
     if (this.settings.video_min) {
       if (post.getFiles(FileGroup.VIDEO).length < this.settings.video_min) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "video_min",
@@ -98,7 +98,7 @@ export default class LimitFiles extends Plugin {
     }
     if (this.settings.text_min) {
       if (post.getFiles(FileGroup.TEXT).length < this.settings.text_min) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "text_min",
@@ -110,7 +110,7 @@ export default class LimitFiles extends Plugin {
     }
     if (this.settings.other_min) {
       if (post.getFiles(FileGroup.OTHER).length < this.settings.other_min) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "other_min",
@@ -124,7 +124,7 @@ export default class LimitFiles extends Plugin {
     if (this.settings.exclusive?.length) {
       for (const exclusiveGroup of this.settings.exclusive) {
         if (post.hasFiles(exclusiveGroup as FileGroup)) {
-          post.platform.user.trace(
+          post.platform.user.log.trace(
             this.id,
             post.id,
             "exclusive",
@@ -143,7 +143,7 @@ export default class LimitFiles extends Plugin {
     if (this.settings.image_max) {
       const numfiles = post.getFiles(FileGroup.IMAGE).length;
       if (numfiles > this.settings.image_max) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "image_max",
@@ -155,7 +155,7 @@ export default class LimitFiles extends Plugin {
     if (this.settings.video_max) {
       const numfiles = post.getFiles(FileGroup.VIDEO).length;
       if (numfiles > this.settings.video_max) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "video_max",
@@ -167,7 +167,7 @@ export default class LimitFiles extends Plugin {
     if (this.settings.text_max) {
       const numfiles = post.getFiles(FileGroup.TEXT).length;
       if (numfiles > this.settings.text_max) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "text_max",
@@ -179,7 +179,7 @@ export default class LimitFiles extends Plugin {
     if (this.settings.other_max) {
       const numfiles = post.getFiles(FileGroup.OTHER).length;
       if (numfiles > this.settings.other_max) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           this.id,
           post.id,
           "other_max",
@@ -195,7 +195,7 @@ export default class LimitFiles extends Plugin {
         if (remaining) {
           const numfiles = post.getFiles(preferGroup as FileGroup).length;
           if (numfiles > this.settings.total_max) {
-            post.platform.user.trace(
+            post.platform.user.log.trace(
               this.id,
               post.id,
               "total_max",
@@ -205,7 +205,7 @@ export default class LimitFiles extends Plugin {
           }
           remaining = Math.max(remaining - numfiles, 0);
         } else {
-          post.platform.user.trace(
+          post.platform.user.log.trace(
             this.id,
             post.id,
             "total_max",

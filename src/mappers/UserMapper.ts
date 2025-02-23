@@ -81,7 +81,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
         switch (field) {
           case "id":
             // todo - there should be a rename-user command instead
-            throw this.user.error("Cannot set ID: unimplemented");
+            throw this.user.log.error("Cannot set ID: unimplemented");
             break;
           case "loglevel":
             this.user.data.set(
@@ -92,7 +92,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
             break;
         }
       } else {
-        throw this.user.error("Unknown field: " + field);
+        throw this.user.log.error("Unknown field: " + field);
       }
     }
     await this.user.data.save();

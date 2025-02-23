@@ -70,12 +70,20 @@ export default class Post {
     if (load) {
       const postFilePath = platform.getPostFilePath(source);
       if (!(await platform.user.files.fileExists(postFilePath))) {
-        throw platform.user.error("No such post ", platform.id, post.source.id);
+        throw platform.user.log.error(
+          "No such post ",
+          platform.id,
+          post.source.id,
+        );
       }
       const contents = await platform.user.files.readToString(postFilePath);
       const data = JSON.parse(contents);
       if (!data) {
-        throw platform.user.error("Cant parse post ", post.id, post.source.id);
+        throw platform.user.log.error(
+          "Cant parse post ",
+          post.id,
+          post.source.id,
+        );
       }
       Object.assign(post, data);
       post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
@@ -90,7 +98,7 @@ export default class Post {
    */
 
   async save() {
-    this.platform.user.trace("Post", "save");
+    this.platform.user.log.trace("Post", "save");
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const data = { ...this } as { [key: string]: any };
     delete data.source;
@@ -118,7 +126,7 @@ export default class Post {
    */
 
   async prepare(isnew: boolean) {
-    this.platform.user.trace("Post", "prepare");
+    this.platform.user.log.trace("Post", "prepare");
 
     // purge non-existing files and
     // update existing files
@@ -219,15 +227,15 @@ export default class Post {
    */
 
   async schedule(date: Date) {
-    this.platform.user.trace("Post", "schedule", date);
+    this.platform.user.log.trace("Post", "schedule", date);
     if (!this.valid) {
-      throw this.platform.user.error("Post is not valid");
+      throw this.platform.user.log.error("Post is not valid");
     }
     if (this.skip) {
-      throw this.platform.user.error("Post is marked to be skipped");
+      throw this.platform.user.log.error("Post is marked to be skipped");
     }
     if (this.status !== PostStatus.UNSCHEDULED) {
-      this.platform.user.warn("Rescheduling post");
+      this.platform.user.log.warn("Rescheduling post");
     }
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
@@ -244,19 +252,19 @@ export default class Post {
    * @returns boolean if success
    */
   async publish(dryrun: boolean): Promise<boolean> {
-    this.platform.user.trace("Post", "publish");
+    this.platform.user.log.trace("Post", "publish");
     if (!this.valid) {
-      throw this.platform.user.error("Post is not valid", this.id);
+      throw this.platform.user.log.error("Post is not valid", this.id);
     }
     if (this.skip) {
-      throw this.platform.user.error("Post is marked skip", this.id);
+      throw this.platform.user.log.error("Post is marked skip", this.id);
     }
     if (this.published) {
-      throw this.platform.user.error("Post was already published", this.id);
+      throw this.platform.user.log.error("Post was already published", this.id);
     }
     // why ?
     // if (!dryrun) post.schedule(now);
-    this.platform.user.info("Publishing", this.id);
+    this.platform.user.log.info("Publishing", this.id);
     return await this.platform.publishPost(this, dryrun);
   }
 
@@ -442,7 +450,7 @@ export default class Post {
         file.original &&
         !(await this.platform.user.files.fileExists(file.original))
       ) {
-        this.platform.user.info(
+        this.platform.user.log.info(
           "Post",
           "purgeFiles",
           "purging non-existant derivate",
@@ -455,7 +463,7 @@ export default class Post {
           this.getFilePath(file.name),
         ))
       ) {
-        this.platform.user.info(
+        this.platform.user.log.info(
           "Post",
           "purgeFiles",
           "purging non-existent file",
@@ -512,11 +520,11 @@ export default class Post {
       if (!this.files) {
         this.files = [];
       }
-      this.platform.user.trace("Post.addFile", newFile);
+      this.platform.user.log.trace("Post.addFile", newFile);
       this.files.push(newFile);
       return newFile;
     } else {
-      this.platform.user.warn(
+      this.platform.user.log.warn(
         "Post.addFile",
         "Not replacing existing file",
         name,
@@ -562,7 +570,7 @@ export default class Post {
     search: string,
     replace: string,
   ): Promise<FileInfo | undefined> {
-    this.platform.user.trace("Post.replaceFile", search, replace);
+    this.platform.user.log.trace("Post.replaceFile", search, replace);
     const index = this.files?.findIndex((file) => file.name === search) ?? -1;
     if (index > -1) {
       const oldFile = this.getFile(search);
@@ -573,7 +581,11 @@ export default class Post {
         return this.files[index];
       }
     } else {
-      this.platform.user.warn("Post.replaceFile", "metadata not found", search);
+      this.platform.user.log.warn(
+        "Post.replaceFile",
+        "metadata not found",
+        search,
+      );
     }
   }
 
@@ -603,7 +615,7 @@ export default class Post {
     this.results.push(result);
 
     if (result.error) {
-      this.platform.user.warn(
+      this.platform.user.log.warn(
         "Post.processResult",
         this.id,
         "failed",

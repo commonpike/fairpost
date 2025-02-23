@@ -160,7 +160,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
           }
         }
       } else {
-        throw this.user.error("Unknown field: " + field);
+        throw this.user.log.error("Unknown field: " + field);
       }
     }
     await this.user.data.save();

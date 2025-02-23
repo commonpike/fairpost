@@ -35,7 +35,7 @@ export default class RedditAuth {
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "RedditAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -48,7 +48,7 @@ export default class RedditAuth {
    * @returns - code
    */
   protected async requestCode(): Promise<string> {
-    this.user.trace("RedditAuth", "requestCode");
+    this.user.log.trace("RedditAuth", "requestCode");
     const clientId = this.user.data.get("app", "REDDIT_CLIENT_ID");
     const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
@@ -75,15 +75,15 @@ export default class RedditAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -94,7 +94,7 @@ export default class RedditAuth {
    * @returns - TokenResponse
    */
   protected async exchangeCode(code: string): Promise<TokenResponse> {
-    this.user.trace("RedditAuth", "exchangeCode", code);
+    this.user.log.trace("RedditAuth", "exchangeCode", code);
     const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
@@ -112,7 +112,7 @@ export default class RedditAuth {
     };
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "RedditAuth.exchangeCode: response is not a TokenResponse",
         tokens,
       );
@@ -150,7 +150,7 @@ export default class RedditAuth {
   ): Promise<object> {
     const url = new URL("https://www.reddit.com");
     url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
 
     const clientId = this.user.data.get("app", "REDDIT_CLIENT_ID");
     const clientSecret = this.user.data.get("app", "REDDIT_CLIENT_SECRET");

@@ -29,7 +29,7 @@ export default class TwitterAuth {
       this.user.data.get("auth", "TWITTER_REFRESH_TOKEN"),
     )) as TokenResponse;
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "TwitterAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -74,15 +74,15 @@ export default class TwitterAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.log.error("TwitterApi.requestCode: " + msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw this.user.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.log.error("TwitterApi.requestCode: " + msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw this.user.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.log.error("TwitterApi.requestCode: " + msg, result);
     }
     return {
       code: result["code"] as string,
@@ -108,7 +108,7 @@ export default class TwitterAuth {
       redirectUri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
     })) as TokenResponse;
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "TitterAuth.requestAccessToken: reponse is not a valid TokenResponse",
       );
     }

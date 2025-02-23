@@ -2,7 +2,7 @@ import { dirname } from "path";
 import User from "./User.ts";
 
 /**
- * Store
+ * UserData
  *
  * - sets and gets key / value pairs, all string.
  * - uses three 'stores':
@@ -10,7 +10,7 @@ import User from "./User.ts";
  *   - 'settings' is typically what a user maintains,
  *   - 'auth' is what fairpost maintains and may be
  *     stored and encrypted somewhere else
- * - it store has a backend, one of
+ * - each store has a backend, one of
  *   - 'env' is process.env (.env)
  *   - 'json' is json file, with one key for each store and a flat list below it
  *   - 'json-env' is the above json file with .env as fallback
@@ -31,7 +31,7 @@ export default class UserData {
   jsonData: { [store: string]: { [key: string]: string } } = {};
   user: User;
   /**
-   * Create a new DataStore.
+   * Create a new UserData.
    * Dont forgt to call await init() afterwards.
    * @param user
    */

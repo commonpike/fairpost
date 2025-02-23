@@ -38,7 +38,7 @@ export default class LinkedInAuth {
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "LinkedInAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -51,7 +51,7 @@ export default class LinkedInAuth {
    * @returns - code
    */
   private async requestCode(): Promise<string> {
-    this.user.trace("LinkedInAuth", "requestCode");
+    this.user.log.trace("LinkedInAuth", "requestCode");
     const clientId = this.user.data.get("app", "LINKEDIN_CLIENT_ID");
     const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
@@ -82,15 +82,15 @@ export default class LinkedInAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -101,7 +101,7 @@ export default class LinkedInAuth {
    * @returns - TokenResponse
    */
   private async exchangeCode(code: string): Promise<TokenResponse> {
-    this.user.trace("LinkedInAuth", "exchangeCode", code);
+    this.user.log.trace("LinkedInAuth", "exchangeCode", code);
     const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
@@ -115,7 +115,7 @@ export default class LinkedInAuth {
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error("Invalid TokenResponse", tokens);
+      throw this.user.log.error("Invalid TokenResponse", tokens);
     }
 
     return tokens;
@@ -160,7 +160,7 @@ export default class LinkedInAuth {
   ): Promise<object> {
     const url = new URL("https://www.linkedin.com");
     url.pathname = "oauth/" + this.API_VERSION + "/" + endpoint;
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",

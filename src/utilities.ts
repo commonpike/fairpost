@@ -174,5 +174,5 @@ export async function handleApiError(
       errorDetails["errno"] = error.errno as number;
     }
   }
-  throw user.error(errorMessage, error.response?.url, errorDetails);
+  throw user.log.error(errorMessage, error.response?.url, errorDetails);
 }

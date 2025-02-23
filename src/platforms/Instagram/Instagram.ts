@@ -81,7 +81,7 @@ export default class Instagram extends Platform {
 
   /** @inheritdoc */
   async preparePost(source: Source): Promise<Post> {
-    this.user.trace("Instagram.preparePost", source.id);
+    this.user.log.trace("Instagram.preparePost", source.id);
     const post = await super.preparePost(source);
     if (post && post.files) {
       // instagram: require media
@@ -113,7 +113,7 @@ export default class Instagram extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    this.user.trace("Instagram.publishPost", post.id, dryrun);
+    this.user.log.trace("Instagram.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as { id: string; permalink?: string };
     let error = undefined as Error | undefined;
@@ -177,7 +177,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    this.user.trace("publishImagePost", post.id, dryrun);
+    this.user.log.trace("publishImagePost", post.id, dryrun);
     const file = post.getFilePath(post.getFiles(FileGroup.IMAGE)[0].name);
     const caption = post.getCompiledBody();
     const photoId = (await this.uploadImage(file))["id"];
@@ -187,7 +187,7 @@ export default class Instagram extends Platform {
       caption: caption,
     })) as { id: string };
     if (!container?.id) {
-      throw this.user.error(
+      throw this.user.log.error(
         "No id returned for container for " + file,
         container,
       );
@@ -197,7 +197,7 @@ export default class Instagram extends Platform {
     try {
       await this.checkPostStatus(container.id);
     } catch (e) {
-      throw this.user.error(e);
+      throw this.user.log.error(e);
     }
 
     if (!dryrun) {
@@ -205,7 +205,7 @@ export default class Instagram extends Platform {
         creation_id: container.id,
       })) as { id: string };
       if (!response?.id) {
-        throw this.user.error(
+        throw this.user.log.error(
           "No id returned for igMedia for " + file,
           response,
         );
@@ -229,7 +229,7 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    this.user.trace("publishVideoPost", post.id, dryrun);
+    this.user.log.trace("publishVideoPost", post.id, dryrun);
     const file = post.getFilePath(post.getFiles(FileGroup.VIDEO)[0].name);
     const caption = post.getCompiledBody();
     const videoId = (await this.uploadVideo(file))["id"];
@@ -240,7 +240,7 @@ export default class Instagram extends Platform {
       caption: caption,
     })) as { id: string };
     if (!container?.id) {
-      throw this.user.error(
+      throw this.user.log.error(
         "No id returned for container for " + file,
         container,
       );
@@ -250,7 +250,7 @@ export default class Instagram extends Platform {
     try {
       await this.checkPostStatus(container.id);
     } catch (e) {
-      throw this.user.error(e);
+      throw this.user.log.error(e);
     }
 
     if (!dryrun) {
@@ -258,7 +258,7 @@ export default class Instagram extends Platform {
         creation_id: container.id,
       })) as { id: string };
       if (!response?.id) {
-        throw this.user.error(
+        throw this.user.log.error(
           "No id returned for igMedia for " + file,
           response,
         );
@@ -282,12 +282,12 @@ export default class Instagram extends Platform {
     post: Post,
     dryrun: boolean = false,
   ): Promise<{ id: string }> {
-    this.user.trace("publishMixedPost", post.id, dryrun);
+    this.user.log.trace("publishMixedPost", post.id, dryrun);
     const uploadIds = [] as string[];
 
     for (const file of post.getFiles(FileGroup.VIDEO, FileGroup.IMAGE)) {
       if (file.group === "video") {
-        this.user.trace("publishMixedPost", "Processing video", file.name);
+        this.user.log.trace("publishMixedPost", "Processing video", file.name);
         const videoId = (await this.uploadVideo(post.getFilePath(file.name)))[
           "id"
         ];
@@ -303,7 +303,7 @@ export default class Instagram extends Platform {
         );
       }
       if (file.group === "image") {
-        this.user.trace("publishMixedPost", "Processing image", file.name);
+        this.user.log.trace("publishMixedPost", "Processing image", file.name);
         const photoId = (await this.uploadImage(post.getFilePath(file.name)))[
           "id"
         ];
@@ -320,7 +320,7 @@ export default class Instagram extends Platform {
     }
 
     // create carousel
-    this.user.trace("publishMixedPost", "Preparing carousel", uploadIds);
+    this.user.log.trace("publishMixedPost", "Preparing carousel", uploadIds);
     const container = (await this.api.postJson("%USER%/media", {
       media_type: "CAROUSEL",
       caption: post.getCompiledBody(),
@@ -329,7 +329,7 @@ export default class Instagram extends Platform {
       id: string;
     };
     if (!container["id"]) {
-      throw this.user.error(
+      throw this.user.log.error(
         "No id returned for carroussel container ",
         container,
       );
@@ -339,12 +339,12 @@ export default class Instagram extends Platform {
     try {
       await this.checkPostStatus(container.id);
     } catch (e) {
-      throw this.user.error(e);
+      throw this.user.log.error(e);
     }
 
     // publish carousel
     if (!dryrun) {
-      this.user.trace(
+      this.user.log.trace(
         "publishMixedPost",
         "Publishing carousel",
         container["id"],
@@ -355,7 +355,7 @@ export default class Instagram extends Platform {
         id: string;
       };
       if (!response["id"]) {
-        throw this.user.error(
+        throw this.user.log.error(
           "No id returned for igMedia for carroussel",
           response,
         );
@@ -373,7 +373,7 @@ export default class Instagram extends Platform {
    * @returns id of the uploaded photo to use in post attachments
    */
   private async uploadImage(file: string = ""): Promise<{ id: string }> {
-    this.user.trace("Reading file", file);
+    this.user.log.trace("Reading file", file);
     const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
 
@@ -386,7 +386,7 @@ export default class Instagram extends Platform {
     };
 
     if (!result["id"]) {
-      throw this.user.error("No id returned after uploading photo " + file);
+      throw this.user.log.error("No id returned after uploading photo " + file);
     }
     return result;
   }
@@ -410,7 +410,7 @@ export default class Instagram extends Platform {
       picture: string;
     };
     if (!photoData.images?.length) {
-      throw this.user.error("No derivates found for photo " + id);
+      throw this.user.log.error("No derivates found for photo " + id);
     }
 
     // find largest derivative
@@ -418,7 +418,7 @@ export default class Instagram extends Platform {
       return prev && prev.width > current.width ? prev : current;
     });
     if (!largestPhoto["source"]) {
-      throw this.user.error(
+      throw this.user.log.error(
         "Largest derivate for photo " + id + " has no source",
       );
     }
@@ -432,7 +432,7 @@ export default class Instagram extends Platform {
    */
 
   private async uploadVideo(file: string): Promise<{ id: string }> {
-    this.user.trace("Reading file", file);
+    this.user.log.trace("Reading file", file);
     const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
 
@@ -446,7 +446,7 @@ export default class Instagram extends Platform {
     };
 
     if (!result["id"]) {
-      throw this.user.error("No id returned when uploading video");
+      throw this.user.log.error("No id returned when uploading video");
     }
     return result;
   }
@@ -465,7 +465,7 @@ export default class Instagram extends Platform {
     return new Promise((resolve, reject) => {
       const poll = async () => {
         counter++;
-        this.user.trace("getVideoLink", "Polling video source " + counter);
+        this.user.log.trace("getVideoLink", "Polling video source " + counter);
         const videoData = (await api.get(id, {
           fields: "permalink_url,source",
         })) as {
@@ -473,7 +473,7 @@ export default class Instagram extends Platform {
           source: string;
         };
         if (videoData.source) {
-          this.user.trace(
+          this.user.log.trace(
             "getVideoLink",
             "Video source ready",
             videoData.source,
@@ -505,14 +505,17 @@ export default class Instagram extends Platform {
     return new Promise((resolve, reject) => {
       const poll = async () => {
         counter++;
-        this.user.trace("checkPostStatus", "Polling post status " + counter);
+        this.user.log.trace(
+          "checkPostStatus",
+          "Polling post status " + counter,
+        );
         const response = (await api.get(id, {
           fields: "status_code",
         })) as {
           status_code: string;
         };
         if (response.status_code === "FINISHED") {
-          this.user.trace("checkPostStatus", "Post status FINISHED");
+          this.user.log.trace("checkPostStatus", "Post status FINISHED");
           resolve(true);
         } else if (response.status_code === "IN_PROGRESS") {
           if (counter < limit) {
