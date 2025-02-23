@@ -123,10 +123,6 @@ export default class Reddit extends Platform {
             post.getFilePath(srcposter),
             post.getFilePath(dstposter),
           );
-          //await fs.copyFile(
-          //  post.getFilePath(srcposter),
-          //  post.getFilePath(dstposter),
-          //);
           post.removeFiles(FileGroup.IMAGE);
           videoposter = dstposter;
         }
@@ -379,7 +375,6 @@ export default class Reddit extends Platform {
     },
     file: string,
   ): Promise<string> {
-    //const buffer = await fs.readFile(file);
     const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
     const filename = basename(file);

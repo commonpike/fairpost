@@ -154,7 +154,6 @@ export default class ImageSize extends Plugin {
   ): Promise<void> {
     if (file.width && file.size / 1024 >= maxkb) {
       if (file.mimetype !== "image/jpeg") {
-        //console.log(file.mimetype);
         const dst =
           post.platform.assetsFolder +
           "/" +

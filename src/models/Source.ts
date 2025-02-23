@@ -55,14 +55,6 @@ export default class Source {
         "Not a valid source: " + path,
       );
     }
-    //try {
-    //  const stat = await fs.stat(feed.user.homedir+'/'+source.path);
-    //  if (!stat.isDirectory()) {
-    //    throw new Error();
-    //  }
-    //} catch {
-    //  throw feed.user.error(source.id,"getSource","Not a valid source: " + path);
-    //}
     return source;
   }
 
@@ -184,39 +176,8 @@ export default class Source {
       return true;
     });
     return (await files.toArray()).map((file) => basename(file.path));
-
-    //const allFiles = await fs.readdir(this.path);
-    //const files = [] as string[];
-    //const regex = /^[^._]/;
-    //for (const file of allFiles) {
-    //  let valid = file.match(regex) !== null;
-    //  if (valid) {
-    //    const stat = await fs.stat(this.path + "/" + file);
-    //    valid = stat.isFile();
-    //    if (valid) {
-    //      files.push(file);
-    //    }
-    //  }
-    //}
-    //return files;
   }
 
-  //private guessMimeType(filename: string): string {
-  //  const extension = extname(filename).toLowerCase();
-  //  const mimeTypes = {
-  //    ".txt": "text/plain",
-  //    ".png": "image/png",
-  //    ".mov": "video/quicktime",
-  //    ".mp4": "video/mp4",
-  //    ".jpg": "image/jpeg",
-  //    ".jpeg": "image/jpeg",
-  //    ".gif": "image/gif",
-  //  } as { [ext: string]: string };
-  //  if (extension in mimeTypes) {
-  //    return mimeTypes[extension];
-  //  }
-  //  return "application/unknown";
-  //}
 }
 
 export interface FileInfo {

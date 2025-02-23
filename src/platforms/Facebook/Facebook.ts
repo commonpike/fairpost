@@ -203,7 +203,6 @@ export default class Facebook extends Platform {
     const description = post.getCompiledBody("!title");
 
     this.user.trace("Reading file", file);
-    //const rawData = await fs.readFile(file);
     const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
 
@@ -236,7 +235,6 @@ export default class Facebook extends Platform {
     published = false,
   ): Promise<{ id: string }> {
     this.user.trace("Reading file", file);
-    //const rawData = await fs.readFile(file);
     const buffer = await this.user.files.readToBuffer(file);
     const blob = new Blob([buffer]);
 

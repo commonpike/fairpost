@@ -100,10 +100,6 @@ export default class Post {
       this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),
     );
-    //await fs.writeFile(
-    //  this.platform.getPostFilePath(this.source),
-    //  JSON.stringify(data, null, "\t"),
-    //);
   }
 
   /**
@@ -132,7 +128,6 @@ export default class Post {
     } else {
       const assetsPath = this.getFilePath(this.platform.assetsFolder);
       if (!(await this.platform.user.files.directoryExists(assetsPath))) {
-        //await fs.mkdir(assetsPath, { recursive: true });
         await this.platform.user.files.createDirectory(assetsPath);
       }
     }
@@ -153,13 +148,11 @@ export default class Post {
     const textFiles = this.getFiles(FileGroup.TEXT);
 
     if (this.hasFile("body.txt")) {
-      //this.body = await fs.readFile(this.source.path + "/body.txt", "utf8");
       this.body = await this.platform.user.files.readToString(
         this.getFilePath("body.txt"),
       );
     } else if (textFiles.length === 1) {
       const bodyFile = textFiles[0].name;
-      //this.body = await fs.readFile(this.source.path + "/" + bodyFile, "utf8");
       this.body = await this.platform.user.files.readToString(
         this.getFilePath(bodyFile),
       );
@@ -168,19 +161,16 @@ export default class Post {
     }
 
     if (this.hasFile("title.txt")) {
-      //this.title = await fs.readFile(this.source.path + "/title.txt", "utf8");
       this.title = await this.platform.user.files.readToString(
         this.getFilePath("title.txt"),
       );
     } else if (this.hasFile("subject.txt")) {
-      // this.title = await fs.readFile(this.source.path + "/subject.txt", "utf8");
       this.title = await this.platform.user.files.readToString(
         this.getFilePath("subject.txt"),
       );
     }
 
     if (this.hasFile("tags.txt")) {
-      //this.tags = await fs.readFile(this.source.path + "/tags.txt", "utf8")
       this.tags = (
         await this.platform.user.files.readToString(
           this.getFilePath("tags.txt"),
@@ -189,7 +179,6 @@ export default class Post {
     }
     if (this.hasFile("mentions.txt")) {
       this.mentions =
-        // this.mentions = await fs.readFile(this.source.path + "/mentions.txt", "utf8")
         this.mentions = (
           await this.platform.user.files.readToString(
             this.getFilePath("mentions.txt"),
@@ -197,7 +186,6 @@ export default class Post {
         ).split(/\s/);
     }
     if (this.hasFile("geo.txt")) {
-      //this.geo = await fs.readFile(this.source.path + "/geo.txt", "utf8");
       this.geo = await this.platform.user.files.readToString(
         this.getFilePath("geo.txt"),
       );
@@ -453,7 +441,6 @@ export default class Post {
     for (const file of this.getFiles()) {
       if (
         file.original &&
-        //!(await this.fileExists(this.getFilePath(file.original)))
         !(await this.platform.user.files.fileExists(file.original))
       ) {
         this.platform.user.info(
@@ -464,7 +451,6 @@ export default class Post {
         );
         this.removeFile(file.name);
       }
-      //if (!(await this.fileExists(this.getFilePath(file.name)))) {
       if (
         !(await this.platform.user.files.fileExists(
           this.getFilePath(file.name),

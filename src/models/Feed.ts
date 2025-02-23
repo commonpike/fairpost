@@ -61,15 +61,6 @@ export default class Feed {
       const source = await Source.getSource(this, basename(file.path));
       this.cache[source.id] = source;
     }
-    //const paths = (await fs.readdir(this.path)).filter((path) => {
-    //  return !path.startsWith("_") && !path.startsWith(".");
-    //});
-    //for (const path of paths) {
-    //  const stat = await fs.stat(this.path + "/" + path);
-    //  if (stat.isDirectory()) {
-    //    await this.getSource(path);
-    //  }
-    //}
     this.allCached = true;
     return Object.values(this.cache);
   }
