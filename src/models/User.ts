@@ -54,9 +54,9 @@ export default class User {
       process.env.FAIRPOST_USER_HOMEDIR ?? "users/%user%"
     ).replace("%user%", id);
 
+    this.files = new UserFiles(this);
     this.data = new UserData(this);
     this.log = new UserLog(this);
-    this.files = new UserFiles(this);
     this.mapper = new UserMapper(this);
   }
 
