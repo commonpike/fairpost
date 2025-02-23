@@ -9,10 +9,10 @@ to speak with this singleton.
 
 ## Roles, permissions
 
-The callee of those commands constructs the operator and the
+The callee of the Fairpost commands constructs the operator and the
 optional user; the operator is assigned one or more 'roles'
 that will later give it 'permissions' to execute the command.
-Fairpost is the only place where these permissions are checked.
+Fairpost is the main place where these permissions are checked.
 
 ## Class structure
 
