@@ -26,13 +26,13 @@ enum StorageKeys {
   "auth" = "FAIRPOST_STORAGE_AUTH",
 }
 
-export default class Store {
+export default class UserData {
   jsonPath: string;
   jsonData: { [store: string]: { [key: string]: string } } = {};
   user: User;
   /**
-   * Dont call the constructor yourself;
-   * instead, call `await Store.getStore()`
+   * Create a new DataStore.
+   * Dont forgt to call await init() afterwards.
    * @param user
    */
   constructor(user: User) {
@@ -43,22 +43,14 @@ export default class Store {
     );
   }
 
-  /**
-   * getStore
-   *
-   * get a new store and do some async checks and loads.
-   * @param user
-   * @returns new store object
-   */
-  public static async getStore(user: User): Promise<Store> {
-    const store = new Store(user);
-    await store.load();
-    return store;
+  public async init() {
+    await this.load();
   }
 
   public async load() {
     await this.loadJson();
   }
+
   public async save() {
     await this.saveJson();
   }

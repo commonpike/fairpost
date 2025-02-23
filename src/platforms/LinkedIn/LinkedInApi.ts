@@ -36,7 +36,7 @@ export default class LinkedInApi {
     url.pathname = this.LGC_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
 
-    const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
+    const accessToken = this.user.data.get("auth", "LINKEDIN_ACCESS_TOKEN");
 
     this.user.trace("GET", url.href);
     return await fetch(url, {
@@ -45,7 +45,7 @@ export default class LinkedInApi {
         Accept: "application/json",
         Connection: "Keep-Alive",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": this.user.get("app", "OAUTH_USERAGENT"),
+        "User-Agent": this.user.data.get("app", "OAUTH_USERAGENT"),
       },
     })
       .then((res) => handleJsonResponse(res, true))
@@ -71,7 +71,7 @@ export default class LinkedInApi {
     if (search) {
       url.search = search;
     }
-    const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
+    const accessToken = this.user.data.get("auth", "LINKEDIN_ACCESS_TOKEN");
     this.user.trace("POST", url.href);
 
     return await fetch(url, {

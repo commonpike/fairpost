@@ -77,30 +77,34 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
         default:
           switch (this.mapping[field].type) {
             case "string":
-              dto[field] = String(this.user.get("settings", field, ""));
+              dto[field] = String(this.user.data.get("settings", field, ""));
               break;
             case "string[]":
-              dto[field] = String(this.user.get("settings", field, "")).split(
-                ",",
-              );
+              dto[field] = String(
+                this.user.data.get("settings", field, ""),
+              ).split(",");
               break;
             case "boolean":
-              dto[field] = this.user.get("settings", field, "") === "true";
+              dto[field] = this.user.data.get("settings", field, "") === "true";
               break;
             case "integer":
-              dto[field] = parseInt(this.user.get("settings", field, ""));
+              dto[field] = parseInt(this.user.data.get("settings", field, ""));
               break;
             case "float":
-              dto[field] = parseFloat(this.user.get("settings", field, ""));
+              dto[field] = parseFloat(
+                this.user.data.get("settings", field, ""),
+              );
               break;
             case "json":
               if (this.mapping[field].default) {
                 dto[field] = {
                   ...(this.mapping[field].default as object),
-                  ...JSON.parse(this.user.get("settings", field, "{}")),
+                  ...JSON.parse(this.user.data.get("settings", field, "{}")),
                 };
               } else {
-                dto[field] = JSON.parse(this.user.get("settings", field, "{}"));
+                dto[field] = JSON.parse(
+                  this.user.data.get("settings", field, "{}"),
+                );
               }
               break;
           }
@@ -129,20 +133,28 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
               case "string":
               case "integer":
               case "float":
-                this.user.set("settings", field, String(dto[field]));
+                this.user.data.set("settings", field, String(dto[field]));
                 break;
               case "string[]":
-                this.user.set(
+                this.user.data.set(
                   "settings",
                   field,
                   (dto[field] as string[]).join(","),
                 );
                 break;
               case "boolean":
-                this.user.set("settings", field, dto[field] ? "true" : "false");
+                this.user.data.set(
+                  "settings",
+                  field,
+                  dto[field] ? "true" : "false",
+                );
                 break;
               case "json":
-                this.user.set("settings", field, JSON.stringify(dto[field]));
+                this.user.data.set(
+                  "settings",
+                  field,
+                  JSON.stringify(dto[field]),
+                );
                 break;
             }
           }
@@ -151,7 +163,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
         throw this.user.error("Unknown field: " + field);
       }
     }
-    await this.user.save();
+    await this.user.data.save();
     return true;
   }
 }

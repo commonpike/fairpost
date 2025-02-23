@@ -49,7 +49,7 @@ export default class Reddit extends Platform {
 
   constructor(user: User) {
     super(user);
-    this.SUBREDDIT = this.user.get("settings", "REDDIT_SUBREDDIT", "");
+    this.SUBREDDIT = this.user.data.get("settings", "REDDIT_SUBREDDIT", "");
     this.api = new RedditApi(user);
     this.auth = new RedditAuth(user);
     this.mapper = new PlatformMapper(this);
@@ -128,7 +128,7 @@ export default class Reddit extends Platform {
         }
       }
       const userPluginSettings = JSON.parse(
-        this.user.get("settings", "REDDIT_PLUGIN_SETTINGS", "{}"),
+        this.user.data.get("settings", "REDDIT_PLUGIN_SETTINGS", "{}"),
       );
       const pluginSettings = {
         ...this.pluginSettings,

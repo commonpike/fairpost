@@ -29,12 +29,12 @@ export default class YouTubeAuth {
   async refresh() {
     this.user.trace("YouTubeAuth", "refresh");
     const auth = new OAuth2Client(
-      this.user.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
     );
     auth.setCredentials({
-      access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
-      refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
+      access_token: this.user.data.get("auth", "YOUTUBE_ACCESS_TOKEN"),
+      refresh_token: this.user.data.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
     const response = (await auth.refreshAccessToken()) as {
       res?: { data: Credentials };
@@ -63,12 +63,12 @@ export default class YouTubeAuth {
       return this.client;
     }
     const auth = new OAuth2Client(
-      this.user.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
     );
     auth.setCredentials({
-      access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
-      refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
+      access_token: this.user.data.get("auth", "YOUTUBE_ACCESS_TOKEN"),
+      refresh_token: this.user.data.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
     auth.on("tokens", async (creds) => {
       this.user.trace("YouTubeAuth", "tokens event received");
@@ -84,13 +84,13 @@ export default class YouTubeAuth {
    */
   private async requestCode(): Promise<string> {
     this.user.trace("YouTubeAuth", "requestCode");
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     const auth = new OAuth2Client(
-      this.user.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
     const url = auth.generateAuthUrl({
@@ -132,12 +132,12 @@ export default class YouTubeAuth {
   private async exchangeCode(code: string): Promise<Credentials> {
     this.user.trace("YouTubeAuth", "exchangeCode", code);
 
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
 
     const auth = new OAuth2Client(
-      this.user.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
 
@@ -155,19 +155,19 @@ export default class YouTubeAuth {
   private async store(creds: Credentials) {
     this.user.trace("YouTubeAuth", "store");
     if (creds.access_token) {
-      this.user.set("auth", "YOUTUBE_ACCESS_TOKEN", creds.access_token);
+      this.user.data.set("auth", "YOUTUBE_ACCESS_TOKEN", creds.access_token);
     }
     if (creds.expiry_date) {
       const accessExpiry = new Date(creds.expiry_date).toISOString();
-      this.user.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry);
+      this.user.data.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry);
     }
     if (creds.scope) {
-      this.user.set("auth", "YOUTUBE_SCOPE", creds.scope);
+      this.user.data.set("auth", "YOUTUBE_SCOPE", creds.scope);
     }
     if (creds.refresh_token) {
-      this.user.set("auth", "YOUTUBE_REFRESH_TOKEN", creds.refresh_token);
+      this.user.data.set("auth", "YOUTUBE_REFRESH_TOKEN", creds.refresh_token);
     }
-    await this.user.save();
+    await this.user.data.save();
   }
 }
 

@@ -69,15 +69,15 @@ export default class Twitter extends Platform {
   async test() {
     this.user.trace("Twitter.test: get oauth1 api");
     const client1 = new TwitterApi({
-      appKey: this.user.get("app", "TWITTER_OA1_API_KEY"),
-      appSecret: this.user.get("app", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: this.user.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: this.user.get("app", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.data.get("app", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.data.get("app", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.data.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.data.get("app", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const creds1 = await client1.v1.verifyCredentials();
     this.user.trace("Twitter.test: get oauth2 api");
     const client2 = new TwitterApi(
-      this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+      this.user.data.get("auth", "TWITTER_ACCESS_TOKEN"),
     );
     const creds2 = await client2.v2.me();
     return {
@@ -103,7 +103,7 @@ export default class Twitter extends Platform {
     const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
-        this.user.get("settings", "TWITTER_PLUGIN_SETTINGS", "{}"),
+        this.user.data.get("settings", "TWITTER_PLUGIN_SETTINGS", "{}"),
       );
       const pluginSettings = {
         ...this.pluginSettings,
@@ -192,7 +192,7 @@ export default class Twitter extends Platform {
     this.user.trace("Twitter.publishTextPost", post.id, dryrun);
     if (!dryrun) {
       const client2 = new TwitterApi(
-        this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+        this.user.data.get("auth", "TWITTER_ACCESS_TOKEN"),
       );
       const result = await client2.v2.tweet({
         text: post.getCompiledBody(),
@@ -227,10 +227,10 @@ export default class Twitter extends Platform {
     this.user.trace("Twitter.publishImagesPost", post.id, dryrun);
 
     const client1 = new TwitterApi({
-      appKey: this.user.get("app", "TWITTER_OA1_API_KEY"),
-      appSecret: this.user.get("app", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: this.user.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: this.user.get("app", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.data.get("app", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.data.get("app", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.data.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.data.get("app", "TWITTER_OA1_ACCESS_SECRET"),
     });
     // eslint-disable-next-line
     const mediaIds = new Array() as
@@ -239,7 +239,7 @@ export default class Twitter extends Platform {
       | [string, string, string]
       | [string, string, string, string];
 
-    const additionalOwner = this.user.get(
+    const additionalOwner = this.user.data.get(
       "settings",
       "TWITTER_OA1_ADDITIONAL_OWNER",
       "",
@@ -266,7 +266,7 @@ export default class Twitter extends Platform {
     }
 
     const client2 = new TwitterApi(
-      this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+      this.user.data.get("auth", "TWITTER_ACCESS_TOKEN"),
     );
 
     if (!dryrun) {

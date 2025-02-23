@@ -81,7 +81,7 @@ export default class Facebook extends Platform {
     const post = await super.preparePost(source);
     if (post && post.files) {
       const userPluginSettings = JSON.parse(
-        this.user.get("settings", "FACEBOOK_PLUGIN_SETTINGS", "{}"),
+        this.user.data.get("settings", "FACEBOOK_PLUGIN_SETTINGS", "{}"),
       );
       const pluginSettings = {
         ...this.pluginSettings,
@@ -149,7 +149,7 @@ export default class Facebook extends Platform {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
         message: post.getCompiledBody(),
-        published: this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        published: this.user.data.get("settings", "FACEBOOK_PUBLISH_POSTS"),
       })) as { id: string };
     }
     return { id: "-99" };
@@ -177,7 +177,7 @@ export default class Facebook extends Platform {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
         message: post.getCompiledBody(),
-        published: this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        published: this.user.data.get("settings", "FACEBOOK_PUBLISH_POSTS"),
         attached_media: attachments,
       })) as { id: string };
     }
@@ -209,7 +209,10 @@ export default class Facebook extends Platform {
     const body = new FormData();
     body.set("title", title);
     body.set("description", description);
-    body.set("published", this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"));
+    body.set(
+      "published",
+      this.user.data.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+    );
     body.set("source", blob, basename(file));
 
     if (!dryrun) {

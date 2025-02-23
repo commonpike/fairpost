@@ -57,7 +57,7 @@ export default class LinkedIn extends Platform {
     this.mapper = new PlatformMapper(this);
     this.POST_AUTHOR =
       "urn:li:organization:" +
-      this.user.get("settings", "LINKEDIN_COMPANY_ID", "");
+      this.user.data.get("settings", "LINKEDIN_COMPANY_ID", "");
   }
 
   /** @inheritdoc */
@@ -82,7 +82,7 @@ export default class LinkedIn extends Platform {
     const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
-        this.user.get("settings", "LINKEDIN_PLUGIN_SETTINGS", "{}"),
+        this.user.data.get("settings", "LINKEDIN_PLUGIN_SETTINGS", "{}"),
       );
       const pluginSettings = {
         ...this.pluginSettings,
@@ -379,7 +379,7 @@ export default class LinkedIn extends Platform {
     this.user.trace("LinkedIn.uploadImage");
     const rawData = await this.user.files.readToBuffer(file);
     this.user.trace("PUT", leashUrl);
-    const accessToken = this.user.get("auth", "LINKEDIN_ACCESS_TOKEN");
+    const accessToken = this.user.data.get("auth", "LINKEDIN_ACCESS_TOKEN");
     return await fetch(leashUrl, {
       method: "PUT",
       headers: {

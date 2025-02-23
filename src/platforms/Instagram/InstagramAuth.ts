@@ -9,29 +9,29 @@ export default class InstagramAuth extends FacebookAuth {
 
   async setup() {
     const code = await this.requestCode(
-      this.user.get("app", "INSTAGRAM_APP_ID"),
+      this.user.data.get("app", "INSTAGRAM_APP_ID"),
     );
 
     const accessToken = await this.exchangeCode(
       code,
-      this.user.get("app", "INSTAGRAM_APP_ID"),
-      this.user.get("app", "INSTAGRAM_APP_SECRET"),
+      this.user.data.get("app", "INSTAGRAM_APP_ID"),
+      this.user.data.get("app", "INSTAGRAM_APP_SECRET"),
     );
 
     const pageToken = await this.getLLPageToken(
-      this.user.get("app", "INSTAGRAM_APP_ID"),
-      this.user.get("app", "INSTAGRAM_APP_SECRET"),
-      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.data.get("app", "INSTAGRAM_APP_ID"),
+      this.user.data.get("app", "INSTAGRAM_APP_SECRET"),
+      this.user.data.get("settings", "INSTAGRAM_PAGE_ID"),
       accessToken,
     );
 
-    this.user.set("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN", pageToken);
-    await this.user.save();
+    this.user.data.set("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN", pageToken);
+    await this.user.data.save();
   }
 
   protected async requestCode(clientId: string): Promise<string> {
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url

@@ -23,7 +23,7 @@ export default class Feed {
 
   constructor(user: User) {
     this.user = user;
-    this.path = this.user.get("settings", "USER_FEEDPATH", "feed");
+    this.path = this.user.data.get("settings", "USER_FEEDPATH", "feed");
     this.id = this.user.id + ":feed";
     this.mapper = new FeedMapper(this);
   }

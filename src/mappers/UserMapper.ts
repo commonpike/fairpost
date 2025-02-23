@@ -61,7 +61,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
           dto[field] = this.user.homedir;
           break;
         case "loglevel":
-          dto[field] = this.user.get("settings", "LOGGER_LEVEL");
+          dto[field] = this.user.data.get("settings", "LOGGER_LEVEL");
           break;
       }
     }
@@ -84,14 +84,18 @@ export default class UserMapper extends AbstractMapper<UserDto> {
             throw this.user.error("Cannot set ID: unimplemented");
             break;
           case "loglevel":
-            this.user.set("settings", "LOGGER_LEVEL", dto[field] as string);
+            this.user.data.set(
+              "settings",
+              "LOGGER_LEVEL",
+              dto[field] as string,
+            );
             break;
         }
       } else {
         throw this.user.error("Unknown field: " + field);
       }
     }
-    await this.user.save();
+    await this.user.data.save();
     return true;
   }
 }

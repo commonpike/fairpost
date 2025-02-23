@@ -82,7 +82,7 @@ export default class YouTube extends Platform {
     const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
-        this.user.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),
+        this.user.data.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),
       );
       const pluginSettings = {
         ...this.pluginSettings,
@@ -198,7 +198,7 @@ export default class YouTube extends Platform {
           title: post.title,
           description: post.getCompiledBody("!title"),
           tags: post.tags, // both in body and separate
-          categoryId: this.user.get("settings", "YOUTUBE_CATEGORY", ""),
+          categoryId: this.user.data.get("settings", "YOUTUBE_CATEGORY", ""),
           defaultLanguage: this.defaultLanguage,
         },
         status: {
@@ -206,7 +206,7 @@ export default class YouTube extends Platform {
           license: this.license,
           publicStatsViewable: this.publicStatsViewable,
           selfDeclaredMadeForKids: this.selfDeclaredMadeForKids,
-          privacyStatus: this.user.get("settings", "YOUTUBE_PRIVACY"),
+          privacyStatus: this.user.data.get("settings", "YOUTUBE_PRIVACY"),
         },
       },
       media: {

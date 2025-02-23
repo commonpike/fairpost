@@ -94,7 +94,7 @@ export default class Instagram extends Platform {
       }
       if (post.valid) {
         const userPluginSettings = JSON.parse(
-          this.user.get("settings", "INSTAGRAM_PLUGIN_SETTINGS", "{}"),
+          this.user.data.get("settings", "INSTAGRAM_PLUGIN_SETTINGS", "{}"),
         );
         const pluginSettings = {
           ...this.pluginSettings,

@@ -11,7 +11,7 @@ import { PlatformId } from "../platforms/index.ts";
 
 import Feed from "./Feed.ts";
 import Platform from "./Platform.ts";
-import Store from "./Store.ts";
+import UserData from "./UserData.ts";
 
 import UserMapper from "../mappers/UserMapper.ts";
 
@@ -41,7 +41,7 @@ export default class User {
   public files: FileStorage;
   public mapper: UserMapper;
 
-  private data: Store | undefined;
+  public data: UserData;
   private logger: log4js.Logger | undefined = undefined;
   private static globalFS: FileStorage | undefined = undefined;
 
@@ -55,6 +55,9 @@ export default class User {
     this.homedir = (
       process.env.FAIRPOST_USER_HOMEDIR ?? "users/%user%"
     ).replace("%user%", id);
+
+    this.data = new UserData(this);
+
     switch (process.env.FAIRPOST_FILE_SYSTEM) {
       default: {
         const adapter = new LocalStorageAdapter(
@@ -78,7 +81,7 @@ export default class User {
     if (!(await user.files.directoryExists("."))) {
       throw new Error("No such user: " + id);
     }
-    user.data = await Store.getStore(user);
+    await user.data.init();
     user.logger = await user.getLogger();
     return user;
   }
@@ -136,8 +139,8 @@ export default class User {
     }
 
     const user = await User.getUser(newUserId);
-    user.set("settings", "FEED_PLATFORMS", "");
-    await user.save();
+    user.data.set("settings", "FEED_PLATFORMS", "");
+    await user.data.save();
     for (const msg of log) {
       user.info(msg);
     }

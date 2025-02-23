@@ -31,7 +31,7 @@ export default class FacebookApi {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%PAGE%",
-      this.user.get("settings", "FACEBOOK_PAGE_ID"),
+      this.user.data.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -43,7 +43,7 @@ export default class FacebookApi {
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + this.user.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.data.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
     })
       .then((res) => handleJsonResponse(res))
@@ -63,7 +63,7 @@ export default class FacebookApi {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%PAGE%",
-      this.user.get("settings", "FACEBOOK_PAGE_ID"),
+      this.user.data.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -75,7 +75,7 @@ export default class FacebookApi {
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization:
-          "Bearer " + this.user.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.data.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
       body: JSON.stringify(body),
     })
@@ -93,7 +93,7 @@ export default class FacebookApi {
   public async postForm(endpoint: string, body: FormData): Promise<object> {
     endpoint = endpoint.replace(
       "%PAGE%",
-      this.user.get("settings", "FACEBOOK_PAGE_ID"),
+      this.user.data.get("settings", "FACEBOOK_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
@@ -105,7 +105,7 @@ export default class FacebookApi {
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + this.user.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.data.get("auth", "FACEBOOK_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })

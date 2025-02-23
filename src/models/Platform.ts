@@ -30,7 +30,9 @@ export default class Platform {
   constructor(user: User) {
     this.user = user;
     this.id = (this.constructor as typeof Platform).id();
-    this.interval = Number(this.user.get("settings", "FEED_INTERVAL", "7"));
+    this.interval = Number(
+      this.user.data.get("settings", "FEED_INTERVAL", "7"),
+    );
     this.mapper = new PlatformMapper(this);
   }
 
