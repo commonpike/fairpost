@@ -32,18 +32,21 @@ export default class InstagramApi {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      this.user.get("settings", "INSTAGRAM_USER_ID"),
+      this.user.data.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.data.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
-    const accessToken = this.user.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN");
-    this.user.trace("GET", url.href);
+    const accessToken = this.user.data.get(
+      "auth",
+      "INSTAGRAM_PAGE_ACCESS_TOKEN",
+    );
+    this.user.log.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: accessToken
@@ -73,23 +76,23 @@ export default class InstagramApi {
   ): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      this.user.get("settings", "INSTAGRAM_USER_ID"),
+      this.user.data.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.data.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
     return await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization:
-          "Bearer " + this.user.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.data.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: JSON.stringify(body),
     })
@@ -108,23 +111,23 @@ export default class InstagramApi {
   public async postForm(endpoint: string, body: FormData): Promise<object> {
     endpoint = endpoint.replace(
       "%USER%",
-      this.user.get("settings", "INSTAGRAM_USER_ID"),
+      this.user.data.get("settings", "INSTAGRAM_USER_ID"),
     );
     endpoint = endpoint.replace(
       "%PAGE%",
-      this.user.get("settings", "INSTAGRAM_PAGE_ID"),
+      this.user.data.get("settings", "INSTAGRAM_PAGE_ID"),
     );
 
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         Authorization:
-          "Bearer " + this.user.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
+          "Bearer " + this.user.data.get("auth", "INSTAGRAM_PAGE_ACCESS_TOKEN"),
       },
       body: body,
     })

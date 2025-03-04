@@ -109,7 +109,7 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
             break;
         }
       } else {
-        throw this.user.error("Unknown field: " + field);
+        throw this.user.log.error("Unknown field: " + field);
       }
     }
     return true;

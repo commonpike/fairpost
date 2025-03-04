@@ -26,10 +26,10 @@ export default class TwitterAuth {
    */
   async refresh() {
     const tokens = (await this.getClient().refreshOAuth2Token(
-      this.user.get("auth", "TWITTER_REFRESH_TOKEN"),
+      this.user.data.get("auth", "TWITTER_REFRESH_TOKEN"),
     )) as TokenResponse;
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "TwitterAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -46,8 +46,8 @@ export default class TwitterAuth {
       return this.client;
     }
     this.client = new TwitterApi({
-      clientId: this.user.get("app", "TWITTER_CLIENT_ID"),
-      clientSecret: this.user.get("app", "TWITTER_CLIENT_SECRET"),
+      clientId: this.user.data.get("app", "TWITTER_CLIENT_ID"),
+      clientSecret: this.user.data.get("app", "TWITTER_CLIENT_SECRET"),
     });
     return this.client;
   }
@@ -57,8 +57,8 @@ export default class TwitterAuth {
    * @returns - {code, verifier}
    */
   private async requestCode(): Promise<{ code: string; verifier: string }> {
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const { url, codeVerifier, state } =
       this.getClient().generateOAuth2AuthLink(
         OAuth2Service.getCallbackUrl(clientHost, clientPort),
@@ -74,15 +74,15 @@ export default class TwitterAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.log.error("TwitterApi.requestCode: " + msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw this.user.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.log.error("TwitterApi.requestCode: " + msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw this.user.error("TwitterApi.requestCode: " + msg, result);
+      throw this.user.log.error("TwitterApi.requestCode: " + msg, result);
     }
     return {
       code: result["code"] as string,
@@ -100,15 +100,15 @@ export default class TwitterAuth {
     code: string,
     verifier: string,
   ): Promise<TokenResponse> {
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const tokens = (await this.getClient().loginWithOAuth2({
       code: code,
       codeVerifier: verifier,
       redirectUri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
     })) as TokenResponse;
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "TitterAuth.requestAccessToken: reponse is not a valid TokenResponse",
       );
     }
@@ -121,14 +121,14 @@ export default class TwitterAuth {
    * @param tokens - the tokens to store
    */
   private async store(tokens: TokenResponse) {
-    this.user.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
+    this.user.data.set("auth", "TWITTER_ACCESS_TOKEN", tokens["accessToken"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expiresIn"] * 1000,
     ).toISOString();
-    this.user.set("auth", "TWITTER_ACCESS_EXPIRY", accessExpiry);
+    this.user.data.set("auth", "TWITTER_ACCESS_EXPIRY", accessExpiry);
 
-    this.user.set("auth", "TWITTER_REFRESH_TOKEN", tokens["refreshToken"]);
-    await this.user.save();
+    this.user.data.set("auth", "TWITTER_REFRESH_TOKEN", tokens["refreshToken"]);
+    await this.user.data.save();
   }
 }
 

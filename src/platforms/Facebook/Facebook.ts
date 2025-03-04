@@ -77,11 +77,11 @@ export default class Facebook extends Platform {
 
   /** @inheritdoc */
   async preparePost(source: Source): Promise<Post> {
-    this.user.trace("Facebook.preparePost", source.id);
+    this.user.log.trace("Facebook.preparePost", source.id);
     const post = await super.preparePost(source);
     if (post && post.files) {
       const userPluginSettings = JSON.parse(
-        this.user.get("settings", "FACEBOOK_PLUGIN_SETTINGS", "{}"),
+        this.user.data.get("settings", "FACEBOOK_PLUGIN_SETTINGS", "{}"),
       );
       const pluginSettings = {
         ...this.pluginSettings,
@@ -98,7 +98,7 @@ export default class Facebook extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    this.user.trace("Facebook.publishPost", post.id, dryrun);
+    this.user.log.trace("Facebook.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as { id: string };
     let error = undefined as Error | undefined;
@@ -149,7 +149,7 @@ export default class Facebook extends Platform {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
         message: post.getCompiledBody(),
-        published: this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        published: this.user.data.get("settings", "FACEBOOK_PUBLISH_POSTS"),
       })) as { id: string };
     }
     return { id: "-99" };
@@ -177,7 +177,7 @@ export default class Facebook extends Platform {
     if (!dryrun) {
       return (await this.api.postJson("%PAGE%/feed", {
         message: post.getCompiledBody(),
-        published: this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+        published: this.user.data.get("settings", "FACEBOOK_PUBLISH_POSTS"),
         attached_media: attachments,
       })) as { id: string };
     }
@@ -202,14 +202,17 @@ export default class Facebook extends Platform {
     const title = post.title;
     const description = post.getCompiledBody("!title");
 
-    this.user.trace("Reading file", file);
-    const buffer = await this.user.files.readToBuffer(file);
+    this.user.log.trace("Reading file", file);
+    const buffer = await this.user.files.readBuffer(file);
     const blob = new Blob([buffer]);
 
     const body = new FormData();
     body.set("title", title);
     body.set("description", description);
-    body.set("published", this.user.get("settings", "FACEBOOK_PUBLISH_POSTS"));
+    body.set(
+      "published",
+      this.user.data.get("settings", "FACEBOOK_PUBLISH_POSTS"),
+    );
     body.set("source", blob, basename(file));
 
     if (!dryrun) {
@@ -217,7 +220,7 @@ export default class Facebook extends Platform {
         id: string;
       };
       if (!result["id"]) {
-        throw this.user.error("No id returned when uploading video");
+        throw this.user.log.error("No id returned when uploading video");
       }
       return result;
     }
@@ -234,8 +237,8 @@ export default class Facebook extends Platform {
     file: string = "",
     published = false,
   ): Promise<{ id: string }> {
-    this.user.trace("Reading file", file);
-    const buffer = await this.user.files.readToBuffer(file);
+    this.user.log.trace("Reading file", file);
+    const buffer = await this.user.files.readBuffer(file);
     const blob = new Blob([buffer]);
 
     const body = new FormData();
@@ -247,7 +250,7 @@ export default class Facebook extends Platform {
     };
 
     if (!result["id"]) {
-      throw this.user.error("No id returned when uploading photo");
+      throw this.user.log.error("No id returned when uploading photo");
     }
     return result;
   }

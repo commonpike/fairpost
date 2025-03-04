@@ -27,14 +27,14 @@ export default class YouTubeAuth {
    * Refresh YouTube  tokens
    */
   async refresh() {
-    this.user.trace("YouTubeAuth", "refresh");
+    this.user.log.trace("YouTubeAuth", "refresh");
     const auth = new OAuth2Client(
-      this.user.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
     );
     auth.setCredentials({
-      access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
-      refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
+      access_token: this.user.data.get("auth", "YOUTUBE_ACCESS_TOKEN"),
+      refresh_token: this.user.data.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
     const response = (await auth.refreshAccessToken()) as {
       res?: { data: Credentials };
@@ -47,7 +47,7 @@ export default class YouTubeAuth {
       await this.store(response.credentials);
       return;
     }
-    throw this.user.error(
+    throw this.user.log.error(
       "YouTubeAuth.refresh",
       "not a valid response",
       response,
@@ -63,15 +63,15 @@ export default class YouTubeAuth {
       return this.client;
     }
     const auth = new OAuth2Client(
-      this.user.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
     );
     auth.setCredentials({
-      access_token: this.user.get("auth", "YOUTUBE_ACCESS_TOKEN"),
-      refresh_token: this.user.get("auth", "YOUTUBE_REFRESH_TOKEN"),
+      access_token: this.user.data.get("auth", "YOUTUBE_ACCESS_TOKEN"),
+      refresh_token: this.user.data.get("auth", "YOUTUBE_REFRESH_TOKEN"),
     });
     auth.on("tokens", async (creds) => {
-      this.user.trace("YouTubeAuth", "tokens event received");
+      this.user.log.trace("YouTubeAuth", "tokens event received");
       await this.store(creds);
     });
     this.client = new youtube_v3.Youtube({ auth });
@@ -83,14 +83,14 @@ export default class YouTubeAuth {
    * @returns - code
    */
   private async requestCode(): Promise<string> {
-    this.user.trace("YouTubeAuth", "requestCode");
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    this.user.log.trace("YouTubeAuth", "requestCode");
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     const auth = new OAuth2Client(
-      this.user.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
     const url = auth.generateAuthUrl({
@@ -111,15 +111,15 @@ export default class YouTubeAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -130,20 +130,20 @@ export default class YouTubeAuth {
    * @returns - Credentials
    */
   private async exchangeCode(code: string): Promise<Credentials> {
-    this.user.trace("YouTubeAuth", "exchangeCode", code);
+    this.user.log.trace("YouTubeAuth", "exchangeCode", code);
 
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
 
     const auth = new OAuth2Client(
-      this.user.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.get("app", "YOUTUBE_CLIENT_SECRET"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
+      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
       OAuth2Service.getCallbackUrl(clientHost, clientPort),
     );
 
     const response = await auth.getToken(code);
     if (!isCredentials(response.tokens)) {
-      throw this.user.error("Invalid response for getToken", response);
+      throw this.user.log.error("Invalid response for getToken", response);
     }
     return response.tokens;
   }
@@ -153,21 +153,21 @@ export default class YouTubeAuth {
    * @param creds - contains the tokens to store
    */
   private async store(creds: Credentials) {
-    this.user.trace("YouTubeAuth", "store");
+    this.user.log.trace("YouTubeAuth", "store");
     if (creds.access_token) {
-      this.user.set("auth", "YOUTUBE_ACCESS_TOKEN", creds.access_token);
+      this.user.data.set("auth", "YOUTUBE_ACCESS_TOKEN", creds.access_token);
     }
     if (creds.expiry_date) {
       const accessExpiry = new Date(creds.expiry_date).toISOString();
-      this.user.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry);
+      this.user.data.set("auth", "YOUTUBE_ACCESS_EXPIRY", accessExpiry);
     }
     if (creds.scope) {
-      this.user.set("auth", "YOUTUBE_SCOPE", creds.scope);
+      this.user.data.set("auth", "YOUTUBE_SCOPE", creds.scope);
     }
     if (creds.refresh_token) {
-      this.user.set("auth", "YOUTUBE_REFRESH_TOKEN", creds.refresh_token);
+      this.user.data.set("auth", "YOUTUBE_REFRESH_TOKEN", creds.refresh_token);
     }
-    await this.user.save();
+    await this.user.data.save();
   }
 }
 

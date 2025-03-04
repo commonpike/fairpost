@@ -32,13 +32,13 @@ export default class LinkedInAuth {
   async refresh() {
     const tokens = (await this.post("accessToken", {
       grant_type: "refresh_token",
-      refresh_token: this.user.get("auth", "LINKEDIN_REFRESH_TOKEN"),
-      client_id: this.user.get("app", "LINKEDIN_CLIENT_ID"),
-      client_secret: this.user.get("app", "LINKEDIN_CLIENT_SECRET"),
+      refresh_token: this.user.data.get("auth", "LINKEDIN_REFRESH_TOKEN"),
+      client_id: this.user.data.get("app", "LINKEDIN_CLIENT_ID"),
+      client_secret: this.user.data.get("app", "LINKEDIN_CLIENT_SECRET"),
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "LinkedInAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -51,10 +51,10 @@ export default class LinkedInAuth {
    * @returns - code
    */
   private async requestCode(): Promise<string> {
-    this.user.trace("LinkedInAuth", "requestCode");
-    const clientId = this.user.get("app", "LINKEDIN_CLIENT_ID");
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    this.user.log.trace("LinkedInAuth", "requestCode");
+    const clientId = this.user.data.get("app", "LINKEDIN_CLIENT_ID");
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -82,15 +82,15 @@ export default class LinkedInAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -101,21 +101,21 @@ export default class LinkedInAuth {
    * @returns - TokenResponse
    */
   private async exchangeCode(code: string): Promise<TokenResponse> {
-    this.user.trace("LinkedInAuth", "exchangeCode", code);
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    this.user.log.trace("LinkedInAuth", "exchangeCode", code);
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.post("accessToken", {
       grant_type: "authorization_code",
       code: code,
-      client_id: this.user.get("app", "LINKEDIN_CLIENT_ID"),
-      client_secret: this.user.get("app", "LINKEDIN_CLIENT_SECRET"),
+      client_id: this.user.data.get("app", "LINKEDIN_CLIENT_ID"),
+      client_secret: this.user.data.get("app", "LINKEDIN_CLIENT_SECRET"),
       redirect_uri: redirectUri,
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error("Invalid TokenResponse", tokens);
+      throw this.user.log.error("Invalid TokenResponse", tokens);
     }
 
     return tokens;
@@ -126,20 +126,24 @@ export default class LinkedInAuth {
    * @param tokens - the tokens to store
    */
   private async store(tokens: TokenResponse) {
-    this.user.set("auth", "LINKEDIN_ACCESS_TOKEN", tokens["access_token"]);
+    this.user.data.set("auth", "LINKEDIN_ACCESS_TOKEN", tokens["access_token"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expires_in"] * 1000,
     ).toISOString();
-    this.user.set("auth", "LINKEDIN_ACCESS_EXPIRY", accessExpiry);
+    this.user.data.set("auth", "LINKEDIN_ACCESS_EXPIRY", accessExpiry);
 
-    this.user.set("auth", "LINKEDIN_REFRESH_TOKEN", tokens["refresh_token"]);
+    this.user.data.set(
+      "auth",
+      "LINKEDIN_REFRESH_TOKEN",
+      tokens["refresh_token"],
+    );
     const refreshExpiry = new Date(
       new Date().getTime() + tokens["refresh_token_expires_in"] * 1000,
     ).toISOString();
-    this.user.set("auth", "LINKEDIN_REFRESH_EXPIRY", refreshExpiry);
+    this.user.data.set("auth", "LINKEDIN_REFRESH_EXPIRY", refreshExpiry);
 
-    this.user.set("auth", "LINKEDIN_SCOPE", tokens["scope"]);
-    await this.user.save();
+    this.user.data.set("auth", "LINKEDIN_SCOPE", tokens["scope"]);
+    await this.user.data.save();
   }
 
   // API implementation -------------------
@@ -156,7 +160,7 @@ export default class LinkedInAuth {
   ): Promise<object> {
     const url = new URL("https://www.linkedin.com");
     url.pathname = "oauth/" + this.API_VERSION + "/" + endpoint;
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",

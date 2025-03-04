@@ -32,7 +32,7 @@ export default class Plugin {
    */
 
   async process(post: Post): Promise<void> {
-    throw post.platform.user.error(
+    throw post.platform.user.log.error(
       this.id,
       "process() not implemented. Read the docs in the docs folder.",
     );

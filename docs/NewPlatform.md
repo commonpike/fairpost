@@ -125,9 +125,9 @@ storage uses `.env`, it is read-only.
 ```php
 <?php
     ...
-    this.user.set('auth', 'foo', 'bar');
-    console.log(this.user.get('auth', 'foo')); // bar
-    await this.user.save(); 
+    this.user.data.set('auth', 'foo', 'bar');
+    console.log(this.user.data.get('auth', 'foo')); // bar
+    await this.user.data.save(); 
 ```
 ### Using User.trace(), User.info(), User.error() etc.
 
@@ -140,8 +140,8 @@ for you to throw:
 <?php
 
     ...
-    this.user.trace('foo', 'bar', 'quz');
-    throw this.user.error('foo', 'bar', 'quz');
+    this.user.log.trace('foo', 'bar', 'quz');
+    throw this.user.log.error('foo', 'bar', 'quz');
 ```
 
 ### Using Plugins to prepare your Post
@@ -251,9 +251,9 @@ export default class FooBarAuth {
    * @returns - code
    */
   private async requestCode(): Promise<string> {
-    const clientId = this.user.get("settings", "FOOBAR_CLIENT_ID");
-     const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
+    const clientId = this.user.data.get("settings", "FOOBAR_CLIENT_ID");
+     const clientHost = this.user.data.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("settings", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -297,15 +297,15 @@ export default class FooBarAuth {
    * @returns - TokenResponse
    */
   private async exchangeCode(code: string) {
-    const clientHost = this.user.get("settings", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("settings", "OAUTH_PORT"));
+    const clientHost = this.user.data.get("settings", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("settings", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost,clientPort);
     // implement your own post method ... 
     const tokens = (await this.post("token", {
       grant_type: "authorization_code",
       code: code,
-      client_id: this.user.get("settings", "FOOBAR_CLIENT_ID"),
-      client_secret: this.user.get("settings", "FOOBAR_CLIENT_SECRET"),
+      client_id: this.user.data.get("settings", "FOOBAR_CLIENT_ID"),
+      client_secret: this.user.data.get("settings", "FOOBAR_CLIENT_SECRET"),
       redirect_uri: redirectUri,
     }));
     if (!('accessToken' in tokens)) {
@@ -320,8 +320,8 @@ export default class FooBarAuth {
    * @param tokens - the tokens to store
    */
   private async store(tokens) {
-    this.user.set("auth", "FOOBAR_ACCESS_TOKEN", tokens["access_token"]);
-    await this.user.save();
+    this.user.data.set("auth", "FOOBAR_ACCESS_TOKEN", tokens["access_token"]);
+    await this.user.data.save();
   }
 
 }

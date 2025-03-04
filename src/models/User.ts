@@ -1,8 +1,5 @@
 import { resolve } from "path";
 
-import log4js from "log4js";
-import log4jsConfig from "../config/log4js.json" with { type: "json" };
-
 import { FileStorage } from "@flystorage/file-storage";
 import { LocalStorageAdapter } from "@flystorage/local-fs";
 
@@ -11,8 +8,9 @@ import { PlatformId } from "../platforms/index.ts";
 
 import Feed from "./Feed.ts";
 import Platform from "./Platform.ts";
-import Store from "./Store.ts";
-
+import UserData from "./User/UserData.ts";
+import UserFiles from "./User/UserFiles.ts";
+import UserLog from "./User/UserLog.ts";
 import UserMapper from "../mappers/UserMapper.ts";
 
 /**
@@ -22,27 +20,27 @@ import UserMapper from "../mappers/UserMapper.ts";
  * - with zero or more platforms
  * - with a private logger for this account, seperate from
  *   the Fairpost logger.
- * - with a mapper to create a dto;
+ * - with a data store for key / value pairs
+ * - with a file storage for the homedir
+ * - with a mapper to create a dto
  *
- * Also contains getters and setters for key / value pairs,
- * using a store.
  *
  */
 
 export default class User {
   public id: string;
   public homedir: string = "";
-  public feed: Feed | undefined;
-  public platforms:
+  private feed: Feed | undefined;
+  private platforms:
     | {
         [id in PlatformId]?: Platform;
       }
     | undefined = undefined;
-  public files: FileStorage;
+  public files: UserFiles;
   public mapper: UserMapper;
 
-  private data: Store | undefined;
-  private logger: log4js.Logger | undefined = undefined;
+  public data: UserData;
+  public log: UserLog;
   private static globalFS: FileStorage | undefined = undefined;
 
   /**
@@ -55,15 +53,11 @@ export default class User {
     this.homedir = (
       process.env.FAIRPOST_USER_HOMEDIR ?? "users/%user%"
     ).replace("%user%", id);
-    switch (process.env.FAIRPOST_FILE_SYSTEM) {
-      default: {
-        const adapter = new LocalStorageAdapter(
-          resolve(import.meta.dirname + "/../../", this.homedir),
-        );
-        this.files = new FileStorage(adapter);
-        this.mapper = new UserMapper(this);
-      }
-    }
+
+    this.files = new UserFiles(this);
+    this.data = new UserData(this);
+    this.log = new UserLog(this);
+    this.mapper = new UserMapper(this);
   }
 
   /**
@@ -75,11 +69,9 @@ export default class User {
    */
   public static async getUser(id: string): Promise<User> {
     const user = new User(id);
-    if (!(await user.files.directoryExists("."))) {
-      throw new Error("No such user: " + id);
-    }
-    user.data = await Store.getStore(user);
-    user.logger = await user.getLogger();
+    await user.files.init();
+    await user.data.init();
+    await user.log.init();
     return user;
   }
 
@@ -136,12 +128,12 @@ export default class User {
     }
 
     const user = await User.getUser(newUserId);
-    user.set("settings", "FEED_PLATFORMS", "");
-    await user.save();
+    user.data.set("settings", "FEED_PLATFORMS", "");
+    await user.data.save();
     for (const msg of log) {
-      user.info(msg);
+      user.log.info(msg);
     }
-    user.info("User created: " + newUserId);
+    user.log.info("User created: " + newUserId);
     return user;
   }
 
@@ -162,8 +154,10 @@ export default class User {
    * active
    */
   private loadPlatforms(): void {
-    this.trace("User", "loadPlatforms");
-    const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
+    this.log.trace("User", "loadPlatforms");
+    const platformIds = this.data
+      .get("settings", "FEED_PLATFORMS", "")
+      .split(",");
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
         if (platformIds.includes(platformClass.id())) {
@@ -184,13 +178,13 @@ export default class User {
    * @returns platform given by id
    */
   getPlatform(platformId: PlatformId): Platform {
-    this.trace("User", "getPlatform", platformId);
+    this.log.trace("User", "getPlatform", platformId);
     if (this.platforms === undefined) {
       this.loadPlatforms();
     }
     const platform = this.platforms?.[platformId];
     if (!platform) {
-      throw this.error("Unknown or disabled platform: " + platformId);
+      throw this.log.error("Unknown or disabled platform: " + platformId);
     }
     return platform;
   }
@@ -201,7 +195,7 @@ export default class User {
    * @returns platforms given by ids
    */
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
-    this.trace("User", "getPlatforms", platformIds);
+    this.log.trace("User", "getPlatforms", platformIds);
     if (this.platforms === undefined) {
       this.loadPlatforms();
     }
@@ -215,20 +209,22 @@ export default class User {
    * @param platformId
    */
   public addPlatform(platformId: PlatformId): void {
-    this.trace("User", "addPlatform", platformId);
+    this.log.trace("User", "addPlatform", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
     ) {
-      const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
+      const platformIds = this.data
+        .get("settings", "FEED_PLATFORMS", "")
+        .split(",");
       if (!platformIds.includes(platformId)) {
         platformIds.push(platformId);
-        this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
+        this.data.set("settings", "FEED_PLATFORMS", platformIds.join(","));
       }
       this.loadPlatforms();
-      this.info(`Platform ${platformId} enabled for user ${this.id}`);
+      this.log.info(`Platform ${platformId} enabled for user ${this.id}`);
     } else {
-      throw this.error("addPlatform: no such platform", platformId);
+      throw this.log.error("addPlatform: no such platform", platformId);
     }
   }
 
@@ -237,155 +233,23 @@ export default class User {
    * @param platformId
    */
   public removePlatform(platformId: PlatformId): void {
-    this.trace("User", "removePlatforms", platformId);
+    this.log.trace("User", "removePlatforms", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
     ) {
-      const platformIds = this.get("settings", "FEED_PLATFORMS", "").split(",");
+      const platformIds = this.data
+        .get("settings", "FEED_PLATFORMS", "")
+        .split(",");
       const index = platformIds.indexOf(platformId);
       if (index !== -1) {
         platformIds.splice(index, 1);
-        this.set("settings", "FEED_PLATFORMS", platformIds.join(","));
+        this.data.set("settings", "FEED_PLATFORMS", platformIds.join(","));
       }
       this.loadPlatforms();
-      this.info(`Platform ${platformId} disabled for user ${this.id}`);
+      this.log.info(`Platform ${platformId} disabled for user ${this.id}`);
     } else {
-      throw this.error("removePlatform: no such platform", platformId);
+      throw this.log.error("removePlatform: no such platform", platformId);
     }
-  }
-
-  /*
-    User Store 
-  */
-
-  public get(
-    store: "settings" | "auth" | "app",
-    key: string,
-    def?: string,
-  ): string {
-    if (!this.data) {
-      throw new Error("User.get: No store");
-    }
-    try {
-      return this.data.get(store, key, def);
-    } catch (error) {
-      throw this.error(error);
-    }
-  }
-
-  public set(store: "settings" | "auth" | "app", key: string, value: string) {
-    if (!this.data) {
-      throw new Error("User.set: No store");
-    }
-    try {
-      return this.data.set(store, key, value);
-    } catch (error) {
-      throw this.error(error);
-    }
-  }
-
-  public async save() {
-    if (!this.data) {
-      throw new Error("User.save: No store");
-    }
-    try {
-      return await this.data.save();
-    } catch (error) {
-      throw this.error(error);
-    }
-  }
-
-  /*
-    User logging 
-  */
-
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public trace(...args: any[]) {
-    this.logger?.trace(this.id, ...args);
-  }
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public debug(...args: any[]) {
-    this.logger?.debug(this.id, ...args);
-  }
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public info(...args: any[]) {
-    this.logger?.info(this.id, ...args);
-  }
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public warn(...args: any[]) {
-    this.logger?.warn(this.id, ...args);
-  }
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public error(...args: any[]): Error {
-    this.logger?.error(this.id, ...args);
-    return new Error(
-      "Error: " +
-        "(" +
-        this.id +
-        ") " +
-        args.filter((arg) => typeof arg === "string").join("; "),
-    );
-  }
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public fatal(...args: any[]): Error {
-    this.logger?.fatal(this.id, ...args);
-    const code = parseInt(args[0]);
-    process.exitCode = code || 1;
-    return new Error(
-      "Fatal: " +
-        +"(" +
-        this.id +
-        ") " +
-        args.filter((arg) => typeof arg === "string").join("; "),
-    );
-  }
-
-  /**
-   * @returns a logger to use on this user
-   *
-   * allow cli/env to override level and console
-   */
-  private async getLogger(): Promise<log4js.Logger> {
-    if (!this.data) {
-      throw new Error("User.getLogger: No store");
-    }
-    const configFile = this.data.get(
-      "settings",
-      "LOGGER_CONFIG",
-      "log4js.json",
-    );
-    if (process.argv.includes("--verbose")) {
-      process.env.FAIRPOST_LOGGER_LEVEL = "TRACE";
-      process.env.FAIRPOST_LOGGER_CONSOLE = "true";
-    }
-    const level = this.data!.get("settings", "LOGGER_LEVEL", "INFO");
-    const addConsole =
-      this.data!.get("settings", "LOGGER_CONSOLE", "false") === "true";
-
-    const config = (await this.files.fileExists(configFile))
-      ? JSON.parse(await this.files.readToString(configFile))
-      : log4jsConfig;
-    if (!config.categories["user"]) {
-      throw new Error(
-        "Logger: Log4js category user not found in " + configFile,
-      );
-    }
-
-    if (
-      addConsole &&
-      !config.categories["user"]["appenders"].includes("console")
-    ) {
-      if (!config.appenders["console"]) {
-        config.appenders["console"] = { type: "console" };
-      }
-      config.categories["user"]["appenders"].push("console");
-    }
-
-    log4js.configure(config);
-    const logger = log4js.getLogger("user");
-    logger.addContext("userId", this.id);
-    logger.level = level;
-    return logger;
   }
 }

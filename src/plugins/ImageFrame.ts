@@ -42,7 +42,7 @@ export default class ImageFrame extends Plugin {
    */
 
   async process(post: Post): Promise<void> {
-    post.platform.user.trace(this.id, post.id, "process");
+    post.platform.user.log.trace(this.id, post.id, "process");
     for (const file of post.getFiles(FileGroup.IMAGE)) {
       await this.addImageFrame(post, file);
     }
@@ -57,7 +57,7 @@ export default class ImageFrame extends Plugin {
 
       const fileIn = post.getFilePath(src);
       const fileOut = post.getFilePath(dst);
-      const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+      const bufferIn = await post.platform.user.files.readBuffer(fileIn);
       const source = sharp(bufferIn);
 
       let innerBuffer = await source.toBuffer();

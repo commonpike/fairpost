@@ -31,11 +31,11 @@ export default class RedditAuth {
   public async refresh() {
     const tokens = (await this.post("access_token", {
       grant_type: "refresh_token",
-      refresh_token: this.user.get("auth", "REDDIT_REFRESH_TOKEN"),
+      refresh_token: this.user.data.get("auth", "REDDIT_REFRESH_TOKEN"),
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "RedditAuth.refresh: response is not a TokenResponse",
         tokens,
       );
@@ -48,10 +48,10 @@ export default class RedditAuth {
    * @returns - code
    */
   protected async requestCode(): Promise<string> {
-    this.user.trace("RedditAuth", "requestCode");
-    const clientId = this.user.get("app", "REDDIT_CLIENT_ID");
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    this.user.log.trace("RedditAuth", "requestCode");
+    const clientId = this.user.data.get("app", "REDDIT_CLIENT_ID");
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -75,15 +75,15 @@ export default class RedditAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -94,9 +94,9 @@ export default class RedditAuth {
    * @returns - TokenResponse
    */
   protected async exchangeCode(code: string): Promise<TokenResponse> {
-    this.user.trace("RedditAuth", "exchangeCode", code);
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    this.user.log.trace("RedditAuth", "exchangeCode", code);
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.post("access_token", {
@@ -112,7 +112,7 @@ export default class RedditAuth {
     };
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "RedditAuth.exchangeCode: response is not a TokenResponse",
         tokens,
       );
@@ -126,14 +126,14 @@ export default class RedditAuth {
    * @param tokens - the tokens to store
    */
   private async store(tokens: TokenResponse) {
-    this.user.set("auth", "REDDIT_ACCESS_TOKEN", tokens["access_token"]);
+    this.user.data.set("auth", "REDDIT_ACCESS_TOKEN", tokens["access_token"]);
     const accessExpiry = new Date(
       new Date().getTime() + tokens["expires_in"] * 1000,
     ).toISOString();
-    this.user.set("auth", "REDDIT_ACCESS_EXPIRY", accessExpiry);
-    this.user.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
-    this.user.set("auth", "REDDIT_SCOPE", tokens["scope"]);
-    await this.user.save();
+    this.user.data.set("auth", "REDDIT_ACCESS_EXPIRY", accessExpiry);
+    this.user.data.set("auth", "REDDIT_REFRESH_TOKEN", tokens["refresh_token"]);
+    this.user.data.set("auth", "REDDIT_SCOPE", tokens["scope"]);
+    await this.user.data.save();
   }
 
   // API implementation -------------------
@@ -150,10 +150,10 @@ export default class RedditAuth {
   ): Promise<object> {
     const url = new URL("https://www.reddit.com");
     url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
-    this.user.trace("POST", url.href);
+    this.user.log.trace("POST", url.href);
 
-    const clientId = this.user.get("app", "REDDIT_CLIENT_ID");
-    const clientSecret = this.user.get("app", "REDDIT_CLIENT_SECRET");
+    const clientId = this.user.data.get("app", "REDDIT_CLIENT_ID");
+    const clientSecret = this.user.data.get("app", "REDDIT_CLIENT_SECRET");
     const userpass = clientId + ":" + clientSecret;
     const userpassb64 = Buffer.from(userpass).toString("base64");
 

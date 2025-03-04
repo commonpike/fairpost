@@ -67,17 +67,17 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async test() {
-    this.user.trace("Twitter.test: get oauth1 api");
+    this.user.log.trace("Twitter.test: get oauth1 api");
     const client1 = new TwitterApi({
-      appKey: this.user.get("app", "TWITTER_OA1_API_KEY"),
-      appSecret: this.user.get("app", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: this.user.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: this.user.get("app", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.data.get("app", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.data.get("app", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.data.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.data.get("app", "TWITTER_OA1_ACCESS_SECRET"),
     });
     const creds1 = await client1.v1.verifyCredentials();
-    this.user.trace("Twitter.test: get oauth2 api");
+    this.user.log.trace("Twitter.test: get oauth2 api");
     const client2 = new TwitterApi(
-      this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+      this.user.data.get("auth", "TWITTER_ACCESS_TOKEN"),
     );
     const creds2 = await client2.v2.me();
     return {
@@ -99,11 +99,11 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async preparePost(source: Source): Promise<Post> {
-    this.user.trace("Twitter.preparePost", source.id);
+    this.user.log.trace("Twitter.preparePost", source.id);
     const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
-        this.user.get("settings", "TWITTER_PLUGIN_SETTINGS", "{}"),
+        this.user.data.get("settings", "TWITTER_PLUGIN_SETTINGS", "{}"),
       );
       const pluginSettings = {
         ...this.pluginSettings,
@@ -122,14 +122,16 @@ export default class Twitter extends Platform {
             file.mimetype as EUploadMimeType,
           )
         ) {
-          this.user.trace("Removing unsupported file type: " + file.mimetype);
+          this.user.log.trace(
+            "Removing unsupported file type: " + file.mimetype,
+          );
           post.removeFile(file.name);
         }
       }
 
       // twitter requires a real body or images
       if (!post.body && !post.hasFiles(FileGroup.IMAGE)) {
-        this.user.warn("Twitter post has no body");
+        this.user.log.warn("Twitter post has no body");
         post.valid = false;
       }
       post.save();
@@ -139,7 +141,7 @@ export default class Twitter extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    this.user.trace("Twitter.publishPost", post.id, dryrun);
+    this.user.log.trace("Twitter.publishPost", post.id, dryrun);
 
     let response = { data: { id: "-99" } } as {
       data: {
@@ -189,16 +191,16 @@ export default class Twitter extends Platform {
       id: string;
     };
   }> {
-    this.user.trace("Twitter.publishTextPost", post.id, dryrun);
+    this.user.log.trace("Twitter.publishTextPost", post.id, dryrun);
     if (!dryrun) {
       const client2 = new TwitterApi(
-        this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+        this.user.data.get("auth", "TWITTER_ACCESS_TOKEN"),
       );
       const result = await client2.v2.tweet({
         text: post.getCompiledBody(),
       });
       if (result.errors) {
-        throw this.user.error(result.errors.join());
+        throw this.user.log.error(result.errors.join());
       }
       return result;
     }
@@ -224,13 +226,13 @@ export default class Twitter extends Platform {
       id: string;
     };
   }> {
-    this.user.trace("Twitter.publishImagesPost", post.id, dryrun);
+    this.user.log.trace("Twitter.publishImagesPost", post.id, dryrun);
 
     const client1 = new TwitterApi({
-      appKey: this.user.get("app", "TWITTER_OA1_API_KEY"),
-      appSecret: this.user.get("app", "TWITTER_OA1_API_KEY_SECRET"),
-      accessToken: this.user.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
-      accessSecret: this.user.get("app", "TWITTER_OA1_ACCESS_SECRET"),
+      appKey: this.user.data.get("app", "TWITTER_OA1_API_KEY"),
+      appSecret: this.user.data.get("app", "TWITTER_OA1_API_KEY_SECRET"),
+      accessToken: this.user.data.get("app", "TWITTER_OA1_ACCESS_TOKEN"),
+      accessSecret: this.user.data.get("app", "TWITTER_OA1_ACCESS_SECRET"),
     });
     // eslint-disable-next-line
     const mediaIds = new Array() as
@@ -239,15 +241,15 @@ export default class Twitter extends Platform {
       | [string, string, string]
       | [string, string, string, string];
 
-    const additionalOwner = this.user.get(
+    const additionalOwner = this.user.data.get(
       "settings",
       "TWITTER_OA1_ADDITIONAL_OWNER",
       "",
     );
     for (const image of post.getFiles(FileGroup.IMAGE).splice(0, 4)) {
       const path = post.getFilePath(image.name);
-      const buffer = await post.platform.user.files.readToBuffer(path);
-      this.user.trace("Uploading " + path + "...");
+      const buffer = await post.platform.user.files.readBuffer(path);
+      this.user.log.trace("Uploading " + path + "...");
       try {
         mediaIds.push(
           await client1.v1.uploadMedia(buffer, {
@@ -261,16 +263,16 @@ export default class Twitter extends Platform {
           }),
         );
       } catch (e) {
-        throw this.user.error("Twitter.publishPost uploadMedia failed", e);
+        throw this.user.log.error("Twitter.publishPost uploadMedia failed", e);
       }
     }
 
     const client2 = new TwitterApi(
-      this.user.get("auth", "TWITTER_ACCESS_TOKEN"),
+      this.user.data.get("auth", "TWITTER_ACCESS_TOKEN"),
     );
 
     if (!dryrun) {
-      this.user.trace("Tweeting " + post.id + "...");
+      this.user.log.trace("Tweeting " + post.id + "...");
       const result = await client2.v2.tweet({
         text: post.getCompiledBody(),
         media: {
@@ -278,7 +280,7 @@ export default class Twitter extends Platform {
         },
       });
       if (result.errors) {
-        throw this.user.error(result.errors.join());
+        throw this.user.log.error(result.errors.join());
       }
       return result;
     }

@@ -33,15 +33,15 @@ export default class RedditApi {
     url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
 
-    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
+    const accessToken = this.user.data.get("auth", "REDDIT_ACCESS_TOKEN");
 
-    this.user.trace("GET", url.href);
+    this.user.log.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": this.user.get("app", "OAUTH_USERAGENT"),
+        "User-Agent": this.user.data.get("app", "OAUTH_USERAGENT"),
       },
     })
       .then((res) => handleJsonResponse(res))
@@ -63,8 +63,8 @@ export default class RedditApi {
     //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.pathname = "api/" + endpoint;
 
-    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
-    this.user.trace("POST", url.href);
+    const accessToken = this.user.data.get("auth", "REDDIT_ACCESS_TOKEN");
+    this.user.log.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
@@ -72,7 +72,7 @@ export default class RedditApi {
         Accept: "application/json",
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": this.user.get("app", "OAUTH_USERAGENT"),
+        "User-Agent": this.user.data.get("app", "OAUTH_USERAGENT"),
       },
       body: new URLSearchParams(body),
     })
@@ -92,15 +92,15 @@ export default class RedditApi {
     //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
     url.pathname = "api/" + endpoint;
 
-    const accessToken = this.user.get("auth", "REDDIT_ACCESS_TOKEN");
-    this.user.trace("POST", url.href);
+    const accessToken = this.user.data.get("auth", "REDDIT_ACCESS_TOKEN");
+    this.user.log.trace("POST", url.href);
 
     return await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         Authorization: "Bearer " + accessToken,
-        "User-Agent": this.user.get("app", "OAUTH_USERAGENT"),
+        "User-Agent": this.user.data.get("app", "OAUTH_USERAGENT"),
       },
       body: body,
     })

@@ -78,11 +78,11 @@ export default class YouTube extends Platform {
 
   /** @inheritdoc */
   async preparePost(source: Source): Promise<Post> {
-    this.user.trace("YouTube.preparePost", source.id);
+    this.user.log.trace("YouTube.preparePost", source.id);
     const post = await super.preparePost(source);
     if (post) {
       const userPluginSettings = JSON.parse(
-        this.user.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),
+        this.user.data.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),
       );
       const pluginSettings = {
         ...this.pluginSettings,
@@ -99,7 +99,7 @@ export default class YouTube extends Platform {
 
   /** @inheritdoc */
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    this.user.trace("YouTube.publishPost", post.id, dryrun);
+    this.user.log.trace("YouTube.publishPost", post.id, dryrun);
 
     let response = { id: "-99" } as {
       id?: string;
@@ -132,7 +132,7 @@ export default class YouTube extends Platform {
    * @returns object, incl. some ids and names
    */
   private async getChannel() {
-    this.user.trace("YouTube", "getChannel");
+    this.user.log.trace("YouTube", "getChannel");
     const client = this.auth.getClient();
     const result = (await client.channels.list({
       part: ["snippet", "contentDetails", "status"],
@@ -159,7 +159,7 @@ export default class YouTube extends Platform {
         },
       };
     }
-    throw this.user.error("YouTube.getChannel", "invalid result", result);
+    throw this.user.log.error("YouTube.getChannel", "invalid result", result);
   }
 
   /**
@@ -171,12 +171,12 @@ export default class YouTube extends Platform {
    * @returns object, incl. id of the created post
    */
   private async publishVideoPost(post: Post, dryrun: boolean = false) {
-    this.user.trace("YouTube.publishVideoPost", dryrun);
+    this.user.log.trace("YouTube.publishVideoPost", dryrun);
 
     const file = post.getFiles(FileGroup.VIDEO)[0];
 
     const client = this.auth.getClient();
-    this.user.trace(
+    this.user.log.trace(
       "YouTube.publishVideoPost",
       "uploading " + file.name + " ...",
     );
@@ -198,7 +198,7 @@ export default class YouTube extends Platform {
           title: post.title,
           description: post.getCompiledBody("!title"),
           tags: post.tags, // both in body and separate
-          categoryId: this.user.get("settings", "YOUTUBE_CATEGORY", ""),
+          categoryId: this.user.data.get("settings", "YOUTUBE_CATEGORY", ""),
           defaultLanguage: this.defaultLanguage,
         },
         status: {
@@ -206,7 +206,7 @@ export default class YouTube extends Platform {
           license: this.license,
           publicStatsViewable: this.publicStatsViewable,
           selfDeclaredMadeForKids: this.selfDeclaredMadeForKids,
-          privacyStatus: this.user.get("settings", "YOUTUBE_PRIVACY"),
+          privacyStatus: this.user.data.get("settings", "YOUTUBE_PRIVACY"),
         },
       },
       media: {
@@ -226,7 +226,7 @@ export default class YouTube extends Platform {
     };
 
     if (result.data.status?.uploadStatus !== "uploaded") {
-      throw this.user.error(
+      throw this.user.log.error(
         "YouTube.publishVideoPost",
         "failed",
         result.data.status?.uploadStatus,
@@ -235,7 +235,7 @@ export default class YouTube extends Platform {
       );
     }
     if (!result.data.id) {
-      throw this.user.error(
+      throw this.user.log.error(
         "YouTube.publishVideoPost",
         "missing id in result",
         result,

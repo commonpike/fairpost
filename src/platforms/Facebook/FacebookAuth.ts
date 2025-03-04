@@ -19,30 +19,30 @@ export default class FacebookAuth {
 
   async setup() {
     const code = await this.requestCode(
-      this.user.get("app", "FACEBOOK_APP_ID"),
+      this.user.data.get("app", "FACEBOOK_APP_ID"),
     );
 
     const accessToken = await this.exchangeCode(
       code,
-      this.user.get("app", "FACEBOOK_APP_ID"),
-      this.user.get("app", "FACEBOOK_APP_SECRET"),
+      this.user.data.get("app", "FACEBOOK_APP_ID"),
+      this.user.data.get("app", "FACEBOOK_APP_SECRET"),
     );
 
     const pageToken = await this.getLLPageToken(
-      this.user.get("app", "FACEBOOK_APP_ID"),
-      this.user.get("app", "FACEBOOK_APP_SECRET"),
-      this.user.get("settings", "FACEBOOK_PAGE_ID"),
+      this.user.data.get("app", "FACEBOOK_APP_ID"),
+      this.user.data.get("app", "FACEBOOK_APP_SECRET"),
+      this.user.data.get("settings", "FACEBOOK_PAGE_ID"),
       accessToken,
     );
 
-    this.user.set("auth", "FACEBOOK_PAGE_ACCESS_TOKEN", pageToken);
-    await this.user.save();
+    this.user.data.set("auth", "FACEBOOK_PAGE_ACCESS_TOKEN", pageToken);
+    await this.user.data.save();
   }
 
   protected async requestCode(clientId: string): Promise<string> {
-    this.user.trace("FacebookAuth", "requestCode");
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    this.user.log.trace("FacebookAuth", "requestCode");
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const state = String(Math.random()).substring(2);
 
     // create auth url
@@ -73,15 +73,15 @@ export default class FacebookAuth {
     );
     if (result["error"]) {
       const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (result["state"] !== state) {
       const msg = "Response state does not match request state";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     if (!result["code"]) {
       const msg = "Remote response did not return a code";
-      throw this.user.error(msg, result);
+      throw this.user.log.error(msg, result);
     }
     return result["code"] as string;
   }
@@ -91,10 +91,10 @@ export default class FacebookAuth {
     clientId: string,
     clientSecret: string,
   ): Promise<string> {
-    this.user.trace("FacebookAuth", "exchangeCode");
+    this.user.log.trace("FacebookAuth", "exchangeCode");
 
-    const clientHost = this.user.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.get("app", "OAUTH_PORT"));
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
 
     const tokens = (await this.get("oauth/access_token", {
@@ -105,7 +105,7 @@ export default class FacebookAuth {
     })) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "FacebookAuth.exchangeCode: response is not a TokenResponse",
         tokens,
       );
@@ -132,7 +132,7 @@ export default class FacebookAuth {
     pageId: string,
     userAccessToken: string,
   ): Promise<string> {
-    this.user.trace("FacebookAuth", "getLLPageToken");
+    this.user.log.trace("FacebookAuth", "getLLPageToken");
     const appUserId = await this.getAppUserId(userAccessToken);
     const llUserAccessToken = await this.getLLUserAccessToken(
       appId,
@@ -152,7 +152,7 @@ export default class FacebookAuth {
 
     const pageData = data.data?.find((page) => page.id === pageId);
     if (!pageData) {
-      throw this.user.error(
+      throw this.user.log.error(
         "Page " + pageId + " is not listed in the Apps accounts.",
         data,
       );
@@ -160,7 +160,7 @@ export default class FacebookAuth {
     const llPageAccessToken = pageData["access_token"];
 
     if (!llPageAccessToken) {
-      throw this.user.error(
+      throw this.user.log.error(
         "No llPageAccessToken for page " + pageId + "  in response.",
         data,
       );
@@ -181,7 +181,7 @@ export default class FacebookAuth {
     appSecret: string,
     userAccessToken: string,
   ): Promise<string> {
-    this.user.trace("FacebookAuth", "getLLUserAccessToken");
+    this.user.log.trace("FacebookAuth", "getLLUserAccessToken");
     const query = {
       grant_type: "fb_exchange_token",
       client_id: appId,
@@ -194,7 +194,7 @@ export default class FacebookAuth {
     )) as TokenResponse;
 
     if (!isTokenResponse(tokens)) {
-      throw this.user.error(
+      throw this.user.log.error(
         "FacebookAuth.getLLUserAccessToken: response is not a TokenResponse",
         tokens,
       );
@@ -208,7 +208,7 @@ export default class FacebookAuth {
    * @returns the app scoped user id ('me')
    */
   private async getAppUserId(accessToken: string): Promise<string> {
-    this.user.trace("FacebookAuth", "getAppUserId");
+    this.user.log.trace("FacebookAuth", "getAppUserId");
     const query = {
       fields: "id,name",
       access_token: accessToken,
@@ -218,7 +218,7 @@ export default class FacebookAuth {
       name: string;
     };
     if (!data["id"]) {
-      throw this.user.error("Can not get app scoped user id.", data);
+      throw this.user.log.error("Can not get app scoped user id.", data);
     }
     return data["id"];
   }
@@ -238,7 +238,7 @@ export default class FacebookAuth {
     const url = new URL("https://graph.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/" + endpoint;
     url.search = new URLSearchParams(query).toString();
-    this.user.trace("GET", url.href);
+    this.user.log.trace("GET", url.href);
     return await fetch(url, {
       method: "GET",
       headers: {

@@ -1,8 +1,8 @@
 import { dirname } from "path";
-import User from "./User.ts";
+import User from "../User.ts";
 
 /**
- * Store
+ * UserData
  *
  * - sets and gets key / value pairs, all string.
  * - uses three 'stores':
@@ -10,7 +10,7 @@ import User from "./User.ts";
  *   - 'settings' is typically what a user maintains,
  *   - 'auth' is what fairpost maintains and may be
  *     stored and encrypted somewhere else
- * - it store has a backend, one of
+ * - each store has a backend, one of
  *   - 'env' is process.env (.env)
  *   - 'json' is json file, with one key for each store and a flat list below it
  *   - 'json-env' is the above json file with .env as fallback
@@ -26,13 +26,13 @@ enum StorageKeys {
   "auth" = "FAIRPOST_STORAGE_AUTH",
 }
 
-export default class Store {
+export default class UserData {
   jsonPath: string;
   jsonData: { [store: string]: { [key: string]: string } } = {};
   user: User;
   /**
-   * Dont call the constructor yourself;
-   * instead, call `await Store.getStore()`
+   * Create a new UserData.
+   * Dont forgt to call await init() afterwards.
    * @param user
    */
   constructor(user: User) {
@@ -43,22 +43,14 @@ export default class Store {
     );
   }
 
-  /**
-   * getStore
-   *
-   * get a new store and do some async checks and loads.
-   * @param user
-   * @returns new store object
-   */
-  public static async getStore(user: User): Promise<Store> {
-    const store = new Store(user);
-    await store.load();
-    return store;
+  public async init() {
+    await this.load();
   }
 
   public async load() {
     await this.loadJson();
   }
+
   public async save() {
     await this.saveJson();
   }
@@ -143,8 +135,8 @@ export default class Store {
   }
 
   private async loadJson() {
-    if (await this.user.files.fileExists(this.jsonPath)) {
-      const contents = await this.user.files.readToString(this.jsonPath);
+    if (await this.user.files.isFile(this.jsonPath)) {
+      const contents = await this.user.files.readFile(this.jsonPath);
       const jsonData = JSON.parse(contents);
       if (jsonData) {
         this.jsonData = jsonData;
@@ -157,8 +149,8 @@ export default class Store {
   }
 
   private async saveJson() {
-    if (!(await this.user.files.fileExists(this.jsonPath))) {
-      await this.user.files.createDirectory(dirname(this.jsonPath));
+    if (!(await this.user.files.exists(this.jsonPath))) {
+      await this.user.files.mkdir(dirname(this.jsonPath));
     }
     try {
       const contents = JSON.stringify(this.jsonData, null, "\t");

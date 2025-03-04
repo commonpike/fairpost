@@ -52,7 +52,7 @@ export default class ImageSize extends Plugin {
    */
 
   async process(post: Post): Promise<void> {
-    post.platform.user.trace(this.id, post.id, "process");
+    post.platform.user.log.trace(this.id, post.id, "process");
     for (const file of post.getFiles(FileGroup.IMAGE)) {
       await this.fixDimensions(post, file);
     }
@@ -80,7 +80,7 @@ export default class ImageSize extends Plugin {
         canw !== imgw ||
         canh !== imgh
       ) {
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           "ImageSize.fixDimensions",
           file.name +
             ":" +
@@ -113,7 +113,7 @@ export default class ImageSize extends Plugin {
         const padw = Math.floor((canw - imgw) / 2);
         const fileIn = post.getFilePath(src);
         const fileOut = post.getFilePath(dst);
-        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferIn = await post.platform.user.files.readBuffer(fileIn);
         const bufferOut = await sharp(bufferIn)
           .withMetadata()
           .resize({
@@ -136,7 +136,7 @@ export default class ImageSize extends Plugin {
 
   private async fixFileSize(post: Post, file: FileInfo) {
     if (this.settings.min_size && file.size <= this.settings.min_size) {
-      throw post.platform.user.error(
+      throw post.platform.user.log.error(
         "ImageSize.fixFileSize",
         "Image is too small",
         post.id + ":" + file.name + ":" + file.size,
@@ -161,13 +161,13 @@ export default class ImageSize extends Plugin {
           "-" +
           file.extension +
           ".jpg";
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           "ImageSize.reduceFileSize",
           post.id + ":" + file.name + ": to jpg",
         );
         const fileIn = post.getFilePath(file.name);
         const fileOut = post.getFilePath(dst);
-        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferIn = await post.platform.user.files.readBuffer(fileIn);
         const bufferOut = await sharp(bufferIn)
           .keepExif()
           .toFormat("jpg") // default q = 80
@@ -185,13 +185,13 @@ export default class ImageSize extends Plugin {
       let count = 1;
       while (newfile.size / 1024 >= maxkb) {
         factor = factor * Math.sqrt((0.9 * maxkb) / (newfile.size / 1024));
-        post.platform.user.trace(
+        post.platform.user.log.trace(
           "ImageSize.reduceFileSize",
           post.id + ":" + file.name + ": scale " + factor,
         );
         const fileIn = post.getFilePath(file.name);
         const fileOut = post.getFilePath(dst);
-        const bufferIn = await post.platform.user.files.readToBuffer(fileIn);
+        const bufferIn = await post.platform.user.files.readBuffer(fileIn);
         const bufferOut = await sharp(bufferIn)
           .keepExif()
           .resize({
@@ -201,7 +201,7 @@ export default class ImageSize extends Plugin {
         await post.platform.user.files.write(fileOut, bufferOut);
         newfile = await post.source.getFileInfo(dst, file.order);
         if (count++ > 5) {
-          throw post.platform.user.error(
+          throw post.platform.user.log.error(
             "ImageSize.reduceFileSize",
             "Failed to scale down",
             post.id + ":" + file.name + ":" + factor,
