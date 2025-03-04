@@ -1,8 +1,6 @@
 import { resolve } from "path";
 import { Readable } from "stream";
 
-import User from "../User.ts";
-
 import {
   FileStorage,
   DirectoryListing,
@@ -12,28 +10,20 @@ import {
 import { LocalStorageAdapter } from "@flystorage/local-fs";
 
 /**
- * UserFiles is a wrapper around flystorage, tied to a user;
+ * GlobalFs is a wrapper around flystorage, not tied to a user;
  */
 
-export default class UserFiles {
-  private user: User;
+export default class GlobalFs {
   public storage: FileStorage;
 
-  constructor(user: User) {
-    this.user = user;
+  constructor() {
     switch (process.env.FAIRPOST_FILE_SYSTEM) {
       default: {
         const adapter = new LocalStorageAdapter(
-          resolve(import.meta.dirname + "/../../../", user.homedir),
+          resolve(import.meta.dirname + "/../../"),
         );
         this.storage = new FileStorage(adapter);
       }
-    }
-  }
-
-  public async init() {
-    if (!(await this.storage.directoryExists("."))) {
-      throw new Error("No such user: " + this.user.id);
     }
   }
 

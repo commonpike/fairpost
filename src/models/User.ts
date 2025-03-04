@@ -1,13 +1,10 @@
-import { resolve } from "path";
-
-import { FileStorage } from "@flystorage/file-storage";
-import { LocalStorageAdapter } from "@flystorage/local-fs";
-
 import * as platformClasses from "../platforms/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 
 import Feed from "./Feed.ts";
 import Platform from "./Platform.ts";
+import GlobalFs from "../services/GlobalFs.ts";
+
 import UserData from "./User/UserData.ts";
 import UserFiles from "./User/UserFiles.ts";
 import UserLog from "./User/UserLog.ts";
@@ -41,7 +38,6 @@ export default class User {
 
   public data: UserData;
   public log: UserLog;
-  private static globalFS: FileStorage | undefined = undefined;
 
   /**
    * Dont call the constructor yourself;
@@ -85,45 +81,30 @@ export default class User {
         "invalid userid: must be between 4 and 32 long, start with a character and contain only (a-z,0-9,-,_,.)",
       );
     }
-    if (!User.globalFS) {
-      switch (process.env.FAIRPOST_FILE_SYSTEM) {
-        default: {
-          const adapter = new LocalStorageAdapter(
-            resolve(import.meta.dirname + "/../../"),
-          );
-          User.globalFS = new FileStorage(adapter);
-        }
+    const globalfs = new GlobalFs();
+    const log = [] as string[];
+
+    if (!process.env.FAIRPOST_USER_HOMEDIR) {
+      throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
+    }
+    const src = "etc/skeleton";
+    const dst = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", newUserId);
+    if (await globalfs.exists(dst)) {
+      throw new Error("Homedir already exists: " + dst);
+    }
+    const listing = await globalfs.list(src, { deep: true }).toArray();
+    for await (const entry of listing) {
+      if (entry.type === "directory" || entry.isDirectory) {
+        const entrydst = entry.path.replace("etc/skeleton", dst);
+        log.push("creating dir " + entrydst);
+        await globalfs.mkdir(entrydst);
       }
     }
-    const log = [] as string[];
-    switch (process.env.FAIRPOST_FILE_SYSTEM) {
-      default: {
-        if (!process.env.FAIRPOST_USER_HOMEDIR) {
-          throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
-        }
-        const src = "etc/skeleton";
-        const dst = process.env.FAIRPOST_USER_HOMEDIR.replace(
-          "%user%",
-          newUserId,
-        );
-        if (await User.globalFS.directoryExists(dst)) {
-          throw new Error("Homedir already exists: " + dst);
-        }
-        const listing = await User.globalFS.list(src, { deep: true }).toArray();
-        for await (const entry of listing) {
-          if (entry.type === "directory" || entry.isDirectory) {
-            const entrydst = entry.path.replace("etc/skeleton", dst);
-            log.push("creating dir " + entrydst);
-            await User.globalFS.createDirectory(entrydst);
-          }
-        }
-        for await (const entry of listing) {
-          if (entry.type === "file" || entry.isFile) {
-            const entrydst = entry.path.replace("etc/skeleton", dst);
-            log.push("copying file " + entry.path + " -> " + entrydst);
-            await User.globalFS.copyFile(entry.path, entrydst);
-          }
-        }
+    for await (const entry of listing) {
+      if (entry.type === "file" || entry.isFile) {
+        const entrydst = entry.path.replace("etc/skeleton", dst);
+        log.push("copying file " + entry.path + " -> " + entrydst);
+        await globalfs.copy(entry.path, entrydst);
       }
     }
 
