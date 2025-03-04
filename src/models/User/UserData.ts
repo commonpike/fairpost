@@ -70,7 +70,7 @@ export default class UserData {
       case "json":
         return this.getJson(store, key, def);
       default:
-        throw new Error("Storage " + storage + " not implemented");
+        throw new Error("UserData: Storage " + storage + " not implemented");
     }
   }
 
@@ -79,7 +79,7 @@ export default class UserData {
     if (!value) {
       if (def === undefined) {
         throw new Error(
-          "Storage.getEnv: Value " + "FAIRPOST_" + key + " not found.",
+          "UserData.getEnv: Value " + "FAIRPOST_" + key + " not found.",
         );
       }
       value = def;
@@ -92,7 +92,7 @@ export default class UserData {
     if (!value) {
       if (def === undefined) {
         throw new Error(
-          "Storage.getJson: Value " + store + "." + key + " not found.",
+          "UserData.getJson: Value " + store + "." + key + " not found.",
         );
       }
       value = def;
@@ -110,7 +110,7 @@ export default class UserData {
       case "json":
         return this.setJson(store, key, value);
       default:
-        throw new Error("Storage " + storage + " not implemented");
+        throw new Error("UserData: Storage " + storage + " not implemented");
     }
   }
 
@@ -122,7 +122,7 @@ export default class UserData {
       console.log("FAIRPOST_" + key + "=" + value);
       console.log();
     } else {
-      throw new Error("Storage.setEnv: UI " + ui + " not supported");
+      throw new Error("UserData.setEnv: UI " + ui + " not supported");
     }
   }
 
@@ -141,10 +141,10 @@ export default class UserData {
       if (jsonData) {
         this.jsonData = jsonData;
       } else {
-        throw new Error("Store.loadJson: cant parse " + this.jsonPath);
+        throw new Error("UserData.loadJson: cant parse " + this.jsonPath);
       }
     } else {
-      throw new Error("Store.loadJson: cant read " + this.jsonPath);
+      throw new Error("UserData.loadJson: cant read " + this.jsonPath);
     }
   }
 
@@ -156,7 +156,7 @@ export default class UserData {
       const contents = JSON.stringify(this.jsonData, null, "\t");
       await this.user.files.write(this.jsonPath, contents);
     } catch {
-      throw new Error("Store.saveJson: cant write " + this.jsonPath);
+      throw new Error("UserData.saveJson: cant write " + this.jsonPath);
     }
   }
 }
