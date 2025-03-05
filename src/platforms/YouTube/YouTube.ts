@@ -1,10 +1,10 @@
-import Source, { FileGroup } from "../../models/Source.ts";
+import { FileGroup, FieldMapping } from "../../types/index.ts";
+import Source from "../../models/Source.ts";
 
 import Platform from "../../models/Platform.ts";
 import Post from "../../models/Post.ts";
 import User from "../../models/User.ts";
 import YouTubeAuth from "./YouTubeAuth.ts";
-import { FieldMapping } from "../../mappers/AbstractMapper.ts";
 import PlatformMapper from "../../mappers/PlatformMapper.ts";
 
 export default class YouTube extends Platform {

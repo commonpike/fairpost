@@ -1,10 +1,10 @@
 import { basename } from "path";
+import { FileGroup, FieldMapping } from "../../types/index.ts";
 
-import Source, { FileGroup } from "../../models/Source.ts";
+import Source from "../../models/Source.ts";
 
 import FacebookApi from "./FacebookApi.ts";
 import FacebookAuth from "./FacebookAuth.ts";
-import { FieldMapping } from "../../mappers/AbstractMapper.ts";
 import PlatformMapper from "../../mappers/PlatformMapper.ts";
 
 import Platform from "../../models/Platform.ts";

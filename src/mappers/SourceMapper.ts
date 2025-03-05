@@ -1,17 +1,7 @@
 import AbstractMapper from "./AbstractMapper.ts";
-import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import { SourceDto, FieldMapping, FileInfo } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
-import Source, { FileInfo } from "../models/Source.ts";
-
-export interface SourceDto
-  extends Dto<{
-    model?: string;
-    id?: string;
-    user_id?: string;
-    feed_id?: string;
-    path?: string;
-    files?: FileInfo;
-  }> {}
+import Source from "../models/Source.ts";
 
 export default class SourceMapper extends AbstractMapper<SourceDto> {
   private source: Source;

@@ -2,8 +2,9 @@ import { basename, extname } from "path";
 
 import sharp from "sharp";
 import Feed from "./Feed.ts";
+import { PostStatus, FileInfo, FileGroup } from "../types/index.ts";
 import Platform from "./Platform.ts";
-import Post, { PostStatus } from "./Post.ts";
+import Post from "./Post.ts";
 import SourceMapper from "../mappers/SourceMapper.ts";
 
 /**
@@ -171,24 +172,4 @@ export default class Source {
     });
     return (await files.toArray()).map((file) => basename(file.path));
   }
-}
-
-export interface FileInfo {
-  name: string;
-  original?: string;
-  basename: string;
-  extension: string;
-  group: FileGroup;
-  size: number;
-  mimetype: string;
-  order: number;
-  width?: number;
-  height?: number;
-}
-
-export enum FileGroup {
-  VIDEO = "video",
-  IMAGE = "image",
-  TEXT = "text",
-  OTHER = "other",
 }

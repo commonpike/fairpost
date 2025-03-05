@@ -1,36 +1,6 @@
 import User from "../models/User.ts";
 import Operator from "../models/Operator.ts";
-import { FileInfo } from "../models/Source.ts";
-import { PostStatus, PostResult } from "../models/Post.ts";
-
-export interface FieldMapping {
-  [field: string]: {
-    type:
-      | "string"
-      | "string[]"
-      | "integer"
-      | "float"
-      | "boolean"
-      | "date"
-      | "json";
-    label: string;
-    get: string[]; // (permissions | any | none)[]
-    set: string[]; // (permissions | any | none)[]
-    required?: boolean; // only if settable
-    default?: string | string[] | number | boolean | Date | object;
-  };
-}
-export type Dto<T extends Record<string, unknown> = Record<string, unknown>> = {
-  [K in keyof T]:
-    | string
-    | string[]
-    | number
-    | boolean
-    | FileInfo[]
-    | PostResult[]
-    | PostStatus
-    | undefined;
-};
+import { FieldMapping, Dto } from "../types/index.ts";
 
 /**
  * AbstractMapper - base for all mappers

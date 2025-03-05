@@ -1,10 +1,10 @@
 import { basename } from "path";
+import { FileGroup, FieldMapping } from "../../types/index.ts";
 
-import Source, { FileGroup } from "../../models/Source.ts";
+import Source from "../../models/Source.ts";
 
 import InstagramApi from "./InstagramApi.ts";
 import InstagramAuth from "./InstagramAuth.ts";
-import { FieldMapping } from "../../mappers/AbstractMapper.ts";
 import PlatformMapper from "../../mappers/PlatformMapper.ts";
 import Platform from "../../models/Platform.ts";
 import Post from "../../models/Post.ts";

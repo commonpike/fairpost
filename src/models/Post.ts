@@ -1,4 +1,5 @@
-import Source, { FileGroup, FileInfo } from "./Source.ts";
+import { FileGroup, FileInfo, PostStatus, PostResult } from "../types/index.ts";
+import Source from "./Source.ts";
 import Platform from "./Platform.ts";
 import { isSimilarArray } from "../utilities.ts";
 import PostMapper from "../mappers/PostMapper.ts";
@@ -634,20 +635,4 @@ export default class Post {
     await this.save();
     return result.success;
   }
-}
-
-export interface PostResult {
-  date: Date;
-  dryrun?: boolean;
-  error?: Error;
-  success: boolean;
-  response: object;
-}
-
-export enum PostStatus {
-  UNKNOWN = "unknown",
-  UNSCHEDULED = "unscheduled",
-  SCHEDULED = "scheduled",
-  PUBLISHED = "published",
-  FAILED = "failed",
 }

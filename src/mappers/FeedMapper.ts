@@ -1,16 +1,7 @@
 import AbstractMapper from "./AbstractMapper.ts";
-import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import { FeedDto, FieldMapping } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
 import Feed from "../models/Feed.ts";
-
-export interface FeedDto
-  extends Dto<{
-    model?: string;
-    id?: string;
-    user_id?: string;
-    path?: string;
-    sources?: string[];
-  }> {}
 
 export default class FeedMapper extends AbstractMapper<FeedDto> {
   private feed: Feed;

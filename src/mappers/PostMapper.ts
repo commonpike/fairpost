@@ -1,33 +1,7 @@
 import AbstractMapper from "./AbstractMapper.ts";
-import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import { PostDto, FieldMapping, FileInfo } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
 import Post from "../models/Post.ts";
-import { PostStatus, PostResult } from "../models/Post.ts";
-import { FileInfo } from "../models/Source.ts";
-
-export interface PostDto
-  extends Dto<{
-    model?: string;
-    id?: string;
-    user_id?: string;
-    platform_id?: string;
-    source_id?: string;
-    valid?: boolean;
-    skip?: boolean;
-    status?: PostStatus;
-    scheduled?: string; // date
-    published?: string; // date
-    title?: string;
-    body?: string;
-    tags?: string[];
-    mentions?: string[];
-    geo?: string;
-    files?: FileInfo[];
-    ignore_files?: string[];
-    results?: PostResult[];
-    remote_id?: string;
-    link?: string;
-  }> {}
 
 export default class PostMapper extends AbstractMapper<PostDto> {
   private post: Post;
