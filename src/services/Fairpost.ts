@@ -36,7 +36,8 @@ type FairpostOutput =
   | CombinedResult[]
   | {
       [id in PlatformId]?: CombinedResult | CombinedResult[];
-    };
+    }
+  | { success: boolean; message?: string; messages?: string[] };
 
 class Fairpost {
   static instance: Fairpost;
@@ -667,7 +668,7 @@ class Fairpost {
           }
           output = {
             success: true,
-            result: await Server.serve(),
+            message: await Server.serve(),
           };
 
           break;
@@ -676,8 +677,8 @@ class Fairpost {
         default: {
           const cmd = "fairpost:";
           output = {
-            succes: true,
-            result: [
+            success: true,
+            messages: [
               "# basic commands:",
               `${cmd} help`,
               `${cmd} @userid get-user`,
@@ -710,12 +711,10 @@ class Fairpost {
           };
         }
       }
-      return (
-        output ?? {
-          success: false,
-          message: "No output",
-        }
-      );
+      if (!output) {
+        throw this.logger.error("Fairpost.execute", "no output");
+      }
+      return output;
     } catch (e) {
       this.logger.error("Fairpost.execute", e);
       // the caller may handle the error

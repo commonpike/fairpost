@@ -1,6 +1,6 @@
 import User from "../models/User.ts";
 import Operator from "../models/Operator.ts";
-import { FieldMapping, Dto } from "../types/index.ts";
+import { FieldMapping } from "../types/index.ts";
 
 /**
  * AbstractMapper - base for all mappers
@@ -19,7 +19,7 @@ import { FieldMapping, Dto } from "../types/index.ts";
  *
  */
 
-export default abstract class AbstractMapper<ModelDto extends Dto> {
+export default abstract class AbstractMapper<ModelDto> {
   protected user: User;
 
   constructor(user: User) {

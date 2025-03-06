@@ -56,7 +56,11 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
    */
   async getDto(operator: Operator): Promise<SourceDto> {
     const fields = this.getDtoFields(operator, "get");
-    const dto: SourceDto = {};
+    const dto: SourceDto = {
+      user_id: this.user.id,
+      model: "source",
+      id: this.source.id,
+    };
     for (const field of fields) {
       switch (field) {
         case "model":

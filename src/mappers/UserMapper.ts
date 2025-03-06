@@ -40,15 +40,12 @@ export default class UserMapper extends AbstractMapper<UserDto> {
    */
   async getDto(operator: Operator): Promise<UserDto> {
     const fields = this.getDtoFields(operator, "get");
-    const dto: UserDto = {};
+    const dto: UserDto = {
+      model: "user",
+      id: this.user.id,
+    };
     for (const field of fields) {
       switch (field) {
-        case "model":
-          dto[field] = "user";
-          break;
-        case "id":
-          dto[field] = this.user.id;
-          break;
         case "homedir":
           dto[field] = this.user.homedir;
           break;

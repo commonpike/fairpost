@@ -51,18 +51,13 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
    */
   async getDto(operator: Operator): Promise<FeedDto> {
     const fields = this.getDtoFields(operator, "get");
-    const dto: FeedDto = {};
+    const dto: FeedDto = {
+      user_id: this.user.id,
+      model: "feed",
+      id: this.feed.id,
+    };
     for (const field of fields) {
       switch (field) {
-        case "model":
-          dto[field] = "feed";
-          break;
-        case "id":
-          dto[field] = this.feed.id;
-          break;
-        case "user_id":
-          dto[field] = this.user.id;
-          break;
         case "path":
           dto[field] = this.feed.path;
           break;
