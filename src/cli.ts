@@ -8,7 +8,7 @@ import "./bootstrap.ts";
 import Fairpost from "./services/Fairpost.ts";
 import { JSONReplacer } from "./utilities.ts";
 import { PlatformId } from "./platforms/index.ts";
-import { PostStatus } from "./models/Post.ts";
+import { PostStatus } from "./types/index.ts";
 import Operator from "./models/Operator.ts";
 import User from "./models/User.ts";
 

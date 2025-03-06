@@ -1,17 +1,7 @@
 import AbstractMapper from "./AbstractMapper.ts";
-import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import { PlatformDto, FieldMapping } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
 import Platform from "../models/Platform.ts";
-
-export interface PlatformDto
-  extends Dto<{
-    model?: string;
-    id?: string;
-    user_id?: string;
-    active?: boolean;
-    // more fields added by platform
-    [key: string]: string | string[] | number | boolean | undefined;
-  }> {}
 
 export default class PlatformMapper extends AbstractMapper<PlatformDto> {
   private platform: Platform;

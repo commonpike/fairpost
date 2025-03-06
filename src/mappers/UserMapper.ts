@@ -1,14 +1,6 @@
 import AbstractMapper from "./AbstractMapper.ts";
-import { Dto, FieldMapping } from "./AbstractMapper.ts";
+import { UserDto, FieldMapping } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
-
-export interface UserDto
-  extends Dto<{
-    model?: string;
-    id?: string;
-    homedir?: string;
-    loglevel?: string;
-  }> {}
 
 export default class UserMapper extends AbstractMapper<UserDto> {
   mapping: FieldMapping = {
@@ -74,7 +66,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
    * @param dto
    * @returns boolean success
    */
-  async setDto(operator: Operator, dto: Dto): Promise<boolean> {
+  async setDto(operator: Operator, dto: UserDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (field in fields) {

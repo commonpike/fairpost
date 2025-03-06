@@ -9,11 +9,13 @@ import log4jsConfig from "../config/log4js.json" with { type: "json" };
 
 import { CommandArguments, CombinedResult } from "../types/index.ts";
 import { PlatformId } from "../platforms/index.ts";
-import { FeedDto } from "../mappers/FeedMapper.ts";
-import { PlatformDto } from "../mappers/PlatformMapper.ts";
-import { PostDto } from "../mappers/PostMapper.ts";
-import { SourceDto } from "../mappers/SourceMapper.ts";
-import { UserDto } from "../mappers/UserMapper.ts";
+import {
+  FeedDto,
+  PlatformDto,
+  PostDto,
+  SourceDto,
+  UserDto,
+} from "../types/index.ts";
 
 import Post from "../models/Post.ts";
 import Server from "../services/Server.ts";

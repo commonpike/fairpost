@@ -1,9 +1,9 @@
-import Source, { FileGroup } from "../../models/Source.ts";
+import { FileGroup, FieldMapping } from "../../types/index.ts";
+import Source from "../../models/Source.ts";
 import { handleApiError, handleEmptyResponse } from "../../utilities.ts";
 
 import LinkedInApi from "./LinkedInApi.ts";
 import LinkedInAuth from "./LinkedInAuth.ts";
-import { FieldMapping } from "../../mappers/AbstractMapper.ts";
 import PlatformMapper from "../../mappers/PlatformMapper.ts";
 import Platform from "../../models/Platform.ts";
 import Post from "../../models/Post.ts";

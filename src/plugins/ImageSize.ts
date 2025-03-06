@@ -1,4 +1,4 @@
-import { FileGroup, FileInfo } from "../models/Source.ts";
+import { FileGroup, FileInfo } from "../types/index.ts";
 
 import Plugin from "../models/Plugin.ts";
 import Post from "../models/Post.ts";

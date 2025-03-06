@@ -1,13 +1,11 @@
 import * as pluginClasses from "../plugins/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 import PlatformMapper from "../mappers/PlatformMapper.ts";
-import { FieldMapping } from "../mappers/AbstractMapper.ts";
+import { FieldMapping, PostStatus } from "../types/index.ts";
 
 import Source from "./Source.ts";
-
 import Plugin from "./Plugin.ts";
 import Post from "./Post.ts";
-import { PostStatus } from "./Post.ts";
 import User from "./User.ts";
 
 /**
