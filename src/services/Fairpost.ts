@@ -37,7 +37,7 @@ type FairpostOutput =
   | {
       [id in PlatformId]?: CombinedResult | CombinedResult[];
     }
-  | { success: boolean; message: string };
+  | { success: boolean; message?: string; messages?: string[] };
 
 class Fairpost {
   static instance: Fairpost;
@@ -678,7 +678,7 @@ class Fairpost {
           const cmd = "fairpost:";
           output = {
             success: true,
-            message: [
+            messages: [
               "# basic commands:",
               `${cmd} help`,
               `${cmd} @userid get-user`,
@@ -707,7 +707,7 @@ class Fairpost {
               "\n# admin only:",
               `${cmd} @userid create-user`,
               `${cmd} serve`,
-            ].join("\n"),
+            ],
           };
         }
       }
