@@ -49,18 +49,13 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
    */
   async getDto(operator: Operator): Promise<PlatformDto> {
     const fields = this.getDtoFields(operator, "get");
-    const dto: PlatformDto = {};
+    const dto: PlatformDto = {
+      user_id: this.user.id,
+      model: "platform",
+      id: this.platform.id,
+    };
     for (const field of fields) {
       switch (field) {
-        case "model":
-          dto[field] = "platform";
-          break;
-        case "id":
-          dto[field] = this.platform.id;
-          break;
-        case "user_id":
-          dto[field] = this.user.id;
-          break;
         case "active":
           dto[field] = !!this.platform.active;
           break;

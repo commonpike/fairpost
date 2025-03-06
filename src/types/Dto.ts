@@ -1,13 +1,8 @@
-import { FileInfo, PostStatus, PostResult } from "./index.ts";
-type Dto<T extends Record<string, unknown> = Record<string, unknown>> = {
-  [K in keyof T]:
-    | string
-    | string[]
-    | number
-    | boolean
-    | FileInfo[]
-    | PostResult[]
-    | PostStatus
-    | undefined;
-};
-export { Dto as default };
+import type FeedDto from "./FeedDto.ts";
+import type PlatformDto from "./FeedDto.ts";
+import type PostDto from "./FeedDto.ts";
+import type SourceDto from "./FeedDto.ts";
+import type UserDto from "./FeedDto.ts";
+
+type Dto = FeedDto | PlatformDto | PostDto | SourceDto | UserDto;
+export { type Dto as default };

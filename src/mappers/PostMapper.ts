@@ -140,18 +140,13 @@ export default class PostMapper extends AbstractMapper<PostDto> {
    */
   async getDto(operator: Operator): Promise<PostDto> {
     const fields = this.getDtoFields(operator, "get");
-    const dto: PostDto = {};
+    const dto: PostDto = {
+      user_id: this.user.id,
+      model: "post",
+      id: this.post.id,
+    };
     for (const field of fields) {
       switch (field) {
-        case "model":
-          dto[field] = "post";
-          break;
-        case "id":
-          dto[field] = this.post.id;
-          break;
-        case "user_id":
-          dto[field] = this.user.id;
-          break;
         case "platform_id":
           dto[field] = this.post.platform.id;
           break;
