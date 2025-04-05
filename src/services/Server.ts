@@ -184,8 +184,12 @@ export default class Server {
           "Set-Cookie",
           cookie.serialize("FairpostSession", token, {
             httpOnly: true,
-            secure: true,
-            sameSite: "strict",
+            secure:
+              process.env.FAIRPOST_SERVER_SECURE === "false" ? false : true,
+            sameSite:
+              process.env.FAIRPOST_SERVER_SECURE === "false"
+                ? "none"
+                : "strict",
             maxAge: 60 * 60, // 1 hour
           }),
         );

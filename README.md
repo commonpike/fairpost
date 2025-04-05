@@ -154,6 +154,12 @@ fairpost: @userid prepare-posts  [--sources=xxx,xxx|--source=xxx] [--platforms=x
 fairpost: @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] 
 fairpost: @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
 
+# account mgmt:
+fairpost: @userid login --password=xxx`,
+fairpost: @userid logout`,
+fairpost: @userid set-password --password=xxx`,
+fairpost: @userid refresh-token`,
+
 # admin only:
 fairpost: create-user --userid=xxx
 fairpost: get-user --userid=xxx
