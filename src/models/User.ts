@@ -1,3 +1,5 @@
+import { basename } from "path";
+
 import * as platformClasses from "../platforms/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 
@@ -54,6 +56,44 @@ export default class User {
     this.data = new UserData(this);
     this.log = new UserLog(this);
     this.mapper = new UserMapper(this);
+  }
+
+  /**
+   * getUsers
+   *
+   * get all users, but do not init them all the way;
+   * filter them for public. This is dumb and heavy now.
+   * https://github.com/commonpike/fairpost/issues/135
+   * @param publicOnly - wether users should be public
+   * @returns new user object
+   */
+  public static async getUsers(publicOnly: boolean): Promise<User[]> {
+    const users: User[] = [];
+    const globalfs = new GlobalFs();
+    if (!process.env.FAIRPOST_USER_HOMEDIR) {
+      throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
+    }
+    const srcdir = process.env.FAIRPOST_USER_HOMEDIR.replace("%user%", "");
+    const listing = await globalfs.list(srcdir).toArray();
+    const ids = listing
+      .map((entry) => {
+        if (entry.isDirectory) {
+          return basename(entry.path);
+        }
+      })
+      .filter((id) => id !== undefined);
+    for (const id of ids) {
+      const user = new User(id);
+      await user.files.init();
+      await user.data.init();
+      if (
+        !publicOnly ||
+        user.data.get("settings", "IS_PUBLIC", "false") !== "false"
+      ) {
+        users.push(user);
+      }
+    }
+    return users;
   }
 
   /**

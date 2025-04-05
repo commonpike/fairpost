@@ -40,6 +40,10 @@ export default class Operator {
     }
     const permissions = {
       manageUsers: this.authenticated && this.roles.includes("admin"),
+      manageAccount:
+        !!user &&
+        this.authenticated &&
+        (this.id === user.id || this.roles.includes("admin")),
       manageFeed:
         !!user &&
         this.authenticated &&

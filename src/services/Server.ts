@@ -1,7 +1,9 @@
+import cookie from "cookie";
 import { createReadStream } from "fs";
 import { createServer, IncomingMessage, ServerResponse } from "http";
 
 import Fairpost from "./Fairpost.ts";
+import AuthService from "./AuthService.ts";
 import { JSONReplacer } from "../utilities.ts";
 import { PlatformId } from "../platforms/index.ts";
 import { PostStatus } from "../types/index.ts";
@@ -37,7 +39,10 @@ export default class Server {
     );
     response.setHeader("Access-Control-Request-Method", "*");
     response.setHeader("Access-Control-Allow-Methods", "OPTIONS, GET");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    response.setHeader("Access-Control-Allow-Credentials", "true");
     response.setHeader("Access-Control-Allow-Headers", "*");
+
     if (request.method === "OPTIONS") {
       response.writeHead(200);
       response.end();
@@ -58,11 +63,22 @@ export default class Server {
       request.url ?? "/",
       `${request.headers.protocol}://${request.headers.host}`,
     );
-    const [username, command] = parsed.pathname?.split("/").slice(1) ?? [
-      "",
-      "",
-    ];
-    const userid = username.replace("@", "");
+
+    // read userid and command from path
+    let username = undefined,
+      userid = undefined,
+      command = undefined;
+    const [part1, part2] = parsed.pathname?.split("/").slice(1) ?? ["", ""];
+    if (part1.startsWith("@")) {
+      username = part1;
+      userid = part1.replace("@", "");
+      command = part2;
+    } else {
+      command = part1;
+    }
+
+    // read other params from query
+    const password = parsed.searchParams.get("password") || undefined;
     const dryrun = parsed.searchParams.get("dry-run") === "true";
     const date = parsed.searchParams.get("date");
     const post = parsed.searchParams.get("post");
@@ -80,6 +96,7 @@ export default class Server {
       (parsed.searchParams.get("status") as PostStatus) || undefined;
 
     const args = {
+      password: password,
       dryrun: dryrun || undefined,
       platforms: platforms,
       platform: platform,
@@ -93,11 +110,18 @@ export default class Server {
     let output = undefined;
     let error = false as boolean | unknown;
     try {
-      const operator = Server.getOperator(userid, request);
-      const user = await User.getUser(userid);
+      let user = undefined;
+      if (userid !== undefined) {
+        user = await User.getUser(userid);
+      }
+      const operator = await Server.getOperator(request, user);
+
       output = await Fairpost.execute(operator, user, command, args);
       code = 200;
       Fairpost.logger.trace("Server.handleRequest", "success", request.url);
+      if (user !== undefined) {
+        await Server.addFairpostSession(response, user, command);
+      }
     } catch (e) {
       Fairpost.logger.error("Server.handleRequest", "error", request.url);
       code = 500;
@@ -128,11 +152,55 @@ export default class Server {
       ),
     );
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public static getOperator(userid: string, request: IncomingMessage) {
-    if (process.env.FAIRPOST_SERVER_AUTH === "none") {
-      return new Operator(userid, ["user"], "api", true);
+  public static async getOperator(request: IncomingMessage, user?: User) {
+    if (user !== undefined) {
+      if (process.env.FAIRPOST_USER_AUTH === "fairpost") {
+        const cookies = cookie.parse(request.headers.cookie || "");
+        if ("FairpostSession" in cookies) {
+          if (
+            await AuthService.verifyToken(
+              user,
+              cookies["FairpostSession"] ?? "",
+            )
+          ) {
+            return new Operator(user.id, ["user"], "api", true);
+          }
+        }
+        return new Operator(user.id, ["anonymous"], "api", false);
+      }
     }
     return new Operator("anonymous", ["anonymous"], "api", true);
+  }
+
+  public static async addFairpostSession(
+    response: ServerResponse,
+    user: User,
+    command: string,
+  ) {
+    if (process.env.FAIRPOST_USER_AUTH === "fairpost") {
+      if (["login", "refresh-token"].includes(command)) {
+        const token = await AuthService.getToken(user);
+        response.setHeader(
+          "Set-Cookie",
+          cookie.serialize("FairpostSession", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 60 * 60, // 1 hour
+          }),
+        );
+      }
+      if (command === "logout") {
+        response.setHeader(
+          "Set-Cookie",
+          cookie.serialize("FairpostSession", "", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 0,
+          }),
+        );
+      }
+    }
   }
 }
