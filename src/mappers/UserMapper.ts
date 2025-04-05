@@ -31,6 +31,13 @@ export default class UserMapper extends AbstractMapper<UserDto> {
       set: ["manageUsers"],
       required: false,
     },
+    report: {
+      type: "json",
+      label: "Report",
+      get: ["any"],
+      set: ["none"],
+      required: false,
+    },
   };
 
   /**
@@ -51,6 +58,12 @@ export default class UserMapper extends AbstractMapper<UserDto> {
           break;
         case "loglevel":
           dto[field] = this.user.data.get("settings", "LOGGER_LEVEL");
+          break;
+        case "report":
+          dto[field] = {
+            todo: "report",
+            // TODO - this should be a report object
+          };
           break;
       }
     }

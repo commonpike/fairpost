@@ -8,6 +8,7 @@ import { PostStatus } from "./index.ts";
 export default interface CommandArguments {
   dryrun?: boolean;
   user?: string;
+  password?: string;
   platforms?: PlatformId[];
   platform?: PlatformId;
   sources?: string[];

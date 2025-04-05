@@ -19,6 +19,7 @@ import {
 
 import Post from "../models/Post.ts";
 import Server from "../services/Server.ts";
+import AuthService from "../services/AuthService.ts";
 import Operator from "../models/Operator.ts";
 import User from "../models/User.ts";
 
@@ -92,9 +93,72 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const newUser = await User.createUser(args.user);
+          if (args.password) {
+            AuthService.setPassword(newUser, args.password);
+          }
           output = await newUser.mapper.getDto(operator);
           break;
         }
+
+        case "login": {
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.password) {
+            throw new Error("password is required for command " + command);
+          }
+          const token = await AuthService.login(user, args.password);
+          output = { success: !!token };
+          break;
+        }
+
+        case "logout": {
+          if (!permissions.manageAccount) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          await AuthService.logout(user);
+          output = { success: true };
+          break;
+        }
+
+        case "set-password": {
+          if (!permissions.manageAccount) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.password) {
+            throw new Error("password is required for command " + command);
+          }
+          await AuthService.setPassword(user, args.password);
+          output = { success: true };
+          break;
+        }
+
+        case "refresh-token": {
+          if (!permissions.manageAccount) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          const result = await AuthService.generateToken(user);
+          output = { success: true, result: result.token };
+          break;
+        }
+
+        case "get-users": {
+          const users = await User.getUsers(!permissions.manageUsers);
+          output = await Promise.all(
+            users.map((user) => user.mapper.getDto(operator)),
+          );
+          break;
+        }
+
         case "get-user": {
           if (!user) {
             throw new Error("Missing user for command " + command);
@@ -103,6 +167,7 @@ class Fairpost {
           }
           break;
         }
+
         case "get-feed": {
           if (!permissions.manageFeed) {
             throw new Error("Missing permissions for command " + command);
@@ -704,6 +769,11 @@ class Fairpost {
               `${cmd} @userid prepare-posts  [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
               `${cmd} @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
+              "\n# account mgmt:",
+              `${cmd} @userid login --password=xxx`,
+              `${cmd} @userid logout`,
+              `${cmd} @userid set-password --password=xxx`,
+              `${cmd} @userid refresh-token`,
               "\n# admin only:",
               `${cmd} @userid create-user`,
               `${cmd} serve`,

@@ -3,4 +3,5 @@ export default interface UserDto {
   id: string;
   homedir?: string;
   loglevel?: string;
+  report?: object; // TODO be more specific
 }

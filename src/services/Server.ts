@@ -1,7 +1,9 @@
+import cookie from "cookie";
 import { createReadStream } from "fs";
 import { createServer, IncomingMessage, ServerResponse } from "http";
 
 import Fairpost from "./Fairpost.ts";
+import AuthService from "./AuthService.ts";
 import { JSONReplacer } from "../utilities.ts";
 import { PlatformId } from "../platforms/index.ts";
 import { PostStatus } from "../types/index.ts";
@@ -37,7 +39,10 @@ export default class Server {
     );
     response.setHeader("Access-Control-Request-Method", "*");
     response.setHeader("Access-Control-Allow-Methods", "OPTIONS, GET");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    response.setHeader("Access-Control-Allow-Credentials", "true");
     response.setHeader("Access-Control-Allow-Headers", "*");
+
     if (request.method === "OPTIONS") {
       response.writeHead(200);
       response.end();
@@ -63,6 +68,7 @@ export default class Server {
       "",
     ];
     const userid = username.replace("@", "");
+    const password = parsed.searchParams.get("password") || undefined;
     const dryrun = parsed.searchParams.get("dry-run") === "true";
     const date = parsed.searchParams.get("date");
     const post = parsed.searchParams.get("post");
@@ -80,6 +86,7 @@ export default class Server {
       (parsed.searchParams.get("status") as PostStatus) || undefined;
 
     const args = {
+      password: password,
       dryrun: dryrun || undefined,
       platforms: platforms,
       platform: platform,
@@ -93,11 +100,12 @@ export default class Server {
     let output = undefined;
     let error = false as boolean | unknown;
     try {
-      const operator = Server.getOperator(userid, request);
       const user = await User.getUser(userid);
+      const operator = await Server.getOperator(user, request);
       output = await Fairpost.execute(operator, user, command, args);
       code = 200;
       Fairpost.logger.trace("Server.handleRequest", "success", request.url);
+      await Server.addFairpostSession(response, user, command);
     } catch (e) {
       Fairpost.logger.error("Server.handleRequest", "error", request.url);
       code = 500;
@@ -128,11 +136,50 @@ export default class Server {
       ),
     );
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public static getOperator(userid: string, request: IncomingMessage) {
-    if (process.env.FAIRPOST_SERVER_AUTH === "none") {
-      return new Operator(userid, ["user"], "api", true);
+  public static async getOperator(user: User, request: IncomingMessage) {
+    if (process.env.FAIRPOST_USER_AUTH === "fairpost") {
+      const cookies = cookie.parse(request.headers.cookie || "");
+      if ("FairpostSession" in cookies) {
+        if (
+          await AuthService.verifyToken(user, cookies["FairpostSession"] ?? "")
+        ) {
+          return new Operator(user.id, ["user"], "api", true);
+        }
+      }
+      return new Operator(user.id, ["anonymous"], "api", false);
     }
     return new Operator("anonymous", ["anonymous"], "api", true);
+  }
+
+  public static async addFairpostSession(
+    response: ServerResponse,
+    user: User,
+    command: string,
+  ) {
+    if (process.env.FAIRPOST_USER_AUTH === "fairpost") {
+      if (["login", "refresh-token"].includes(command)) {
+        const token = await AuthService.getToken(user);
+        response.setHeader(
+          "Set-Cookie",
+          cookie.serialize("FairpostSession", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 60 * 60, // 1 hour
+          }),
+        );
+      }
+      if (command === "logout") {
+        response.setHeader(
+          "Set-Cookie",
+          cookie.serialize("FairpostSession", "", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 0,
+          }),
+        );
+      }
+    }
   }
 }

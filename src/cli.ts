@@ -23,6 +23,7 @@ const COMMAND = process.argv[2]?.includes("@")
 // options
 const DRY_RUN = !!getOption("dry-run");
 const OPERATOR = (getOption("operator") as string) ?? "admin";
+const PASSWORD = (getOption("password") as string) ?? undefined;
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
 const SOURCES = (getOption("sources") as string)?.split(",") ?? undefined;
@@ -54,6 +55,7 @@ async function main() {
     const output = await Fairpost.execute(operator, user, COMMAND, {
       dryrun: DRY_RUN,
       user: USER,
+      password: PASSWORD,
       platforms: PLATFORMS,
       platform: PLATFORM,
       sources: SOURCES,

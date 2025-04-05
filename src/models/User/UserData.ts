@@ -134,6 +134,42 @@ export default class UserData {
     // dont forget to call save()
   }
 
+  public del(store: StorageType, key: string) {
+    const storageKey = StorageKeys[store];
+    const storage = process.env[storageKey] ?? "none";
+    switch (storage) {
+      case "env":
+        return this.delEnv(store, key);
+      case "json-env":
+      case "json":
+        return this.delJson(store, key);
+      default:
+        throw new Error("UserData: Storage " + storage + " not implemented");
+    }
+  }
+
+  private delEnv(store: StorageType, key: string) {
+    const ui = process.env.FAIRPOST_UI ?? "none";
+    if (ui === "cli") {
+      console.log("Remove this value from your users .env file:");
+      console.log();
+      console.log("FAIRPOST_" + key);
+      console.log();
+    } else {
+      throw new Error("UserData.setEnv: UI " + ui + " not supported");
+    }
+  }
+
+  private delJson(store: StorageType, key: string) {
+    if (!(store in this.jsonData)) {
+      this.jsonData[store] = {};
+    }
+    if (key in this.jsonData[store]) {
+      delete this.jsonData[store][key];
+    }
+    // dont forget to call save()
+  }
+
   private async loadJson() {
     if (await this.user.files.isFile(this.jsonPath)) {
       const contents = await this.user.files.readFile(this.jsonPath);
