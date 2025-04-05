@@ -4,8 +4,8 @@ import User from "../models/User.ts";
 
 /**
  * AuthService handles authentication; wrapping
- * sauth (simple auth) or eg amazon cognito
- * given by FAIRPOST_USER_AUTH
+ * fairposts simple username/password auth or eg amazon cognito
+ * as decided by by FAIRPOST_USER_AUTH
  */
 
 export default class AuthService {

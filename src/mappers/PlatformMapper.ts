@@ -59,6 +59,10 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
         case "active":
           dto[field] = !!this.platform.active;
           break;
+        case "model":
+        case "id":
+        case "user_id":
+          break;
         default:
           switch (this.mapping[field].type) {
             case "string":

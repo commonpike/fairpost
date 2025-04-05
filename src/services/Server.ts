@@ -63,11 +63,21 @@ export default class Server {
       request.url ?? "/",
       `${request.headers.protocol}://${request.headers.host}`,
     );
-    const [username, command] = parsed.pathname?.split("/").slice(1) ?? [
-      "",
-      "",
-    ];
-    const userid = username.replace("@", "");
+
+    // read userid and command from path
+    let username = undefined,
+      userid = undefined,
+      command = undefined;
+    const [part1, part2] = parsed.pathname?.split("/").slice(1) ?? ["", ""];
+    if (part1.startsWith("@")) {
+      username = part1;
+      userid = part1.replace("@", "");
+      command = part2;
+    } else {
+      command = part1;
+    }
+
+    // read other params from query
     const password = parsed.searchParams.get("password") || undefined;
     const dryrun = parsed.searchParams.get("dry-run") === "true";
     const date = parsed.searchParams.get("date");
@@ -100,12 +110,18 @@ export default class Server {
     let output = undefined;
     let error = false as boolean | unknown;
     try {
-      const user = await User.getUser(userid);
-      const operator = await Server.getOperator(user, request);
+      let user = undefined;
+      if (userid !== undefined) {
+        user = await User.getUser(userid);
+      }
+      const operator = await Server.getOperator(request, user);
+
       output = await Fairpost.execute(operator, user, command, args);
       code = 200;
       Fairpost.logger.trace("Server.handleRequest", "success", request.url);
-      await Server.addFairpostSession(response, user, command);
+      if (user !== undefined) {
+        await Server.addFairpostSession(response, user, command);
+      }
     } catch (e) {
       Fairpost.logger.error("Server.handleRequest", "error", request.url);
       code = 500;
@@ -136,17 +152,22 @@ export default class Server {
       ),
     );
   }
-  public static async getOperator(user: User, request: IncomingMessage) {
-    if (process.env.FAIRPOST_USER_AUTH === "fairpost") {
-      const cookies = cookie.parse(request.headers.cookie || "");
-      if ("FairpostSession" in cookies) {
-        if (
-          await AuthService.verifyToken(user, cookies["FairpostSession"] ?? "")
-        ) {
-          return new Operator(user.id, ["user"], "api", true);
+  public static async getOperator(request: IncomingMessage, user?: User) {
+    if (user !== undefined) {
+      if (process.env.FAIRPOST_USER_AUTH === "fairpost") {
+        const cookies = cookie.parse(request.headers.cookie || "");
+        if ("FairpostSession" in cookies) {
+          if (
+            await AuthService.verifyToken(
+              user,
+              cookies["FairpostSession"] ?? "",
+            )
+          ) {
+            return new Operator(user.id, ["user"], "api", true);
+          }
         }
+        return new Operator(user.id, ["anonymous"], "api", false);
       }
-      return new Operator(user.id, ["anonymous"], "api", false);
     }
     return new Operator("anonymous", ["anonymous"], "api", true);
   }
