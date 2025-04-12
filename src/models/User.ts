@@ -6,6 +6,7 @@ import { PlatformId } from "../platforms/index.ts";
 import Feed from "./Feed.ts";
 import Platform from "./Platform.ts";
 import GlobalFs from "../services/GlobalFs.ts";
+import { UserReport, SourceStatus, PostStatus } from "../types/index.ts";
 
 import UserData from "./User/UserData.ts";
 import UserFiles from "./User/UserFiles.ts";
@@ -156,6 +157,45 @@ export default class User {
     }
     user.log.info("User created: " + newUserId);
     return user;
+  }
+
+  /**
+   * @returns the feed for this user
+   */
+
+  public async getReport(): Promise<UserReport> {
+    const report: UserReport = {
+      feed: {
+        sources: {
+          [SourceStatus.UNKNOWN]: 0,
+          [SourceStatus.INCOMING]: 0,
+          [SourceStatus.PREPARED]: 0,
+          [SourceStatus.PROCESSING]: 0,
+          [SourceStatus.PROCESSED]: 0,
+          [SourceStatus.ARCHIVED]: 0,
+        },
+        lastId: "todo",
+        nextId: "todo",
+      },
+      platforms: {},
+    };
+    for (const platform of this.getPlatforms()) {
+      report.platforms[platform.id] = {
+        link: "todo",
+        posts: {
+          [PostStatus.UNKNOWN]: 0,
+          [PostStatus.UNSCHEDULED]: 0,
+          [PostStatus.SCHEDULED]: 0,
+          [PostStatus.PUBLISHED]: 0,
+          [PostStatus.CANCELED]: 0,
+          [PostStatus.FAILED]: 0,
+        },
+        lastId: "todo",
+        lastLink: "todo",
+        nextId: "todo",
+      };
+    }
+    return report;
   }
 
   /**

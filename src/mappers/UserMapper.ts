@@ -60,10 +60,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
           dto[field] = this.user.data.get("settings", "LOGGER_LEVEL");
           break;
         case "report":
-          dto[field] = {
-            todo: "report",
-            // TODO - this should be a report object
-          };
+          dto[field] = await this.user.getReport();
           break;
       }
     }
