@@ -2,7 +2,12 @@ import { basename, extname } from "path";
 
 import sharp from "sharp";
 import Feed from "./Feed.ts";
-import { PostStatus, FileInfo, FileGroup } from "../types/index.ts";
+import {
+  SourceStatus,
+  PostStatus,
+  FileInfo,
+  FileGroup,
+} from "../types/index.ts";
 import Platform from "./Platform.ts";
 import Post from "./Post.ts";
 import SourceMapper from "../mappers/SourceMapper.ts";
@@ -51,6 +56,18 @@ export default class Source {
       throw feed.user.log.error("getSource", "Not a valid source: " + path);
     }
     return new Source(feed, feed.path + "/" + path);
+  }
+
+  /**
+   * Get the status of a source.
+   *
+   * The status depends on
+   * the various states of the posts in the source.
+   * @returns {SourceStatus} - the status of the source
+   */
+  public async getStatus(): Promise<SourceStatus> {
+    // TODO
+    return SourceStatus.UNKNOWN;
   }
 
   /**

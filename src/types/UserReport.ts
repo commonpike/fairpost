@@ -3,7 +3,7 @@ import PostStatus from "./PostStatus";
 import { PlatformId } from "../platforms";
 export default interface UserReport {
   feed: {
-    sources: {
+    count: {
       [status in SourceStatus]?: number;
     };
     lastId: string;
@@ -12,12 +12,12 @@ export default interface UserReport {
   platforms: {
     [id in PlatformId]?: {
       link: string;
-      posts: {
+      count: {
         [status in PostStatus]?: number;
       };
       lastId: string;
-      lastLink: string;
       nextId: string;
+      lastLink: string;
     };
   };
 }
