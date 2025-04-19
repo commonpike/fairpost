@@ -1,4 +1,4 @@
-enum PostStatus {
+enum SourceStatus {
   UNKNOWN = "unknown",
   INCOMING = "incoming", // no posts
   PREPARED = "prepared", // all posts unscheduled
@@ -6,4 +6,4 @@ enum PostStatus {
   PROCESSED = "processed", // all posts published, canceled or failed
   ARCHIVED = "archived",
 }
-export default PostStatus;
+export default SourceStatus;
