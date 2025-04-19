@@ -1,5 +1,6 @@
 import FeedMapper from "../mappers/FeedMapper.ts";
 import Source from "./Source.ts";
+import { SourceStatus } from "../types/index.ts";
 import User from "./User.ts";
 import { basename } from "path";
 
@@ -29,7 +30,36 @@ export default class Feed {
   }
 
   /**
-   * getSourceId
+   * Get a report for this feed. This is
+   * part of the user report, which is updated
+   * as posts are processed and then cached
+   * @returns a report for this feed
+   */
+  async getReport() {
+    // TODO check cache first
+    const sources = {
+      [SourceStatus.UNKNOWN]: 0,
+      [SourceStatus.INCOMING]: 0,
+      [SourceStatus.PREPARED]: 0,
+      [SourceStatus.PROCESSING]: 0,
+      [SourceStatus.PROCESSED]: 0,
+      [SourceStatus.ARCHIVED]: 0,
+    };
+    const allSources = await this.getAllSources();
+    for (const source of allSources) {
+      const status = await source.getStatus();
+      sources[status] = sources[status] + 1;
+    }
+
+    return {
+      lastId: "todo",
+      nextId: "todo",
+      count: sources,
+    };
+  }
+
+  /**
+   * get source id based on the path of a source
    * @param path the path for the new or existing source
    * @returns the id for the new or existing source
    */
@@ -93,55 +123,4 @@ export default class Feed {
     }
     return Promise.all(paths.map((path) => this.getSource(path)));
   }
-
-  /**
-   * Get one source status
-   * @param path - path to a single source
-   * @returns an amalgation of the sources post statusses
-   *
-   * if there are no posts, its unknown
-   * if at least one post is failed, its failed
-   * if at least one post is scheduled, its scheduled
-   * if all posts are published, its published
-   * otherwise its unscheduled
-   
-  getSourceStatus(path: string): PostStatus {
-    this.user.log.trace("Feed", "getSourceStatus", path);
-    const platforms = this.user.getPlatforms();
-    const source = this.getSource(path);
-    const posts = [] as Post[];
-    platforms.forEach((p) => {
-      posts.push(p.getPost(source));
-    });
-    if (!posts.length) {
-      return PostStatus.UNKNOWN;
-    }
-    let haveScheduled = false;
-    let haveFailed = false;
-    let allPublished = true;
-    for (const post of posts) {
-      if (post.valid && !post.skip) {
-        if (post.status === PostStatus.SCHEDULED) {
-          haveScheduled = true;
-        }
-        if (post.status === PostStatus.FAILED) {
-          haveFailed = true;
-        }
-        if (post.status !== PostStatus.PUBLISHED) {
-          allPublished = false;
-        }
-      }
-    }
-    if (haveFailed) {
-      return PostStatus.FAILED;
-    }
-    if (haveScheduled) {
-      return PostStatus.SCHEDULED;
-    }
-    if (allPublished) {
-      return PostStatus.PUBLISHED;
-    }
-    return PostStatus.UNSCHEDULED;
-  }
-   */
 }

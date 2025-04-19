@@ -6,6 +6,7 @@ import { PlatformId } from "../platforms/index.ts";
 import Feed from "./Feed.ts";
 import Platform from "./Platform.ts";
 import GlobalFs from "../services/GlobalFs.ts";
+import { UserReport } from "../types/index.ts";
 
 import UserData from "./User/UserData.ts";
 import UserFiles from "./User/UserFiles.ts";
@@ -156,6 +157,25 @@ export default class User {
     }
     user.log.info("User created: " + newUserId);
     return user;
+  }
+
+  /**
+   * getReport: return a report for this user.
+   *
+   * The report is updated as posts are processed
+   * and cached in the user data.
+   * @returns the report for this user.
+   */
+
+  public async getReport(): Promise<UserReport> {
+    const report: UserReport = {
+      feed: await this.getFeed().getReport(),
+      platforms: {},
+    };
+    for (const platform of this.getPlatforms()) {
+      report.platforms[platform.id] = await platform.getReport();
+    }
+    return report;
   }
 
   /**

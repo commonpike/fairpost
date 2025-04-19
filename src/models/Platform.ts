@@ -85,6 +85,37 @@ export default class Platform {
   }
 
   /**
+   * Get a report for this feed. This is
+   * part of the user report which is updated
+   * while the posts are being processed
+   * and then cached.
+   * @returns a report for this platform
+   */
+  async getReport() {
+    this.user.log.trace(this.id, "getReport");
+    // todo : check the cache first
+    const posts = {
+      [PostStatus.UNKNOWN]: 0,
+      [PostStatus.CANCELED]: 0,
+      [PostStatus.FAILED]: 0,
+      [PostStatus.UNSCHEDULED]: 0,
+      [PostStatus.SCHEDULED]: 0,
+      [PostStatus.PUBLISHED]: 0,
+    };
+    const allPosts = await this.getPosts();
+    for (const post of allPosts) {
+      posts[post.status] = posts[post.status] + 1;
+    }
+    return {
+      link: "todo",
+      count: posts,
+      lastId: "todo",
+      lastLink: "todo",
+      nextId: "todo",
+    };
+  }
+
+  /**
    * getPostFilePath
    * @param source the source for the new or existing post
    * @returns the full path to the post file used
