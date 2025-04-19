@@ -78,58 +78,17 @@ export default class UserData {
   }
 
   public getObject(store: StorageType, key: string, def?: object): object {
-    const storageKey = StorageKeys[store];
-    const storage = process.env[storageKey] ?? "none";
-    switch (storage) {
-      case "env": {
-        const value = this.getEnv(store, key, JSON.stringify(def));
-        try {
-          return JSON.parse(value);
-        } catch {
-          throw new Error(
-            "UserData.getObject: Value " +
-              store +
-              "." +
-              key +
-              " not a valid json",
-          );
-        }
-      }
-      case "json-env": {
-        try {
-          const value = this.getJson(store, key);
-          return JSON.parse(value);
-        } catch {
-          const value = this.getEnv(store, key, JSON.stringify(def));
-          try {
-            return JSON.parse(value);
-          } catch {
-            throw new Error(
-              "UserData.getObject: Value " +
-                store +
-                "." +
-                key +
-                " not a valid json",
-            );
-          }
-        }
-      }
-      case "json": {
-        const value = this.getJson(store, key, JSON.stringify(def));
-        try {
-          return JSON.parse(value);
-        } catch {
-          throw new Error(
-            "UserData.getObject: Value " +
-              store +
-              "." +
-              key +
-              " not a valid json",
-          );
-        }
-      }
-      default:
-        throw new Error("UserData: Storage " + storage + " not implemented");
+    const value = this.get(store, key, JSON.stringify(def));
+    try {
+      return JSON.parse(value);
+    } catch {
+      throw new Error(
+        "UserData.getObject: Value " +
+          store +
+          "." +
+          key +
+          " not a valid json",
+      );
     }
   }
 
@@ -174,17 +133,7 @@ export default class UserData {
   }
 
   public setObject(store: StorageType, key: string, value: object) {
-    const storageKey = StorageKeys[store];
-    const storage = process.env[storageKey] ?? "none";
-    switch (storage) {
-      case "env":
-        return this.setEnv(store, key, JSON.stringify(value));
-      case "json-env":
-      case "json":
-        return this.setJson(store, key, JSON.stringify(value));
-      default:
-        throw new Error("UserData: Storage " + storage + " not implemented");
-    }
+    return this.set(store, key, JSON.stringify(value));
   }
 
   private setEnv(store: StorageType, key: string, value: string) {
