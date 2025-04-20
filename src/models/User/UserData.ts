@@ -83,11 +83,7 @@ export default class UserData {
       return JSON.parse(value);
     } catch {
       throw new Error(
-        "UserData.getObject: Value " +
-          store +
-          "." +
-          key +
-          " not a valid json",
+        "UserData.getObject: Value " + store + "." + key + " not a valid json",
       );
     }
   }

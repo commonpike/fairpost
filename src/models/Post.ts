@@ -95,6 +95,39 @@ export default class Post {
   }
 
   /**
+   * Get the post status
+   * @returns the post status
+   */
+  getStatus(): PostStatus {
+    return this.status;
+  }
+
+  /**
+   * Set the post status - this also updates the cached user report
+   * @param status
+   */
+  async setStatus(status: PostStatus) {
+    this.platform.user.log.trace("Post", "setStatus", status);
+    const previousStatus = this.status;
+    if (previousStatus !== status) {
+      this.status = status;
+      // update the report
+      const report = await this.platform.user.getReport();
+      if (report.platforms[this.platform.id]) {
+        if (!report.platforms[this.platform.id]?.count[previousStatus]) {
+          report.platforms[this.platform.id]!.count[previousStatus] = 1;
+        }
+        if (!report.platforms[this.platform.id]?.count[status]) {
+          report.platforms[this.platform.id]!.count[status] = 0;
+        }
+        report.platforms[this.platform.id]!.count[previousStatus]!--;
+        report.platforms[this.platform.id]!.count[status]!++;
+        // save the report
+      }
+    }
+  }
+
+  /**
    * Save this post to disk
    */
 
@@ -209,10 +242,10 @@ export default class Post {
     }
 
     if (this.status === PostStatus.UNKNOWN) {
-      this.status = PostStatus.UNSCHEDULED;
+      this.setStatus(PostStatus.UNSCHEDULED);
     }
     if (this.status === PostStatus.FAILED) {
-      this.status = PostStatus.UNSCHEDULED;
+      this.setStatus(PostStatus.UNSCHEDULED);
     }
 
     // done
@@ -237,7 +270,7 @@ export default class Post {
       this.platform.user.log.warn("Rescheduling post");
     }
     this.scheduled = date;
-    this.status = PostStatus.SCHEDULED;
+    this.setStatus(PostStatus.SCHEDULED);
     await this.save();
   }
 
@@ -625,10 +658,10 @@ export default class Post {
       if (!result.error) {
         this.remoteId = remoteId;
         this.link = link;
-        this.status = PostStatus.PUBLISHED;
+        this.setStatus(PostStatus.PUBLISHED);
         this.published = new Date();
       } else {
-        this.status = PostStatus.FAILED;
+        this.setStatus(PostStatus.FAILED);
       }
     }
 

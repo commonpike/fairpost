@@ -200,6 +200,10 @@ export default class Platform {
 
   /**
    * Get first post from sources scheduled in the past
+   * This also does some janitor checks ..
+   * - if a post is scheduled without a date, it will be unscheduled
+   * - if a post is already published, it will be marked as such
+   * - if a post is marked as skip, it will be unscheduled
    * @param sources
    * @returns the above post or none
    */
@@ -208,13 +212,13 @@ export default class Platform {
     for (const source of sources) {
       const post = await this.getPost(source);
       if (post && post.status === PostStatus.SCHEDULED) {
-        // some sanity checks
+        // some janitor checks
         if (!post.scheduled) {
           this.user.log.warn(
             "Found scheduled post without date. Unscheduling post.",
             post.id,
           );
-          post.status = PostStatus.UNSCHEDULED;
+          post.setStatus(PostStatus.UNSCHEDULED);
           post.save();
           continue;
         }
@@ -223,7 +227,7 @@ export default class Platform {
             "Found scheduled post marked skip. Unscheduling post.",
             post.id,
           );
-          post.status = PostStatus.UNSCHEDULED;
+          post.setStatus(PostStatus.UNSCHEDULED);
           post.save();
           continue;
         }
@@ -232,7 +236,7 @@ export default class Platform {
             "Found scheduled post previously published. Marking published.",
             post.id,
           );
-          post.status = PostStatus.PUBLISHED;
+          post.setStatus(PostStatus.PUBLISHED);
           post.save();
           continue;
         }

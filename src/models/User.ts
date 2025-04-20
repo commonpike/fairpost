@@ -168,6 +168,8 @@ export default class User {
    */
 
   public async getReport(): Promise<UserReport> {
+    // see if the report is cached in data
+    // otherwise, create a new report
     const report: UserReport = {
       feed: await this.getFeed().getReport(),
       platforms: {},
