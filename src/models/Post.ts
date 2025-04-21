@@ -95,6 +95,68 @@ export default class Post {
   }
 
   /**
+   * Get the post status
+   * @returns the post status
+   */
+  getStatus(): PostStatus {
+    return this.status;
+  }
+
+  /**
+   * Set the post status - this also updates the
+   * source status and the cached user report
+   * @param status
+   */
+  async setStatus(status: PostStatus) {
+    this.platform.user.log.trace("Post", "setStatus", status);
+
+    const originalPostStatus = this.status;
+    if (originalPostStatus !== status) {
+      // update the status
+      this.status = status;
+
+      // update the user report
+      const report = await this.platform.user.getReport();
+      if (report.platforms[this.platform.id]) {
+        if (!report.platforms[this.platform.id]?.count[originalPostStatus]) {
+          report.platforms[this.platform.id]!.count[originalPostStatus] = 1;
+        }
+        if (!report.platforms[this.platform.id]?.count[status]) {
+          report.platforms[this.platform.id]!.count[status] = 0;
+        }
+        report.platforms[this.platform.id]!.count[originalPostStatus]!--;
+        report.platforms[this.platform.id]!.count[status]!++;
+
+        // check if the source status is updated
+        // note, this may *move* the source and all posts
+        const orginalSourceStatus = await this.source.getStatus();
+        const newSourceStatus = await this.source.updateStatus();
+
+        // update the user report if needed
+        if (orginalSourceStatus !== newSourceStatus) {
+          if (!report.feed.count[orginalSourceStatus]) {
+            report.feed.count[orginalSourceStatus] = 1;
+          }
+          if (!report.feed.count[newSourceStatus]) {
+            report.feed.count[newSourceStatus] = 0;
+          }
+          report.feed.count[orginalSourceStatus]!--;
+          report.feed.count[newSourceStatus]!++;
+        }
+
+        // save the report
+
+        await this.platform.user.putReport(report);
+        this.platform.user.log.trace(
+          "Post",
+          "setStatus",
+          "updated user report",
+        );
+      }
+    }
+  }
+
+  /**
    * Save this post to disk
    */
 
@@ -209,10 +271,10 @@ export default class Post {
     }
 
     if (this.status === PostStatus.UNKNOWN) {
-      this.status = PostStatus.UNSCHEDULED;
+      await this.setStatus(PostStatus.UNSCHEDULED);
     }
     if (this.status === PostStatus.FAILED) {
-      this.status = PostStatus.UNSCHEDULED;
+      await this.setStatus(PostStatus.UNSCHEDULED);
     }
 
     // done
@@ -237,7 +299,7 @@ export default class Post {
       this.platform.user.log.warn("Rescheduling post");
     }
     this.scheduled = date;
-    this.status = PostStatus.SCHEDULED;
+    await this.setStatus(PostStatus.SCHEDULED);
     await this.save();
   }
 
@@ -625,10 +687,10 @@ export default class Post {
       if (!result.error) {
         this.remoteId = remoteId;
         this.link = link;
-        this.status = PostStatus.PUBLISHED;
+        await this.setStatus(PostStatus.PUBLISHED);
         this.published = new Date();
       } else {
-        this.status = PostStatus.FAILED;
+        await this.setStatus(PostStatus.FAILED);
       }
     }
 

@@ -61,11 +61,26 @@ export default class Source {
   /**
    * Get the status of a source.
    *
-   * The status depends on
-   * the various states of the posts in the source.
+   * The status depends on the various statusses of the posts
+   * in the source. The path of the source depends on the status,
+   * and here we just check the path to see its current status.
    * @returns {SourceStatus} - the status of the source
    */
   public async getStatus(): Promise<SourceStatus> {
+    // TODO
+    return SourceStatus.UNKNOWN;
+  }
+
+  /**
+   * Update the status of a source.
+   *
+   * The status of the source depends on the various statusses
+   * of the posts in the source. Post.setStatus calls this method.
+   * The path of the source depends on the status, so if
+   * it is updated source may move to a new location.
+   * @returns {SourceStatus} - the new status of the source
+   */
+  public async updateStatus(): Promise<SourceStatus> {
     // TODO
     return SourceStatus.UNKNOWN;
   }

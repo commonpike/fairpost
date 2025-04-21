@@ -5,11 +5,13 @@ import User from "../User.ts";
  * UserData
  *
  * - sets and gets key / value pairs, all string.
- * - uses three 'stores':
+ * - uses four 'stores':
  *   - 'app' is typically what the admin maintains
  *   - 'settings' is typically what a user maintains,
  *   - 'auth' is what fairpost maintains and may be
  *     stored and encrypted somewhere else
+ *  - 'cache' is what fairpost maintains and may be
+ *     deleted at any time
  * - each store has a backend, one of
  *   - 'env' is process.env (.env)
  *   - 'json' is json file, with one key for each store and a flat list below it
@@ -19,11 +21,12 @@ import User from "../User.ts";
  * set in the environment
  */
 
-type StorageType = "app" | "settings" | "auth";
+type StorageType = "app" | "settings" | "auth" | "cache";
 enum StorageKeys {
   "app" = "FAIRPOST_STORAGE_APP",
   "settings" = "FAIRPOST_STORAGE_SETTINGS",
   "auth" = "FAIRPOST_STORAGE_AUTH",
+  "cache" = "FAIRPOST_STORAGE_CACHE",
 }
 
 export default class UserData {
@@ -74,6 +77,17 @@ export default class UserData {
     }
   }
 
+  public getObject(store: StorageType, key: string, def?: object): object {
+    const value = this.get(store, key, JSON.stringify(def));
+    try {
+      return JSON.parse(value);
+    } catch {
+      throw new Error(
+        "UserData.getObject: Value " + store + "." + key + " not a valid json",
+      );
+    }
+  }
+
   private getEnv(store: StorageType, key: string, def?: string): string {
     let value = process.env["FAIRPOST_" + key] ?? "";
     if (!value) {
@@ -112,6 +126,10 @@ export default class UserData {
       default:
         throw new Error("UserData: Storage " + storage + " not implemented");
     }
+  }
+
+  public setObject(store: StorageType, key: string, value: object) {
+    return this.set(store, key, JSON.stringify(value));
   }
 
   private setEnv(store: StorageType, key: string, value: string) {

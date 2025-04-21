@@ -118,9 +118,9 @@ usually to refresh the access tokens and save them in Storage.
 Your platform is constructed with a User, `FooBar.user`.
 All configuration, including 'global' configuration from 
 Fairpost, is set on (and some can be overridden by) the user. 
-The user has three stores, `app`, `settings` and `auth`. Depending on the 
-users configuration, these may be stored in different places. If a 
-storage uses `.env`, it is read-only.
+The user has four stores, `app`, `settings`,`auth` and `cache`. 
+Depending on the apps configuration, these may be stored in 
+different places. If a storage uses `.env`, it is read-only.
 
 ```php
 <?php
