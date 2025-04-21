@@ -22,7 +22,7 @@ export default class UserLog {
   }
 
   public async init() {
-    await this.getLogger();
+    this.logger = await this.getLogger();
   }
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any

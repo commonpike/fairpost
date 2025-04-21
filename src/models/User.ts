@@ -162,22 +162,41 @@ export default class User {
   /**
    * getReport: return a report for this user.
    *
-   * The report is updated as posts are processed
+   * Generating a report may be heavy, so
+   * the report is updated as posts are processed
    * and cached in the user data.
    * @returns the report for this user.
    */
 
   public async getReport(): Promise<UserReport> {
-    // see if the report is cached in data
-    // otherwise, create a new report
-    const report: UserReport = {
-      feed: await this.getFeed().getReport(),
-      platforms: {},
-    };
-    for (const platform of this.getPlatforms()) {
-      report.platforms[platform.id] = await platform.getReport();
+    this.log.trace("User", "getReport");
+    try {
+      return this.data.getObject("cache", "report") as UserReport;
+    } catch {
+      this.log.trace("User", "getReport", "creating new report");
+      const report: UserReport = {
+        feed: await this.getFeed().getReport(),
+        platforms: {},
+      };
+      for (const platform of this.getPlatforms()) {
+        report.platforms[platform.id] = await platform.getReport();
+      }
+      await this.putReport(report);
+      return report;
     }
-    return report;
+  }
+
+  /**
+   * putReport: save an updated report
+   *
+   * The report is updated as posts are processed
+   * and cached in the user data.
+   */
+
+  public async putReport(report: UserReport): Promise<void> {
+    this.log.trace("User", "putReport");
+    this.data.setObject("cache", "report", report);
+    await this.data.save();
   }
 
   /**
