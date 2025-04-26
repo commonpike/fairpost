@@ -1,9 +1,9 @@
 enum SourceStatus {
   UNKNOWN = "unknown",
   INCOMING = "incoming", // no posts
-  PREPARED = "prepared", // all posts unscheduled
-  PROCESSING = "processing", // mixed post statuses
-  PROCESSED = "processed", // all posts published, canceled or failed
+  PENDING = "pending", // all posts unscheduled
+  CURRENT = "current", // mixed post statuses
+  DONE = "done", // all posts published or canceled
   ARCHIVED = "archived",
 }
 export default SourceStatus;

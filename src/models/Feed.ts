@@ -40,9 +40,9 @@ export default class Feed {
     const sources = {
       [SourceStatus.UNKNOWN]: 0,
       [SourceStatus.INCOMING]: 0,
-      [SourceStatus.PREPARED]: 0,
-      [SourceStatus.PROCESSING]: 0,
-      [SourceStatus.PROCESSED]: 0,
+      [SourceStatus.PENDING]: 0,
+      [SourceStatus.CURRENT]: 0,
+      [SourceStatus.DONE]: 0,
       [SourceStatus.ARCHIVED]: 0,
     };
     const allSources = await this.getAllSources();
