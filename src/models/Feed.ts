@@ -19,7 +19,9 @@ export default class Feed {
   path: string = "";
   user: User;
   cache: { [id: string]: Source } = {};
-  allCached: boolean = false;
+  allCached: {
+    [status in SourceStatus]?: boolean;
+  } = {};
   mapper: FeedMapper;
 
   constructor(user: User) {
@@ -27,6 +29,12 @@ export default class Feed {
     this.path = this.user.data.get("settings", "USER_FEEDPATH", "feed");
     this.id = this.user.id + ":feed";
     this.mapper = new FeedMapper(this);
+  }
+
+  clearCache() {
+    this.user.log.trace("Feed", "clearCache");
+    this.cache = {};
+    this.allCached = {};
   }
 
   /**
@@ -81,9 +89,6 @@ export default class Feed {
     if (!sourceIds || !sourceIds.length) {
       if (!status) {
         // requesting all sources
-        if (this.allCached) {
-          return Object.values(this.cache);
-        }
         if (!(await this.user.files.exists(this.path))) {
           this.user.log.info("creating dir " + this.path);
           await this.user.files.mkdir(this.path);
@@ -96,11 +101,10 @@ export default class Feed {
         this.user.log.trace(
           "found " + Object.keys(this.cache).length + " sources",
         );
-        this.allCached = true;
         return Object.values(this.cache);
       } else {
         // requesting sources with a specific status
-        if (this.allCached) {
+        if (this.allCached[status]) {
           return Object.values(this.cache).filter(
             (source) => source.status === status,
           );
@@ -123,6 +127,7 @@ export default class Feed {
           this.cache[source.id] = source;
           sources.push(source);
         }
+        this.allCached[status] = true;
         this.user.log.trace(
           "found " + sources.length + " sources of status " + status,
         );
@@ -167,18 +172,5 @@ export default class Feed {
     const source = await Source.getSource(this, id);
     this.cache[source.id] = source;
     return source;
-  }
-
-  /**
-   * Get multiple sources
-   * @param ids - ids of multiple sources
-   * @returns the given source objects
-   */
-  async oldGetSources(ids?: string[]): Promise<Source[]> {
-    this.user.log.trace("Feed", "getSources", ids);
-    if (!ids || !ids.length) {
-      return await this.getSources();
-    }
-    return Promise.all(ids.map((id) => this.getSource(id)));
   }
 }

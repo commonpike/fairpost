@@ -93,7 +93,12 @@ export default class Source {
    */
   public async updateStatus(): Promise<SourceStatus> {
     // TODO
-    return SourceStatus.UNKNOWN;
+    // loop all posts to check their status
+    // if our status changed,
+    // move this source to the new location
+    // update its status
+    // and clear feed cache
+    return this.status;
   }
 
   /**
