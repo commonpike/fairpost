@@ -15,6 +15,8 @@ import {
   PostDto,
   SourceDto,
   UserDto,
+  SourceStatus,
+  PostStatus,
 } from "../types/index.ts";
 
 import Post from "../models/Post.ts";
@@ -355,10 +357,19 @@ class Fairpost {
             throw new Error("Missing permissions for command " + command);
           }
           if (!user) {
-            throw new Error("user is required for command " + command);
+            throw new Error("User is required for command " + command);
+          }
+          if (
+            args.status &&
+            !Object.values(SourceStatus).includes(args.status as SourceStatus)
+          ) {
+            throw new Error("Incorrect status " + args.status);
           }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(
+            args.sources,
+            args.status as SourceStatus,
+          );
           output = await Promise.all(
             sources.map((source) => source.mapper.getDto(operator)),
           );
@@ -396,8 +407,15 @@ class Fairpost {
             throw new Error("Missing permissions for command " + command);
           }
           if (!user) {
-            throw new Error("user is required for command " + command);
+            throw new Error("User is required for command " + command);
           }
+          if (
+            args.status &&
+            !Object.values(PostStatus).includes(args.status as PostStatus)
+          ) {
+            throw new Error("Incorrect status " + args.status);
+          }
+
           if (!args.platforms && args.platform) {
             args.platforms = [args.platform];
           }
@@ -409,7 +427,9 @@ class Fairpost {
           const sources = await feed.getSources(args.sources);
           const posts = [] as Post[];
           for (const platform of platforms) {
-            posts.push(...(await platform.getPosts(sources, args.status)));
+            posts.push(
+              ...(await platform.getPosts(sources, args.status as PostStatus)),
+            );
           }
           output = await Promise.all(
             posts.map((p) => p.mapper.getDto(operator)),

@@ -36,6 +36,12 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
       get: ["manageSources"],
       set: ["none"],
     },
+    status: {
+      type: "string",
+      label: "Status",
+      get: ["manageSources"],
+      set: ["none"],
+    },
     files: {
       type: "json",
       label: "Files",
@@ -77,6 +83,9 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
           break;
         case "path":
           dto[field] = this.source.path;
+          break;
+        case "status":
+          dto[field] = this.source.status;
           break;
         case "files":
           dto[field] = await this.source.getFiles();

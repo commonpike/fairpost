@@ -129,7 +129,7 @@ export default class Post {
 
         // check if the source status is updated
         // note, this may *move* the source and all posts
-        const orginalSourceStatus = await this.source.getStatus();
+        const orginalSourceStatus = await this.source.status;
         const newSourceStatus = await this.source.updateStatus();
 
         // update the user report if needed

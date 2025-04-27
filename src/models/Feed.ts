@@ -36,7 +36,7 @@ export default class Feed {
    * @returns a report for this feed
    */
   async getReport() {
-    // TODO check cache first
+    // TODO check report cache first
     const sources = {
       [SourceStatus.UNKNOWN]: 0,
       [SourceStatus.INCOMING]: 0,
@@ -45,9 +45,9 @@ export default class Feed {
       [SourceStatus.DONE]: 0,
       [SourceStatus.ARCHIVED]: 0,
     };
-    const allSources = await this.getAllSources();
+    const allSources = await this.getSources();
     for (const source of allSources) {
-      const status = await source.getStatus();
+      const status = source.status;
       sources[status] = sources[status] + 1;
     }
 
@@ -69,58 +69,116 @@ export default class Feed {
 
   /**
    * Get all sources
+   * @param sourceIds array of ids of source you want to get
+   * @param status optional status of the sources you want to get
    * @returns all source in the feed
    */
-  async getAllSources(): Promise<Source[]> {
-    this.user.log.trace("Feed", "getAllSources");
-    if (this.allCached) {
-      return Object.values(this.cache);
+  async getSources(
+    sourceIds?: string[],
+    status?: SourceStatus,
+  ): Promise<Source[]> {
+    this.user.log.trace("Feed", "getSources", sourceIds, status);
+    if (!sourceIds || !sourceIds.length) {
+      if (!status) {
+        // requesting all sources
+        if (this.allCached) {
+          return Object.values(this.cache);
+        }
+        if (!(await this.user.files.exists(this.path))) {
+          this.user.log.info("creating dir " + this.path);
+          await this.user.files.mkdir(this.path);
+        }
+        await Promise.all(
+          Object.values(SourceStatus).map((status) =>
+            this.getSources([], status),
+          ),
+        );
+        this.user.log.trace(
+          "found " + Object.keys(this.cache).length + " sources",
+        );
+        this.allCached = true;
+        return Object.values(this.cache);
+      } else {
+        // requesting sources with a specific status
+        if (this.allCached) {
+          return Object.values(this.cache).filter(
+            (source) => source.status === status,
+          );
+        }
+        const sources: Source[] = [];
+        const statusPath = this.path + "/" + status;
+        if (!(await this.user.files.exists(statusPath))) {
+          this.user.log.info("creating dir " + statusPath);
+          await this.user.files.mkdir(statusPath);
+        }
+        const files = this.user.files.list(statusPath).filter((entry) => {
+          if (entry.type === "file" || entry.isFile) return false;
+          const filename = basename(entry.path);
+          if (filename.startsWith("_")) return false;
+          if (filename.startsWith(".")) return false;
+          return true;
+        });
+        for await (const file of files) {
+          const source = await Source.getSource(this, basename(file.path));
+          this.cache[source.id] = source;
+          sources.push(source);
+        }
+        this.user.log.trace(
+          "found " + sources.length + " sources of status " + status,
+        );
+        return sources;
+      }
+    } else {
+      // requesting sources with specific ids and optionally status
+      const sources: Source[] = [];
+      for (const sourceId of sourceIds) {
+        if (sourceId in this.cache) {
+          sources.push(this.cache[sourceId]);
+        } else {
+          const source = await Source.getSource(this, sourceId);
+          this.cache[source.id] = source;
+          sources.push(source);
+        }
+      }
+      this.user.log.trace("found " + sources.length + " sources");
+      if (!status) {
+        return sources;
+      }
+      const filteredSources = sources.filter(
+        (source) => source.status === status,
+      );
+      this.user.log.trace(
+        "found " + filteredSources.length + " sources of status " + status,
+      );
+      return filteredSources;
     }
-    if (!(await this.user.files.exists(this.path))) {
-      this.user.log.info("creating dir " + this.path);
-      await this.user.files.mkdir(this.path);
-    }
-    const files = this.user.files.list(this.path).filter((entry) => {
-      if (entry.type === "file" || entry.isFile) return false;
-      const filename = basename(entry.path);
-      if (filename.startsWith("_")) return false;
-      if (filename.startsWith(".")) return false;
-      return true;
-    });
-    for await (const file of files) {
-      const source = await Source.getSource(this, basename(file.path));
-      this.cache[source.id] = source;
-    }
-    this.allCached = true;
-    return Object.values(this.cache);
   }
 
   /**
    * Get one source
-   * @param path - path to a single source
+   * @param id - id of a single source
    * @returns the given source object
    */
-  async getSource(path: string): Promise<Source> {
-    this.user.log.trace("Feed", "getSource", path);
-    const sourceId = this.getSourceId(path);
-    if (sourceId in this.cache) {
-      return this.cache[sourceId];
+  async getSource(id: string): Promise<Source> {
+    this.user.log.trace("Feed", "getSource", id);
+    if (id in this.cache) {
+      return this.cache[id];
     }
-    const source = await Source.getSource(this, path);
+    const source = await Source.getSource(this, id);
     this.cache[source.id] = source;
     return source;
   }
 
   /**
    * Get multiple sources
-   * @param paths - paths to multiple sources
+   * @param ids - ids of multiple sources
    * @returns the given source objects
    */
-  async getSources(paths?: string[]): Promise<Source[]> {
-    this.user.log.trace("Feed", "getSources", paths);
-    if (!paths || !paths.length) {
-      return await this.getAllSources();
+  async oldGetSources(ids?: string[]): Promise<Source[]> {
+    this.user.log.trace("Feed", "getSources", ids);
+    if (!ids || !ids.length) {
+      return await this.getSources();
     }
-    return Promise.all(paths.map((path) => this.getSource(path)));
+    return Promise.all(ids.map((id) => this.getSource(id)));
   }
 }

@@ -1,6 +1,7 @@
 import { basename, extname } from "path";
 
 import sharp from "sharp";
+import { dirname } from "path";
 import Feed from "./Feed.ts";
 import {
   SourceStatus,
@@ -27,6 +28,7 @@ export default class Source {
   feed: Feed;
   id: string;
   path: string;
+  status: SourceStatus;
   files?: FileInfo[];
   mapper: SourceMapper;
 
@@ -40,6 +42,7 @@ export default class Source {
     this.feed = feed;
     this.id = this.feed.getSourceId(path);
     this.path = path;
+    this.status = this.getStatus();
     this.mapper = new SourceMapper(this);
   }
 
@@ -48,14 +51,17 @@ export default class Source {
    *
    * get a new source and do some async checks.
    * @param feed - the feed this source belongs to
-   * @param path - the path within that feed
+   * @param id - the id of the source
    * @returns new source object
    */
-  public static async getSource(feed: Feed, path: string): Promise<Source> {
-    if (!(await feed.user.files.isDir(feed.path + "/" + path))) {
-      throw feed.user.log.error("getSource", "Not a valid source: " + path);
+  public static async getSource(feed: Feed, id: string): Promise<Source> {
+    for (const status of Object.values(SourceStatus)) {
+      const sourcePath = feed.path + "/" + status + "/" + id;
+      if (await feed.user.files.isDir(sourcePath)) {
+        return new Source(feed, sourcePath);
+      }
     }
-    return new Source(feed, feed.path + "/" + path);
+    throw feed.user.log.error("getSource", "Not a valid source: " + id);
   }
 
   /**
@@ -66,8 +72,13 @@ export default class Source {
    * and here we just check the path to see its current status.
    * @returns {SourceStatus} - the status of the source
    */
-  public async getStatus(): Promise<SourceStatus> {
-    // TODO
+  private getStatus(): SourceStatus {
+    const parent = dirname(this.path);
+    for (const status of Object.values(SourceStatus)) {
+      if (parent.endsWith(status)) {
+        return status;
+      }
+    }
     return SourceStatus.UNKNOWN;
   }
 
