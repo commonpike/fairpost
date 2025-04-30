@@ -106,7 +106,7 @@ export default class Instagram extends Platform {
         }
       }
 
-      post.save();
+      await post.save();
     }
     return post;
   }

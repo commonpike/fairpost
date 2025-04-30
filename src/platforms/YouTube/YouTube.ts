@@ -92,7 +92,7 @@ export default class YouTube extends Platform {
       for (const plugin of plugins) {
         await plugin.process(post);
       }
-      post.save();
+      await post.save();
     }
     return post;
   }

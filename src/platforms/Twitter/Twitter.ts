@@ -134,7 +134,7 @@ export default class Twitter extends Platform {
         this.user.log.warn("Twitter post has no body");
         post.valid = false;
       }
-      post.save();
+      await post.save();
     }
     return post;
   }

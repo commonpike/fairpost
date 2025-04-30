@@ -110,12 +110,12 @@ export default class Feed {
             (source) => source.status === status,
           );
         }
-        const sources: Source[] = [];
         const statusPath = this.path + "/" + status;
         if (!(await this.user.files.exists(statusPath))) {
-          this.user.log.info("creating dir " + statusPath);
-          await this.user.files.mkdir(statusPath);
+          this.user.log.trace("found 0 sources of status " + status);
+          return [];
         }
+        const sources: Source[] = [];
         const files = this.user.files.list(statusPath).filter((entry) => {
           if (entry.type === "file" || entry.isFile) return false;
           const filename = basename(entry.path);

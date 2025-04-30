@@ -40,6 +40,8 @@ export default class Post {
   remoteId?: string;
   mapper: PostMapper;
 
+  private originalStatus: PostStatus = PostStatus.UNKNOWN;
+
   /**
    * Dont call the constructor yourself;
    * instead, call `await Post.getPost()`
@@ -90,47 +92,49 @@ export default class Post {
       post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
       post.published = post.published ? new Date(post.published) : undefined;
       post.ignoreFiles = post.ignoreFiles ?? [];
+      post.originalStatus = post.status;
     }
     return post;
   }
 
   /**
-   * Get the post status
-   * @returns the post status
+   * Save this post to disk
    */
-  getStatus(): PostStatus {
-    return this.status;
-  }
 
-  /**
-   * Set the post status - this also updates the
-   * source status and the cached user report
-   * @param status
-   */
-  async setStatus(status: PostStatus) {
-    this.platform.user.log.trace("Post", "setStatus", status);
+  async save() {
+    this.platform.user.log.trace("Post", this.id, "save");
 
-    const originalPostStatus = this.status;
-    if (originalPostStatus !== status) {
-      // update the status
-      this.status = status;
+    // save the post json
 
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+    const data = { ...this } as { [key: string]: any };
+    delete data.source;
+    delete data.platform;
+    delete data.mapper;
+    await this.platform.user.files.write(
+      this.platform.getPostFilePath(this.source),
+      JSON.stringify(data, null, "\t"),
+    );
+
+    // update source status and the report if necessary
+
+    if (this.originalStatus !== this.status) {
       // update the source status if necessary
       // note, this may *move* the source and all posts
       const orginalSourceStatus = this.source.status;
       const newSourceStatus = await this.source.updateStatus();
 
-      // update the user report
+      // update the users report
       const report = await this.platform.user.getReport();
       if (report.platforms[this.platform.id]) {
-        if (!report.platforms[this.platform.id]?.count[originalPostStatus]) {
-          report.platforms[this.platform.id]!.count[originalPostStatus] = 1;
+        if (!report.platforms[this.platform.id]?.count[this.originalStatus]) {
+          report.platforms[this.platform.id]!.count[this.originalStatus] = 1;
         }
-        if (!report.platforms[this.platform.id]?.count[status]) {
-          report.platforms[this.platform.id]!.count[status] = 0;
+        if (!report.platforms[this.platform.id]?.count[this.status]) {
+          report.platforms[this.platform.id]!.count[this.status] = 0;
         }
-        report.platforms[this.platform.id]!.count[originalPostStatus]!--;
-        report.platforms[this.platform.id]!.count[status]!++;
+        report.platforms[this.platform.id]!.count[this.originalStatus]!--;
+        report.platforms[this.platform.id]!.count[this.status]!++;
 
         if (orginalSourceStatus !== newSourceStatus) {
           if (!report.feed.count[orginalSourceStatus]) {
@@ -146,28 +150,12 @@ export default class Post {
         await this.platform.user.putReport(report);
         this.platform.user.log.trace(
           "Post",
-          "setStatus",
+          this.id,
+          "save",
           "updated user report",
         );
       }
     }
-  }
-
-  /**
-   * Save this post to disk
-   */
-
-  async save() {
-    this.platform.user.log.trace("Post", "save");
-    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-    const data = { ...this } as { [key: string]: any };
-    delete data.source;
-    delete data.platform;
-    delete data.mapper;
-    await this.platform.user.files.write(
-      this.platform.getPostFilePath(this.source),
-      JSON.stringify(data, null, "\t"),
-    );
   }
 
   /**
@@ -268,10 +256,10 @@ export default class Post {
     }
 
     if (this.status === PostStatus.UNKNOWN) {
-      await this.setStatus(PostStatus.UNSCHEDULED);
+      this.status = PostStatus.UNSCHEDULED;
     }
     if (this.status === PostStatus.FAILED) {
-      await this.setStatus(PostStatus.UNSCHEDULED);
+      this.status = PostStatus.UNSCHEDULED;
     }
 
     // done
@@ -296,7 +284,7 @@ export default class Post {
       this.platform.user.log.warn("Rescheduling post");
     }
     this.scheduled = date;
-    await this.setStatus(PostStatus.SCHEDULED);
+    this.status = PostStatus.SCHEDULED;
     await this.save();
   }
 
@@ -684,10 +672,10 @@ export default class Post {
       if (!result.error) {
         this.remoteId = remoteId;
         this.link = link;
-        await this.setStatus(PostStatus.PUBLISHED);
+        this.status = PostStatus.PUBLISHED;
         this.published = new Date();
       } else {
-        await this.setStatus(PostStatus.FAILED);
+        this.status = PostStatus.FAILED;
       }
     }
 

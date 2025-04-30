@@ -132,24 +132,8 @@ export default class User {
     if (await globalfs.exists(dst)) {
       throw new Error("Homedir already exists: " + dst);
     }
-    /*
-    const listing = await globalfs.list(src, { deep: true }).toArray();
-    for await (const entry of listing) {
-      if (entry.type === "directory" || entry.isDirectory) {
-        const entrydst = entry.path.replace("etc/skeleton", dst);
-        log.push("creating dir " + entrydst);
-        await globalfs.mkdir(entrydst);
-      }
-    }
-    for await (const entry of listing) {
-      if (entry.type === "file" || entry.isFile) {
-        const entrydst = entry.path.replace("etc/skeleton", dst);
-        log.push("copying file " + entry.path + " -> " + entrydst);
-        await globalfs.copy(entry.path, entrydst);
-      }
-    }*/
+
     const log = await globalfs.copyDir(src, dst);
-    console.log(log);
     const user = await User.getUser(newUserId);
 
     user.data.set("settings", "FEED_PLATFORMS", "");

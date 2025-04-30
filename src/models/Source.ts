@@ -67,9 +67,10 @@ export default class Source {
   /**
    * Get the status of a source.
    *
-   * The status depends on the various statusses of the posts
-   * in the source. The path of the source depends on the status,
-   * and here we just check the path to see its current status.
+   * By definition, the status of a source is its location on disk.
+   *
+   * That location depends on the various statusses of the posts
+   * in the source. Here we just check the path to see its current status.
    * @returns {SourceStatus} - the status of the source
    */
   private getStatus(): SourceStatus {
@@ -83,10 +84,10 @@ export default class Source {
   }
 
   /**
-   * Update the status of a source.
+   * Check/Update the status of a source.
    *
    * The status of the source depends on the various statusses
-   * of the posts in the source. Post.setStatus calls this method.
+   * of the posts in the source. Post.save() calls this method.
    * The path of the source depends on the status, so if
    * it is updated source may move to a new location.
    * @returns {SourceStatus} - the new status of the source

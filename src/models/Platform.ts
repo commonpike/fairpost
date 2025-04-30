@@ -145,7 +145,6 @@ export default class Platform {
 
     const postId = this.getPostId(source);
     if (!(postId in this.cache)) {
-      console.log("cache", this.cache);
       const post = await Post.getPost(this, source); // or throw an error
       this.cache[postId] = post;
     }
@@ -219,7 +218,7 @@ export default class Platform {
             "Found scheduled post without date. Unscheduling post.",
             post.id,
           );
-          post.setStatus(PostStatus.UNSCHEDULED);
+          post.status = PostStatus.UNSCHEDULED;
           post.save();
           continue;
         }
@@ -228,7 +227,7 @@ export default class Platform {
             "Found scheduled post marked skip. Unscheduling post.",
             post.id,
           );
-          post.setStatus(PostStatus.UNSCHEDULED);
+          post.status = PostStatus.UNSCHEDULED;
           post.save();
           continue;
         }
@@ -237,7 +236,7 @@ export default class Platform {
             "Found scheduled post previously published. Marking published.",
             post.id,
           );
-          post.setStatus(PostStatus.PUBLISHED);
+          post.status = PostStatus.PUBLISHED;
           post.save();
           continue;
         }
