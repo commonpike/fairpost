@@ -141,10 +141,11 @@ export default class Platform {
    */
 
   async getPost(source: Source): Promise<Post> {
-    this.user.log.trace(this.id, "getPost", this.id, source.id);
+    this.user.log.trace(this.id, "getPost", source.id);
 
     const postId = this.getPostId(source);
     if (!(postId in this.cache)) {
+      console.log("cache", this.cache);
       const post = await Post.getPost(this, source); // or throw an error
       this.cache[postId] = post;
     }
@@ -295,8 +296,8 @@ export default class Platform {
       await post.prepare(false);
     } catch {
       post = await Post.getPost(this, source, false);
-      await post.prepare(true);
       this.cache[post.id] = post;
+      await post.prepare(true);
     }
     if (save) {
       await post.save();

@@ -1,9 +1,7 @@
-# Feed folder
+# Fairpost Incoming sources
 
-This folder can actually be anywhere, the path
-can be defined in your `.env` file.
+Add your new sources here. 
 
-Post your new source posts in the incoming folder, each in a separate folder.
 Folder names starting with an underscore or dot are ignored.
 
 Fairpost will manage these sources while processing

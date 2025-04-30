@@ -115,6 +115,11 @@ export default class Post {
       // update the status
       this.status = status;
 
+      // update the source status if necessary
+      // note, this may *move* the source and all posts
+      const orginalSourceStatus = this.source.status;
+      const newSourceStatus = await this.source.updateStatus();
+
       // update the user report
       const report = await this.platform.user.getReport();
       if (report.platforms[this.platform.id]) {
@@ -127,12 +132,6 @@ export default class Post {
         report.platforms[this.platform.id]!.count[originalPostStatus]!--;
         report.platforms[this.platform.id]!.count[status]!++;
 
-        // check if the source status is updated
-        // note, this may *move* the source and all posts
-        const orginalSourceStatus = await this.source.status;
-        const newSourceStatus = await this.source.updateStatus();
-
-        // update the user report if needed
         if (orginalSourceStatus !== newSourceStatus) {
           if (!report.feed.count[orginalSourceStatus]) {
             report.feed.count[orginalSourceStatus] = 1;
@@ -143,9 +142,7 @@ export default class Post {
           report.feed.count[orginalSourceStatus]!--;
           report.feed.count[newSourceStatus]!++;
         }
-
         // save the report
-
         await this.platform.user.putReport(report);
         this.platform.user.log.trace(
           "Post",

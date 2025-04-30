@@ -123,7 +123,6 @@ export default class User {
       );
     }
     const globalfs = new GlobalFs();
-    const log = [] as string[];
 
     if (!process.env.FAIRPOST_USER_HOMEDIR) {
       throw new Error("FAIRPOST_USER_HOMEDIR not set in env");
@@ -133,6 +132,7 @@ export default class User {
     if (await globalfs.exists(dst)) {
       throw new Error("Homedir already exists: " + dst);
     }
+    /*
     const listing = await globalfs.list(src, { deep: true }).toArray();
     for await (const entry of listing) {
       if (entry.type === "directory" || entry.isDirectory) {
@@ -147,9 +147,11 @@ export default class User {
         log.push("copying file " + entry.path + " -> " + entrydst);
         await globalfs.copy(entry.path, entrydst);
       }
-    }
-
+    }*/
+    const log = await globalfs.copyDir(src, dst);
+    console.log(log);
     const user = await User.getUser(newUserId);
+
     user.data.set("settings", "FEED_PLATFORMS", "");
     await user.data.save();
     for (const msg of log) {
@@ -257,7 +259,7 @@ export default class User {
    * @returns platforms given by ids
    */
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
-    this.log.trace("User", "getPlatforms", platformIds);
+    this.log.trace("User", "getPlatforms", platformIds ?? "");
     if (this.platforms === undefined) {
       this.loadPlatforms();
     }

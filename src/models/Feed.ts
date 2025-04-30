@@ -8,7 +8,8 @@ import { basename } from "path";
  * Feed - the sources handler of fairpost
  *
  * The feed is a container of sources. The sources
- * path is set by USER_FEEDPATH. Every dir in there,
+ * path is set by USER_FEEDPATH. In it are subfolder
+ * for every source status. Every dir in those subfolders,
  * if not starting with _ or ., is a source.
  *
  * Every source can be prepared to become a post

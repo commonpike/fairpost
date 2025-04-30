@@ -1,5 +1,5 @@
 enum SourceStatus {
-  PENDING = "pending", // all posts unscheduled
+  PENDING = "pending", // all posts unscheduled or unknown
   ACTIVE = "active", // mixed post statuses
   DONE = "done", // all posts published or canceled
   INCOMING = "incoming", // no posts

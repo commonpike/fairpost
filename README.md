@@ -7,10 +7,16 @@ Fairpost helps you manage users social media feeds from a single
 entry point, using Node. It supports Facebook, Instagram, 
 Reddit, Twitter, YouTube and LinkedIn.
 
-A Feed is just a folder on disk, and all subfolders are Source Posts, 
-containing at least one text file (the post body) and 
-optionally images or video. The Source Post will be transformed
-into real posts for each connected platform.
+Fairpost behaves like a feed, not a calendar.
+By default, there is only one scheduled post for each 
+platform. Once it is published, the next post may
+be scheduled. 
+
+A Feed is just a bunch of folders on disk, and all subfolders 
+in each folder are Source Posts, containing at least one text 
+file (the post body) and optionally images or video. The Source 
+Post will be transformed into destination posts for each 
+connected platform.
 
 Fairpost is *opinionated*, meaning, it will decide
 how a Source Post with contents can best be presented
@@ -25,13 +31,13 @@ post on their behalf. This is usually done via an
 online (oauth) consent page in a webbrowser.
 
 Commonly, you would call this script every day or week
-for every user. Fairpost can then automatically **prepare** the folders,
-**schedule** the next post using a certain interval and 
-**publish** any post when it is due. All the user has to do is 
-add folders with content.
+for every user. Fairpost can then automatically **prepare** the posts
+from the sources, **schedule** the next post using a certain interval 
+and **publish** any post when it is due. All the user has to do is 
+add folders with content in the `incoming` folder.
 
 Or, if you prefer, you can manually publish one
-specific folder as posts on all supported and enabled 
+specific source as posts on all supported and enabled 
 platforms at once, or just one post on one platform,
 etcetera.
 
@@ -74,6 +80,14 @@ nano users/foobar/var/lib/storage.json
 ```
 
 ## Feed planning
+
+Inside each feed, there are folders for `incoming`,
+`pending`, `active`, `done` and `archived` sources. 
+The location of a source depends on the statusses of 
+the posts inside that source. New posts should be 
+added to 'incoming'; from there, Fairpost will manage 
+the sources location with the commands below.
+
 ### Prepare
 ```
 fairpost.js prepare-posts
@@ -89,6 +103,12 @@ is youtube). Finally, it will add a json file
 describing the post for that platform in the 
 folder.
 
+TODO
+Without arguments, `prepare-posts` will prepare all
+the sources in the `incoming` folder and on success,
+move the source and its posts to the `pending` folder.
+
+
 ### Schedule
 ```
 fairpost.js schedule-next-post
@@ -101,12 +121,22 @@ By default the date will be `FAIRPOST_FEED_INTERVAL` days
 after the last post for that platform, or `now`, whichever 
 is latest.
 
+TODO
+Without arguments, `schedule-next-post` will select the 
+next post for each platform from the `pending` or `active` folders.
+If it wasn't already there, it will move the source and 
+its posts to the `active` folder.
+
 ### Publish
 ```
 fairpost.js publish-due-posts
 ```
 This will publish any scheduled posts that are past their due date.
 
+Without arguments, `publish-due-posts` will search for a 
+due post for each platform from the `active` folder.
+Once all posts from a source are published, it will move 
+the source and its posts to the `done` folder.
 
 ## Other commands
 

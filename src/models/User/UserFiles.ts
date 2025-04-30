@@ -82,8 +82,101 @@ export default class UserFiles {
   public async write(path: string, contents: FileContents): Promise<void> {
     return await this.storage.write(path, contents);
   }
-  public async copy(src: string, dst: string): Promise<void> {
+  public async copy(
+    src: string,
+    dst: string,
+    dontCheckType = false,
+  ): Promise<void> {
+    if (!dontCheckType && (await this.isDir(src))) {
+      this.copyDir(src, dst);
+    }
     return await this.storage.copyFile(src, dst);
+  }
+
+  public async copyDir(
+    sourceDir: string,
+    destinationDir: string,
+  ): Promise<string[]> {
+    const log: string[] = [];
+    const createDirectoryPromises = [];
+    for await (const entry of this.list(sourceDir, { deep: true })) {
+      if (entry.type === "directory" || entry.isDirectory) {
+        const sourcePath = entry.path;
+        const relativePath = sourcePath
+          .slice(sourceDir.length)
+          .replace(/^\/+/, "");
+        const destinationPath = `${destinationDir}/${relativePath}`;
+        log.push("creating dir " + destinationPath);
+        createDirectoryPromises.push(this.mkdir(destinationPath));
+      }
+    }
+    await Promise.all(createDirectoryPromises);
+
+    const copyFilePromises = [];
+    for await (const entry of this.list(sourceDir, { deep: true })) {
+      if (entry.type === "file" || entry.isFile) {
+        const sourcePath = entry.path;
+        const relativePath = sourcePath
+          .slice(sourceDir.length)
+          .replace(/^\/+/, "");
+        const destinationPath = `${destinationDir}/${relativePath}`;
+        log.push("copying file " + entry.path + " -> " + destinationPath);
+        copyFilePromises.push(this.copy(entry.path, destinationPath, true));
+      }
+    }
+    await Promise.all(copyFilePromises);
+
+    return log;
+  }
+
+  public async move(
+    src: string,
+    dst: string,
+    dontCheckType = false,
+  ): Promise<void> {
+    if (!dontCheckType && (await this.isDir(src))) {
+      this.moveDir(src, dst);
+    }
+    return await this.storage.moveFile(src, dst);
+  }
+
+  public async moveDir(
+    sourceDir: string,
+    destinationDir: string,
+  ): Promise<string[]> {
+    const log: string[] = [];
+
+    const createDirectoryPromises = [];
+    for await (const item of this.list(sourceDir, { deep: true })) {
+      if (item.isDirectory) {
+        const relativePath = item.path
+          .slice(sourceDir.length)
+          .replace(/^\/+/, "");
+        const destinationPath = `${destinationDir}/${relativePath}`;
+        log.push("creating dir " + destinationPath);
+        createDirectoryPromises.push(
+          this.storage.createDirectory(destinationPath),
+        );
+      }
+    }
+    await Promise.all(createDirectoryPromises);
+
+    const moveFilePromises = [];
+    for await (const item of this.list(sourceDir, { deep: true })) {
+      if (item.isFile) {
+        const relativePath = item.path
+          .slice(sourceDir.length)
+          .replace(/^\/+/, "");
+        const destinationPath = `${destinationDir}/${relativePath}`;
+        log.push("moving file " + item.path + "," + destinationPath);
+        moveFilePromises.push(this.move(item.path, destinationPath, true));
+      }
+    }
+    await Promise.all(moveFilePromises);
+
+    log.push("deleting dir " + sourceDir);
+    await this.storage.deleteDirectory(sourceDir);
+    return log;
   }
 
   public async getMimeType(path: string): Promise<string> {

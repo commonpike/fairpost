@@ -92,12 +92,68 @@ export default class Source {
    * @returns {SourceStatus} - the new status of the source
    */
   public async updateStatus(): Promise<SourceStatus> {
-    // TODO
-    // loop all posts to check their status
+    this.feed.user.log.trace("Source", "updateStatus");
+
+    // check all posts to check their status
+    const orgStatus = this.status;
+    let newStatus: SourceStatus | undefined = undefined;
+
+    if (this.status === SourceStatus.ARCHIVED) {
+      newStatus = SourceStatus.ARCHIVED;
+    } else {
+      const posts = await this.getPosts();
+      if (posts.length === 0) {
+        newStatus = SourceStatus.INCOMING;
+      } else if (
+        posts.every(
+          (post: Post) =>
+            post.status === PostStatus.PUBLISHED ||
+            post.status === PostStatus.CANCELED,
+        )
+      ) {
+        newStatus = SourceStatus.DONE;
+      } else if (
+        posts.every((post: Post) => post.status === PostStatus.UNSCHEDULED)
+      ) {
+        newStatus = SourceStatus.PENDING;
+      } else if (
+        posts.every((post: Post) => post.status === PostStatus.UNKNOWN)
+      ) {
+        newStatus = SourceStatus.UNKNOWN;
+      }
+      if (newStatus === undefined) {
+        newStatus = SourceStatus.ACTIVE;
+      }
+    }
+    if (orgStatus === newStatus) {
+      this.feed.user.log.trace(this.id, "updateStatus", "no change");
+      return this.status;
+    }
+
     // if our status changed,
     // move this source to the new location
-    // update its status
-    // and clear feed cache
+    this.feed.user.log.trace(this.id, "updateStatus", orgStatus, newStatus);
+    const newPath = this.feed.path + "/" + newStatus + "/" + this.id;
+    if (await this.feed.user.files.exists(newPath)) {
+      this.feed.user.log.error(
+        this.id,
+        "updateStatus",
+        "source already exists: " + newPath,
+      );
+      return this.status;
+    }
+
+    // move directory
+    const log = await this.feed.user.files.moveDir(this.path, newPath);
+    for (const msg of log) {
+      this.feed.user.log.trace(msg);
+    }
+
+    // update my status and clear feed cache
+    this.path = newPath;
+    this.status = newStatus;
+    this.feed.clearCache();
+
     return this.status;
   }
 
@@ -168,7 +224,7 @@ export default class Source {
    */
 
   public async getPost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(this.id, "getPost", this.id, platform.id);
+    this.feed.user.log.trace(this.id, "getPost", platform.id);
     return await platform.getPost(this);
   }
 
