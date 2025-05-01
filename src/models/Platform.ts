@@ -1,7 +1,7 @@
 import * as pluginClasses from "../plugins/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 import PlatformMapper from "../mappers/PlatformMapper.ts";
-import { FieldMapping, PostStatus } from "../types/index.ts";
+import { FieldMapping, PostStatus, SourceStatus } from "../types/index.ts";
 
 import Source from "./Source.ts";
 import Plugin from "./Plugin.ts";
@@ -177,13 +177,22 @@ export default class Platform {
   }
 
   /**
-   * Get last published post for a platform
+   * Get last published post for a platform from active or done sources
+   * Once a source is archived, posts there wil be ignored
    * @returns the above post or none
    */
   async getLastPost(): Promise<Post | void> {
     this.user.log.trace(this.id, "getLastPost");
     let lastPost: Post | undefined = undefined;
-    const posts = await this.getPosts(undefined, PostStatus.PUBLISHED);
+    const sources = [
+      ...(await this.user.getFeed().getSources([], SourceStatus.DONE)),
+      ...(await this.user.getFeed().getSources([], SourceStatus.ACTIVE)),
+    ];
+    if (!sources.length) {
+      this.user.log.trace(this.id, "getLastPost", "No active or done sources");
+      return undefined;
+    }
+    const posts = await this.getPosts(sources, PostStatus.PUBLISHED);
     for (const post of posts) {
       if (post.published) {
         if (
@@ -340,27 +349,52 @@ export default class Platform {
     sources?: Source[],
   ): Promise<Post | undefined> {
     this.user.log.trace(this.id, "scheduleNextPost");
-    if (!sources) {
-      sources = await this.user.getFeed().getSources();
+
+    if (sources && !sources.length) {
+      this.user.log.trace(this.id, "scheduleNextPost", "No sources given");
+      return undefined;
     }
-    const scheduledPosts = await this.getPosts(sources, PostStatus.SCHEDULED);
+    if (!sources) {
+      sources = [
+        ...(await this.user.getFeed().getSources([], SourceStatus.ACTIVE)),
+        ...(await this.user.getFeed().getSources([], SourceStatus.PENDING)),
+      ];
+    }
+    if (!sources.length) {
+      this.user.log.trace(
+        this.id,
+        "scheduleNextPost",
+        "No sources active or pending",
+      );
+      return undefined;
+    }
+    const posts = await this.getPosts(sources);
+
+    const scheduledPosts = posts.filter(
+      (post) => post.status === PostStatus.SCHEDULED,
+    );
     if (scheduledPosts.length) {
-      this.user.log.trace(this.id, "scheduleNextPost", "Already scheduled");
+      this.user.log.trace(this.id, "scheduleNextPost", "Already one scheduled");
       return scheduledPosts[0];
     }
-    const nextDate = date ? date : await this.getNextPostDate();
-    for (const source of sources) {
-      const post = await this.getPost(source);
-      if (
-        post &&
-        post.valid &&
-        !post.skip &&
-        post.status === PostStatus.UNSCHEDULED
-      ) {
-        post.schedule(nextDate);
-        return post;
-      }
+    const candidatePosts = posts.filter(
+      (post) =>
+        post.status === PostStatus.UNSCHEDULED && post.valid && !post.skip,
+    );
+
+    if (candidatePosts.length) {
+      const nextDate = date ? date : await this.getNextPostDate();
+      const post = candidatePosts[0];
+      this.user.log.trace(
+        this.id,
+        "scheduleNextPost",
+        "Scheduling post",
+        post.id,
+      );
+      await post.schedule(nextDate);
+      return post;
     }
+
     this.user.log.trace(
       this.id,
       "scheduleNextPost",

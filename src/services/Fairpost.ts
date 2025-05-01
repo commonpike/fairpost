@@ -476,28 +476,35 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
-          const platforms = user.getPlatforms(args.platforms);
-          output = {} as { [id in PlatformId]?: CombinedResult[] };
-          for (const platform of platforms) {
-            for (const source of sources) {
-              if (!output[platform.id]) {
-                output[platform.id] = [];
-              }
-              try {
-                const post = await platform.preparePost(source);
-                (output[platform.id] as CombinedResult[]).push({
-                  success: true,
-                  result: await post.mapper.getDto(operator),
-                });
-              } catch (e) {
-                user.log.error("Fairpost", "preparePosts", e);
-                (output[platform.id] as CombinedResult[]).push({
-                  success: false,
-                  message: e instanceof Error ? e.message : JSON.stringify(e),
-                });
+          const sources = await feed.getSources(
+            args.sources,
+            SourceStatus.INCOMING,
+          );
+          if (sources.length) {
+            const platforms = user.getPlatforms(args.platforms);
+            output = {} as { [id in PlatformId]?: CombinedResult[] };
+            for (const platform of platforms) {
+              for (const source of sources) {
+                if (!output[platform.id]) {
+                  output[platform.id] = [];
+                }
+                try {
+                  const post = await platform.preparePost(source);
+                  (output[platform.id] as CombinedResult[]).push({
+                    success: true,
+                    result: await post.mapper.getDto(operator),
+                  });
+                } catch (e) {
+                  user.log.error("Fairpost", "preparePosts", e);
+                  (output[platform.id] as CombinedResult[]).push({
+                    success: false,
+                    message: e instanceof Error ? e.message : JSON.stringify(e),
+                  });
+                }
               }
             }
+          } else {
+            output = { success: true, message: "No post left to prepare" };
           }
           break;
         }
@@ -694,7 +701,9 @@ class Fairpost {
             args.sources = [args.source];
           }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = args.sources?.length
+            ? await feed.getSources(args.sources)
+            : undefined;
           const platforms = user.getPlatforms(args.platforms);
           const posts = [] as Post[];
           for (const platform of platforms) {

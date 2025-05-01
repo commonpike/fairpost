@@ -86,7 +86,7 @@ export default class Feed {
     sourceIds?: string[],
     status?: SourceStatus,
   ): Promise<Source[]> {
-    this.user.log.trace("Feed", "getSources", sourceIds, status);
+    this.user.log.trace("Feed", "getSources", sourceIds ?? "", status ?? "");
     if (!sourceIds || !sourceIds.length) {
       if (!status) {
         // requesting all sources
@@ -99,6 +99,7 @@ export default class Feed {
             this.getSources([], status),
           ),
         );
+        // should all be in the cache now
         this.user.log.trace(
           "found " + Object.keys(this.cache).length + " sources",
         );
@@ -112,7 +113,6 @@ export default class Feed {
         }
         const statusPath = this.path + "/" + status;
         if (!(await this.user.files.exists(statusPath))) {
-          this.user.log.trace("found 0 sources of status " + status);
           return [];
         }
         const sources: Source[] = [];

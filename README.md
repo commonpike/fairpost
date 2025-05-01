@@ -94,6 +94,10 @@ fairpost.js prepare-posts
 ```
 Sources need to be `prepared` (iow turned into posts)
 before they can be published to a platform. 
+`prepare-posts` will prepare allthe sources in the 
+`incoming` folder and on success, move the source 
+and its posts to the `pending` folder.
+
 Each platform, as defined in src/platforms, will 
 handle the folder contents by itself. It may
 decide to modify the media (eg, scale images) 
@@ -102,11 +106,6 @@ when it only contains images and the platform
 is youtube). Finally, it will add a json file
 describing the post for that platform in the 
 folder.
-
-TODO
-Without arguments, `prepare-posts` will prepare all
-the sources in the `incoming` folder and on success,
-move the source and its posts to the `pending` folder.
 
 
 ### Schedule
