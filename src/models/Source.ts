@@ -59,8 +59,7 @@ export default class Source {
     id: string,
     stage: SourceStage,
   ): string {
-    const stageFolder = stage.toLowerCase(); // todo: map from .env
-    return feed.path + "/" + stageFolder + "/" + id;
+    return feed.getStagePath(stage) + "/" + id;
   }
 
   /**
@@ -107,7 +106,7 @@ export default class Source {
         return new Source(feed, sourcePath);
       }
     }
-    throw feed.user.log.error("getSource", "Not a valid source: " + id);
+    throw feed.user.log.error("getSource", "Not a valid source: " + id, stage);
   }
 
   /**

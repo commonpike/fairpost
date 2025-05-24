@@ -19,7 +19,9 @@ export default class Feed {
   path: string = "";
   user: User;
   cache: { [id: string]: Source } = {};
-  allCached: boolean = false;
+  allCached: {
+    [stage in SourceStage]?: boolean;
+  } = {};
   mapper: FeedMapper;
 
   constructor(user: User) {
@@ -36,7 +38,7 @@ export default class Feed {
    * @returns a report for this feed
    */
   async getReport() {
-    // TODO check cache first
+    // TODO check report cache first
     const sources = {
       [SourceStage.UNKNOWN]: 0,
       [SourceStage.INCOMING]: 0,
@@ -45,10 +47,9 @@ export default class Feed {
       [SourceStage.FINISHED]: 0,
       [SourceStage.ARCHIVED]: 0,
     };
-    const allSources = await this.getAllSources();
+    const allSources = await this.getSources();
     for (const source of allSources) {
-      const status = source.getSourceStage();
-      sources[status] = sources[status] + 1;
+      sources[source.stage] = sources[source.stage] + 1;
     }
 
     return {
@@ -58,10 +59,16 @@ export default class Feed {
     };
   }
 
+  public clearCache() {
+    this.user.log.trace("Feed", "clearCache");
+    this.cache = {};
+    this.allCached = {};
+  }
+
   /**
    * Get all sources
    * @returns all source in the feed
-   */
+   
   async getAllSources(): Promise<Source[]> {
     this.user.log.trace("Feed", "getAllSources");
     if (this.allCached) {
@@ -85,7 +92,92 @@ export default class Feed {
     this.allCached = true;
     return Object.values(this.cache);
   }
+   */
 
+  /**
+   * getStagePath
+   *
+   * Get the path for a stage in a feed
+   * @param stage - the stage of the source
+   * @returns the path to the folder for the stage
+   */
+  public getStagePath(stage: SourceStage): string {
+    const stageFolder = stage.toLowerCase(); // todo: map from .env
+    return this.path + "/" + stageFolder;
+  }
+
+  /**
+   * Get multiple sources
+   * @param sourceIds optional array of ids of source you want to get
+   * @param stage optional stage of the sources you want to get
+   * @returns all requested sources
+   */
+  async getSources(
+    sourceIds?: string[],
+    stage?: SourceStage,
+  ): Promise<Source[]> {
+    this.user.log.trace("Feed", "getSources", sourceIds ?? "", stage ?? "");
+    if (!sourceIds || !sourceIds.length) {
+      if (!stage) {
+        // requesting all sources
+        if (!(await this.user.files.exists(this.path))) {
+          this.user.log.info("creating dir " + this.path);
+          await this.user.files.mkdir(this.path);
+        }
+        await Promise.all(
+          Object.values(SourceStage).map((stage) => this.getSources([], stage)),
+        );
+        // should all be in the cache now
+        this.user.log.trace(
+          "found " + Object.keys(this.cache).length + " sources",
+        );
+        return Object.values(this.cache);
+      } else {
+        // requesting sources with a specific status
+        if (this.allCached[stage]) {
+          return Object.values(this.cache).filter(
+            (source) => source.stage === stage,
+          );
+        }
+        const stagePath = this.getStagePath(stage);
+        if (!(await this.user.files.exists(stagePath))) {
+          return [];
+        }
+        const sources: Source[] = [];
+        const files = this.user.files.list(stagePath).filter((entry) => {
+          if (entry.type === "file" || entry.isFile) return false;
+          const filename = basename(entry.path);
+          if (filename.startsWith("_")) return false;
+          if (filename.startsWith(".")) return false;
+          return true;
+        });
+        for await (const file of files) {
+          const source = await Source.getSource(this, basename(file.path));
+          this.cache[source.id] = source;
+          sources.push(source);
+        }
+        this.allCached[stage] = true;
+        this.user.log.trace(
+          "found " + sources.length + " sources of stage " + stage,
+        );
+        return sources;
+      }
+    } else {
+      // requesting sources with specific ids and optionally stage
+      const sources: Source[] = [];
+      for (const sourceId of sourceIds) {
+        if (sourceId in this.cache) {
+          sources.push(this.cache[sourceId]);
+        } else {
+          const source = await Source.getSource(this, sourceId, stage);
+          this.cache[source.id] = source;
+          sources.push(source);
+        }
+      }
+      this.user.log.trace("found " + sources.length + " sources");
+      return sources;
+    }
+  }
   /**
    * Get one source
    * @param id - id of the source
@@ -106,7 +198,7 @@ export default class Feed {
    * Get multiple sources
    * @param ids - ids of multiple sources
    * @returns the given source objects
-   */
+   
   async getSources(ids?: string[]): Promise<Source[]> {
     this.user.log.trace("Feed", "getSources", ids);
     if (!ids || !ids.length) {
@@ -114,4 +206,5 @@ export default class Feed {
     }
     return Promise.all(ids.map((id) => this.getSource(id)));
   }
+   */
 }

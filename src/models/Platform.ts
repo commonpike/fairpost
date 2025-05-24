@@ -161,7 +161,7 @@ export default class Platform {
     this.user.log.trace(this.id, "getPosts");
     const posts: Post[] = [];
     if (!sources) {
-      sources = await this.user.getFeed().getAllSources();
+      sources = await this.user.getFeed().getSources();
     }
     for (const source of sources) {
       try {
@@ -341,7 +341,7 @@ export default class Platform {
   ): Promise<Post | undefined> {
     this.user.log.trace(this.id, "scheduleNextPost");
     if (!sources) {
-      sources = await this.user.getFeed().getAllSources();
+      sources = await this.user.getFeed().getSources();
     }
     const scheduledPosts = await this.getPosts(sources, PostStatus.SCHEDULED);
     if (scheduledPosts.length) {
