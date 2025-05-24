@@ -1,9 +1,9 @@
 enum SourceStage {
-  UNKNOWN = "unknown",
-  INCOMING = "incoming", // no posts
-  PREPARED = "prepared", // all posts unscheduled
-  PROCESSING = "processing", // mixed post statuses
-  PROCESSED = "processed", // all posts published, canceled or failed
+  PENDING = "pending", // all posts unscheduled
+  ACTIVE = "active", // mixed post statuses
+  FINISHED = "finished", // all posts published or canceled
+  INCOMING = "incoming", // no posts yet
   ARCHIVED = "archived",
+  UNKNOWN = "unknown",
 }
 export default SourceStage;
