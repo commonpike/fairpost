@@ -171,7 +171,19 @@ export default class User {
   public async getReport(): Promise<UserReport> {
     this.log.trace("User", "getReport");
     try {
-      return this.data.getObject("cache", "report") as UserReport;
+      const report = this.data.getObject("cache", "report") as UserReport;
+      const platforms = this.getPlatforms();
+      const reportedPlatforms = Object.keys(report.platforms);
+      if (
+        !platforms.every((platform) => reportedPlatforms.includes(platform.id))
+      ) {
+        throw this.log.error(
+          "User",
+          "getReport",
+          "report is missing a platform, regenerating",
+        );
+      }
+      return report;
     } catch {
       this.log.trace("User", "getReport", "creating new report");
       const report: UserReport = {
