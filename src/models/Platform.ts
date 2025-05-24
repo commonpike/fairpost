@@ -295,8 +295,8 @@ export default class Platform {
       await post.prepare(false);
     } catch {
       post = await Post.getPost(this, source, false);
-      await post.prepare(true);
       this.cache[post.id] = post;
+      await post.prepare(true);
     }
     if (save) {
       await post.save();

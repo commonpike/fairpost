@@ -118,15 +118,82 @@ export default class Source {
   /**
    * Update the stage of a source.
    *
-   * The status of the source depends on the various statusses
-   * of the posts in the source. Post.setStatus calls this method.
-   * The path of the source depends on the status, so if
+   * The stage of the source depends on the various statusses
+   * of the posts in the source. Post.save calls this method.
+   * The path of the source depends on the stage, so if
    * it is updated source may move to a new location.
-   * @returns {SourceStage} - the new status of the source
+   * @returns {SourceStage} - the new stage of the source
    */
   public async updateStage(): Promise<SourceStage> {
-    // TODO
-    return SourceStage.UNKNOWN;
+    this.feed.user.log.trace("Source", "updateStage");
+
+    // check all posts to check their status
+    const orgStage = this.stage;
+    let newStage: SourceStage | undefined = undefined;
+
+    if (this.stage === SourceStage.ARCHIVED) {
+      newStage = SourceStage.ARCHIVED;
+    } else {
+      const posts = await this.getPosts();
+      if (posts.length === 0) {
+        newStage = SourceStage.INCOMING;
+      } else if (
+        posts.every(
+          (post: Post) =>
+            post.status === PostStatus.PUBLISHED ||
+            post.status === PostStatus.CANCELED,
+        )
+      ) {
+        newStage = SourceStage.FINISHED;
+      } else if (
+        posts.every((post: Post) => post.status === PostStatus.UNSCHEDULED)
+      ) {
+        newStage = SourceStage.PENDING;
+      } else if (
+        posts.every((post: Post) => post.status === PostStatus.UNKNOWN)
+      ) {
+        newStage = SourceStage.UNKNOWN;
+      }
+      if (newStage === undefined) {
+        newStage = SourceStage.ACTIVE;
+      }
+    }
+    if (orgStage === newStage) {
+      this.feed.user.log.trace(this.id, "updateStage", "no change");
+      return this.stage;
+    }
+
+    // if our stage changed,
+    // move this source to the new location
+    this.feed.user.log.trace(
+      this.id,
+      "updateStage",
+      "stage changed",
+      orgStage,
+      newStage,
+    );
+    const newPath = Source.getSourcePath(this.feed, this.id, newStage);
+    if (await this.feed.user.files.exists(newPath)) {
+      this.feed.user.log.error(
+        this.id,
+        "updateStatus",
+        "source already exists: " + newPath,
+      );
+      return this.stage;
+    }
+
+    // move directory
+    const log = await this.feed.user.files.moveDir(this.path, newPath);
+    for (const msg of log) {
+      this.feed.user.log.trace(msg);
+    }
+
+    // update my stage and clear feed cache
+    this.path = newPath;
+    this.stage = newStage;
+    this.feed.clearCache();
+
+    return this.stage;
   }
 
   /**

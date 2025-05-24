@@ -213,6 +213,8 @@ export default class Post {
           "updated user report",
         );
       }
+      // all up to date
+      this.originalStatus = this.status;
     }
   }
 
