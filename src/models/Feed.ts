@@ -47,7 +47,7 @@ export default class Feed {
     };
     const allSources = await this.getAllSources();
     for (const source of allSources) {
-      const status = source.getStage();
+      const status = source.getSourceStage();
       sources[status] = sources[status] + 1;
     }
 
@@ -56,15 +56,6 @@ export default class Feed {
       nextId: "todo",
       count: sources,
     };
-  }
-
-  /**
-   * get source id based on the path of a source
-   * @param path the path for the new or existing source
-   * @returns the id for the new or existing source
-   */
-  getSourceId(path: string): string {
-    return basename(path); // ah, simple
   }
 
   /**
@@ -97,30 +88,30 @@ export default class Feed {
 
   /**
    * Get one source
-   * @param path - path to a single source
+   * @param id - id of the source
+   * @param stage - optional stage to find the source in
    * @returns the given source object
    */
-  async getSource(path: string): Promise<Source> {
-    this.user.log.trace("Feed", "getSource", path);
-    const sourceId = this.getSourceId(path);
-    if (sourceId in this.cache) {
-      return this.cache[sourceId];
+  async getSource(id: string, stage?: SourceStage): Promise<Source> {
+    this.user.log.trace("Feed", "getSource", id, stage);
+    if (id in this.cache) {
+      return this.cache[id];
     }
-    const source = await Source.getSource(this, path);
+    const source = await Source.getSource(this, id, stage);
     this.cache[source.id] = source;
     return source;
   }
 
   /**
    * Get multiple sources
-   * @param paths - paths to multiple sources
+   * @param ids - ids of multiple sources
    * @returns the given source objects
    */
-  async getSources(paths?: string[]): Promise<Source[]> {
-    this.user.log.trace("Feed", "getSources", paths);
-    if (!paths || !paths.length) {
+  async getSources(ids?: string[]): Promise<Source[]> {
+    this.user.log.trace("Feed", "getSources", ids);
+    if (!ids || !ids.length) {
       return await this.getAllSources();
     }
-    return Promise.all(paths.map((path) => this.getSource(path)));
+    return Promise.all(ids.map((id) => this.getSource(id)));
   }
 }

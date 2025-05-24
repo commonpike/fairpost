@@ -39,10 +39,50 @@ export default class Source {
    */
   constructor(feed: Feed, path: string) {
     this.feed = feed;
-    this.id = this.feed.getSourceId(path);
+    this.id = this.getSourceId(path);
     this.path = path;
     this.mapper = new SourceMapper(this);
-    this.stage = this.getStage();
+    this.stage = this.getSourceStage();
+  }
+
+  /**
+   * getSourcePath
+   *
+   * Get the path for a source in a feed, based on stage and id
+   * @param feed - the feed this source belongs to
+   * @param id - the id of the source
+   * @param stage - the stage of the source
+   * @returns the path to the source
+   */
+  public static getSourcePath(
+    feed: Feed,
+    id: string,
+    stage: SourceStage,
+  ): string {
+    const stageFolder = stage.toLowerCase(); // todo: map from .env
+    return feed.path + "/" + stageFolder + "/" + id;
+  }
+
+  /**
+   * get source id based on the path of a source
+   * @param path the path for the new or existing source
+   * @returns the id for the new or existing source
+   */
+  public getSourceId(path: string): string {
+    return basename(path); // ah, simple
+  }
+
+  /**
+   * Get the stage of this source.
+   *
+   * The stage depends on the various statusses of the posts
+   * in the source. The path of the source depends on the status,
+   * and here we just check the path to see its current status.
+   * @returns {SourceStage} - the status of the source
+   */
+  public getSourceStage(): SourceStage {
+    // TODO
+    return SourceStage.UNKNOWN;
   }
 
   /**
@@ -50,27 +90,24 @@ export default class Source {
    *
    * get a new source and do some async checks.
    * @param feed - the feed this source belongs to
-   * @param path - the path within that feed
+   * @param id - the id of the source
+   * @param stage - optional stage to find the source in
    * @returns new source object
    */
-  public static async getSource(feed: Feed, path: string): Promise<Source> {
-    if (!(await feed.user.files.isDir(feed.path + "/" + path))) {
-      throw feed.user.log.error("getSource", "Not a valid source: " + path);
-    }
-    return new Source(feed, feed.path + "/" + path);
-  }
 
-  /**
-   * Get the status of a source.
-   *
-   * The status depends on the various statusses of the posts
-   * in the source. The path of the source depends on the status,
-   * and here we just check the path to see its current status.
-   * @returns {SourceStage} - the status of the source
-   */
-  public getStage(): SourceStage {
-    // TODO
-    return SourceStage.UNKNOWN;
+  public static async getSource(
+    feed: Feed,
+    id: string,
+    stage?: SourceStage,
+  ): Promise<Source> {
+    const stages = stage ? [stage] : Object.values(SourceStage);
+    for (const stage of stages) {
+      const sourcePath = Source.getSourcePath(feed, id, stage);
+      if (await feed.user.files.isDir(sourcePath)) {
+        return new Source(feed, sourcePath);
+      }
+    }
+    throw feed.user.log.error("getSource", "Not a valid source: " + id);
   }
 
   /**
