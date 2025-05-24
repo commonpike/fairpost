@@ -219,7 +219,7 @@ export default class Platform {
             post.id,
           );
           post.status = PostStatus.UNSCHEDULED;
-          post.save();
+          await post.save();
           continue;
         }
         if (post.skip) {
@@ -228,7 +228,7 @@ export default class Platform {
             post.id,
           );
           post.status = PostStatus.UNSCHEDULED;
-          post.save();
+          await post.save();
           continue;
         }
         if (post.published) {
@@ -237,7 +237,7 @@ export default class Platform {
             post.id,
           );
           post.status = PostStatus.PUBLISHED;
-          post.save();
+          await post.save();
           continue;
         }
         if (post.scheduled <= now) {

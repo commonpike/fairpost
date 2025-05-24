@@ -141,7 +141,7 @@ export default class Reddit extends Platform {
       if (videoposter) {
         await post.addFile(videoposter);
       }
-      post.save();
+      await post.save();
     }
     return post;
   }
