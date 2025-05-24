@@ -26,6 +26,7 @@ export default class Post {
   valid: boolean = false;
   skip: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
+  private originalStatus: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
   results: PostResult[] = [];
@@ -90,23 +91,25 @@ export default class Post {
       post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
       post.published = post.published ? new Date(post.published) : undefined;
       post.ignoreFiles = post.ignoreFiles ?? [];
+      post.originalStatus = post.status;
     }
     return post;
   }
 
-  /**
+  /*
    * Get the post status
    * @returns the post status
-   */
+   
   getStatus(): PostStatus {
     return this.status;
   }
+  */
 
-  /**
+  /*
    * Set the post status - this also updates the
    * source status and the cached user report
    * @param status
-   */
+   
   async setStatus(status: PostStatus) {
     this.platform.user.log.trace("Post", "setStatus", status);
 
@@ -155,6 +158,7 @@ export default class Post {
       }
     }
   }
+  */
 
   /**
    * Save this post to disk
@@ -171,6 +175,45 @@ export default class Post {
       this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),
     );
+
+    if (this.originalStatus !== this.status) {
+      // update the source status if necessary
+      // note, this may *move* the source and all posts
+      const originalSourceStage = this.source.stage;
+      const newSourceStage = await this.source.updateStage();
+
+      // update the users report
+      const report = await this.platform.user.getReport();
+      if (report.platforms[this.platform.id]) {
+        if (!report.platforms[this.platform.id]?.count[this.originalStatus]) {
+          report.platforms[this.platform.id]!.count[this.originalStatus] = 1;
+        }
+        if (!report.platforms[this.platform.id]?.count[this.status]) {
+          report.platforms[this.platform.id]!.count[this.status] = 0;
+        }
+        report.platforms[this.platform.id]!.count[this.originalStatus]!--;
+        report.platforms[this.platform.id]!.count[this.status]!++;
+
+        if (originalSourceStage !== newSourceStage) {
+          if (!report.feed.count[originalSourceStage]) {
+            report.feed.count[originalSourceStage] = 1;
+          }
+          if (!report.feed.count[newSourceStage]) {
+            report.feed.count[newSourceStage] = 0;
+          }
+          report.feed.count[originalSourceStage]!--;
+          report.feed.count[newSourceStage]!++;
+        }
+        // save the report
+        await this.platform.user.putReport(report);
+        this.platform.user.log.trace(
+          "Post",
+          this.id,
+          "save",
+          "updated user report",
+        );
+      }
+    }
   }
 
   /**
@@ -271,10 +314,10 @@ export default class Post {
     }
 
     if (this.status === PostStatus.UNKNOWN) {
-      await this.setStatus(PostStatus.UNSCHEDULED);
+      this.status = PostStatus.UNSCHEDULED;
     }
     if (this.status === PostStatus.FAILED) {
-      await this.setStatus(PostStatus.UNSCHEDULED);
+      this.status = PostStatus.UNSCHEDULED;
     }
 
     // done
@@ -299,7 +342,7 @@ export default class Post {
       this.platform.user.log.warn("Rescheduling post");
     }
     this.scheduled = date;
-    await this.setStatus(PostStatus.SCHEDULED);
+    this.status = PostStatus.SCHEDULED;
     await this.save();
   }
 
@@ -687,10 +730,10 @@ export default class Post {
       if (!result.error) {
         this.remoteId = remoteId;
         this.link = link;
-        await this.setStatus(PostStatus.PUBLISHED);
+        this.status = PostStatus.PUBLISHED;
         this.published = new Date();
       } else {
-        await this.setStatus(PostStatus.FAILED);
+        this.status = PostStatus.FAILED;
       }
     }
 

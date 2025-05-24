@@ -212,13 +212,13 @@ export default class Platform {
     for (const source of sources) {
       const post = await this.getPost(source);
       if (post && post.status === PostStatus.SCHEDULED) {
-        // some janitor checks
+        // TODO: some janitor checks
         if (!post.scheduled) {
           this.user.log.warn(
             "Found scheduled post without date. Unscheduling post.",
             post.id,
           );
-          post.setStatus(PostStatus.UNSCHEDULED);
+          post.status = PostStatus.UNSCHEDULED;
           post.save();
           continue;
         }
@@ -227,7 +227,7 @@ export default class Platform {
             "Found scheduled post marked skip. Unscheduling post.",
             post.id,
           );
-          post.setStatus(PostStatus.UNSCHEDULED);
+          post.status = PostStatus.UNSCHEDULED;
           post.save();
           continue;
         }
@@ -236,7 +236,7 @@ export default class Platform {
             "Found scheduled post previously published. Marking published.",
             post.id,
           );
-          post.setStatus(PostStatus.PUBLISHED);
+          post.status = PostStatus.PUBLISHED;
           post.save();
           continue;
         }
