@@ -1,4 +1,4 @@
-import { basename, extname } from "path";
+import { dirname, basename, extname } from "path";
 
 import sharp from "sharp";
 import Feed from "./Feed.ts";
@@ -80,7 +80,13 @@ export default class Source {
    * @returns {SourceStage} - the status of the source
    */
   public getSourceStage(): SourceStage {
-    // TODO
+    const parent = dirname(this.path);
+    for (const stage of Object.values(SourceStage)) {
+      const stagePath = this.feed.getStagePath(stage);
+      if (parent.endsWith(stagePath)) {
+        return stage;
+      }
+    }
     return SourceStage.UNKNOWN;
   }
 
