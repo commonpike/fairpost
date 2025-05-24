@@ -30,6 +30,12 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
       get: ["manageSources"],
       set: ["none"],
     },
+    stage: {
+      type: "string",
+      label: "Stage",
+      get: ["manageSources"],
+      set: ["none"],
+    },
     path: {
       type: "string",
       label: "Path",
@@ -74,6 +80,9 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
           break;
         case "feed_id":
           dto[field] = this.source.feed.id;
+          break;
+        case "stage":
+          dto[field] = this.source.stage;
           break;
         case "path":
           dto[field] = this.source.path;
