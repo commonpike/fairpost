@@ -65,7 +65,7 @@ export default class InstagramApi {
 
   /**
    * Do a Json POST request on the graph.
-   * @param endpoin - the path to call
+   * @param endpoint - the path to call
    * @param body - body as object
    * @returns the parsed response as object
    */

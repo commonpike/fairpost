@@ -311,7 +311,7 @@ export default class Post {
   }
 
   /**
-   * Check body for title, #tags, @mentions and %geo
+   * Check body for title, #tags, \@mentions and %geo
    * and store those in separate fields instead.
    * Does not save.
    */

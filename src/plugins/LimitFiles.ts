@@ -2,13 +2,6 @@ import { FileGroup } from "../types/index.ts";
 import Plugin from "../models/Plugin.ts";
 import Post from "../models/Post.ts";
 
-/**
- * Plugin LimitFiles.
- *
- * Remove files from Post based on Platform limits.
- *
- */
-
 interface LimitFilesSettings {
   prefer?: FileGroup[];
   exclusive?: FileGroup[];
@@ -24,6 +17,12 @@ interface LimitFilesSettings {
   other_max?: number;
 }
 
+/**
+ * Plugin LimitFiles.
+ *
+ * Remove files from Post based on Platform limits.
+ *
+ */
 export default class LimitFiles extends Plugin {
   static defaults: LimitFilesSettings = {
     prefer: [FileGroup.VIDEO, FileGroup.IMAGE, FileGroup.TEXT, FileGroup.OTHER],

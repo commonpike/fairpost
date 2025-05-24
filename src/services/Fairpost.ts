@@ -1,9 +1,3 @@
-/**
- * Fairpost - singleton
- *
- * A command handler for the Fairpost framework
- * Fairpost has its own logger, but the commands user has their own logs too.
- */
 import log4js from "log4js";
 import log4jsConfig from "../config/log4js.json" with { type: "json" };
 
@@ -40,6 +34,13 @@ type FairpostOutput =
     }
   | { success: boolean; message?: string; messages?: string[] };
 
+/**
+ * Fairpost - singleton
+ *
+ * A command handler for the Fairpost framework
+ * Fairpost has its own logger, but the commands user has their own logs too.
+ */
+
 class Fairpost {
   static instance: Fairpost;
   public logger: log4js.Logger;
@@ -50,12 +51,28 @@ class Fairpost {
     log4js.configure(log4jsConfig);
     this.logger = log4js.getLogger("default");
   }
+  /**
+   * Get the instance of the singleton
+   */
+
   static getInstance(): Fairpost {
     if (!Fairpost.instance) {
       Fairpost.instance = new Fairpost();
     }
     return Fairpost.instance;
   }
+
+  /**
+   * Execute a command
+   * @param operator - the operator executing the command
+   * @param user - the user executing the command, if any
+   * @param command - the command to execute
+   * @param args - the arguments for the command
+   * @returns a promise that resolves to the output of the command
+   * @throws Error if the command is not recognized or if the user does not have the required permissions
+   * @throws Error if the command fails
+   */
+
   async execute(
     operator: Operator,
     user?: User,
