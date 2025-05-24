@@ -1,4 +1,4 @@
-enum SourceStatus {
+enum SourceStage {
   UNKNOWN = "unknown",
   INCOMING = "incoming", // no posts
   PREPARED = "prepared", // all posts unscheduled
@@ -6,4 +6,4 @@ enum SourceStatus {
   PROCESSED = "processed", // all posts published, canceled or failed
   ARCHIVED = "archived",
 }
-export default SourceStatus;
+export default SourceStage;

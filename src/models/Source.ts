@@ -3,7 +3,7 @@ import { basename, extname } from "path";
 import sharp from "sharp";
 import Feed from "./Feed.ts";
 import {
-  SourceStatus,
+  SourceStage,
   PostStatus,
   FileInfo,
   FileGroup,
@@ -64,11 +64,11 @@ export default class Source {
    * The status depends on the various statusses of the posts
    * in the source. The path of the source depends on the status,
    * and here we just check the path to see its current status.
-   * @returns {SourceStatus} - the status of the source
+   * @returns {SourceStage} - the status of the source
    */
-  public async getStatus(): Promise<SourceStatus> {
+  public async getStatus(): Promise<SourceStage> {
     // TODO
-    return SourceStatus.UNKNOWN;
+    return SourceStage.UNKNOWN;
   }
 
   /**
@@ -78,11 +78,11 @@ export default class Source {
    * of the posts in the source. Post.setStatus calls this method.
    * The path of the source depends on the status, so if
    * it is updated source may move to a new location.
-   * @returns {SourceStatus} - the new status of the source
+   * @returns {SourceStage} - the new status of the source
    */
-  public async updateStatus(): Promise<SourceStatus> {
+  public async updateStatus(): Promise<SourceStage> {
     // TODO
-    return SourceStatus.UNKNOWN;
+    return SourceStage.UNKNOWN;
   }
 
   /**

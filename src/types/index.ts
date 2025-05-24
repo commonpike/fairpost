@@ -10,6 +10,6 @@ export type { default as PostDto } from "./PostDto.ts";
 export type { default as PostResult } from "./PostResult.ts";
 export { default as PostStatus } from "./PostStatus.ts";
 export type { default as SourceDto } from "./SourceDto.ts";
-export { default as SourceStatus } from "./SourceStatus.ts";
+export { default as SourceStage } from "./SourceStage.ts";
 export type { default as UserDto } from "./UserDto.ts";
 export type { default as UserReport } from "./UserReport.ts";

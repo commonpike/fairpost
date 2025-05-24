@@ -1,6 +1,6 @@
 import FeedMapper from "../mappers/FeedMapper.ts";
 import Source from "./Source.ts";
-import { SourceStatus } from "../types/index.ts";
+import { SourceStage } from "../types/index.ts";
 import User from "./User.ts";
 import { basename } from "path";
 
@@ -38,12 +38,12 @@ export default class Feed {
   async getReport() {
     // TODO check cache first
     const sources = {
-      [SourceStatus.UNKNOWN]: 0,
-      [SourceStatus.INCOMING]: 0,
-      [SourceStatus.PREPARED]: 0,
-      [SourceStatus.PROCESSING]: 0,
-      [SourceStatus.PROCESSED]: 0,
-      [SourceStatus.ARCHIVED]: 0,
+      [SourceStage.UNKNOWN]: 0,
+      [SourceStage.INCOMING]: 0,
+      [SourceStage.PREPARED]: 0,
+      [SourceStage.PROCESSING]: 0,
+      [SourceStage.PROCESSED]: 0,
+      [SourceStage.ARCHIVED]: 0,
     };
     const allSources = await this.getAllSources();
     for (const source of allSources) {

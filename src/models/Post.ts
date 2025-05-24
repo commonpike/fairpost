@@ -129,19 +129,19 @@ export default class Post {
 
         // check if the source status is updated
         // note, this may *move* the source and all posts
-        const orginalSourceStatus = await this.source.getStatus();
-        const newSourceStatus = await this.source.updateStatus();
+        const orginalSourceStage = await this.source.getStatus();
+        const newSourceStage = await this.source.updateStatus();
 
         // update the user report if needed
-        if (orginalSourceStatus !== newSourceStatus) {
-          if (!report.feed.count[orginalSourceStatus]) {
-            report.feed.count[orginalSourceStatus] = 1;
+        if (orginalSourceStage !== newSourceStage) {
+          if (!report.feed.count[orginalSourceStage]) {
+            report.feed.count[orginalSourceStage] = 1;
           }
-          if (!report.feed.count[newSourceStatus]) {
-            report.feed.count[newSourceStatus] = 0;
+          if (!report.feed.count[newSourceStage]) {
+            report.feed.count[newSourceStage] = 0;
           }
-          report.feed.count[orginalSourceStatus]!--;
-          report.feed.count[newSourceStatus]!++;
+          report.feed.count[orginalSourceStage]!--;
+          report.feed.count[newSourceStage]!++;
         }
 
         // save the report
