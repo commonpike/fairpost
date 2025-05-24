@@ -66,35 +66,6 @@ export default class Feed {
   }
 
   /**
-   * Get all sources
-   * @returns all source in the feed
-   
-  async getAllSources(): Promise<Source[]> {
-    this.user.log.trace("Feed", "getAllSources");
-    if (this.allCached) {
-      return Object.values(this.cache);
-    }
-    if (!(await this.user.files.exists(this.path))) {
-      this.user.log.info("creating dir " + this.path);
-      await this.user.files.mkdir(this.path);
-    }
-    const files = this.user.files.list(this.path).filter((entry) => {
-      if (entry.type === "file" || entry.isFile) return false;
-      const filename = basename(entry.path);
-      if (filename.startsWith("_")) return false;
-      if (filename.startsWith(".")) return false;
-      return true;
-    });
-    for await (const file of files) {
-      const source = await Source.getSource(this, basename(file.path));
-      this.cache[source.id] = source;
-    }
-    this.allCached = true;
-    return Object.values(this.cache);
-  }
-   */
-
-  /**
    * getStagePath
    *
    * Get the path for a stage in a feed
@@ -193,18 +164,4 @@ export default class Feed {
     this.cache[source.id] = source;
     return source;
   }
-
-  /**
-   * Get multiple sources
-   * @param ids - ids of multiple sources
-   * @returns the given source objects
-   
-  async getSources(ids?: string[]): Promise<Source[]> {
-    this.user.log.trace("Feed", "getSources", ids);
-    if (!ids || !ids.length) {
-      return await this.getAllSources();
-    }
-    return Promise.all(ids.map((id) => this.getSource(id)));
-  }
-   */
 }

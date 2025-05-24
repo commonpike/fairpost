@@ -35,6 +35,14 @@ const platform = user.getPlatform(platformId);
 const post = source.getPost(platform);
 ```
 
+## Post Status and Source Stage
+
+The stage of a source depends on the statuses of 
+all posts in the source. The first stage is 
+`incoming`, the final stage is `archived`. 
+The path to the source folder, containing all
+the posts, is defined by the soure stage.
+
 ## DTOs
 
 All relevant models have associated 'mappers' which

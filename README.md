@@ -7,10 +7,12 @@ Fairpost helps you manage users social media feeds from a single
 entry point, using Node. It supports Facebook, Instagram, 
 Reddit, Twitter, YouTube and LinkedIn.
 
-A Feed is just a folder on disk, and all subfolders are Source Posts, 
-containing at least one text file (the post body) and 
+A Feed is just a folder on disk, where all subfolders contain 
+Source Posts, each containing at least one text file (the post body) and 
 optionally images or video. The Source Post will be transformed
-into real posts for each connected platform.
+into real posts for each connected platform, then published on
+that platform, then archived. During the process, the source
+folder moves through the stages in the folder.
 
 Fairpost is *opinionated*, meaning, it will decide
 how a Source Post with contents can best be presented
@@ -28,11 +30,11 @@ Commonly, you would call this script every day or week
 for every user. Fairpost can then automatically **prepare** the folders,
 **schedule** the next post using a certain interval and 
 **publish** any post when it is due. All the user has to do is 
-add folders with content.
+add folders with content in the feeds 'incoming' folder.
 
 Or, if you prefer, you can manually publish one
-specific folder as posts on all supported and enabled 
-platforms at once, or just one post on one platform,
+specific source as posts on all supported and enabled 
+platforms at once, or just one source on one platform,
 etcetera.
 
 
@@ -62,7 +64,7 @@ but in general, the steps are
 
 ```
 # create a user foobar
-./fairpost.js create-user --userid=foobar
+./fairpost.js @foobar create-user
 
 # edit the users storage.json, finetune settings
 # and enable platform `bla`
@@ -89,6 +91,10 @@ is youtube). Finally, it will add a json file
 describing the post for that platform in the 
 folder.
 
+As soon as at least one post is prepared, the
+source moves from the 'incoming' to the 'pending'
+stage.
+
 ### Schedule
 ```
 fairpost.js schedule-next-post
@@ -101,12 +107,18 @@ By default the date will be `FAIRPOST_FEED_INTERVAL` days
 after the last post for that platform, or `now`, whichever 
 is latest.
 
+As soon as at least one post is scheduled, the source
+is moved from the 'pending' to the 'active' stage.
+
 ### Publish
 ```
 fairpost.js publish-due-posts
 ```
 This will publish any scheduled posts that are past their due date.
 
+Once all posts are either published or canceled,
+the source is moved from the 'active' to the 'finished'
+stage.
 
 ## Other commands
 
