@@ -219,7 +219,7 @@ export default class Platform {
   async getDuePost(sources: Source[]): Promise<Post | void> {
     const now = new Date();
     for (const source of sources) {
-      const post = await this.getPost(source);
+      const post = await this.getPost(source); // TODO catch err
       if (post && post.status === PostStatus.SCHEDULED) {
         // some janitor checks
         if (!post.scheduled) {

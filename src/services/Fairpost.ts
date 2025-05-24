@@ -669,9 +669,9 @@ class Fairpost {
           for (const platform of platforms) {
             try {
               const post = await platform.getPost(source);
-              await post.publish(!!args.dryrun);
+              const success = await post.publish(!!args.dryrun);
               output[platform.id] = {
-                success: await post.publish(!!args.dryrun),
+                success: success,
                 dryrun: !!args.dryrun,
                 result: post.link,
               };
@@ -726,7 +726,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources, SourceStatus.ACTIVE);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
@@ -739,17 +739,20 @@ class Fairpost {
                 output[platform.id] = {
                   success: true,
                   result: post.link,
+                  dryrun: !!args.dryrun,
                 };
               } else {
                 output[platform.id] = {
                   success: true,
                   message: "No posts due",
+                  dryrun: !!args.dryrun,
                 };
               }
             } catch (e) {
               output[platform.id] = {
                 success: false,
                 message: e instanceof Error ? e.message : JSON.stringify(e),
+                dryrun: !!args.dryrun,
               };
             }
           }
