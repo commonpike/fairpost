@@ -27,6 +27,7 @@ export default class Source {
   feed: Feed;
   id: string;
   path: string;
+  stage: SourceStage;
   files?: FileInfo[];
   mapper: SourceMapper;
 
@@ -41,6 +42,7 @@ export default class Source {
     this.id = this.feed.getSourceId(path);
     this.path = path;
     this.mapper = new SourceMapper(this);
+    this.stage = this.getStage();
   }
 
   /**
@@ -66,13 +68,13 @@ export default class Source {
    * and here we just check the path to see its current status.
    * @returns {SourceStage} - the status of the source
    */
-  public async getStatus(): Promise<SourceStage> {
+  public getStage(): SourceStage {
     // TODO
     return SourceStage.UNKNOWN;
   }
 
   /**
-   * Update the status of a source.
+   * Update the stage of a source.
    *
    * The status of the source depends on the various statusses
    * of the posts in the source. Post.setStatus calls this method.
@@ -80,7 +82,7 @@ export default class Source {
    * it is updated source may move to a new location.
    * @returns {SourceStage} - the new status of the source
    */
-  public async updateStatus(): Promise<SourceStage> {
+  public async updateStage(): Promise<SourceStage> {
     // TODO
     return SourceStage.UNKNOWN;
   }

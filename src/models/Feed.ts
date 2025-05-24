@@ -40,14 +40,14 @@ export default class Feed {
     const sources = {
       [SourceStage.UNKNOWN]: 0,
       [SourceStage.INCOMING]: 0,
-      [SourceStage.PREPARED]: 0,
-      [SourceStage.PROCESSING]: 0,
-      [SourceStage.PROCESSED]: 0,
+      [SourceStage.PENDING]: 0,
+      [SourceStage.ACTIVE]: 0,
+      [SourceStage.FINISHED]: 0,
       [SourceStage.ARCHIVED]: 0,
     };
     const allSources = await this.getAllSources();
     for (const source of allSources) {
-      const status = await source.getStatus();
+      const status = source.getStage();
       sources[status] = sources[status] + 1;
     }
 
