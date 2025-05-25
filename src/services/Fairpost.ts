@@ -728,7 +728,7 @@ class Fairpost {
             args.stage = SourceStage.ACTIVE;
           }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources,args.stage);
+          const sources = await feed.getSources(args.sources, args.stage);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {

@@ -81,11 +81,13 @@ export default class Feed {
    * Get multiple sources
    * @param sourceIds optional array of ids of source you want to get
    * @param stage optional stage of the sources you want to get
+   * @param includeArchived if no stages and no sourceIds are given, archived is excluded by default
    * @returns all requested sources
    */
   async getSources(
     sourceIds?: string[],
     stage?: SourceStage,
+    includeArchived = false,
   ): Promise<Source[]> {
     this.user.log.trace("Feed", "getSources", sourceIds ?? "", stage ?? "");
     if (!(await this.user.files.exists(this.path))) {
@@ -95,9 +97,12 @@ export default class Feed {
     if (!sourceIds || !sourceIds.length) {
       if (!stage) {
         // requesting all sources
-        await Promise.all(
-          Object.values(SourceStage).map((stage) => this.getSources([], stage)),
-        );
+        const stages = includeArchived
+          ? Object.values(SourceStage)
+          : Object.values(SourceStage).filter(
+              (v) => v !== SourceStage.ARCHIVED,
+            );
+        await Promise.all(stages.map((stage) => this.getSources([], stage)));
         // should all be in the cache now
         this.user.log.trace(
           "found " + Object.keys(this.cache).length + " sources",
