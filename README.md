@@ -92,7 +92,7 @@ describing the post for that platform in the
 folder.
 
 As soon as at least one post is prepared, the
-source moves from the 'incoming' to the 'pending'
+source moves from the `incoming` to the `pending`
 stage.
 
 ### Schedule
@@ -110,6 +110,11 @@ is latest.
 As soon as at least one post is scheduled, the source
 is moved from the 'pending' to the 'active' stage.
 
+`schedule-next-post` only looks in  `pending` and `active` sources 
+for unscheduled posts and only in `active` and `finished` sources
+for the last published post.
+
+
 ### Publish
 ```
 fairpost.js publish-due-posts
@@ -117,7 +122,7 @@ fairpost.js publish-due-posts
 This will publish any scheduled posts that are past their due date.
 
 Once all posts are either published or canceled,
-the source is moved from the 'active' to the 'finished'
+the source is moved from the `active` to the `finished`
 stage.
 
 ## Other commands

@@ -152,23 +152,25 @@ export default class Platform {
   }
 
   /**
-   * Get multiple (prepared) posts. by default, it excludes posts from
-   * archived and incoming sources.
+   * Get multiple (prepared) posts. by default, if no sources are
+   * given, it excludes posts from archived and incoming sources.
+   * 
    * @param sources - sources to filter on
    * @param status - post status to filter on
-   * @param includeAll - whether to include posts from archived and incoming sources
+   * @param stage - if no sources are given, the stage to filter al sources on
    * @returns multiple posts
    */
   async getPosts(
     sources?: Source[],
     status?: PostStatus,
-    includeAll = false,
+    stage?: SourceStage,
   ): Promise<Post[]> {
     this.user.log.trace(this.id, "getPosts");
     const posts: Post[] = [];
     if (!sources) {
-      const stages = includeAll
-        ? Object.values(SourceStage)
+      sources = await this.user.getFeed().getSources([], stage);
+      const stages = stage
+        ? [stage]
         : Object.values(SourceStage).filter(
             (v) => v !== SourceStage.ARCHIVED && v !== SourceStage.INCOMING,
           );
@@ -364,7 +366,7 @@ export default class Platform {
    * the next date.
    * @param date - use date instead of the next post date
    * @param sources - paths to sources to filter on
-   * @param includeAll - whether to consider incoming, finished and archived sources for published and unscheduled posts
+   * @param includeAll - whether to consider incoming, finished and archived sources for last post date and unscheduled posts
    * @returns the next scheduled post or undefined if there are no posts to schedule
    */
   async scheduleNextPost(
