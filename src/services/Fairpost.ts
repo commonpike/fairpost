@@ -695,10 +695,9 @@ class Fairpost {
           if (!args.sources && args.source) {
             args.sources = [args.source];
           }
-          // TODO by default, schedule posts from incoming
-          //if (!args.sources && !args.stage) {
-          //  args.stage = SourceStage.INCOMING;
-          //}
+          // by default, platform.scheduleNextPost schedules
+          // one post from pending and active only.
+
           const feed = user.getFeed();
           const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
