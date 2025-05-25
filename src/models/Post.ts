@@ -107,6 +107,7 @@ export default class Post {
     delete data.source;
     delete data.platform;
     delete data.mapper;
+    delete data.originalStatus;
     await this.platform.user.files.write(
       this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),
