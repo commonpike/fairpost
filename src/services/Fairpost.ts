@@ -9,6 +9,7 @@ import {
   PostDto,
   SourceDto,
   UserDto,
+  SourceStage,
 } from "../types/index.ts";
 
 import Post from "../models/Post.ts";
@@ -423,7 +424,7 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const platforms = user.getPlatforms(args.platforms);
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources, args.stage);
           const posts = [] as Post[];
           for (const platform of platforms) {
             posts.push(...(await platform.getPosts(sources, args.status)));
@@ -472,8 +473,12 @@ class Fairpost {
           if (!args.sources && args.source) {
             args.sources = [args.source];
           }
+          // by default, prepare posts from incoming
+          if (!args.sources && !args.stage) {
+            args.stage = SourceStage.INCOMING;
+          }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources, args.stage);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]?: CombinedResult[] };
           for (const platform of platforms) {
@@ -690,6 +695,10 @@ class Fairpost {
           if (!args.sources && args.source) {
             args.sources = [args.source];
           }
+          // TODO by default, schedule posts from incoming
+          //if (!args.sources && !args.stage) {
+          //  args.stage = SourceStage.INCOMING;
+          //}
           const feed = user.getFeed();
           const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
@@ -713,6 +722,10 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
+          // TODO by default, publist due posts from pending/active
+          //if (!args.sources && !args.stage) {
+          //  args.stage = SourceStage.INCOMING;
+          //}
           const feed = user.getFeed();
           const sources = await feed.getSources(args.sources);
           const platforms = user.getPlatforms(args.platforms);
@@ -772,20 +785,20 @@ class Fairpost {
               `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid get-platform --platform=xxx`,
               `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
-              `${cmd} @userid get-source --source=xxx`,
-              `${cmd} @userid get-sources [--sources=xxx,xxx]`,
+              `${cmd} @userid get-source --source=xxx [--stage=xxx] `,
+              `${cmd} @userid get-sources [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid get-post --post=xxx:xxx`,
-              `${cmd} @userid get-posts [--status=xxx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
+              `${cmd} @userid get-posts [--status=xxx] [--sources=xxx,xxx|--stage=xxx] [--platforms=xxx,xxx] `,
               `${cmd} @userid prepare-post --post=xxx:xxx`,
               `${cmd} @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
-              `${cmd} @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
+              `${cmd} @userid schedule-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
               `${cmd} @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx]`,
               `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
-              `${cmd} @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+              `${cmd} @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               "\n# feed planning:",
-              `${cmd} @userid prepare-posts  [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
-              `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
-              `${cmd} @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
+              `${cmd} @userid prepare-posts  [--sources=xxx,xxx|--source=xxx|--stage=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+              `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage] [--platforms=xxx,xxx] `,
+              `${cmd} @userid publish-due-posts [--sources=xxx,xxx|--stage=xxx] [--platforms=xxx,xxx] [--dry-run]`,
               "\n# account mgmt:",
               `${cmd} @userid login --password=xxx`,
               `${cmd} @userid logout`,
