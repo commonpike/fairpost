@@ -722,12 +722,13 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          // TODO by default, publist due posts from pending/active
-          //if (!args.sources && !args.stage) {
-          //  args.stage = SourceStage.INCOMING;
-          //}
+          // by default, publist due posts from active,
+          // because that is where scheduled posts are
+          if (!args.sources && !args.stage) {
+            args.stage = SourceStage.ACTIVE;
+          }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources,args.stage);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
