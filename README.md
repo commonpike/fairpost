@@ -108,7 +108,7 @@ after the last post for that platform, or `now`, whichever
 is latest.
 
 As soon as at least one post is scheduled, the source
-is moved from the 'pending' to the 'active' stage.
+is moved from the `pending` to the `active` stage.
 
 `schedule-next-post` only looks in  `pending` and `active` sources 
 for unscheduled posts and only in `active` and `finished` sources
@@ -155,25 +155,30 @@ fairpost: @userid refresh-platform --platform=xxx
 fairpost: @userid refresh-platforms [--platforms=xxx,xxx]
 fairpost: @userid get-platform --platform=xxx
 fairpost: @userid get-platforms [--platforms=xxx,xxx]
-fairpost: @userid get-source --source=xxx
-fairpost: @userid get-sources [--sources=xxx,xxx]
+fairpost: @userid get-source --source=xxx [--stage=xxx] 
+fairpost: @userid get-sources [--sources=xxx,xxx|--stage=xxx]
 fairpost: @userid get-post --post=xxx:xxx
-fairpost: @userid get-posts [--status=xxx] [--sources=xxx,xxx] [--platforms=xxx,xxx] 
+fairpost: @userid get-posts [--status=xxx] [--sources=xxx,xxx|--stage=xxx] [--platforms=xxx,xxx] 
 fairpost: @userid prepare-post --post=xxx:xxx
 fairpost: @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
-fairpost: @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
-fairpost: @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] 
+fairpost: @userid schedule-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
+fairpost: @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx]
 fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
-fairpost: @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
 
 # feed planning:
-fairpost: @userid prepare-posts  [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
-fairpost: @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] 
-fairpost: @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]
+fairpost: @userid prepare-posts  [--sources=xxx,xxx|--source=xxx|--stage=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage] [--platforms=xxx,xxx] 
+fairpost: @userid publish-due-posts [--sources=xxx,xxx|--stage=xxx] [--platforms=xxx,xxx] [--dry-run]
+
+# account mgmt:
+fairpost: @userid login --password=xxx
+fairpost: @userid logout
+fairpost: @userid set-password --password=xxx
+fairpost: @userid refresh-token
 
 # admin only:
-fairpost: create-user --userid=xxx
-fairpost: get-user --userid=xxx
+fairpost: @userid create-user
 fairpost: serve
 ```
 
