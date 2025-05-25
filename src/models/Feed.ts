@@ -49,7 +49,7 @@ export default class Feed {
     };
     const currentSources = await this.getSources();
     const archivedSources = await this.getSources([], SourceStage.ARCHIVED);
-    for (const source of [...currentSources,...archivedSources]) {
+    for (const source of [...currentSources, ...archivedSources]) {
       sources[source.stage] = sources[source.stage] + 1;
     }
 

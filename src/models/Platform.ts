@@ -1,7 +1,7 @@
 import * as pluginClasses from "../plugins/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 import PlatformMapper from "../mappers/PlatformMapper.ts";
-import { FieldMapping, PostStatus } from "../types/index.ts";
+import { FieldMapping, SourceStage, PostStatus } from "../types/index.ts";
 
 import Source from "./Source.ts";
 import Plugin from "./Plugin.ts";
@@ -152,16 +152,30 @@ export default class Platform {
   }
 
   /**
-   * Get multiple (prepared) posts
+   * Get multiple (prepared) posts. by default, it excludes posts from
+   * archived and incoming sources.
    * @param sources - sources to filter on
    * @param status - post status to filter on
+   * @param includeAll - whether to include posts from archived and incoming sources
    * @returns multiple posts
    */
-  async getPosts(sources?: Source[], status?: PostStatus): Promise<Post[]> {
+  async getPosts(
+    sources?: Source[],
+    status?: PostStatus,
+    includeAll = false,
+  ): Promise<Post[]> {
     this.user.log.trace(this.id, "getPosts");
     const posts: Post[] = [];
     if (!sources) {
-      sources = await this.user.getFeed().getSources();
+      const stages = includeAll
+        ? Object.values(SourceStage)
+        : Object.values(SourceStage).filter(
+            (v) => v !== SourceStage.ARCHIVED && v !== SourceStage.INCOMING,
+          );
+      const feed = this.user.getFeed();
+      sources = (
+        await Promise.all(stages.map((stage) => feed.getSources([], stage)))
+      ).flat();
     }
     for (const source of sources) {
       try {
@@ -177,13 +191,22 @@ export default class Platform {
   }
 
   /**
-   * Get last published post for a platform
+   * Get last published post for a platform (by default
+   * only from active and finished sources)
+   * @param includeAll - whether to include posts from archived and incoming sources
    * @returns the above post or none
    */
-  async getLastPost(): Promise<Post | void> {
+  async getLastPost(includeAll = false): Promise<Post | void> {
     this.user.log.trace(this.id, "getLastPost");
     let lastPost: Post | undefined = undefined;
-    const posts = await this.getPosts(undefined, PostStatus.PUBLISHED);
+    const stages = includeAll
+      ? Object.values(SourceStage)
+      : [SourceStage.ACTIVE, SourceStage.FINISHED];
+    const feed = this.user.getFeed();
+    const sources = (
+      await Promise.all(stages.map((stage) => feed.getSources([], stage)))
+    ).flat();
+    const posts = await this.getPosts(sources, PostStatus.PUBLISHED);
     for (const post of posts) {
       if (post.published) {
         if (
@@ -310,12 +333,13 @@ export default class Platform {
    *
    * This would be FAIRPOST_INTERVAL days after the date
    * of the last post for that platform, or now.
+   * @param includeAll - whether to check for published posts from incoming, pending and archived sources
    * @returns the next date
    */
-  async getNextPostDate(): Promise<Date> {
+  async getNextPostDate(includeAll = false): Promise<Date> {
     this.user.log.trace("Feed", "getNextPostDate");
     let nextDate = null;
-    const lastPost = await this.getLastPost();
+    const lastPost = await this.getLastPost(includeAll);
     if (lastPost && lastPost.published) {
       nextDate = new Date(lastPost.published);
       nextDate.setDate(nextDate.getDate() + this.interval);
@@ -328,27 +352,44 @@ export default class Platform {
   /**
    * Schedule the first unscheduled post for this platforms
    *
-   * within given sources are all sources,
-   * finds the next post date and the first unscheduled post,
-   * and schedules that post on that date
+   * If no sources are given, searches for sources in
+   * pending and active stages, or all if includeAll is given.
+   *
+   * If no date is given, finds the last post date within pending,
+   * active and finished sources, or all if includeAll is given.
+   * and calculates the next date based on that.
+   *
+   * within given sources, if there is a scheduled post, returns that one.
+   * else, finds the first unscheduled post, and schedules that post on
+   * the next date.
    * @param date - use date instead of the next post date
    * @param sources - paths to sources to filter on
+   * @param includeAll - whether to consider incoming, finished and archived sources for published and unscheduled posts
    * @returns the next scheduled post or undefined if there are no posts to schedule
    */
   async scheduleNextPost(
     date?: Date,
     sources?: Source[],
+    includeAll: boolean = false,
   ): Promise<Post | undefined> {
     this.user.log.trace(this.id, "scheduleNextPost");
     if (!sources) {
-      sources = await this.user.getFeed().getSources();
+      // by default, only check pending and active sources
+      const stages = includeAll
+        ? Object.values(SourceStage)
+        : [SourceStage.PENDING, SourceStage.ACTIVE];
+      const feed = this.user.getFeed();
+      sources = (
+        await Promise.all(stages.map((stage) => feed.getSources([], stage)))
+      ).flat();
     }
     const scheduledPosts = await this.getPosts(sources, PostStatus.SCHEDULED);
     if (scheduledPosts.length) {
       this.user.log.trace(this.id, "scheduleNextPost", "Already scheduled");
       return scheduledPosts[0];
     }
-    const nextDate = date ? date : await this.getNextPostDate();
+    // by default, only check pending, active and finished sources
+    const nextDate = date ? date : await this.getNextPostDate(includeAll);
     for (const source of sources) {
       const post = await this.getPost(source);
       if (
@@ -371,6 +412,7 @@ export default class Platform {
   /**
    * publishPost
    *
+   * - your platform should implement this itself.
    * - publish the post for this platform, sync.
    * - when done, pass the result to post.processResult()
    *
