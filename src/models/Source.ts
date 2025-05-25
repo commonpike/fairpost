@@ -112,7 +112,7 @@ export default class Source {
         return new Source(feed, sourcePath);
       }
     }
-    throw feed.user.log.error("getSource", "Not a valid source: " + id, stage);
+    throw feed.user.log.error("getSource", "No source in stage: " + id, stage);
   }
 
   /**

@@ -363,7 +363,7 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = await feed.getSource(args.source);
+          const source = await feed.getSource(args.source, args.stage);
           output = await source.mapper.getDto(operator);
           break;
         }
@@ -375,7 +375,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources, args.stage);
           output = await Promise.all(
             sources.map((source) => source.mapper.getDto(operator)),
           );

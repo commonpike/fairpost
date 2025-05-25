@@ -1,5 +1,5 @@
 import { PlatformId } from "../platforms/index.ts";
-import { PostStatus } from "./index.ts";
+import { PostStatus, SourceStage } from "./index.ts";
 
 /**
  * CommandArguments are the arguments that can be passed
@@ -15,4 +15,5 @@ export default interface CommandArguments {
   source?: string;
   date?: Date;
   status?: PostStatus;
+  stage?: SourceStage;
 }

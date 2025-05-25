@@ -88,13 +88,13 @@ export default class Feed {
     stage?: SourceStage,
   ): Promise<Source[]> {
     this.user.log.trace("Feed", "getSources", sourceIds ?? "", stage ?? "");
+    if (!(await this.user.files.exists(this.path))) {
+      this.user.log.info("creating dir " + this.path);
+      await this.user.files.mkdir(this.path);
+    }
     if (!sourceIds || !sourceIds.length) {
       if (!stage) {
         // requesting all sources
-        if (!(await this.user.files.exists(this.path))) {
-          this.user.log.info("creating dir " + this.path);
-          await this.user.files.mkdir(this.path);
-        }
         await Promise.all(
           Object.values(SourceStage).map((stage) => this.getSources([], stage)),
         );
@@ -135,24 +135,17 @@ export default class Feed {
       }
     } else {
       // requesting sources with specific ids and optionally stage
-      const sources: Source[] = [];
-      for (const sourceId of sourceIds) {
-        if (sourceId in this.cache) {
-          sources.push(this.cache[sourceId]);
-        } else {
-          const source = await Source.getSource(this, sourceId, stage);
-          this.cache[source.id] = source;
-          sources.push(source);
-        }
-      }
+      const sources = await Promise.all(
+        sourceIds.map((sourceId) => this.getSource(sourceId, stage)),
+      );
       this.user.log.trace("found " + sources.length + " sources");
       return sources;
     }
   }
   /**
-   * Get one source
+   * Get one source, and use a local cache.
    * @param id - id of the source
-   * @param stage - optional stage to find the source in
+   * @param stage - optional stages to find the source in
    * @returns the given source object
    */
   async getSource(id: string, stage?: SourceStage): Promise<Source> {

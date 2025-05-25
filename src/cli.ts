@@ -8,7 +8,7 @@ import "./bootstrap.ts";
 import Fairpost from "./services/Fairpost.ts";
 import { JSONReplacer } from "./utilities.ts";
 import { PlatformId } from "./platforms/index.ts";
-import { PostStatus } from "./types/index.ts";
+import { SourceStage, PostStatus } from "./types/index.ts";
 import Operator from "./models/Operator.ts";
 import User from "./models/User.ts";
 
@@ -29,6 +29,7 @@ const PLATFORMS =
 const SOURCES = (getOption("sources") as string)?.split(",") ?? undefined;
 const DATE = (getOption("date") as string) ?? undefined;
 const STATUS = (getOption("status") as PostStatus) ?? undefined;
+const STAGE = (getOption("stage") as SourceStage) ?? undefined;
 
 let PLATFORM = (getOption("platform") as string as PlatformId) ?? undefined;
 let SOURCE = (getOption("source") as string) ?? undefined;
@@ -62,6 +63,7 @@ async function main() {
       source: SOURCE,
       date: DATE ? new Date(DATE) : undefined,
       status: STATUS,
+      stage: STAGE,
     });
 
     console.info(JSON.stringify(output, JSONReplacer, "\t"));
