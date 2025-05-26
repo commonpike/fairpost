@@ -172,7 +172,23 @@ export default class Source {
       orgStage,
       newStage,
     );
-    const newPath = Source.getSourcePath(this.feed, this.id, newStage);
+
+    let newId = this.id;
+    if (orgStage === SourceStage.INCOMING) {
+      if (this.id.match(/^\d{8}-\d{6}-/)) {
+        newId = this.feed.user.files.slugify(this.id);
+      } else {
+        const timestamp = await this.getTimestamp();
+        const date = new Date(timestamp);
+        const ymdhis =
+          date.toISOString().slice(0, 10).replace(/-/g, "") +
+          "-" +
+          date.toISOString().slice(11, 19).replace(/:/g, "");
+        newId = ymdhis + "-" + this.feed.user.files.slugify(this.id);
+      }
+    }
+
+    const newPath = Source.getSourcePath(this.feed, newId, newStage);
     if (await this.feed.user.files.exists(newPath)) {
       this.feed.user.log.error(
         this.id,
@@ -188,12 +204,33 @@ export default class Source {
       this.feed.user.log.trace(msg);
     }
 
-    // update my stage and clear feed cache
+    // update my id, path, stage and clear feed cache
+    this.id = newId;
     this.path = newPath;
     this.stage = newStage;
     this.feed.clearCache();
 
     return this.stage;
+  }
+
+  /**
+   * Get timestamp for a source.
+   *
+   * Not all adapters support directories, so we read the timestamps
+   * of all files in the source and return the first one.
+   * @returns timestamp or zero if no files are present
+   */
+  public async getTimestamp(): Promise<number> {
+    const fileNames = await this.getFileNames();
+    const allTimestamps = await Promise.all(
+      fileNames.map((name) =>
+        this.feed.user.files.getTimestamp(this.path + "/" + name),
+      ),
+    );
+    if (allTimestamps.length === 0) {
+      return 0;
+    }
+    return Math.min(...allTimestamps);
   }
 
   /**
@@ -208,7 +245,7 @@ export default class Source {
       return structuredClone(this.files); // todo clone where this is called
     }
     const fileNames = await this.getFileNames();
-    this.files = [];
+    this.files = []; // todo use promise.all
     for (let index = 0; index < fileNames.length; index++) {
       this.files.push(await this.getFileInfo(fileNames[index], index));
     }

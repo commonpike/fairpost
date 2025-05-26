@@ -1,4 +1,4 @@
-import { resolve } from "path";
+import { basename, extname, resolve } from "path";
 import { Readable } from "stream";
 
 import {
@@ -174,5 +174,17 @@ export default class GlobalFs {
   }
   public async getSize(path: string): Promise<number> {
     return await this.storage.fileSize(path);
+  }
+  public async getTimestamp(path: string): Promise<number> {
+    return await this.storage.lastModified(path);
+  }
+  public slugify(name: string) {
+    const ext = extname(name).toLowerCase();
+    const base = basename(name, ext)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return base + ext;
   }
 }
