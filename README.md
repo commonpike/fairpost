@@ -162,7 +162,7 @@ fairpost: @userid get-posts [--status=xxx] [--sources=xxx,xxx|--stage=xxx] [--pl
 fairpost: @userid prepare-post --post=xxx:xxx
 fairpost: @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
 fairpost: @userid schedule-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
-fairpost: @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx]
+fairpost: @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage]
 fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
 fairpost: @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
 

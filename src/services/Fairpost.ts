@@ -595,9 +595,22 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
+
           const platform = user.getPlatform(args.platform);
+          const feed = user.getFeed();
+          const sources =
+            args.sources || args.stage
+              ? await feed.getSources(args.sources, args.stage)
+              : (
+                  await Promise.all([
+                    feed.getSources(undefined, SourceStage.PENDING),
+                    feed.getSources(undefined, SourceStage.ACTIVE),
+                  ])
+                ).flat();
           const post = await platform.scheduleNextPost(
             args.date ? new Date(args.date) : undefined,
+            sources,
+            !!args.stage,
           );
           if (post) {
             output = await post.mapper.getDto(operator);
@@ -695,17 +708,24 @@ class Fairpost {
           if (!args.sources && args.source) {
             args.sources = [args.source];
           }
-          // by default, platform.scheduleNextPost schedules
-          // one post from pending and active only.
 
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources =
+            args.sources || args.stage
+              ? await feed.getSources(args.sources, args.stage)
+              : (
+                  await Promise.all([
+                    feed.getSources(undefined, SourceStage.PENDING),
+                    feed.getSources(undefined, SourceStage.ACTIVE),
+                  ])
+                ).flat();
           const platforms = user.getPlatforms(args.platforms);
           const posts = [] as Post[];
           for (const platform of platforms) {
             const post = await platform.scheduleNextPost(
               args.date ? new Date(args.date) : undefined,
               sources,
+              !!args.stage,
             );
             if (post) posts.push(post);
           }
@@ -792,7 +812,7 @@ class Fairpost {
               `${cmd} @userid prepare-post --post=xxx:xxx`,
               `${cmd} @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
               `${cmd} @userid schedule-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
-              `${cmd} @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx]`,
+              `${cmd} @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
               `${cmd} @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               "\n# feed planning:",

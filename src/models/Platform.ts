@@ -154,7 +154,6 @@ export default class Platform {
   /**
    * Get multiple (prepared) posts. by default, if no sources are
    * given, it excludes posts from archived and incoming sources.
-   * 
    * @param sources - sources to filter on
    * @param status - post status to filter on
    * @param stage - if no sources are given, the stage to filter al sources on
