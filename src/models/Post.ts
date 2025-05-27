@@ -26,7 +26,7 @@ export default class Post {
   valid: boolean = false;
   skip: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
-  private isNew: boolean = true;
+  prepared: boolean = true;
   private originalStatus: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
@@ -61,41 +61,31 @@ export default class Post {
    * get a new post and load the async data.
    * @param platform - the platform this post belongs to
    * @param source - the source this post is derived from
-   * @param load
    * @returns new post object
    */
-  static async getPost(
-    platform: Platform,
-    source: Source,
-    load: boolean = true,
-  ): Promise<Post> {
+  static async getPost(platform: Platform, source: Source): Promise<Post> {
     const post = new Post(platform, source);
-    if (load) {
-      const postFilePath = platform.getPostFilePath(source);
-      if (!(await platform.user.files.exists(postFilePath))) {
-        throw platform.user.log.error(
-          "No such post ",
-          platform.id,
-          post.source.id,
-        );
-      }
-      const contents = await platform.user.files.readFile(postFilePath);
-      const data = JSON.parse(contents);
-      if (!data) {
-        throw platform.user.log.error(
-          "Cant parse post ",
-          post.id,
-          post.source.id,
-        );
-      }
-      Object.assign(post, data);
-      post.id = platform.getPostId(source);
-      post.isNew = false;
-      post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
-      post.published = post.published ? new Date(post.published) : undefined;
-      post.ignoreFiles = post.ignoreFiles ?? [];
-      post.originalStatus = post.status;
+    const postFilePath = platform.getPostFilePath(source);
+    if (!(await platform.user.files.exists(postFilePath))) {
+      return post;
     }
+    const contents = await platform.user.files.readFile(postFilePath);
+    const data = JSON.parse(contents);
+    if (!data) {
+      throw platform.user.log.error(
+        "Cant parse post ",
+        post.id,
+        post.source.id,
+      );
+    }
+    Object.assign(post, data);
+    post.id = platform.getPostId(source);
+    post.prepared = true;
+    post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
+    post.published = post.published ? new Date(post.published) : undefined;
+    post.ignoreFiles = post.ignoreFiles ?? [];
+    post.originalStatus = post.status;
+
     return post;
   }
 
@@ -110,6 +100,7 @@ export default class Post {
     delete data.source;
     delete data.platform;
     delete data.mapper;
+    delete data.prepared;
     delete data.originalStatus;
     await this.platform.user.files.write(
       this.platform.getPostFilePath(this.source),
@@ -179,7 +170,7 @@ export default class Post {
     // purge non-existing files and
     // update existing files
 
-    if (this.isNew) {
+    if (!this.prepared) {
       const assetsPath = this.getFilePath(this.platform.assetsFolder);
       if (!(await this.platform.user.files.exists(assetsPath))) {
         await this.platform.user.files.mkdir(assetsPath);
@@ -274,6 +265,9 @@ export default class Post {
 
   async schedule(date: Date) {
     this.platform.user.log.trace("Post", "schedule", date);
+    if (!this.prepared) {
+      throw this.platform.user.log.error("Post is not prepared");
+    }
     if (!this.valid) {
       throw this.platform.user.log.error("Post is not valid");
     }
@@ -299,6 +293,9 @@ export default class Post {
    */
   async publish(dryrun: boolean): Promise<boolean> {
     this.platform.user.log.trace("Post", "publish");
+    if (!this.prepared) {
+      throw this.platform.user.log.error("Post is not prepared");
+    }
     if (!this.valid) {
       throw this.platform.user.log.error("Post is not valid", this.id);
     }

@@ -677,7 +677,6 @@ class Fairpost {
           for (const platform of platforms) {
             try {
               const post = await platform.getPost(source);
-              await post.publish(!!args.dryrun);
               output[platform.id] = {
                 success: await post.publish(!!args.dryrun),
                 dryrun: !!args.dryrun,

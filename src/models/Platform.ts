@@ -136,8 +136,7 @@ export default class Platform {
   /**
    * getPost
    * @param source - the source to get the post for this platform from
-   * @returns {Post} the post for this platform for the given source, if it exists.
-   * @throws errors if the post does not exist or its data cant be read
+   * @returns {Post} the post for this platform for the given source
    */
 
   async getPost(source: Source): Promise<Post> {
@@ -145,7 +144,7 @@ export default class Platform {
 
     const postId = this.getPostId(source);
     if (!(postId in this.cache)) {
-      const post = await Post.getPost(this, source); // or throw an error
+      const post = await Post.getPost(this, source);
       this.cache[postId] = post;
     }
     return this.cache[postId];
@@ -310,18 +309,11 @@ export default class Platform {
    */
   async preparePost(source: Source, save?: true): Promise<Post> {
     this.user.log.trace(this.id, "preparePost");
-    let post: Post | undefined = undefined;
-    try {
-      post = await this.getPost(source);
-      if (post.status === PostStatus.PUBLISHED) {
-        return post;
-      }
-      await post.prepare();
-    } catch {
-      post = await Post.getPost(this, source, false);
-      this.cache[post.id] = post;
-      await post.prepare();
+    const post = await this.getPost(source);
+    if (post.status === PostStatus.PUBLISHED) {
+      return post;
     }
+    await post.prepare();
     if (save) {
       await post.save();
     }
