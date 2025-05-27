@@ -314,6 +314,12 @@ export default class Platform {
       return post;
     }
     await post.prepare();
+    if (post.status === PostStatus.UNKNOWN) {
+      post.status = PostStatus.UNSCHEDULED;
+    }
+    if (post.status === PostStatus.FAILED) {
+      post.status = PostStatus.UNSCHEDULED;
+    }
     if (save) {
       await post.save();
     }

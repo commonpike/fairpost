@@ -246,13 +246,6 @@ export default class Post {
       this.valid = true;
     }
 
-    if (this.status === PostStatus.UNKNOWN) {
-      this.status = PostStatus.UNSCHEDULED;
-    }
-    if (this.status === PostStatus.FAILED) {
-      this.status = PostStatus.UNSCHEDULED;
-    }
-
     // done
   }
 
