@@ -316,11 +316,11 @@ export default class Platform {
       if (post.status === PostStatus.PUBLISHED) {
         return post;
       }
-      await post.prepare(false);
+      await post.prepare();
     } catch {
       post = await Post.getPost(this, source, false);
       this.cache[post.id] = post;
-      await post.prepare(true);
+      await post.prepare();
     }
     if (save) {
       await post.save();

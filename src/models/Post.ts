@@ -26,6 +26,7 @@ export default class Post {
   valid: boolean = false;
   skip: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
+  private isNew: boolean = true;
   private originalStatus: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
@@ -89,6 +90,7 @@ export default class Post {
       }
       Object.assign(post, data);
       post.id = platform.getPostId(source);
+      post.isNew = false;
       post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
       post.published = post.published ? new Date(post.published) : undefined;
       post.ignoreFiles = post.ignoreFiles ?? [];
@@ -171,19 +173,19 @@ export default class Post {
    * Does not save the post.
    */
 
-  async prepare(isnew: boolean) {
+  async prepare() {
     this.platform.user.log.trace("Post", "prepare");
 
     // purge non-existing files and
     // update existing files
 
-    if (!isnew) {
-      await this.purgeFiles();
-    } else {
+    if (this.isNew) {
       const assetsPath = this.getFilePath(this.platform.assetsFolder);
       if (!(await this.platform.user.files.exists(assetsPath))) {
         await this.platform.user.files.mkdir(assetsPath);
       }
+    } else {
+      await this.purgeFiles();
     }
 
     // get all files and process them
