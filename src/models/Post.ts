@@ -88,6 +88,7 @@ export default class Post {
         );
       }
       Object.assign(post, data);
+      post.id = platform.getPostId(source);
       post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
       post.published = post.published ? new Date(post.published) : undefined;
       post.ignoreFiles = post.ignoreFiles ?? [];
