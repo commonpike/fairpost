@@ -7,6 +7,7 @@ import {
   FeedDto,
   PlatformDto,
   PostDto,
+  PostStatus,
   SourceDto,
   UserDto,
   SourceStage,
@@ -757,7 +758,7 @@ class Fairpost {
               );
               if (post) {
                 output[platform.id] = {
-                  success: true,
+                  success: post.status === PostStatus.PUBLISHED,
                   result: post.link,
                 };
               } else {

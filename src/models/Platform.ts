@@ -233,7 +233,11 @@ export default class Platform {
     const now = new Date();
     for (const source of sources) {
       const post = await this.getPost(source);
-      if (post && post.status === PostStatus.SCHEDULED) {
+      if (
+        post &&
+        (post.status === PostStatus.SCHEDULED ||
+          post.status === PostStatus.FAILED)
+      ) {
         // TODO: some janitor checks
         if (!post.scheduled) {
           this.user.log.warn(
@@ -266,7 +270,7 @@ export default class Platform {
           this.user.log.trace(
             "Platform",
             this.id,
-            "publishDuePosts",
+            "getDuePost",
             post.id,
             "Posting; scheduled for",
             post.scheduled,
