@@ -150,9 +150,9 @@ export default class Source {
       ) {
         newStage = SourceStage.PENDING;
       } else if (
-        posts.every((post: Post) => post.status === PostStatus.UNKNOWN)
+        posts.some((post: Post) => post.status === PostStatus.UNKNOWN)
       ) {
-        newStage = SourceStage.UNKNOWN;
+        newStage = SourceStage.INCOMING;
       }
       if (newStage === undefined) {
         newStage = SourceStage.ACTIVE;

@@ -253,7 +253,7 @@ export default class User {
    * @returns platforms given by ids
    */
   getPlatforms(platformIds?: PlatformId[]): Platform[] {
-    this.log.trace("User", "getPlatforms", platformIds);
+    this.log.trace("User", "getPlatforms", platformIds ?? "");
     if (this.platforms === undefined) {
       this.loadPlatforms();
     }

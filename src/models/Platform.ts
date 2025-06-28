@@ -80,7 +80,7 @@ export default class Platform {
    * @returns - true if refreshed
    */
   async refresh(): Promise<boolean> {
-    this.user.log.trace("Refresh not implemented for " + this.id);
+    this.user.log.trace("Platform", "Refresh not implemented for " + this.id);
     return false;
   }
 
@@ -92,7 +92,7 @@ export default class Platform {
    * @returns a report for this platform
    */
   async getReport() {
-    this.user.log.trace(this.id, "getReport");
+    this.user.log.trace("Platform", this.id, "getReport");
     // todo : check the cache first
     const posts = {
       [PostStatus.UNKNOWN]: 0,
@@ -140,10 +140,9 @@ export default class Platform {
    */
 
   async getPost(source: Source): Promise<Post> {
-    this.user.log.trace(this.id, "getPost", this.id, source.id);
-
     const postId = this.getPostId(source);
     if (!(postId in this.cache)) {
+      this.user.log.trace("Platform", this.id, "getPost", source.id);
       const post = await Post.getPost(this, source);
       this.cache[postId] = post;
     }
@@ -163,7 +162,7 @@ export default class Platform {
     status?: PostStatus,
     stage?: SourceStage,
   ): Promise<Post[]> {
-    this.user.log.trace(this.id, "getPosts");
+    this.user.log.trace("Platform", this.id, "getPosts");
     const posts: Post[] = [];
     if (!sources) {
       sources = await this.user.getFeed().getSources([], stage);
@@ -197,7 +196,7 @@ export default class Platform {
    * @returns the above post or none
    */
   async getLastPost(includeAll = false): Promise<Post | void> {
-    this.user.log.trace(this.id, "getLastPost");
+    this.user.log.trace("Platform", this.id, "getLastPost");
     let lastPost: Post | undefined = undefined;
     const stages = includeAll
       ? Object.values(SourceStage)
@@ -265,7 +264,8 @@ export default class Platform {
         }
         if (post.scheduled <= now) {
           this.user.log.trace(
-            "Feed",
+            "Platform",
+            this.id,
             "publishDuePosts",
             post.id,
             "Posting; scheduled for",
@@ -275,7 +275,8 @@ export default class Platform {
           break;
         } else {
           this.user.log.trace(
-            "Feed",
+            "Platform",
+            this.id,
             post.id,
             "Not due yet; scheduled for",
             post.scheduled,
@@ -308,7 +309,7 @@ export default class Platform {
    * @returns the prepared post
    */
   async preparePost(source: Source, save?: true): Promise<Post> {
-    this.user.log.trace(this.id, "preparePost");
+    this.user.log.trace("Platform", this.id, "preparePost");
     const post = await this.getPost(source);
     if (post.status === PostStatus.PUBLISHED) {
       return post;
@@ -371,7 +372,7 @@ export default class Platform {
     sources?: Source[],
     includeAll: boolean = false,
   ): Promise<Post | undefined> {
-    this.user.log.trace(this.id, "scheduleNextPost");
+    this.user.log.trace("Platform", this.id, "scheduleNextPost");
     if (!sources) {
       // by default, only check pending and active sources
       const stages = includeAll
@@ -384,7 +385,12 @@ export default class Platform {
     }
     const scheduledPosts = await this.getPosts(sources, PostStatus.SCHEDULED);
     if (scheduledPosts.length) {
-      this.user.log.trace(this.id, "scheduleNextPost", "Already scheduled");
+      this.user.log.trace(
+        "Platform",
+        this.id,
+        "scheduleNextPost",
+        "Already scheduled",
+      );
       return scheduledPosts[0];
     }
     // by default, only check pending, active and finished sources
@@ -421,7 +427,7 @@ export default class Platform {
    */
 
   async publishPost(post: Post, dryrun: boolean = false): Promise<boolean> {
-    this.user.log.trace(this.id, "publishPost", post.id, dryrun);
+    this.user.log.trace("Platform", this.id, "publishPost", post.id, dryrun);
     return await post.processResult("-99", "#undefined", {
       date: new Date(),
       dryrun: dryrun,
@@ -442,7 +448,7 @@ export default class Platform {
     sources: Source[],
     dryrun: boolean = false,
   ): Promise<Post | undefined> {
-    this.user.log.trace(this.id, "publishDuePost", dryrun);
+    this.user.log.trace("Platform", this.id, "publishDuePost", dryrun);
     const post = await this.getDuePost(sources);
     if (post) {
       await post.publish(dryrun);
