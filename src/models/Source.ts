@@ -159,13 +159,14 @@ export default class Source {
       }
     }
     if (orgStage === newStage) {
-      this.feed.user.log.trace(this.id, "updateStage", "no change");
+      this.feed.user.log.trace("Source", this.id, "updateStage", "no change");
       return this.stage;
     }
 
     // if our stage changed,
     // move this source to the new location
     this.feed.user.log.trace(
+      "Source",
       this.id,
       "updateStage",
       "stage changed",
@@ -290,7 +291,13 @@ export default class Source {
    */
 
   public async preparePost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(this.id, "preparePost", this.id, platform.id);
+    this.feed.user.log.trace(
+      "Source",
+      this.id,
+      "preparePost",
+      this.id,
+      platform.id,
+    );
     return await platform.preparePost(this);
   }
 
@@ -300,7 +307,13 @@ export default class Source {
    */
 
   public async getPost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(this.id, "getPost", this.id, platform.id);
+    this.feed.user.log.trace(
+      "Source",
+      this.id,
+      "getPost",
+      this.id,
+      platform.id,
+    );
     return await platform.getPost(this);
   }
 
@@ -315,7 +328,7 @@ export default class Source {
     platforms?: Platform[],
     status?: PostStatus,
   ): Promise<Post[]> {
-    this.feed.user.log.trace(this.id, "getPosts", this.id);
+    this.feed.user.log.trace("Source", this.id, "getPosts", this.id);
     const posts: Post[] = [];
     if (!platforms) {
       platforms = this.feed.user.getPlatforms();

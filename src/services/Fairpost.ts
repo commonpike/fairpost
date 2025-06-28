@@ -112,7 +112,7 @@ class Fairpost {
           }
           const newUser = await User.createUser(args.user);
           if (args.password) {
-            AuthService.setPassword(newUser, args.password);
+            await AuthService.setPassword(newUser, args.password);
           }
           output = await newUser.mapper.getDto(operator);
           break;
@@ -532,7 +532,7 @@ class Fairpost {
           const source = await feed.getSource(args.source);
           const platform = user.getPlatform(args.platform);
           const post = await platform.getPost(source);
-          post.schedule(args.date);
+          await post.schedule(args.date);
           output = await post.mapper.getDto(operator);
           break;
         }
@@ -568,7 +568,7 @@ class Fairpost {
           for (const platform of platforms) {
             try {
               const post = await platform.getPost(source);
-              post.schedule(args.date);
+              await post.schedule(args.date);
               output[platform.id] = {
                 success: true,
                 result: await post.mapper.getDto(operator),

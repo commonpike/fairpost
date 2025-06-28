@@ -20,6 +20,7 @@ export default class Server {
     const port = Number(process.env.FAIRPOST_SERVER_PORT);
     return await new Promise((resolve) => {
       const server = createServer((req, res) => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Server.handleRequest(req, res);
       });
       server.listen(port, host, () => {

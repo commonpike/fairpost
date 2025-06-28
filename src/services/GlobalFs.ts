@@ -78,7 +78,8 @@ export default class GlobalFs {
     checkForDir = true,
   ): Promise<void> {
     if (checkForDir && (await this.isDir(src))) {
-      this.copyDir(src, dst);
+      await this.copyDir(src, dst);
+      return;
     }
     return await this.storage.copyFile(src, dst);
   }
@@ -125,7 +126,8 @@ export default class GlobalFs {
     checkForDir = true,
   ): Promise<void> {
     if (checkForDir && (await this.isDir(src))) {
-      this.moveDir(src, dst);
+      await this.moveDir(src, dst);
+      return;
     }
     return await this.storage.moveFile(src, dst);
   }

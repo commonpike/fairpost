@@ -403,7 +403,7 @@ export default class Platform {
         !post.skip &&
         post.status === PostStatus.UNSCHEDULED
       ) {
-        post.schedule(nextDate);
+        await post.schedule(nextDate);
         return post;
       }
     }
