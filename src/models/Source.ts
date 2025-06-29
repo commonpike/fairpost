@@ -141,7 +141,9 @@ export default class Source {
         posts.every(
           (post: Post) =>
             post.status === PostStatus.PUBLISHED ||
-            post.status === PostStatus.CANCELED,
+            post.status === PostStatus.CANCELED ||
+            post.skip ||
+            !post.valid,
         )
       ) {
         newStage = SourceStage.FINISHED;

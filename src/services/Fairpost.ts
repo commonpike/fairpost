@@ -758,7 +758,8 @@ class Fairpost {
               );
               if (post) {
                 output[platform.id] = {
-                  success: post.status === PostStatus.PUBLISHED,
+                  success:
+                    post.status === PostStatus.PUBLISHED || !!args.dryrun,
                   result: post.link,
                 };
               } else {
