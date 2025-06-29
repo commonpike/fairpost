@@ -1,10 +1,10 @@
-import SourceStatus from "./SourceStatus";
+import SourceStage from "./SourceStage";
 import PostStatus from "./PostStatus";
 import { PlatformId } from "../platforms";
 export default interface UserReport {
   feed: {
     count: {
-      [status in SourceStatus]?: number;
+      [status in SourceStage]?: number;
     };
     lastId: string;
     nextId: string;

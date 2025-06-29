@@ -4,13 +4,6 @@ import Plugin from "../models/Plugin.ts";
 import Post from "../models/Post.ts";
 import sharp from "sharp";
 
-/**
- * Plugin ImageFrame.
- *
- * Add single or double border around images from Post
- *
- */
-
 interface ImageFrameSettings {
   inner_width: string | number; // set to 0 or "" to ignore
   inner_color: string; // css color
@@ -19,7 +12,12 @@ interface ImageFrameSettings {
 }
 
 // https://sharp.pixelplumbing.com/api-resize#extend
-
+/**
+ * Plugin ImageFrame.
+ *
+ * Add single or double border around images from Post
+ *
+ */
 export default class ImageFrame extends Plugin {
   static defaults: ImageFrameSettings = {
     inner_width: "1%",

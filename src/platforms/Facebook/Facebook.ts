@@ -91,7 +91,7 @@ export default class Facebook extends Platform {
       for (const plugin of plugins) {
         await plugin.process(post);
       }
-      post.save();
+      await post.save();
     }
     return post;
   }

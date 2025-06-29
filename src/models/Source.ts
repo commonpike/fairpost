@@ -1,9 +1,9 @@
-import { basename, extname } from "path";
+import { dirname, basename, extname } from "path";
 
 import sharp from "sharp";
 import Feed from "./Feed.ts";
 import {
-  SourceStatus,
+  SourceStage,
   PostStatus,
   FileInfo,
   FileGroup,
@@ -27,6 +27,7 @@ export default class Source {
   feed: Feed;
   id: string;
   path: string;
+  stage: SourceStage;
   files?: FileInfo[];
   mapper: SourceMapper;
 
@@ -38,9 +39,55 @@ export default class Source {
    */
   constructor(feed: Feed, path: string) {
     this.feed = feed;
-    this.id = this.feed.getSourceId(path);
+    this.id = this.getSourceId(path);
     this.path = path;
     this.mapper = new SourceMapper(this);
+    this.stage = this.getSourceStage();
+  }
+
+  /**
+   * getSourcePath
+   *
+   * Get the path for a source in a feed, based on stage and id
+   * @param feed - the feed this source belongs to
+   * @param id - the id of the source
+   * @param stage - the stage of the source
+   * @returns the path to the source
+   */
+  public static getSourcePath(
+    feed: Feed,
+    id: string,
+    stage: SourceStage,
+  ): string {
+    return feed.getStagePath(stage) + "/" + id;
+  }
+
+  /**
+   * get source id based on the path of a source
+   * @param path the path for the new or existing source
+   * @returns the id for the new or existing source
+   */
+  public getSourceId(path: string): string {
+    return basename(path); // ah, simple
+  }
+
+  /**
+   * Get the stage of this source.
+   *
+   * The stage depends on the various statusses of the posts
+   * in the source. The path of the source depends on the status,
+   * and here we just check the path to see its current status.
+   * @returns {SourceStage} - the status of the source
+   */
+  public getSourceStage(): SourceStage {
+    const parent = dirname(this.path);
+    for (const stage of Object.values(SourceStage)) {
+      const stagePath = this.feed.getStagePath(stage);
+      if (parent.endsWith(stagePath)) {
+        return stage;
+      }
+    }
+    return SourceStage.UNKNOWN;
   }
 
   /**
@@ -48,41 +95,145 @@ export default class Source {
    *
    * get a new source and do some async checks.
    * @param feed - the feed this source belongs to
-   * @param path - the path within that feed
+   * @param id - the id of the source
+   * @param stage - optional stage to find the source in
    * @returns new source object
    */
-  public static async getSource(feed: Feed, path: string): Promise<Source> {
-    if (!(await feed.user.files.isDir(feed.path + "/" + path))) {
-      throw feed.user.log.error("getSource", "Not a valid source: " + path);
+
+  public static async getSource(
+    feed: Feed,
+    id: string,
+    stage?: SourceStage,
+  ): Promise<Source> {
+    const stages = stage ? [stage] : Object.values(SourceStage);
+    for (const stage of stages) {
+      const sourcePath = Source.getSourcePath(feed, id, stage);
+      if (await feed.user.files.isDir(sourcePath)) {
+        return new Source(feed, sourcePath);
+      }
     }
-    return new Source(feed, feed.path + "/" + path);
+    throw feed.user.log.error("getSource", "No source in stage: " + id, stage);
   }
 
   /**
-   * Get the status of a source.
+   * Update the stage of a source.
    *
-   * The status depends on the various statusses of the posts
-   * in the source. The path of the source depends on the status,
-   * and here we just check the path to see its current status.
-   * @returns {SourceStatus} - the status of the source
-   */
-  public async getStatus(): Promise<SourceStatus> {
-    // TODO
-    return SourceStatus.UNKNOWN;
-  }
-
-  /**
-   * Update the status of a source.
-   *
-   * The status of the source depends on the various statusses
-   * of the posts in the source. Post.setStatus calls this method.
-   * The path of the source depends on the status, so if
+   * The stage of the source depends on the various statusses
+   * of the posts in the source. Post.save calls this method.
+   * The path of the source depends on the stage, so if
    * it is updated source may move to a new location.
-   * @returns {SourceStatus} - the new status of the source
+   * @returns {SourceStage} - the new stage of the source
    */
-  public async updateStatus(): Promise<SourceStatus> {
-    // TODO
-    return SourceStatus.UNKNOWN;
+  public async updateStage(): Promise<SourceStage> {
+    this.feed.user.log.trace("Source", "updateStage");
+
+    // check all posts to check their status
+    const orgStage = this.stage;
+    let newStage: SourceStage | undefined = undefined;
+
+    if (this.stage === SourceStage.ARCHIVED) {
+      newStage = SourceStage.ARCHIVED;
+    } else {
+      const posts = await this.getPosts();
+      if (posts.length === 0) {
+        newStage = SourceStage.INCOMING;
+      } else if (
+        posts.every(
+          (post: Post) =>
+            post.status === PostStatus.PUBLISHED ||
+            post.status === PostStatus.CANCELED ||
+            post.skip ||
+            !post.valid,
+        )
+      ) {
+        newStage = SourceStage.FINISHED;
+      } else if (
+        posts.every((post: Post) => post.status === PostStatus.UNSCHEDULED)
+      ) {
+        newStage = SourceStage.PENDING;
+      } else if (
+        posts.some((post: Post) => post.status === PostStatus.UNKNOWN)
+      ) {
+        newStage = SourceStage.INCOMING;
+      }
+      if (newStage === undefined) {
+        newStage = SourceStage.ACTIVE;
+      }
+    }
+    if (orgStage === newStage) {
+      this.feed.user.log.trace("Source", this.id, "updateStage", "no change");
+      return this.stage;
+    }
+
+    // if our stage changed,
+    // move this source to the new location
+    this.feed.user.log.trace(
+      "Source",
+      this.id,
+      "updateStage",
+      "stage changed",
+      orgStage,
+      newStage,
+    );
+
+    let newId = this.id;
+    if (orgStage === SourceStage.INCOMING) {
+      if (this.id.match(/^\d{8}-\d{6}-/)) {
+        newId = this.feed.user.files.slugify(this.id);
+      } else {
+        const timestamp = await this.getTimestamp();
+        const date = new Date(timestamp);
+        const ymdhis =
+          date.toISOString().slice(0, 10).replace(/-/g, "") +
+          "-" +
+          date.toISOString().slice(11, 19).replace(/:/g, "");
+        newId = ymdhis + "-" + this.feed.user.files.slugify(this.id);
+      }
+    }
+
+    const newPath = Source.getSourcePath(this.feed, newId, newStage);
+    if (await this.feed.user.files.exists(newPath)) {
+      this.feed.user.log.error(
+        this.id,
+        "updateStatus",
+        "source already exists: " + newPath,
+      );
+      return this.stage;
+    }
+
+    // move directory
+    const log = await this.feed.user.files.moveDir(this.path, newPath);
+    for (const msg of log) {
+      this.feed.user.log.trace(msg);
+    }
+
+    // update my id, path, stage and clear feed cache
+    this.id = newId;
+    this.path = newPath;
+    this.stage = newStage;
+    this.feed.clearCache();
+
+    return this.stage;
+  }
+
+  /**
+   * Get timestamp for a source.
+   *
+   * Not all adapters support directories, so we read the timestamps
+   * of all files in the source and return the first one.
+   * @returns timestamp or zero if no files are present
+   */
+  public async getTimestamp(): Promise<number> {
+    const fileNames = await this.getFileNames();
+    const allTimestamps = await Promise.all(
+      fileNames.map((name) =>
+        this.feed.user.files.getTimestamp(this.path + "/" + name),
+      ),
+    );
+    if (allTimestamps.length === 0) {
+      return 0;
+    }
+    return Math.min(...allTimestamps);
   }
 
   /**
@@ -97,7 +248,7 @@ export default class Source {
       return structuredClone(this.files); // todo clone where this is called
     }
     const fileNames = await this.getFileNames();
-    this.files = [];
+    this.files = []; // todo use promise.all
     for (let index = 0; index < fileNames.length; index++) {
       this.files.push(await this.getFileInfo(fileNames[index], index));
     }
@@ -142,7 +293,13 @@ export default class Source {
    */
 
   public async preparePost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(this.id, "preparePost", this.id, platform.id);
+    this.feed.user.log.trace(
+      "Source",
+      this.id,
+      "preparePost",
+      this.id,
+      platform.id,
+    );
     return await platform.preparePost(this);
   }
 
@@ -152,7 +309,13 @@ export default class Source {
    */
 
   public async getPost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(this.id, "getPost", this.id, platform.id);
+    this.feed.user.log.trace(
+      "Source",
+      this.id,
+      "getPost",
+      this.id,
+      platform.id,
+    );
     return await platform.getPost(this);
   }
 
@@ -167,7 +330,7 @@ export default class Source {
     platforms?: Platform[],
     status?: PostStatus,
   ): Promise<Post[]> {
-    this.feed.user.log.trace(this.id, "getPosts", this.id);
+    this.feed.user.log.trace("Source", this.id, "getPosts", this.id);
     const posts: Post[] = [];
     if (!platforms) {
       platforms = this.feed.user.getPlatforms();

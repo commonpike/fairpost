@@ -1,6 +1,6 @@
 import FeedMapper from "../mappers/FeedMapper.ts";
 import Source from "./Source.ts";
-import { SourceStatus } from "../types/index.ts";
+import { SourceStage } from "../types/index.ts";
 import User from "./User.ts";
 import { basename } from "path";
 
@@ -19,7 +19,9 @@ export default class Feed {
   path: string = "";
   user: User;
   cache: { [id: string]: Source } = {};
-  allCached: boolean = false;
+  allCached: {
+    [stage in SourceStage]?: boolean;
+  } = {};
   mapper: FeedMapper;
 
   constructor(user: User) {
@@ -36,19 +38,19 @@ export default class Feed {
    * @returns a report for this feed
    */
   async getReport() {
-    // TODO check cache first
+    // TODO check report cache first
     const sources = {
-      [SourceStatus.UNKNOWN]: 0,
-      [SourceStatus.INCOMING]: 0,
-      [SourceStatus.PREPARED]: 0,
-      [SourceStatus.PROCESSING]: 0,
-      [SourceStatus.PROCESSED]: 0,
-      [SourceStatus.ARCHIVED]: 0,
+      [SourceStage.UNKNOWN]: 0,
+      [SourceStage.INCOMING]: 0,
+      [SourceStage.PENDING]: 0,
+      [SourceStage.ACTIVE]: 0,
+      [SourceStage.FINISHED]: 0,
+      [SourceStage.ARCHIVED]: 0,
     };
-    const allSources = await this.getAllSources();
-    for (const source of allSources) {
-      const status = await source.getStatus();
-      sources[status] = sources[status] + 1;
+    const currentSources = await this.getSources();
+    const archivedSources = await this.getSources([], SourceStage.ARCHIVED);
+    for (const source of [...currentSources, ...archivedSources]) {
+      sources[source.stage] = sources[source.stage] + 1;
     }
 
     return {
@@ -58,69 +60,107 @@ export default class Feed {
     };
   }
 
-  /**
-   * get source id based on the path of a source
-   * @param path the path for the new or existing source
-   * @returns the id for the new or existing source
-   */
-  getSourceId(path: string): string {
-    return basename(path); // ah, simple
+  public clearCache() {
+    this.user.log.trace("Feed", "clearCache");
+    this.cache = {};
+    this.allCached = {};
   }
 
   /**
-   * Get all sources
-   * @returns all source in the feed
+   * getStagePath
+   *
+   * Get the path for a stage in a feed
+   * @param stage - the stage of the source
+   * @returns the path to the folder for the stage
    */
-  async getAllSources(): Promise<Source[]> {
-    this.user.log.trace("Feed", "getAllSources");
-    if (this.allCached) {
-      return Object.values(this.cache);
-    }
-    if (!(await this.user.files.exists(this.path))) {
-      this.user.log.info("creating dir " + this.path);
-      await this.user.files.mkdir(this.path);
-    }
-    const files = this.user.files.list(this.path).filter((entry) => {
-      if (entry.type === "file" || entry.isFile) return false;
-      const filename = basename(entry.path);
-      if (filename.startsWith("_")) return false;
-      if (filename.startsWith(".")) return false;
-      return true;
-    });
-    for await (const file of files) {
-      const source = await Source.getSource(this, basename(file.path));
-      this.cache[source.id] = source;
-    }
-    this.allCached = true;
-    return Object.values(this.cache);
-  }
-
-  /**
-   * Get one source
-   * @param path - path to a single source
-   * @returns the given source object
-   */
-  async getSource(path: string): Promise<Source> {
-    this.user.log.trace("Feed", "getSource", path);
-    const sourceId = this.getSourceId(path);
-    if (sourceId in this.cache) {
-      return this.cache[sourceId];
-    }
-    const source = await Source.getSource(this, path);
-    this.cache[source.id] = source;
-    return source;
+  public getStagePath(stage: SourceStage): string {
+    const stageFolder = stage.toLowerCase(); // todo: map from .env
+    return this.path + "/" + stageFolder;
   }
 
   /**
    * Get multiple sources
-   * @param paths - paths to multiple sources
-   * @returns the given source objects
+   * @param sourceIds optional array of ids of source you want to get
+   * @param stage optional stage of the sources you want to get
+   * @param includeArchived if no stages and no sourceIds are given, archived is excluded by default
+   * @returns all requested sources
    */
-  async getSources(paths?: string[]): Promise<Source[]> {
-    this.user.log.trace("Feed", "getSources", paths);
-    if (!paths || !paths.length) {
-      return await this.getAllSources();
+  async getSources(
+    sourceIds?: string[],
+    stage?: SourceStage,
+    includeArchived = false,
+  ): Promise<Source[]> {
+    this.user.log.trace("Feed", "getSources", sourceIds ?? "", stage ?? "");
+    if (!(await this.user.files.exists(this.path))) {
+      this.user.log.info("creating dir " + this.path);
+      await this.user.files.mkdir(this.path);
     }
-    return Promise.all(paths.map((path) => this.getSource(path)));
+    if (!sourceIds || !sourceIds.length) {
+      if (!stage) {
+        // requesting all sources
+        const stages = includeArchived
+          ? Object.values(SourceStage)
+          : Object.values(SourceStage).filter(
+              (v) => v !== SourceStage.ARCHIVED,
+            );
+        await Promise.all(stages.map((stage) => this.getSources([], stage)));
+        // should all be in the cache now
+        this.user.log.trace(
+          "found " + Object.keys(this.cache).length + " sources",
+        );
+        return Object.values(this.cache);
+      } else {
+        // requesting sources with a specific status
+        if (this.allCached[stage]) {
+          return Object.values(this.cache).filter(
+            (source) => source.stage === stage,
+          );
+        }
+        const stagePath = this.getStagePath(stage);
+        if (!(await this.user.files.exists(stagePath))) {
+          return [];
+        }
+        const sources: Source[] = [];
+        const files = this.user.files.list(stagePath).filter((entry) => {
+          if (entry.type === "file" || entry.isFile) return false;
+          const filename = basename(entry.path);
+          if (filename.startsWith("_")) return false;
+          if (filename.startsWith(".")) return false;
+          return true;
+        });
+        for await (const file of files) {
+          const source = await Source.getSource(this, basename(file.path));
+          this.cache[source.id] = source;
+          sources.push(source);
+        }
+        this.allCached[stage] = true;
+        this.user.log.trace(
+          "found " + sources.length + " sources of stage " + stage,
+        );
+        return sources;
+      }
+    } else {
+      // requesting sources with specific ids and optionally stage
+      const sources = await Promise.all(
+        sourceIds.map((sourceId) => this.getSource(sourceId, stage)),
+      );
+      this.user.log.trace("found " + sources.length + " sources");
+      return sources;
+    }
+  }
+  /**
+   * Get one source, and use a local cache.
+   * @param id - id of the source
+   * @param stage - optional stages to find the source in
+   * @returns the given source object
+   */
+  async getSource(id: string, stage?: SourceStage): Promise<Source> {
+    this.user.log.trace("Feed", "getSource", id, stage);
+    if (id in this.cache) {
+      return this.cache[id];
+    }
+    const source = await Source.getSource(this, id, stage);
+    this.cache[source.id] = source;
+    return source;
   }
 }

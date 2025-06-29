@@ -1,9 +1,3 @@
-/**
- * Fairpost - singleton
- *
- * A command handler for the Fairpost framework
- * Fairpost has its own logger, but the commands user has their own logs too.
- */
 import log4js from "log4js";
 import log4jsConfig from "../config/log4js.json" with { type: "json" };
 
@@ -13,8 +7,10 @@ import {
   FeedDto,
   PlatformDto,
   PostDto,
+  PostStatus,
   SourceDto,
   UserDto,
+  SourceStage,
 } from "../types/index.ts";
 
 import Post from "../models/Post.ts";
@@ -40,6 +36,13 @@ type FairpostOutput =
     }
   | { success: boolean; message?: string; messages?: string[] };
 
+/**
+ * Fairpost - singleton
+ *
+ * A command handler for the Fairpost framework
+ * Fairpost has its own logger, but the commands user has their own logs too.
+ */
+
 class Fairpost {
   static instance: Fairpost;
   public logger: log4js.Logger;
@@ -50,12 +53,28 @@ class Fairpost {
     log4js.configure(log4jsConfig);
     this.logger = log4js.getLogger("default");
   }
+  /**
+   * Get the instance of the singleton
+   */
+
   static getInstance(): Fairpost {
     if (!Fairpost.instance) {
       Fairpost.instance = new Fairpost();
     }
     return Fairpost.instance;
   }
+
+  /**
+   * Execute a command
+   * @param operator - the operator executing the command
+   * @param user - the user executing the command, if any
+   * @param command - the command to execute
+   * @param args - the arguments for the command
+   * @returns a promise that resolves to the output of the command
+   * @throws Error if the command is not recognized or if the user does not have the required permissions
+   * @throws Error if the command fails
+   */
+
   async execute(
     operator: Operator,
     user?: User,
@@ -94,7 +113,7 @@ class Fairpost {
           }
           const newUser = await User.createUser(args.user);
           if (args.password) {
-            AuthService.setPassword(newUser, args.password);
+            await AuthService.setPassword(newUser, args.password);
           }
           output = await newUser.mapper.getDto(operator);
           break;
@@ -346,7 +365,7 @@ class Fairpost {
             );
           }
           const feed = user.getFeed();
-          const source = await feed.getSource(args.source);
+          const source = await feed.getSource(args.source, args.stage);
           output = await source.mapper.getDto(operator);
           break;
         }
@@ -358,7 +377,7 @@ class Fairpost {
             throw new Error("user is required for command " + command);
           }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources, args.stage);
           output = await Promise.all(
             sources.map((source) => source.mapper.getDto(operator)),
           );
@@ -406,7 +425,7 @@ class Fairpost {
           }
           const feed = user.getFeed();
           const platforms = user.getPlatforms(args.platforms);
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources, args.stage);
           const posts = [] as Post[];
           for (const platform of platforms) {
             posts.push(...(await platform.getPosts(sources, args.status)));
@@ -455,8 +474,12 @@ class Fairpost {
           if (!args.sources && args.source) {
             args.sources = [args.source];
           }
+          // by default, prepare posts from incoming
+          if (!args.sources && !args.stage) {
+            args.stage = SourceStage.INCOMING;
+          }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources, args.stage);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]?: CombinedResult[] };
           for (const platform of platforms) {
@@ -510,7 +533,7 @@ class Fairpost {
           const source = await feed.getSource(args.source);
           const platform = user.getPlatform(args.platform);
           const post = await platform.getPost(source);
-          post.schedule(args.date);
+          await post.schedule(args.date);
           output = await post.mapper.getDto(operator);
           break;
         }
@@ -546,7 +569,7 @@ class Fairpost {
           for (const platform of platforms) {
             try {
               const post = await platform.getPost(source);
-              post.schedule(args.date);
+              await post.schedule(args.date);
               output[platform.id] = {
                 success: true,
                 result: await post.mapper.getDto(operator),
@@ -573,9 +596,22 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
+
           const platform = user.getPlatform(args.platform);
+          const feed = user.getFeed();
+          const sources =
+            args.sources || args.stage
+              ? await feed.getSources(args.sources, args.stage)
+              : (
+                  await Promise.all([
+                    feed.getSources(undefined, SourceStage.PENDING),
+                    feed.getSources(undefined, SourceStage.ACTIVE),
+                  ])
+                ).flat();
           const post = await platform.scheduleNextPost(
             args.date ? new Date(args.date) : undefined,
+            sources,
+            !!args.stage,
           );
           if (post) {
             output = await post.mapper.getDto(operator);
@@ -642,7 +678,6 @@ class Fairpost {
           for (const platform of platforms) {
             try {
               const post = await platform.getPost(source);
-              await post.publish(!!args.dryrun);
               output[platform.id] = {
                 success: await post.publish(!!args.dryrun),
                 dryrun: !!args.dryrun,
@@ -673,14 +708,24 @@ class Fairpost {
           if (!args.sources && args.source) {
             args.sources = [args.source];
           }
+
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources =
+            args.sources || args.stage
+              ? await feed.getSources(args.sources, args.stage)
+              : (
+                  await Promise.all([
+                    feed.getSources(undefined, SourceStage.PENDING),
+                    feed.getSources(undefined, SourceStage.ACTIVE),
+                  ])
+                ).flat();
           const platforms = user.getPlatforms(args.platforms);
           const posts = [] as Post[];
           for (const platform of platforms) {
             const post = await platform.scheduleNextPost(
               args.date ? new Date(args.date) : undefined,
               sources,
+              !!args.stage,
             );
             if (post) posts.push(post);
           }
@@ -696,8 +741,13 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
+          // by default, publist due posts from active,
+          // because that is where scheduled posts are
+          if (!args.sources && !args.stage) {
+            args.stage = SourceStage.ACTIVE;
+          }
           const feed = user.getFeed();
-          const sources = await feed.getSources(args.sources);
+          const sources = await feed.getSources(args.sources, args.stage);
           const platforms = user.getPlatforms(args.platforms);
           output = {} as { [id in PlatformId]: CombinedResult };
           for (const platform of platforms) {
@@ -708,7 +758,8 @@ class Fairpost {
               );
               if (post) {
                 output[platform.id] = {
-                  success: true,
+                  success:
+                    post.status === PostStatus.PUBLISHED || !!args.dryrun,
                   result: post.link,
                 };
               } else {
@@ -755,20 +806,20 @@ class Fairpost {
               `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid get-platform --platform=xxx`,
               `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
-              `${cmd} @userid get-source --source=xxx`,
-              `${cmd} @userid get-sources [--sources=xxx,xxx]`,
+              `${cmd} @userid get-source --source=xxx [--stage=xxx] `,
+              `${cmd} @userid get-sources [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid get-post --post=xxx:xxx`,
-              `${cmd} @userid get-posts [--status=xxx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
+              `${cmd} @userid get-posts [--status=xxx] [--sources=xxx,xxx|--stage=xxx] [--platforms=xxx,xxx] `,
               `${cmd} @userid prepare-post --post=xxx:xxx`,
               `${cmd} @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
-              `${cmd} @userid schedule-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
-              `${cmd} @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx]`,
+              `${cmd} @userid schedule-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx`,
+              `${cmd} @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
-              `${cmd} @userid publish-posts [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+              `${cmd} @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               "\n# feed planning:",
-              `${cmd} @userid prepare-posts  [--sources=xxx,xxx|--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
-              `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx] [--platforms=xxx,xxx] `,
-              `${cmd} @userid publish-due-posts [--sources=xxx,xxx] [--platforms=xxx,xxx] [--dry-run]`,
+              `${cmd} @userid prepare-posts  [--sources=xxx,xxx|--source=xxx|--stage=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+              `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage] [--platforms=xxx,xxx] `,
+              `${cmd} @userid publish-due-posts [--sources=xxx,xxx|--stage=xxx] [--platforms=xxx,xxx] [--dry-run]`,
               "\n# account mgmt:",
               `${cmd} @userid login --password=xxx`,
               `${cmd} @userid logout`,

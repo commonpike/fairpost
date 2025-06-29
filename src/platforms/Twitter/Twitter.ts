@@ -129,12 +129,33 @@ export default class Twitter extends Platform {
         }
       }
 
+      // limit the post body to 140 characters
+      // this could be a plugin
+      const charLimit = 140;
+      if (post.body && post.body.length >= charLimit) {
+        const splitBody = post.body.match(/[^.\n]+[.\n]*|[.\n]+/g);
+        if (splitBody) {
+          let newBody = "";
+          let nextLine = splitBody.shift();
+          while (nextLine && newBody.length + nextLine.length < charLimit) {
+            newBody += nextLine;
+            nextLine = splitBody.shift();
+          }
+          if (newBody !== "") {
+            post.body = newBody;
+          }
+        }
+        if (post.body.length >= charLimit) {
+          post.body = post.body.substring(0, charLimit - 4) + "...";
+        }
+      }
+
       // twitter requires a real body or images
       if (!post.body && !post.hasFiles(FileGroup.IMAGE)) {
         this.user.log.warn("Twitter post has no body");
         post.valid = false;
       }
-      post.save();
+      await post.save();
     }
     return post;
   }

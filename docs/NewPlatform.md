@@ -38,7 +38,7 @@ export default class FooBar extends Platform {
         const post = await super.preparePost(source);
         if (post) {
             // prepare your post here
-            post.save();
+            await post.save();
         }
         return post;
     }

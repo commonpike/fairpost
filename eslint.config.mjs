@@ -30,6 +30,7 @@ export default [
       "jsdoc/require-returns-type" : 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-empty-object-type': ['warn', { allowWithName: '.*Dto' }],
+      "@typescript-eslint/no-floating-promises": "error",
     },
     
   },

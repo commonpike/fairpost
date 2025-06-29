@@ -6,7 +6,7 @@ import Fairpost from "./Fairpost.ts";
 import AuthService from "./AuthService.ts";
 import { JSONReplacer } from "../utilities.ts";
 import { PlatformId } from "../platforms/index.ts";
-import { PostStatus } from "../types/index.ts";
+import { SourceStage, PostStatus } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
 import User from "../models/User.ts";
 
@@ -20,6 +20,7 @@ export default class Server {
     const port = Number(process.env.FAIRPOST_SERVER_PORT);
     return await new Promise((resolve) => {
       const server = createServer((req, res) => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Server.handleRequest(req, res);
       });
       server.listen(port, host, () => {
@@ -94,6 +95,8 @@ export default class Server {
     const sources = parsed.searchParams.get("sources")?.split(",");
     const status =
       (parsed.searchParams.get("status") as PostStatus) || undefined;
+    const stage =
+      (parsed.searchParams.get("stage") as SourceStage) || undefined;
 
     const args = {
       password: password,
@@ -104,6 +107,7 @@ export default class Server {
       source: source,
       date: date ? new Date(date) : undefined,
       status: status,
+      stage: stage,
     };
 
     let code = 0;

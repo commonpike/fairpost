@@ -15,7 +15,7 @@ export default class AuthService {
         const crypted = await argon2.hash(pass);
         user.log.info("AuthService", "Setting password ..");
         user.data.set("auth", "FAIRPOST_PASSWORD", crypted);
-        user.data.save();
+        await user.data.save();
       }
     }
   }
@@ -30,7 +30,7 @@ export default class AuthService {
         timeout.setHours(timeout.getHours() + 1);
         user.data.set("auth", "FAIRPOST_ACCESS_TOKEN", token);
         user.data.set("auth", "FAIRPOST_ACCESS_EXPIRY", timeout.toISOString());
-        user.data.save();
+        await user.data.save();
         return { token, timeout };
       }
     }
@@ -44,7 +44,7 @@ export default class AuthService {
           if (new Date() < new Date(timeout)) {
             return user.data.get("auth", "FAIRPOST_ACCESS_TOKEN");
           } else {
-            AuthService.logout(user);
+            await AuthService.logout(user);
             throw user.log.error("AuthService", "getToken: token timed out");
           }
         } else {
@@ -89,6 +89,6 @@ export default class AuthService {
   public static async logout(user: User) {
     user.data.del("auth", "FAIRPOST_ACCESS_TOKEN");
     user.data.del("auth", "FAIRPOST_ACCESS_EXPIRY");
-    user.data.save();
+    await user.data.save();
   }
 }

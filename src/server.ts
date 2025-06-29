@@ -14,5 +14,5 @@ async function main() {
   const output = await Fairpost.execute(operator, undefined, "serve");
   console.log(JSON.stringify(output, JSONReplacer, "\t"));
 }
-
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 main();

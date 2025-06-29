@@ -4,13 +4,6 @@ import Plugin from "../models/Plugin.ts";
 import Post from "../models/Post.ts";
 import sharp from "sharp";
 
-/**
- * Plugin ImageSize.
- *
- * Resize images from Post based on Platform limits.
- *
- */
-
 interface ImageSizeSettings {
   fit?: "cover" | "contain";
   bgcolor?: string;
@@ -24,6 +17,12 @@ interface ImageSizeSettings {
   max_height?: number;
 }
 
+/**
+ * Plugin ImageSize.
+ *
+ * Resize images from Post based on Platform limits.
+ *
+ */
 export default class ImageSize extends Plugin {
   static defaults: ImageSizeSettings = {
     fit: "contain",

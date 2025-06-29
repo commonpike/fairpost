@@ -106,7 +106,7 @@ export default class Instagram extends Platform {
         }
       }
 
-      post.save();
+      await post.save();
     }
     return post;
   }
@@ -487,6 +487,7 @@ export default class Instagram extends Platform {
           }
         }
       };
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       poll();
     });
   }
@@ -528,6 +529,7 @@ export default class Instagram extends Platform {
           console.log(response);
         }
       };
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       poll();
     });
   }
