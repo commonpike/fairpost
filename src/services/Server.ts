@@ -61,7 +61,7 @@ export default class Server {
     Fairpost.logger.trace("Server.handleRequest", "start", request.url);
 
     const parsed = new URL(
-      request.url ?? "/",
+      request.url?.replace(/\/+/, "/") ?? "/",
       `${request.headers.protocol}://${request.headers.host}`,
     );
 
