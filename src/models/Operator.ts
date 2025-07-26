@@ -18,7 +18,7 @@ export default class Operator {
   constructor(
     public id: string = "anonymous",
     private roles: ("admin" | "user" | "anonymous")[] = ["anonymous"],
-    private ui: "cli" | "api",
+    public ui: "cli" | "api",
     private authenticated: boolean,
   ) {}
   public validate() {

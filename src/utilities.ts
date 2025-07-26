@@ -176,3 +176,40 @@ export async function handleApiError(
   }
   throw user.log.error(errorMessage, error.response?.url, errorDetails);
 }
+
+/*
+import crypto from 'crypto'
+
+const ALGO = 'aes-256-gcm'
+
+// Derive a 256-bit key from a passphrase (you must keep this safe)
+function getKeyFromSecret(secret) {
+  return crypto.createHash('sha256').update(secret).digest()
+}
+
+export function encrypt(text, secret) {
+  const iv = crypto.randomBytes(12)
+  const key = getKeyFromSecret(secret)
+  const cipher = crypto.createCipheriv(ALGO, key, iv)
+
+  const encrypted = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()])
+  const tag = cipher.getAuthTag()
+
+  return Buffer.concat([iv, tag, encrypted]).toString('base64')
+}
+
+export function decrypt(encryptedBase64, secret) {
+  const data = Buffer.from(encryptedBase64, 'base64')
+  const iv = data.slice(0, 12)
+  const tag = data.slice(12, 28)
+  const encrypted = data.slice(28)
+  const key = getKeyFromSecret(secret)
+
+  const decipher = crypto.createDecipheriv(ALGO, key, iv)
+  decipher.setAuthTag(tag)
+
+  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()])
+  return decrypted.toString('utf8')
+}
+
+*/

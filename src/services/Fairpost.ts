@@ -212,7 +212,7 @@ class Fairpost {
             );
           }
           const platform = user.getPlatform(args.platform);
-          await platform.setup();
+          await platform.setup(operator);
           output = {
             [args.platform]: {
               success: true,
