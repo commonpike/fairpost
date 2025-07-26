@@ -27,15 +27,16 @@ export default class BlueskyAuth {
       password: "",
     };
     tokens.identifier = await reader.question(
-      `BlueSky account ( like foobar.bsky.social ):`,
+      `BlueSky account ( like foobar.bsky.social ): `,
     );
     console.log(
       "To let Fairpost post on your behalf, Bluesky requires an App Password.",
     );
     console.log("We will never ask for your main password.");
-    console.log("You can create an app password here:");
-    console.log("https://bsky.app/settings/app-passwords");
-    tokens.password = await reader.question(`BlueSky app password`);
+    console.log(
+      "You can create an app password here: https://bsky.app/settings/app-passwords",
+    );
+    tokens.password = await reader.question(`BlueSky app password: `);
     reader.close();
     await this.store(tokens);
     console.log("Credentials stored.");
