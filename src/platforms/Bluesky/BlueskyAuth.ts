@@ -1,6 +1,6 @@
 import { BskyAgent } from "@atproto/api";
 import User from "../../models/User.ts";
-import * as readline from 'node:readline/promises';
+import * as readline from "node:readline/promises";
 
 export default class BlueskyAuth {
   service = "https://bsky.social";
@@ -23,10 +23,12 @@ export default class BlueskyAuth {
       output: process.stdout,
     });
     const tokens = {
-      identifier : "",
-      password : ""
+      identifier: "",
+      password: "",
     };
-    tokens.identifier = await reader.question(`BlueSky account ( like foobar.bsky.social ):`);
+    tokens.identifier = await reader.question(
+      `BlueSky account ( like foobar.bsky.social ):`,
+    );
     console.log(
       "To let Fairpost post on your behalf, Bluesky requires an App Password.",
     );
@@ -73,8 +75,8 @@ export default class BlueskyAuth {
     */
     try {
       await this.agent.login({
-        identifier: this.user.data.get("auth", "BLUESKY_IDENTIFIER"), 
-        password: this.user.data.get("auth", "BLUESKY_PASSWORD"), 
+        identifier: this.user.data.get("auth", "BLUESKY_IDENTIFIER"),
+        password: this.user.data.get("auth", "BLUESKY_PASSWORD"),
       });
 
       console.log("Successfully authenticated!");
@@ -88,5 +90,4 @@ export default class BlueskyAuth {
       throw error;
     }
   }
-
 }
