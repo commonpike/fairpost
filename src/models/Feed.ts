@@ -121,13 +121,16 @@ export default class Feed {
           return [];
         }
         const sources: Source[] = [];
-        const files = this.user.files.list(stagePath).filter((entry) => {
+        const files = (
+          await this.user.files.list(stagePath).toArray(true)
+        ).filter((entry) => {
           if (entry.type === "file" || entry.isFile) return false;
           const filename = basename(entry.path);
           if (filename.startsWith("_")) return false;
           if (filename.startsWith(".")) return false;
           return true;
         });
+
         for await (const file of files) {
           const source = await Source.getSource(this, basename(file.path));
           this.cache[source.id] = source;
