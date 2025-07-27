@@ -198,6 +198,52 @@ class Fairpost {
           output = await feed.mapper.getDto(operator);
           break;
         }
+
+        case "add-platform": {
+          if (!permissions.manageFeed) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.platform) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: platform",
+            );
+          }
+          await user.addPlatform(args.platform);
+          output = {
+            [args.platform]: {
+              success: true,
+              message: "Proceed to setup.",
+            },
+          };
+          break;
+        }
+
+        case "remove-platform": {
+          if (!permissions.manageFeed) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.platform) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: platform",
+            );
+          }
+          await user.removePlatform(args.platform);
+          output = {
+            [args.platform]: {
+              success: true,
+            },
+          };
+          break;
+        }
+
         case "setup-platform": {
           if (!permissions.manageFeed) {
             throw new Error("Missing permissions for command " + command);
@@ -799,6 +845,8 @@ class Fairpost {
               `${cmd} help`,
               `${cmd} @userid get-user`,
               `${cmd} @userid get-feed`,
+              `${cmd} @userid add-platform --platform=xxx`,
+              `${cmd} @userid remove-platform --platform=xxx`,
               `${cmd} @userid setup-platform --platform=xxx`,
               `${cmd} @userid test-platform --platform=xxx`,
               `${cmd} @userid test-platforms [--platforms=xxx,xxx]`,
