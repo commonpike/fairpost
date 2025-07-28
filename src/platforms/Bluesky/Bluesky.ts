@@ -284,7 +284,7 @@ export default class Bluesky extends Platform {
   }
 
   /**
-   * POST a video to the uploadVideo endpoint using fetch]
+   * POST a video to the uploadVideo endpoint using fetch
    * and waiting for the response - async.
    * @param path - path to the file to post
    * @returns blobref of the uploaded video to use in post embed

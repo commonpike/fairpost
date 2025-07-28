@@ -79,8 +79,11 @@ export default class BlueskyAuth {
         identifier: this.user.data.get("auth", "BLUESKY_IDENTIFIER"),
         password: this.user.data.get("auth", "BLUESKY_PASSWORD"),
       });
-
-      console.log("Successfully authenticated!");
+      this.user.log.trace(
+        "BlueskuAuth",
+        "getAgent",
+        "Successfully authenticated!",
+      );
       return this.agent;
     } catch (error) {
       console.error("Authentication failed:", error);
