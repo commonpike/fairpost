@@ -266,18 +266,18 @@ export default class User {
    * Enable a platform on this user
    * @param platformId
    */
-  public addPlatform(platformId: PlatformId): void {
+  public async addPlatform(platformId: PlatformId): Promise<void> {
     this.log.trace("User", "addPlatform", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
     ) {
-      const platformIds = this.data
-        .get("settings", "FEED_PLATFORMS", "")
-        .split(",");
+      const platforms = this.data.get("settings", "FEED_PLATFORMS", "");
+      const platformIds = platforms ? platforms.split(",") : [];
       if (!platformIds.includes(platformId)) {
         platformIds.push(platformId);
         this.data.set("settings", "FEED_PLATFORMS", platformIds.join(","));
+        await this.data.save();
       }
       this.loadPlatforms();
       this.log.info(`Platform ${platformId} enabled for user ${this.id}`);
@@ -290,19 +290,19 @@ export default class User {
    * Disable a platform on this user
    * @param platformId
    */
-  public removePlatform(platformId: PlatformId): void {
+  public async removePlatform(platformId: PlatformId): Promise<void> {
     this.log.trace("User", "removePlatforms", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
       platformId != PlatformId.UNKNOWN
     ) {
-      const platformIds = this.data
-        .get("settings", "FEED_PLATFORMS", "")
-        .split(",");
+      const platforms = this.data.get("settings", "FEED_PLATFORMS", "");
+      const platformIds = platforms ? platforms.split(",") : [];
       const index = platformIds.indexOf(platformId);
       if (index !== -1) {
         platformIds.splice(index, 1);
         this.data.set("settings", "FEED_PLATFORMS", platformIds.join(","));
+        await this.data.save();
       }
       this.loadPlatforms();
       this.log.info(`Platform ${platformId} disabled for user ${this.id}`);

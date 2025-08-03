@@ -9,7 +9,8 @@
     "strict" : true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "outDir": "build"
+    "outDir": "build",
+    "skipLibCheck": true // see https://github.com/multiformats/js-multiformats/issues/327
   },
   "include": [
     "src/**/*"

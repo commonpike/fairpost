@@ -4,6 +4,7 @@ import PlatformMapper from "../mappers/PlatformMapper.ts";
 import { FieldMapping, SourceStage, PostStatus } from "../types/index.ts";
 
 import Source from "./Source.ts";
+import Operator from "./Operator.ts";
 import Plugin from "./Plugin.ts";
 import Post from "./Post.ts";
 import User from "./User.ts";
@@ -50,9 +51,11 @@ export default class Platform {
    * Set the platform up. Get the required keys and tokens.
    * This may involve starting a webserver and/or communicating
    * via the CLI.
+   * @param operator
    * @returns - any object
    */
-  async setup() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async setup(operator?: Operator) {
     throw this.user.log.error(
       "No setup implemented for " +
         this.id +

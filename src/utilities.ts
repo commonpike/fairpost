@@ -1,4 +1,5 @@
 import User from "./models/User.ts";
+import crypto from "crypto";
 
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 export function JSONReplacer(key: string, value: any): any {
@@ -175,4 +176,70 @@ export async function handleApiError(
     }
   }
   throw user.log.error(errorMessage, error.response?.url, errorDetails);
+}
+
+export async function encryptAESWeb(text: string, secret: string) {
+  const enc = new TextEncoder();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: iv,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt"],
+  );
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    enc.encode(text),
+  );
+  // Combine iv and encrypted data
+  const result = new Uint8Array(iv.length + encrypted.byteLength);
+  result.set(iv, 0);
+  result.set(new Uint8Array(encrypted), iv.length);
+  return Buffer.from(result).toString("base64");
+}
+
+export async function decryptAESWeb(encryptedBase64: string, secret: string) {
+  const enc = new TextEncoder();
+  const data = Buffer.from(encryptedBase64, "base64");
+  const iv = data.subarray(0, 12);
+  const encrypted = data.subarray(12);
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: iv,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"],
+  );
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encrypted,
+  );
+  return new TextDecoder().decode(decrypted);
 }

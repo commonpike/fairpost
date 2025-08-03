@@ -4,6 +4,7 @@ export { default as Twitter } from "./Twitter/Twitter.ts";
 export { default as Reddit } from "./Reddit/Reddit.ts";
 export { default as LinkedIn } from "./LinkedIn/LinkedIn.ts";
 export { default as YouTube } from "./YouTube/YouTube.ts";
+export { default as Bluesky } from "./Bluesky/Bluesky.ts";
 
 export enum PlatformId {
   UNKNOWN = "unknown",
@@ -13,4 +14,5 @@ export enum PlatformId {
   REDDIT = "reddit",
   LINKEDIN = "linkedin",
   YOUTUBE = "youtube",
+  BLUEKSY = "bluesky",
 }

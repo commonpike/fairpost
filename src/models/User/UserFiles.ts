@@ -67,6 +67,7 @@ export default class UserFiles {
   public list(path: string, options?: { deep?: boolean }): DirectoryListing {
     return this.storage.list(path, options);
   }
+
   public async mkdir(path: string): Promise<void> {
     return await this.storage.createDirectory(path);
   }
@@ -182,7 +183,11 @@ export default class UserFiles {
   }
 
   public async getMimeType(path: string): Promise<string> {
-    return await this.storage.mimeType(path);
+    try {
+      return await this.storage.mimeType(path);
+    } catch {
+      return "application/unknown";
+    }
   }
   public async getSize(path: string): Promise<number> {
     return await this.storage.fileSize(path);

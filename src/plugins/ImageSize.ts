@@ -27,8 +27,8 @@ export default class ImageSize extends Plugin {
   static defaults: ImageSizeSettings = {
     fit: "contain",
     bgcolor: "white",
-    min_size: 0,
-    max_size: 0,
+    min_size: 0, // kb
+    max_size: 0, // kb
     min_ratio: 0,
     max_ratio: 0,
     min_width: 0,
