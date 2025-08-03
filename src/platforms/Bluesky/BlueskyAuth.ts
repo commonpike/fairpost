@@ -1,5 +1,6 @@
 import { BskyAgent } from "@atproto/api";
 import User from "../../models/User.ts";
+import { encryptAESWeb, decryptAESWeb } from "../../utilities.ts";
 import * as readline from "node:readline/promises";
 
 export default class BlueskyAuth {
@@ -26,9 +27,14 @@ export default class BlueskyAuth {
       identifier: "",
       password: "",
     };
-    tokens.identifier = await reader.question(
-      `BlueSky account ( like foobar.bsky.social ): `,
+    const currentid = this.user.data.get(
+      "auth",
+      "BLUESKY_IDENTIFIER",
+      "like foobar.bsky.social",
     );
+    tokens.identifier =
+      (await reader.question(`BlueSky account ( ${currentid} ): `)) ||
+      currentid;
     console.log(
       "To let Fairpost post on your behalf, Bluesky requires an App Password.",
     );
@@ -53,7 +59,9 @@ export default class BlueskyAuth {
 
   private async store(tokens: { identifier: string; password: string }) {
     this.user.data.set("auth", "BLUESKY_IDENTIFIER", tokens["identifier"]);
-    this.user.data.set("auth", "BLUESKY_PASSWORD", tokens["password"]);
+    const secret = this.user.data.get("app", "BLUESKY_CRYPT_SECRET");
+    const encryptedPassword = await encryptAESWeb(tokens["password"], secret);
+    this.user.data.set("auth", "BLUESKY_PASSWORD", encryptedPassword);
     await this.user.data.save();
   }
 
@@ -74,16 +82,13 @@ export default class BlueskyAuth {
       we need to refresh it using the password anyway.
       so lets just store the password and log in every time
     */
+    const identifier = this.user.data.get("auth", "BLUESKY_IDENTIFIER");
+    const encryptedPassword = this.user.data.get("auth", "BLUESKY_PASSWORD");
+    const secret = this.user.data.get("app", "BLUESKY_CRYPT_SECRET");
+    const password = await decryptAESWeb(encryptedPassword, secret);
     try {
-      await this.agent.login({
-        identifier: this.user.data.get("auth", "BLUESKY_IDENTIFIER"),
-        password: this.user.data.get("auth", "BLUESKY_PASSWORD"),
-      });
-      this.user.log.trace(
-        "BlueskuAuth",
-        "getAgent",
-        "Successfully authenticated!",
-      );
+      await this.agent.login({ identifier, password });
+      this.user.log.trace("BlueskyAuth", "authenticated");
       return this.agent;
     } catch (error) {
       console.error("Authentication failed:", error);
