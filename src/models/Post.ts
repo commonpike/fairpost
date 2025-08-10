@@ -24,7 +24,6 @@ export default class Post {
   source: Source;
   platform: Platform;
   valid: boolean = false;
-  skip: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
   prepared: boolean = true;
   private originalStatus: PostStatus = PostStatus.UNKNOWN;
@@ -250,6 +249,50 @@ export default class Post {
   }
 
   /**
+   * Change this posts status and save it
+   *
+   * this just sets the status to whatever given; also updates
+   * or removes published and scheduled dates to match
+   * @param status - the status to change it to
+   */
+
+  async setStatus(status: PostStatus) {
+    this.platform.user.log.trace("Post", "setStatus", status);
+    if (!this.prepared) {
+      throw this.platform.user.log.error("Post is not prepared");
+    }
+    if (!this.valid) {
+      throw this.platform.user.log.error("Post is not valid");
+    }
+
+    if (this.status === status) {
+      throw this.platform.user.log.error("Post already on status " + status);
+    }
+    this.platform.user.log.warn("Changing post status to " + status);
+    switch (status) {
+      case PostStatus.UNSCHEDULED:
+        this.platform.user.log.warn("Removing scheduled and published dates");
+        delete this.scheduled;
+        delete this.published;
+        break;
+      case PostStatus.SCHEDULED:
+        this.platform.user.log.warn(
+          "Resetting scheduled date, removing published date, r",
+        );
+        this.scheduled = this.scheduled || new Date();
+        delete this.published;
+        break;
+      case PostStatus.PUBLISHED:
+        this.platform.user.log.warn("Resetting scheduled and published dates");
+        this.scheduled = this.scheduled || new Date();
+        this.published = this.published || new Date();
+        break;
+    }
+    this.status = status;
+    await this.save();
+  }
+
+  /**
    * Schedule this post and save it
    *
    * this just sets the 'scheduled' date
@@ -264,8 +307,8 @@ export default class Post {
     if (!this.valid) {
       throw this.platform.user.log.error("Post is not valid");
     }
-    if (this.skip) {
-      throw this.platform.user.log.error("Post is marked to be skipped");
+    if (this.status === PostStatus.CANCELED) {
+      throw this.platform.user.log.error("Post has status canceled");
     }
     if (this.status !== PostStatus.UNSCHEDULED) {
       this.platform.user.log.warn("Rescheduling post");
@@ -292,8 +335,8 @@ export default class Post {
     if (!this.valid) {
       throw this.platform.user.log.error("Post is not valid", this.id);
     }
-    if (this.skip) {
-      throw this.platform.user.log.error("Post is marked skip", this.id);
+    if (this.status === PostStatus.CANCELED) {
+      throw this.platform.user.log.error("Post has status canceled", this.id);
     }
     if (this.published) {
       throw this.platform.user.log.error("Post was already published", this.id);

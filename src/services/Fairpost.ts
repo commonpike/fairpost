@@ -550,6 +550,54 @@ class Fairpost {
           }
           break;
         }
+        case "set-status": {
+          if (!permissions.schedulePosts) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.platforms && args.platform) {
+            args.platforms = [args.platform];
+          }
+          if (!args.sources && args.source) {
+            args.sources = [args.source];
+          }
+          if (!args.sources) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: sources",
+            );
+          }
+          if (!args.status) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: status",
+            );
+          }
+          const feed = user.getFeed();
+          const sources = await feed.getSources(args.sources);
+          const platforms = user.getPlatforms(args.platforms);
+          output = {} as { [id in PlatformId]: CombinedResult };
+          for (const source of sources) {
+            for (const platform of platforms) {
+              try {
+                const post = await platform.getPost(source);
+                await post.setStatus(args.status);
+                output[platform.id] = {
+                  success: true,
+                  result: await post.mapper.getDto(operator),
+                };
+              } catch (e) {
+                output[platform.id] = {
+                  success: false,
+                  message: e instanceof Error ? e.message : JSON.stringify(e),
+                };
+              }
+            }
+          }
+          break;
+        }
         case "schedule-post": {
           if (!permissions.schedulePosts) {
             throw new Error("Missing permissions for command " + command);
@@ -864,6 +912,7 @@ class Fairpost {
               `${cmd} @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
               `${cmd} @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
+              `${cmd} @userid set-status [--post=xxx:xxx|--posts=xxx:xxx,xxx:xxx]`,
               "\n# feed planning:",
               `${cmd} @userid prepare-posts  [--sources=xxx,xxx|--source=xxx|--stage=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage] [--platforms=xxx,xxx] `,

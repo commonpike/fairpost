@@ -142,7 +142,6 @@ export default class Source {
           (post: Post) =>
             post.status === PostStatus.PUBLISHED ||
             post.status === PostStatus.CANCELED ||
-            post.skip ||
             !post.valid,
         )
       ) {
