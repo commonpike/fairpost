@@ -251,7 +251,9 @@ export default class Post {
   /**
    * Change this posts status and save it
    *
-   * this just sets the status to whatever given
+   * this just sets the status to whatever given; also updates
+   * or removes published and scheduled dates to match
+   * 
    * @param status - the status to change it to
    */
 
