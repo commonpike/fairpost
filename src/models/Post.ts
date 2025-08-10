@@ -253,7 +253,6 @@ export default class Post {
    *
    * this just sets the status to whatever given; also updates
    * or removes published and scheduled dates to match
-   * 
    * @param status - the status to change it to
    */
 
