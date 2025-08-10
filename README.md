@@ -141,7 +141,7 @@ refresh tokens may expire, and you will have to run
 to get a new pair of tokens.
 
 
-### Cli
+### Interface
 
 ```
 # basic commands:
@@ -165,6 +165,7 @@ fairpost: @userid schedule-posts [--source=xxx] [--platforms=xxx,xxx|--platform=
 fairpost: @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage]
 fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
 fairpost: @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
+fairpost: @userid set-status [--post=xxx:xxx|--posts=xxx:xxx,xxx:xxx]
 
 # feed planning:
 fairpost: @userid prepare-posts  [--sources=xxx,xxx|--source=xxx|--stage=xxx] [--platforms=xxx,xxx|--platform=xxx]

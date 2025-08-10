@@ -250,6 +250,30 @@ export default class Post {
   }
 
   /**
+   * Change this posts status and save it
+   *
+   * this just sets the status to whatever given
+   * @param status - the status to change it to
+   */
+
+  async setStatus(status: PostStatus) {
+    this.platform.user.log.trace("Post", "setStatus", status);
+    if (!this.prepared) {
+      throw this.platform.user.log.error("Post is not prepared");
+    }
+    if (!this.valid) {
+      throw this.platform.user.log.error("Post is not valid");
+    }
+
+    if (this.status === status) {
+      throw this.platform.user.log.error("Post already on status " + status);
+    }
+    this.platform.user.log.warn("Changing post status to " + status);
+    this.status = status;
+    await this.save();
+  }
+
+  /**
    * Schedule this post and save it
    *
    * this just sets the 'scheduled' date
