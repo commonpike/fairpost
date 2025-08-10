@@ -268,6 +268,25 @@ export default class Post {
       throw this.platform.user.log.error("Post already on status " + status);
     }
     this.platform.user.log.warn("Changing post status to " + status);
+    switch (status) {
+      case PostStatus.UNSCHEDULED:
+        this.platform.user.log.warn("Removing scheduled and published dates");
+        delete this.scheduled;
+        delete this.published;
+        break;
+      case PostStatus.SCHEDULED:
+        this.platform.user.log.warn(
+          "Resetting scheduled date, removing published date, r",
+        );
+        this.scheduled = this.scheduled || new Date();
+        delete this.published;
+        break;
+      case PostStatus.PUBLISHED:
+        this.platform.user.log.warn("Resetting scheduled and published dates");
+        this.scheduled = this.scheduled || new Date();
+        this.published = this.published || new Date();
+        break;
+    }
     this.status = status;
     await this.save();
   }
