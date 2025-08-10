@@ -42,12 +42,6 @@ export default class PostMapper extends AbstractMapper<PostDto> {
       get: ["managePosts"],
       set: ["none"],
     },
-    skip: {
-      type: "boolean",
-      label: "Skip",
-      get: ["managePosts"],
-      set: ["managePosts"],
-    },
     status: {
       type: "string",
       label: "Status",
@@ -156,9 +150,6 @@ export default class PostMapper extends AbstractMapper<PostDto> {
         case "valid":
           dto[field] = this.post.valid;
           break;
-        case "skip":
-          dto[field] = this.post.skip;
-          break;
         case "status":
           dto[field] = this.post.status;
           break;
@@ -214,9 +205,6 @@ export default class PostMapper extends AbstractMapper<PostDto> {
     for (const field in dto) {
       if (field in fields) {
         switch (field) {
-          case "skip":
-            this.post.skip = !!dto[field];
-            break;
           case "scheduled":
             this.post.scheduled = new Date((dto.scheduled as string) ?? "");
             break;

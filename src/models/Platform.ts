@@ -228,7 +228,6 @@ export default class Platform {
    * This also does some janitor checks ..
    * - if a post is scheduled without a date, it will be unscheduled
    * - if a post is already published, it will be marked as such
-   * - if a post is marked as skip, it will be unscheduled
    * @param sources
    * @returns the above post or none
    */
@@ -245,15 +244,6 @@ export default class Platform {
         if (!post.scheduled) {
           this.user.log.warn(
             "Found scheduled post without date. Unscheduling post.",
-            post.id,
-          );
-          post.status = PostStatus.UNSCHEDULED;
-          await post.save();
-          continue;
-        }
-        if (post.skip) {
-          this.user.log.warn(
-            "Found scheduled post marked skip. Unscheduling post.",
             post.id,
           );
           post.status = PostStatus.UNSCHEDULED;
@@ -310,7 +300,7 @@ export default class Platform {
    *
    * Presume the post may have already been prepared
    * before, and manually adapted later. For example,
-   * post.skip may have manually been set to true.
+   * post.status may have manually been set to canceled.
    * @param source - the source for which to prepare a post for this platform
    * @param save - wether to save the post already
    * @returns the prepared post
@@ -404,12 +394,7 @@ export default class Platform {
     const nextDate = date ? date : await this.getNextPostDate(includeAll);
     for (const source of sources) {
       const post = await this.getPost(source);
-      if (
-        post &&
-        post.valid &&
-        !post.skip &&
-        post.status === PostStatus.UNSCHEDULED
-      ) {
+      if (post && post.valid && post.status === PostStatus.UNSCHEDULED) {
         await post.schedule(nextDate);
         return post;
       }

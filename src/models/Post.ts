@@ -24,7 +24,6 @@ export default class Post {
   source: Source;
   platform: Platform;
   valid: boolean = false;
-  skip: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
   prepared: boolean = true;
   private originalStatus: PostStatus = PostStatus.UNKNOWN;
@@ -288,8 +287,8 @@ export default class Post {
     if (!this.valid) {
       throw this.platform.user.log.error("Post is not valid");
     }
-    if (this.skip) {
-      throw this.platform.user.log.error("Post is marked to be skipped");
+    if (this.status === PostStatus.CANCELED) {
+      throw this.platform.user.log.error("Post has status canceled");
     }
     if (this.status !== PostStatus.UNSCHEDULED) {
       this.platform.user.log.warn("Rescheduling post");
@@ -316,8 +315,8 @@ export default class Post {
     if (!this.valid) {
       throw this.platform.user.log.error("Post is not valid", this.id);
     }
-    if (this.skip) {
-      throw this.platform.user.log.error("Post is marked skip", this.id);
+    if (this.status === PostStatus.CANCELED) {
+      throw this.platform.user.log.error("Post has status canceled", this.id);
     }
     if (this.published) {
       throw this.platform.user.log.error("Post was already published", this.id);

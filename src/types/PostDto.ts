@@ -6,7 +6,6 @@ export default interface PostDto {
   platform_id?: string;
   source_id?: string;
   valid?: boolean;
-  skip?: boolean;
   status?: PostStatus;
   scheduled?: string; // date
   published?: string; // date
