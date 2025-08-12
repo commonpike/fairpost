@@ -188,9 +188,12 @@ export default class Server {
           "Set-Cookie",
           cookie.serialize("FairpostSession", token, {
             httpOnly: true,
-            secure: (process.env.FAIRPOST_SESSION_SECURE === "false"),
-            sameSite: (process.env.FAIRPOST_SESSION_SAMESITE??"strict") as "strict" | "lax" | "none",
-            maxAge: +(process.env.FAIRPOST_SESSION_TIMEOUT??60*60)
+            secure: process.env.FAIRPOST_SESSION_SECURE === "false",
+            sameSite: (process.env.FAIRPOST_SESSION_SAMESITE ?? "strict") as
+              | "strict"
+              | "lax"
+              | "none",
+            maxAge: +(process.env.FAIRPOST_SESSION_TIMEOUT ?? 60 * 60),
           }),
         );
       }
@@ -199,9 +202,12 @@ export default class Server {
           "Set-Cookie",
           cookie.serialize("FairpostSession", "", {
             httpOnly: true,
-            secure: (process.env.FAIRPOST_SESSION_SECURE === "false"),
-            sameSite: (process.env.FAIRPOST_SESSION_SAMESITE??"strict") as "strict" | "lax" | "none",
-            maxAge: +(process.env.FAIRPOST_SESSION_TIMEOUT??60*60)
+            secure: process.env.FAIRPOST_SESSION_SECURE === "false",
+            sameSite: (process.env.FAIRPOST_SESSION_SAMESITE ?? "strict") as
+              | "strict"
+              | "lax"
+              | "none",
+            maxAge: +(process.env.FAIRPOST_SESSION_TIMEOUT ?? 60 * 60),
           }),
         );
       }
