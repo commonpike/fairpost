@@ -147,7 +147,12 @@ export default class Source {
       ) {
         newStage = SourceStage.FINISHED;
       } else if (
-        posts.every((post: Post) => post.status === PostStatus.UNSCHEDULED)
+        posts.every(
+          (post: Post) =>
+            post.status === PostStatus.UNSCHEDULED ||
+            post.status === PostStatus.CANCELED ||
+            !post.valid,
+        )
       ) {
         newStage = SourceStage.PENDING;
       } else if (

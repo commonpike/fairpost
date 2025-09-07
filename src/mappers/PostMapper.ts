@@ -191,6 +191,7 @@ export default class PostMapper extends AbstractMapper<PostDto> {
           break;
       }
     }
+    //console.log(this.post,dto);
     return dto;
   }
 
