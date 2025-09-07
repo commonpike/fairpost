@@ -25,7 +25,7 @@ export default class Post {
   platform: Platform;
   valid: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
-  prepared: boolean = true;
+  prepared: boolean = false;
   private originalStatus: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
