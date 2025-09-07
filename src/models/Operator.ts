@@ -75,6 +75,8 @@ export default class Operator {
     if (userid) {
       this.cache[userid] = permissions;
     }
+    //user?.log.info(user.id,this.id,this.roles,this.authenticated);
+    //user?.log.info(permissions);
     return permissions;
   }
 }
