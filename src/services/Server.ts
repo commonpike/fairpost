@@ -112,6 +112,8 @@ export default class Server {
 
     let code = 0;
     let output = undefined;
+    let operatorid = undefined;
+
     let error = false as boolean | unknown;
     try {
       let user = undefined;
@@ -119,6 +121,7 @@ export default class Server {
         user = await User.getUser(userid);
       }
       const operator = await Server.getOperator(request, user);
+      operatorid = operator.id;
 
       output = await Fairpost.execute(operator, user, command, args);
       code = 200;
@@ -141,6 +144,7 @@ export default class Server {
         {
           request: {
             user: username,
+            operator: operatorid,
             command: command,
             arguments: args,
           },
@@ -188,7 +192,7 @@ export default class Server {
           "Set-Cookie",
           cookie.serialize("FairpostSession", token, {
             httpOnly: true,
-            secure: process.env.FAIRPOST_SESSION_SECURE === "false",
+            secure: process.env.FAIRPOST_SESSION_SECURE !== "false",
             sameSite: (process.env.FAIRPOST_SESSION_SAMESITE ?? "strict") as
               | "strict"
               | "lax"
