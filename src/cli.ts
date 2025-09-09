@@ -6,7 +6,7 @@
 import "./bootstrap.ts";
 
 import Fairpost from "./services/Fairpost.ts";
-import { JSONReplacer } from "./utilities.ts";
+import { JSONReplacer, parsePayload } from "./utilities.ts";
 import { PlatformId } from "./platforms/index.ts";
 import { SourceStage, PostStatus } from "./types/index.ts";
 import Operator from "./models/Operator.ts";
@@ -38,6 +38,17 @@ if (POST) {
   [SOURCE, PLATFORM] = POST.split(":") as [string, PlatformId];
 }
 
+// payload
+const chunks: Buffer[] = [];
+if (!process.stdin.isTTY) {
+  for await (const chunk of process.stdin) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+}
+const PAYLOAD = chunks.length
+  ? await parsePayload(Buffer.concat(chunks))
+  : undefined;
+
 // utilities
 function getOption(key: string): boolean | string | null {
   if (process.argv.includes(`--${key}`)) return true;
@@ -64,6 +75,7 @@ async function main() {
       date: DATE ? new Date(DATE) : undefined,
       status: STATUS,
       stage: STAGE,
+      payload: PAYLOAD,
     });
 
     console.info(JSON.stringify(output, JSONReplacer, "\t"));
