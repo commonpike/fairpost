@@ -16,4 +16,5 @@ export default interface CommandArguments {
   date?: Date;
   status?: PostStatus;
   stage?: SourceStage;
+  payload?: Buffer | string | object;
 }

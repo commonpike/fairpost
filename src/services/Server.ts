@@ -4,7 +4,7 @@ import { createServer, IncomingMessage, ServerResponse } from "http";
 
 import Fairpost from "./Fairpost.ts";
 import AuthService from "./AuthService.ts";
-import { JSONReplacer } from "../utilities.ts";
+import { JSONReplacer, parsePayload } from "../utilities.ts";
 import { PlatformId } from "../platforms/index.ts";
 import { SourceStage, PostStatus } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
@@ -98,6 +98,17 @@ export default class Server {
     const stage =
       (parsed.searchParams.get("stage") as SourceStage) || undefined;
 
+    // read payload from PUT or POST
+    let payload = undefined as undefined | Buffer | string | object;
+    if (request.method === "POST" || request.method === "PUT") {
+      const chunks: Buffer[] = [];
+      for await (const chunk of request) {
+        chunks.push(chunk as Buffer);
+      }
+      const buffer = Buffer.concat(chunks);
+      payload = await parsePayload(buffer, request.headers["content-type"]);
+    }
+
     const args = {
       password: password,
       dryrun: dryrun || undefined,
@@ -108,6 +119,7 @@ export default class Server {
       date: date ? new Date(date) : undefined,
       status: status,
       stage: stage,
+      payload: payload,
     };
 
     let code = 0;

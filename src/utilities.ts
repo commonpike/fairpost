@@ -16,6 +16,48 @@ export function isSimilarArray(a: any, b: any) {
   return a.length === b.length && a.every((el: any) => b.includes(el));
 }
 
+export async function parsePayload(
+  buffer: Buffer,
+  type?: string,
+): Promise<Buffer | string | object> {
+  const str = buffer.toString("utf8");
+
+  const contentType = type?.split(";")[0].trim().toLowerCase();
+  if (contentType === "application/json") {
+    try {
+      return JSON.parse(str);
+    } catch {
+      return buffer; // invalid JSON, keep raw
+    }
+  }
+  if (contentType && contentType.startsWith("text/")) {
+    return str;
+  }
+
+  // Heuristic fallback: Try JSON first
+  try {
+    const trimmed = str.trim();
+    if (
+      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+      (trimmed.startsWith("[") && trimmed.endsWith("]"))
+    ) {
+      return JSON.parse(trimmed);
+    }
+  } catch {
+    // Ignore, not valid JSON
+  }
+
+  // Check for binary (NUL bytes or lots of control chars)
+  const isBinary = buffer.some((b) => b === 0 || b < 7 || (b > 13 && b < 32));
+
+  if (!isBinary) {
+    return str;
+  }
+
+  // Otherwise, return raw binary
+  return buffer;
+}
+
 export class ApiResponseError extends Error {
   response: Response;
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
