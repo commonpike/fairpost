@@ -16,7 +16,7 @@ import User from "../models/User.ts";
 export default class Server {
   public static async serve(): Promise<string> {
     process.env.FAIRPOST_UI = "api";
-    const host = process.env.FAIRPOST_SERVER_HOSTNAME;
+    const host = process.env.FAIRPOST_SERVER_BIND;
     const port = Number(process.env.FAIRPOST_SERVER_PORT);
     return await new Promise((resolve) => {
       const server = createServer((req, res) => {

@@ -40,13 +40,14 @@ if (POST) {
 
 // payload
 const chunks: Buffer[] = [];
-for await (const chunk of process.stdin) {
-  chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+if (!process.stdin.isTTY) {
+  for await (const chunk of process.stdin) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
 }
 const PAYLOAD = chunks.length
   ? await parsePayload(Buffer.concat(chunks))
   : undefined;
-console.log(PAYLOAD);
 
 // utilities
 function getOption(key: string): boolean | string | null {
