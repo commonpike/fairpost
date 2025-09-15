@@ -52,10 +52,11 @@ export default class Platform {
    * This may involve starting a webserver and/or communicating
    * via the CLI.
    * @param operator
+   * @param payload
    * @returns - any object
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async setup(operator?: Operator) {
+  async setup(operator?: Operator, payload?: object): Promise<unknown> {
     throw this.user.log.error(
       "No setup implemented for " +
         this.id +

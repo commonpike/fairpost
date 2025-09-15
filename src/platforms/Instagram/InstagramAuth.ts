@@ -29,6 +29,11 @@ export default class InstagramAuth extends FacebookAuth {
     await this.user.data.save();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public async setupApi(payload: object) {
+    throw this.user.log.error("InstagramAuth:setupApi - not implemented");
+  }
+
   protected async requestCode(clientId: string): Promise<string> {
     const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));

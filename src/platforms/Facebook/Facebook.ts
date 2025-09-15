@@ -10,6 +10,7 @@ import PlatformMapper from "../../mappers/PlatformMapper.ts";
 import Platform from "../../models/Platform.ts";
 import Post from "../../models/Post.ts";
 import User from "../../models/User.ts";
+import Operator from "../../models/Operator.ts";
 
 /**
  * Facebook: support for facebook platform.
@@ -66,8 +67,15 @@ export default class Facebook extends Platform {
   }
 
   /** @inheritdoc */
-  async setup() {
-    await this.auth.setup();
+  async setup(operator: Operator, payload?: object) {
+    if (operator.ui === "cli") {
+      await this.auth.setupCli();
+      return await this.test();
+    }
+    if (!payload) {
+      throw this.user.log.error("Setup via api requires a payload");
+    }
+    return this.auth.setupApi(payload);
   }
 
   /** @inheritdoc */
