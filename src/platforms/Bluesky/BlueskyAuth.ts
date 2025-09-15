@@ -48,7 +48,8 @@ export default class BlueskyAuth {
     console.log("Credentials stored.");
   }
 
-  public async setupApi() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public async setupApi(payload: object) {
     throw this.user.log.error("BlueskyAuth:setupApi - not implemented");
   }
 

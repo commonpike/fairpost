@@ -7,6 +7,7 @@ import { TwitterApi } from "twitter-api-v2";
 import TwitterAuth from "./TwitterAuth.ts";
 import PlatformMapper from "../../mappers/PlatformMapper.ts";
 import User from "../../models/User.ts";
+import Operator from "../../models/Operator.ts";
 
 /**
  * Twitter: support for twitter platform
@@ -61,8 +62,15 @@ export default class Twitter extends Platform {
   }
 
   /** @inheritdoc */
-  async setup() {
-    return await this.auth.setup();
+  async setup(operator: Operator, payload?: object) {
+    if (operator.ui === "cli") {
+      await this.auth.setupCli();
+      return await this.test();
+    }
+    if (!payload) {
+      throw this.user.log.error("Setup via api requires a payload");
+    }
+    return this.auth.setupApi(payload);
   }
 
   /** @inheritdoc */

@@ -17,10 +17,15 @@ export default class YouTubeAuth {
   /**
    * Set up YouTube platform
    */
-  async setup() {
+  async setupCli() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
     await this.store(tokens);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async setupApi(payload: object) {
+    throw this.user.log.error("YouTubeAuth:setupApi - not implemented");
   }
 
   /**

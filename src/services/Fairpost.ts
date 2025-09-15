@@ -257,12 +257,20 @@ class Fairpost {
               "Missing argument: platform",
             );
           }
+          if (
+            Buffer.isBuffer(args.payload || typeof args.payload === "string")
+          ) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Setup payload must be an object",
+            );
+          }
           const platform = user.getPlatform(args.platform);
-          await platform.setup(operator);
+          const result = await platform.setup(operator, args.payload as object);
           output = {
             [args.platform]: {
               success: true,
-              result: await platform.test(),
+              result: result,
             },
           };
           break;
