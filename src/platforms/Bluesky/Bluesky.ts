@@ -41,10 +41,16 @@ export default class Bluesky extends Platform {
       await this.auth.setupCli();
       return await this.test();
     }
-    if (!payload) {
-      throw this.user.log.error("Setup via api requires a payload");
+    if (operator.ui === "api") {
+      if (!payload) {
+        throw this.user.log.error("Bluesky setup requires a payload");
+      }
+      await this.auth.setupApi(payload);
+      return await this.test();
     }
-    return await this.auth.setupApi(payload);
+    throw this.user.log.error(
+      `Platform.setup: ui ${operator.ui} not supported`,
+    );
   }
 
   /** @inheritdoc */
