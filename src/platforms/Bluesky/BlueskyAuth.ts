@@ -48,9 +48,17 @@ export default class BlueskyAuth {
     console.log("Credentials stored.");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public async setupApi(payload: object) {
-    throw this.user.log.error("BlueskyAuth:setupApi - not implemented");
+  public async setupApi(payload: { identifier?: string; password?: string }) {
+    if (!payload.identifier) {
+      throw this.user.log.error("BlueskyAuth:setupApi - identifier missing");
+    }
+    if (!payload.password) {
+      throw this.user.log.error("BlueskyAuth:setupApi - app password missing");
+    }
+    await this.store({
+      identifier: payload.identifier,
+      password: payload.password,
+    });
   }
 
   /**

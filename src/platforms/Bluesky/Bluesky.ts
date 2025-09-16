@@ -39,12 +39,13 @@ export default class Bluesky extends Platform {
   async setup(operator: Operator, payload?: object) {
     if (operator.ui === "cli") {
       await this.auth.setupCli();
-      return await this.test();
+    } else {
+      if (!payload) {
+        throw this.user.log.error("Bluesky setup requires a payload");
+      }
+      await this.auth.setupApi(payload);
     }
-    if (!payload) {
-      throw this.user.log.error("Setup via api requires a payload");
-    }
-    return await this.auth.setupApi(payload);
+    return await this.test();
   }
 
   /** @inheritdoc */
