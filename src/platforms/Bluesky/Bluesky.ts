@@ -49,7 +49,7 @@ export default class Bluesky extends Platform {
       return await this.test();
     }
     throw this.user.log.error(
-      `Platform.setup: ui ${operator.ui} not supported`,
+      `${this.id} setup: ui ${operator.ui} not supported`,
     );
   }
 
