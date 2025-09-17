@@ -21,14 +21,121 @@ export default class LinkedInAuth {
    * Set up LinkedIn platform
    */
   async setupCli() {
-    const code = await this.requestCode();
-    const tokens = await this.exchangeCode(code);
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
+    const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
+    const code = await this.requestCliCode(redirectUri);
+    const tokens = await this.exchangeCode(code, redirectUri);
     await this.store(tokens);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async setupApi(payload: object) {
-    throw this.user.log.error("LinkedInAuth:setupApi - not implemented");
+  async setupApi(payload: {
+    state?: string;
+    redirect_uri?: string;
+    code?: string;
+    error?: string;
+    error_uri?: string;
+    error_description?: string;
+  }) {
+    if (payload["error"]) {
+      const msg = payload["error"] + " - " + payload["error_description"];
+      throw this.user.log.error(msg, payload);
+    }
+    if (!payload.redirect_uri) {
+      throw this.user.log.error("LinkedInAuth.setup: Invalid payload", payload);
+    }
+    if (!payload.code) {
+      return {
+        url: this.getRequestUrl(payload.redirect_uri, payload.state),
+      };
+    }
+    const tokens = await this.exchangeCode(payload.code, payload.redirect_uri);
+    await this.store(tokens);
+    return {
+      ready: true,
+    };
+  }
+
+  /**
+   * Get oath2 url to request a code
+   * @param redirectUri
+   * @param state
+   * @returns - string
+   */
+  private getRequestUrl(redirectUri: string, state?: string): string {
+    const clientId = this.user.data.get("app", "LINKEDIN_CLIENT_ID");
+    const url = new URL("https://www.linkedin.com");
+    url.pathname = "oauth/" + this.API_VERSION + "/authorization";
+    const query = {
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      ...(state ? { state: state } : {}),
+      response_type: "code",
+      duration: "permanent",
+      scope: [
+        "r_basicprofile",
+        "w_member_social",
+        "w_organization_social",
+      ].join(" "),
+    };
+    url.search = new URLSearchParams(query).toString();
+    return url.href;
+  }
+
+  /**
+   * Request remote code using OAuth2Service as a local server
+   * @param redirectUri
+   * @returns - code
+   */
+  private async requestCliCode(redirectUri: string): Promise<string> {
+    this.user.log.trace("LinkedInAuth", "requestCode");
+    const state = String(Math.random()).substring(2);
+    const requestUrl = this.getRequestUrl(redirectUri, state);
+    const result = await OAuth2Service.requestRemotePermissions(
+      "LinkedIn",
+      requestUrl,
+      this.user.data.get("app", "OAUTH_HOSTNAME"),
+      Number(this.user.data.get("app", "OAUTH_PORT")),
+    );
+    if (result["error"]) {
+      const msg = result["error_reason"] + " - " + result["error_description"];
+      throw this.user.log.error(msg, result);
+    }
+    if (result["state"] !== state) {
+      const msg = "Response state does not match request state";
+      throw this.user.log.error(msg, result);
+    }
+    if (!result["code"]) {
+      const msg = "Remote response did not return a code";
+      throw this.user.log.error(msg, result);
+    }
+    return result["code"] as string;
+  }
+
+  /**
+   * Exchange remote code for tokens
+   * @param code - the code to exchange
+   * @param redirectUri
+   * @returns - TokenResponse
+   */
+  private async exchangeCode(
+    code: string,
+    redirectUri: string,
+  ): Promise<TokenResponse> {
+    this.user.log.trace("LinkedInAuth", "exchangeCode", code);
+    const tokens = (await this.post("accessToken", {
+      grant_type: "authorization_code",
+      code: code,
+      client_id: this.user.data.get("app", "LINKEDIN_CLIENT_ID"),
+      client_secret: this.user.data.get("app", "LINKEDIN_CLIENT_SECRET"),
+      redirect_uri: redirectUri,
+    })) as TokenResponse;
+
+    if (!isTokenResponse(tokens)) {
+      throw this.user.log.error("Invalid TokenResponse", tokens);
+    }
+
+    return tokens;
   }
 
   /**
@@ -49,81 +156,6 @@ export default class LinkedInAuth {
       );
     }
     await this.store(tokens);
-  }
-
-  /**
-   * Request remote code using OAuth2Service
-   * @returns - code
-   */
-  private async requestCode(): Promise<string> {
-    this.user.log.trace("LinkedInAuth", "requestCode");
-    const clientId = this.user.data.get("app", "LINKEDIN_CLIENT_ID");
-    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
-    const state = String(Math.random()).substring(2);
-
-    // create auth url
-    const url = new URL("https://www.linkedin.com");
-    url.pathname = "oauth/" + this.API_VERSION + "/authorization";
-    const query = {
-      client_id: clientId,
-      redirect_uri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
-      state: state,
-      response_type: "code",
-      duration: "permanent",
-      scope: [
-        "r_basicprofile",
-        "w_member_social",
-        "w_organization_social",
-      ].join(" "),
-    };
-    url.search = new URLSearchParams(query).toString();
-
-    const result = await OAuth2Service.requestRemotePermissions(
-      "LinkedIn",
-      url.href,
-      clientHost,
-      clientPort,
-    );
-    if (result["error"]) {
-      const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.log.error(msg, result);
-    }
-    if (result["state"] !== state) {
-      const msg = "Response state does not match request state";
-      throw this.user.log.error(msg, result);
-    }
-    if (!result["code"]) {
-      const msg = "Remote response did not return a code";
-      throw this.user.log.error(msg, result);
-    }
-    return result["code"] as string;
-  }
-
-  /**
-   * Exchange remote code for tokens
-   * @param code - the code to exchange
-   * @returns - TokenResponse
-   */
-  private async exchangeCode(code: string): Promise<TokenResponse> {
-    this.user.log.trace("LinkedInAuth", "exchangeCode", code);
-    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
-    const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
-
-    const tokens = (await this.post("accessToken", {
-      grant_type: "authorization_code",
-      code: code,
-      client_id: this.user.data.get("app", "LINKEDIN_CLIENT_ID"),
-      client_secret: this.user.data.get("app", "LINKEDIN_CLIENT_SECRET"),
-      redirect_uri: redirectUri,
-    })) as TokenResponse;
-
-    if (!isTokenResponse(tokens)) {
-      throw this.user.log.error("Invalid TokenResponse", tokens);
-    }
-
-    return tokens;
   }
 
   /**

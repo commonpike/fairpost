@@ -67,10 +67,15 @@ export default class Twitter extends Platform {
       await this.auth.setupCli();
       return await this.test();
     }
-    if (!payload) {
-      throw this.user.log.error("Setup via api requires a payload");
+    if (operator.ui === "api") {
+      if (!payload) {
+        throw this.user.log.error("Setup via api requires a payload");
+      }
+      return this.auth.setupApi(payload);
     }
-    return this.auth.setupApi(payload);
+    throw this.user.log.error(
+      `${this.id} setup: ui ${operator.ui} not supported`,
+    );
   }
 
   /** @inheritdoc */

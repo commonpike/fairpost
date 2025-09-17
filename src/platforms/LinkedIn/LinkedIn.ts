@@ -67,10 +67,19 @@ export default class LinkedIn extends Platform {
       await this.auth.setupCli();
       return await this.test();
     }
-    if (!payload) {
-      throw this.user.log.error("Setup via api requires a payload");
+    if (operator.ui === "api") {
+      if (!payload) {
+        throw this.user.log.error("Setup via api requires a payload");
+      }
+      const result = await this.auth.setupApi(payload);
+      const ready = "ready" in result && result.ready;
+      if (!ready) return result;
+      return await this.test();
     }
-    return this.auth.setupApi(payload);
+
+    throw this.user.log.error(
+      `${this.id} setup: ui ${operator.ui} not supported`,
+    );
   }
 
   /** @inheritdoc */
