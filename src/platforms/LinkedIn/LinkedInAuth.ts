@@ -36,7 +36,7 @@ export default class LinkedInAuth {
     error?: string;
     error_uri?: string;
     error_description?: string;
-  }) {
+  }): Promise<{ url?: string; ready?: boolean }> {
     if (payload["error"]) {
       const msg = payload["error"] + " - " + payload["error_description"];
       throw this.user.log.error(msg, payload);
@@ -122,7 +122,7 @@ export default class LinkedInAuth {
     code: string,
     redirectUri: string,
   ): Promise<TokenResponse> {
-    this.user.log.trace("LinkedInAuth", "exchangeCode", code);
+    this.user.log.trace("LinkedInAuth", "exchangeCode");
     const tokens = (await this.post("accessToken", {
       grant_type: "authorization_code",
       code: code,

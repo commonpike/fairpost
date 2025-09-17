@@ -74,7 +74,10 @@ export default class LinkedIn extends Platform {
       const result = await this.auth.setupApi(payload);
       const ready = "ready" in result && result.ready;
       if (!ready) return result;
-      return await this.test();
+      return {
+        ...result,
+        test: await this.test(),
+      };
     }
 
     throw this.user.log.error(
