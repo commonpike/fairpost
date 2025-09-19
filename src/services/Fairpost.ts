@@ -265,7 +265,7 @@ class Fairpost {
               "Setup payload must be an object",
             );
           }
-          const platform = user.getPlatform(args.platform);
+          const platform = await user.addPlatform(args.platform);
           const result = await platform.setup(operator, args.payload as object);
           output = {
             [args.platform]: {
