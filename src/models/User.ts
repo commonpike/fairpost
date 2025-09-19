@@ -265,8 +265,9 @@ export default class User {
   /**
    * Enable a platform on this user
    * @param platformId
+   * @returns the enabled platform
    */
-  public async addPlatform(platformId: PlatformId): Promise<void> {
+  public async addPlatform(platformId: PlatformId): Promise<Platform> {
     this.log.trace("User", "addPlatform", platformId);
     if (
       Object.values(PlatformId).includes(platformId) &&
@@ -284,6 +285,7 @@ export default class User {
     } else {
       throw this.log.error("addPlatform: no such platform", platformId);
     }
+    return this.getPlatform(platformId);
   }
 
   /**
