@@ -158,6 +158,35 @@ class Fairpost {
           break;
         }
 
+        case "get-settings": {
+          if (!permissions.manageAccount) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          output = user.getSettings();
+          break;
+        }
+
+        case "put-settings": {
+          if (!permissions.manageAccount) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.payload) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: payload",
+            );
+          }
+          await user.putSettings(args.payload as { [key: string]: string });
+          output = { success: true };
+          break;
+        }
+
         case "refresh-token": {
           if (!permissions.manageAccount) {
             throw new Error("Missing permissions for command " + command);
@@ -910,6 +939,8 @@ class Fairpost {
               `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid get-platform --platform=xxx`,
               `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
+              `${cmd} @userid get-settings`,
+              `${cmd} @userid put-settings <payload>`,
               `${cmd} @userid get-source --source=xxx [--stage=xxx] `,
               `${cmd} @userid get-sources [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid get-post --post=xxx:xxx`,
