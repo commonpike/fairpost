@@ -74,7 +74,9 @@ async function editPayload(getCommand: string, putCommand: string) {
     process.exit(1);
   }
   if (edit.status !== 0) {
-    console.warn(`Editor exited with code ${edit.status} — assuming user cancelled.`);
+    console.warn(
+      `Editor exited with code ${edit.status} — assuming user cancelled.`,
+    );
     process.exit(1);
   }
   PAYLOAD = await parsePayload(fs.readFileSync(tmpFile));
@@ -105,17 +107,14 @@ async function execute(command: string): Promise<string> {
     return JSON.stringify(output, JSONReplacer, "\t");
   } catch (e) {
     console.error((e as Error).message ?? e);
-    throw(e);
+    throw e;
   }
 }
 
-switch(COMMAND) {
+switch (COMMAND) {
   case "edit-platform":
-    console.info(await editPayload("get-platform","put-platform"));
+    console.info(await editPayload("get-platform", "put-platform"));
     break;
   default:
     console.info(await execute(COMMAND));
 }
-
-
-
