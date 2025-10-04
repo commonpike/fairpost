@@ -229,7 +229,7 @@ class Fairpost {
           break;
         }
 
-        case "add-platform": {
+        /*case "add-platform": {
           if (!permissions.manageFeed) {
             throw new Error("Missing permissions for command " + command);
           }
@@ -273,6 +273,7 @@ class Fairpost {
           };
           break;
         }
+        */
 
         case "setup-platform": {
           if (!permissions.manageFeed) {
@@ -971,16 +972,14 @@ class Fairpost {
               `${cmd} help`,
               `${cmd} @userid get-user`,
               `${cmd} @userid get-feed`,
-              `${cmd} @userid add-platform --platform=xxx`,
-              `${cmd} @userid remove-platform --platform=xxx`,
+              `${cmd} @userid get-platform --platform=xxx`,
+              `${cmd} @userid put-platform --platform=xxx << payload`,
+              `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid setup-platform --platform=xxx`,
               `${cmd} @userid test-platform --platform=xxx`,
               `${cmd} @userid test-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid refresh-platform --platform=xxx`,
               `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
-              `${cmd} @userid get-platform --platform=xxx`,
-              `${cmd} @userid put-platform --platform=xxx << platform-dto`,
-              `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid get-source --source=xxx [--stage=xxx] `,
               `${cmd} @userid get-sources [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid get-post --post=xxx:xxx`,

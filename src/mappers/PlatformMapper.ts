@@ -110,7 +110,6 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
    */
   async putDto(operator: Operator, dto: PlatformDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
-    console.log(fields);
     for (const field in dto) {
       if (fields.includes(field)) {
         switch (field) {
