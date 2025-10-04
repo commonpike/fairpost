@@ -73,10 +73,10 @@ export default class UserMapper extends AbstractMapper<UserDto> {
    * @param dto
    * @returns boolean success
    */
-  async setDto(operator: Operator, dto: UserDto): Promise<boolean> {
+  async putDto(operator: Operator, dto: UserDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
-      if (field in fields) {
+      if (fields.includes(field)) {
         switch (field) {
           case "id":
             // todo - there should be a rename-user command instead
@@ -91,7 +91,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
             break;
         }
       } else {
-        throw this.user.log.error("Unknown field: " + field);
+        this.user.log.trace("Ignoring field: " + field);
       }
     }
     await this.user.data.save();

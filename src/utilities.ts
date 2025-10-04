@@ -36,13 +36,7 @@ export async function parsePayload(
 
   // Heuristic fallback: Try JSON first
   try {
-    const trimmed = str.trim();
-    if (
-      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-      (trimmed.startsWith("[") && trimmed.endsWith("]"))
-    ) {
-      return JSON.parse(trimmed);
-    }
+    return JSON.parse(str);
   } catch {
     // Ignore, not valid JSON
   }

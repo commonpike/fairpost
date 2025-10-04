@@ -242,11 +242,22 @@ export default class User {
     if (this.platforms === undefined) {
       this.loadPlatforms();
     }
-    const platform = this.platforms?.[platformId];
-    if (!platform) {
-      throw this.log.error("Unknown or disabled platform: " + platformId);
+    let platform = this.platforms?.[platformId];
+    if (platform) {
+      return platform;
     }
-    return platform;
+
+    Object.values(platformClasses).forEach((platformClass) => {
+      if (typeof platformClass === "function") {
+        if (platformClass.id() === platformId) {
+          platform = new platformClass(this);
+        }
+      }
+    });
+    if (platform) {
+      return platform;
+    }
+    throw this.log.error("Unknown platform: " + platformId);
   }
 
   /**
@@ -317,10 +328,11 @@ export default class User {
 
   /**
    * @returns all data from the settings store
-   */
+   
   public getSettings(): { [key: string]: string } {
     return this.data.getStore("settings");
   }
+   */
 
   public async promptCliFields(
     fields: FieldMapping,
@@ -348,11 +360,12 @@ export default class User {
   /**
    * Update settings with values from payload
    * @param payload - key/value object to save under settings store
-   */
+   
   public async putSettings(payload: { [key: string]: string }): Promise<void> {
     for (const key in payload) {
       this.data.set("settings", key, payload[key]);
     }
     await this.data.save();
   }
+   */
 }

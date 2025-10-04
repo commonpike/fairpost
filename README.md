@@ -148,15 +148,14 @@ to get a new pair of tokens.
 fairpost: help
 fairpost: @userid get-user
 fairpost: @userid get-feed
+fairpost: @userid get-platform --platform=xxx
+fairpost: @userid put-platform --platform=xxx << payload
+fairpost: @userid get-platforms [--platforms=xxx,xxx]
 fairpost: @userid setup-platform --platform=xxx
 fairpost: @userid test-platform --platform=xxx
 fairpost: @userid test-platforms [--platforms=xxx,xxx]
 fairpost: @userid refresh-platform --platform=xxx
 fairpost: @userid refresh-platforms [--platforms=xxx,xxx]
-fairpost: @userid get-platform --platform=xxx
-fairpost: @userid get-platforms [--platforms=xxx,xxx]
-fairpost: @userid get-settings
-fairpost: @userid put-settings <payload>
 fairpost: @userid get-source --source=xxx [--stage=xxx] 
 fairpost: @userid get-sources [--sources=xxx,xxx|--stage=xxx]
 fairpost: @userid get-post --post=xxx:xxx

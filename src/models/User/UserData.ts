@@ -77,7 +77,7 @@ export default class UserData {
     }
   }
 
-  public getStore(storeName: StorageType): { [key: string]: string } {
+  /*public getStore(storeName: StorageType): { [key: string]: string } {
     const storageKey = StorageKeys[storeName];
     const storage = process.env[storageKey] ?? "none";
     const jsonStore = this.jsonData[storeName];
@@ -90,7 +90,7 @@ export default class UserData {
           "UserData.getStore: Storage " + storage + " not implemented",
         );
     }
-  }
+  }*/
 
   public getObject(store: StorageType, key: string, def?: object): object {
     const value = this.get(store, key, JSON.stringify(def));

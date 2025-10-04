@@ -64,7 +64,7 @@ export default abstract class AbstractMapper<ModelDto> {
    * @param dto
    * @returns boolean success
    */
-  abstract setDto(operator: Operator, dto: ModelDto): Promise<boolean>;
+  abstract putDto(operator: Operator, dto: ModelDto): Promise<boolean>;
 
   protected getDtoFields(
     operator: Operator,
