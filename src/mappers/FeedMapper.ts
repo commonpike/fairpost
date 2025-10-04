@@ -78,7 +78,7 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
   async setDto(operator: Operator, dto: FeedDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
-      if (field in fields) {
+      if (fields.includes(field)) {
         // there are no settable fields
       } else {
         throw this.user.log.error("Unknown field: " + field);

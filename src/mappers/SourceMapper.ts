@@ -104,7 +104,7 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
   async setDto(operator: Operator, dto: SourceDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
-      if (field in fields) {
+      if (fields.includes(field)) {
         switch (field) {
           // upload here ?
           case "files":

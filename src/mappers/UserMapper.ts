@@ -76,7 +76,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
   async setDto(operator: Operator, dto: UserDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
-      if (field in fields) {
+      if (fields.includes(field)) {
         switch (field) {
           case "id":
             // todo - there should be a rename-user command instead

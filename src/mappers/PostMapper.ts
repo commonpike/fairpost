@@ -204,7 +204,7 @@ export default class PostMapper extends AbstractMapper<PostDto> {
   async setDto(operator: Operator, dto: PostDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
-      if (field in fields) {
+      if (fields.includes(field)) {
         switch (field) {
           case "scheduled":
             this.post.scheduled = new Date((dto.scheduled as string) ?? "");

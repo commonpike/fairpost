@@ -323,6 +323,46 @@ class Fairpost {
           output = await platform.mapper.getDto(operator);
           break;
         }
+        case "set-platform": {
+          if (!permissions.managePlatforms) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.platform) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: platform",
+            );
+          }
+          if (!args.payload) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing payload",
+            );
+          }
+          if (
+            Buffer.isBuffer(args.payload || typeof args.payload === "string")
+          ) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Payload must be an object",
+            );
+          }
+          const platform = user.getPlatform(args.platform);
+          output = {
+            [args.platform]: {
+              success: await platform.mapper.setDto(
+                operator,
+                args.payload as PlatformDto,
+              ),
+              result: await platform.mapper.getDto(operator),
+            },
+          };
+          break;
+        }
+
         case "get-platforms": {
           if (!permissions.managePlatforms) {
             throw new Error("Missing permissions for command " + command);
@@ -939,6 +979,7 @@ class Fairpost {
               `${cmd} @userid refresh-platform --platform=xxx`,
               `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid get-platform --platform=xxx`,
+              `${cmd} @userid put-platform --platform=xxx << platform-dto`,
               `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid get-source --source=xxx [--stage=xxx] `,
               `${cmd} @userid get-sources [--sources=xxx,xxx|--stage=xxx]`,
