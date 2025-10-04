@@ -73,7 +73,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
    * @param dto
    * @returns boolean success
    */
-  async setDto(operator: Operator, dto: UserDto): Promise<boolean> {
+  async putDto(operator: Operator, dto: UserDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (fields.includes(field)) {

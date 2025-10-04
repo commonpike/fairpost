@@ -101,7 +101,7 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
    * @param dto
    * @returns boolean success
    */
-  async setDto(operator: Operator, dto: SourceDto): Promise<boolean> {
+  async putDto(operator: Operator, dto: SourceDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (fields.includes(field)) {

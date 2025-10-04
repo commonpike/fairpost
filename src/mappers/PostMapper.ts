@@ -201,7 +201,7 @@ export default class PostMapper extends AbstractMapper<PostDto> {
    * @param dto
    * @returns boolean success
    */
-  async setDto(operator: Operator, dto: PostDto): Promise<boolean> {
+  async putDto(operator: Operator, dto: PostDto): Promise<boolean> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (fields.includes(field)) {

@@ -323,7 +323,7 @@ class Fairpost {
           output = await platform.mapper.getDto(operator);
           break;
         }
-        case "set-platform": {
+        case "put-platform": {
           if (!permissions.managePlatforms) {
             throw new Error("Missing permissions for command " + command);
           }
@@ -353,7 +353,7 @@ class Fairpost {
           const platform = user.getPlatform(args.platform);
           output = {
             [args.platform]: {
-              success: await platform.mapper.setDto(
+              success: await platform.mapper.putDto(
                 operator,
                 args.payload as PlatformDto,
               ),
