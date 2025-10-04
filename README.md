@@ -155,8 +155,6 @@ fairpost: @userid refresh-platform --platform=xxx
 fairpost: @userid refresh-platforms [--platforms=xxx,xxx]
 fairpost: @userid get-platform --platform=xxx
 fairpost: @userid get-platforms [--platforms=xxx,xxx]
-fairpost: @userid get-settings
-fairpost: @userid put-settings <payload>
 fairpost: @userid get-source --source=xxx [--stage=xxx] 
 fairpost: @userid get-sources [--sources=xxx,xxx|--stage=xxx]
 fairpost: @userid get-post --post=xxx:xxx

@@ -158,7 +158,7 @@ class Fairpost {
           break;
         }
 
-        case "get-settings": {
+        /*case "get-settings": {
           if (!permissions.manageAccount) {
             throw new Error("Missing permissions for command " + command);
           }
@@ -186,6 +186,7 @@ class Fairpost {
           output = { success: true };
           break;
         }
+        */
 
         case "refresh-token": {
           if (!permissions.manageAccount) {
@@ -939,8 +940,6 @@ class Fairpost {
               `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid get-platform --platform=xxx`,
               `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
-              `${cmd} @userid get-settings`,
-              `${cmd} @userid put-settings <payload>`,
               `${cmd} @userid get-source --source=xxx [--stage=xxx] `,
               `${cmd} @userid get-sources [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid get-post --post=xxx:xxx`,
