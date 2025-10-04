@@ -3,6 +3,11 @@
     Fairpost cli handler     
 */
 
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { spawnSync } from "child_process";
+
 import "./bootstrap.ts";
 
 import Fairpost from "./services/Fairpost.ts";
@@ -45,7 +50,7 @@ if (!process.stdin.isTTY) {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
   }
 }
-const PAYLOAD = chunks.length
+let PAYLOAD = chunks.length
   ? await parsePayload(Buffer.concat(chunks))
   : undefined;
 
@@ -57,14 +62,35 @@ function getOption(key: string): boolean | string | null {
   return value.replace(`--${key}=`, "");
 }
 
+async function editPayload(getCommand: string, putCommand: string) {
+  const tmpFile = path.join(os.tmpdir(), "fairpost.tmp");
+  fs.writeFileSync(tmpFile, await execute(getCommand), "utf8");
+  const edit = spawnSync(`${process.env.EDITOR || "nano"} "${tmpFile}"`, {
+    stdio: "inherit",
+    shell: true,
+  });
+  if (edit.error) {
+    console.error("Failed to launch editor:", edit.error);
+    process.exit(1);
+  }
+  if (edit.status !== 0) {
+    console.warn(
+      `Editor exited with code ${edit.status} — assuming user cancelled.`,
+    );
+    process.exit(1);
+  }
+  PAYLOAD = await parsePayload(fs.readFileSync(tmpFile));
+  return await execute(putCommand);
+}
+
 // main
-async function main() {
+async function execute(command: string): Promise<string> {
   const operator = new Operator(OPERATOR, ["admin"], "cli", true);
   const user =
     USER && COMMAND !== "create-user" ? await User.getUser(USER) : undefined;
 
   try {
-    const output = await Fairpost.execute(operator, user, COMMAND, {
+    const output = await Fairpost.execute(operator, user, command, {
       dryrun: DRY_RUN,
       user: USER,
       password: PASSWORD,
@@ -78,11 +104,17 @@ async function main() {
       payload: PAYLOAD,
     });
 
-    console.info(JSON.stringify(output, JSONReplacer, "\t"));
+    return JSON.stringify(output, JSONReplacer, "\t");
   } catch (e) {
     console.error((e as Error).message ?? e);
+    throw e;
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-main();
+switch (COMMAND) {
+  case "edit-platform":
+    console.info(await editPayload("get-platform", "put-platform"));
+    break;
+  default:
+    console.info(await execute(COMMAND));
+}
