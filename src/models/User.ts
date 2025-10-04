@@ -242,11 +242,22 @@ export default class User {
     if (this.platforms === undefined) {
       this.loadPlatforms();
     }
-    const platform = this.platforms?.[platformId];
-    if (!platform) {
-      throw this.log.error("Unknown or disabled platform: " + platformId);
+    let platform = this.platforms?.[platformId];
+    if (platform) {
+      return platform;
     }
-    return platform;
+
+    Object.values(platformClasses).forEach((platformClass) => {
+      if (typeof platformClass === "function") {
+        if (platformClass.id() === platformId) {
+          platform = new platformClass(this);
+        }
+      }
+    });
+    if (platform) {
+      return platform;
+    }
+    throw this.log.error("Unknown platform: " + platformId);
   }
 
   /**
