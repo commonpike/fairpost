@@ -150,6 +150,7 @@ fairpost: @userid get-user
 fairpost: @userid get-feed
 fairpost: @userid get-platform --platform=xxx
 fairpost: @userid put-platform --platform=xxx << payload
+fairpost: @userid edit-platform --platform=xxx (cli only)
 fairpost: @userid get-platforms [--platforms=xxx,xxx]
 fairpost: @userid setup-platform --platform=xxx
 fairpost: @userid test-platform --platform=xxx

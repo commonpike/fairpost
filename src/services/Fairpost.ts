@@ -974,6 +974,7 @@ class Fairpost {
               `${cmd} @userid get-feed`,
               `${cmd} @userid get-platform --platform=xxx`,
               `${cmd} @userid put-platform --platform=xxx << payload`,
+              `${cmd} @userid edit-platform --platform=xxx (cli only)`,
               `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid setup-platform --platform=xxx`,
               `${cmd} @userid test-platform --platform=xxx`,
