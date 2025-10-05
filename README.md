@@ -147,8 +147,11 @@ to get a new pair of tokens.
 # basic commands:
 fairpost: help
 fairpost: @userid get-user
+fairpost: @userid put-user << payload
+fairpost: @userid edit-user (cli only)
 fairpost: @userid get-feed
-fairpost: @userid get-fields --model=user|feed|platform|source|post [--platform=xxx]
+fairpost: @userid put-feed << payload
+fairpost: @userid edit-feed (cli only)
 fairpost: @userid get-platform --platform=xxx
 fairpost: @userid put-platform --platform=xxx << payload
 fairpost: @userid edit-platform --platform=xxx (cli only)
@@ -159,16 +162,21 @@ fairpost: @userid test-platforms [--platforms=xxx,xxx]
 fairpost: @userid refresh-platform --platform=xxx
 fairpost: @userid refresh-platforms [--platforms=xxx,xxx]
 fairpost: @userid get-source --source=xxx [--stage=xxx] 
+fairpost: @userid put-source << payload
+fairpost: @userid edit-source (cli only)
 fairpost: @userid get-sources [--sources=xxx,xxx|--stage=xxx]
 fairpost: @userid get-post --post=xxx:xxx
+fairpost: @userid put-post << payload
+fairpost: @userid edit-post (cli only)
 fairpost: @userid get-posts [--status=xxx] [--sources=xxx,xxx|--stage=xxx] [--platforms=xxx,xxx] 
 fairpost: @userid prepare-post --post=xxx:xxx
 fairpost: @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx 
 fairpost: @userid schedule-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx] --date=xxxx-xx-xx
-fairpost: @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage]
+fairpost: @userid schedule-next-post --platform=xxx [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage=xxx]
 fairpost: @userid publish-post --post=xxx:xxx [--dry-run]
 fairpost: @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]
 fairpost: @userid set-status [--post=xxx:xxx|--posts=xxx:xxx,xxx:xxx]
+fairpost: @userid get-fields --model=user|feed|platform|source|post [--platform=xxx]
 
 # feed planning:
 fairpost: @userid prepare-posts  [--sources=xxx,xxx|--source=xxx|--stage=xxx] [--platforms=xxx,xxx|--platform=xxx]

@@ -14,8 +14,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
       type: "string",
       label: "ID",
       get: ["any"],
-      set: ["manageUsers"],
-      required: true,
+      set: ["none"], // todo - there should be a rename-user command instead
     },
     homedir: {
       type: "string",
@@ -79,10 +78,6 @@ export default class UserMapper extends AbstractMapper<UserDto> {
     for (const field in dto) {
       if (fields.includes(field)) {
         switch (field) {
-          case "id":
-            // todo - there should be a rename-user command instead
-            throw this.user.log.error("Cannot set ID: unimplemented");
-            break;
           case "loglevel":
             this.user.data.set(
               "settings",
