@@ -29,6 +29,7 @@ const COMMAND = process.argv[2]?.includes("@")
 const DRY_RUN = !!getOption("dry-run");
 const OPERATOR = (getOption("operator") as string) ?? "admin";
 const PASSWORD = (getOption("password") as string) ?? undefined;
+const MODEL = (getOption("model") as string) ?? undefined;
 const PLATFORMS =
   ((getOption("platforms") as string)?.split(",") as PlatformId[]) ?? undefined;
 const SOURCES = (getOption("sources") as string)?.split(",") ?? undefined;
@@ -94,6 +95,7 @@ async function execute(command: string): Promise<string> {
       dryrun: DRY_RUN,
       user: USER,
       password: PASSWORD,
+      model: MODEL,
       platforms: PLATFORMS,
       platform: PLATFORM,
       sources: SOURCES,

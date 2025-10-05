@@ -23,7 +23,7 @@ export default class Platform {
   defaultBody: string = "Fairpost feed";
   assetsFolder: string = "_fairpost";
   postFileName: string = "post.json";
-  mapper: PlatformMapper;
+  mapper!: PlatformMapper; // child *must* set this
   settings: FieldMapping = {};
   interval: number;
   constructor(user: User) {
@@ -32,7 +32,6 @@ export default class Platform {
     this.interval = Number(
       this.user.data.get("settings", "FEED_INTERVAL", "7"),
     );
-    this.mapper = new PlatformMapper(this);
   }
 
   /**

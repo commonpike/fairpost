@@ -5,7 +5,7 @@ import Feed from "../models/Feed.ts";
 
 export default class FeedMapper extends AbstractMapper<FeedDto> {
   private feed: Feed;
-  mapping: FieldMapping = {
+  static feedMapping: FieldMapping = {
     model: {
       type: "string",
       label: "Model",
@@ -38,6 +38,7 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
       required: false,
     },
   };
+  mapping = FeedMapper.feedMapping;
 
   constructor(feed: Feed) {
     super(feed.user);
