@@ -163,36 +163,6 @@ class Fairpost {
           break;
         }
 
-        /*case "get-settings": {
-          if (!permissions.manageAccount) {
-            throw new Error("Missing permissions for command " + command);
-          }
-          if (!user) {
-            throw new Error("user is required for command " + command);
-          }
-          output = user.getSettings();
-          break;
-        }
-
-        case "put-settings": {
-          if (!permissions.manageAccount) {
-            throw new Error("Missing permissions for command " + command);
-          }
-          if (!user) {
-            throw new Error("user is required for command " + command);
-          }
-          if (!args.payload) {
-            throw user.log.error(
-              "CommandHandler " + command,
-              "Missing argument: payload",
-            );
-          }
-          await user.putSettings(args.payload as { [key: string]: string });
-          output = { success: true };
-          break;
-        }
-        */
-
         case "get-fields": {
           if (!permissions.manageAccount) {
             throw new Error("Missing permissions for command " + command);
@@ -244,9 +214,31 @@ class Fairpost {
         case "get-user": {
           if (!user) {
             throw new Error("Missing user for command " + command);
-          } else {
-            output = await user.mapper.getDto(operator);
           }
+          output = await user.mapper.getDto(operator);
+          break;
+        }
+
+        case "put-user": {
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.payload) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing payload",
+            );
+          }
+          if (
+            Buffer.isBuffer(args.payload || typeof args.payload === "string")
+          ) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Payload must be an object",
+            );
+          }
+          await user.mapper.putDto(operator, args.payload as UserDto);
+          output = await user.mapper.getDto(operator);
           break;
         }
 
@@ -262,51 +254,32 @@ class Fairpost {
           break;
         }
 
-        /*case "add-platform": {
+        case "put-feed": {
           if (!permissions.manageFeed) {
             throw new Error("Missing permissions for command " + command);
           }
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          if (!args.platform) {
+          if (!args.payload) {
             throw user.log.error(
               "CommandHandler " + command,
-              "Missing argument: platform",
+              "Missing payload",
             );
           }
-          await user.addPlatform(args.platform);
-          output = {
-            [args.platform]: {
-              success: true,
-              message: "Proceed to setup.",
-            },
-          };
-          break;
-        }
-
-        case "remove-platform": {
-          if (!permissions.manageFeed) {
-            throw new Error("Missing permissions for command " + command);
-          }
-          if (!user) {
-            throw new Error("user is required for command " + command);
-          }
-          if (!args.platform) {
+          if (
+            Buffer.isBuffer(args.payload || typeof args.payload === "string")
+          ) {
             throw user.log.error(
               "CommandHandler " + command,
-              "Missing argument: platform",
+              "Payload must be an object",
             );
           }
-          await user.removePlatform(args.platform);
-          output = {
-            [args.platform]: {
-              success: true,
-            },
-          };
+          const feed = user.getFeed();
+          await feed.mapper.putDto(operator, args.payload as FeedDto);
+          output = await feed.mapper.getDto(operator);
           break;
         }
-        */
 
         case "setup-platform": {
           if (!permissions.manageFeed) {
@@ -527,6 +500,39 @@ class Fairpost {
           output = await source.mapper.getDto(operator);
           break;
         }
+        case "put-source": {
+          if (!permissions.manageSources) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.payload) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing payload",
+            );
+          }
+          if (!args.source) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: source",
+            );
+          }
+          if (
+            Buffer.isBuffer(args.payload || typeof args.payload === "string")
+          ) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Payload must be an object",
+            );
+          }
+          const feed = user.getFeed();
+          const source = await feed.getSource(args.source, args.stage);
+          await source.mapper.putDto(operator, args.payload as SourceDto);
+          output = await source.mapper.getDto(operator);
+          break;
+        }
         case "get-sources": {
           if (!permissions.manageSources) {
             throw new Error("Missing permissions for command " + command);
@@ -565,6 +571,48 @@ class Fairpost {
           const platform = user.getPlatform(args.platform);
           const source = await feed.getSource(args.source);
           const post = await platform.getPost(source);
+          output = await post.mapper.getDto(operator);
+          break;
+        }
+        case "put-post": {
+          if (!permissions.managePosts) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.payload) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing payload",
+            );
+          }
+          if (!args.source) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: source",
+            );
+          }
+          if (!args.platform) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: platform",
+            );
+          }
+
+          if (
+            Buffer.isBuffer(args.payload || typeof args.payload === "string")
+          ) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Payload must be an object",
+            );
+          }
+          const feed = user.getFeed();
+          const platform = user.getPlatform(args.platform);
+          const source = await feed.getSource(args.source);
+          const post = await platform.getPost(source);
+          await post.mapper.putDto(operator, args.payload as PostDto);
           output = await post.mapper.getDto(operator);
           break;
         }
@@ -1004,8 +1052,11 @@ class Fairpost {
               "# basic commands:",
               `${cmd} help`,
               `${cmd} @userid get-user`,
+              `${cmd} @userid put-user << payload`,
+              `${cmd} @userid edit-user (cli only)`,
               `${cmd} @userid get-feed`,
-              `${cmd} @userid get-fields --model=user|feed|platform|source|post [--platform=xxx]`,
+              `${cmd} @userid put-feed << payload`,
+              `${cmd} @userid edit-feed (cli only)`,
               `${cmd} @userid get-platform --platform=xxx`,
               `${cmd} @userid put-platform --platform=xxx << payload`,
               `${cmd} @userid edit-platform --platform=xxx (cli only)`,
@@ -1016,8 +1067,12 @@ class Fairpost {
               `${cmd} @userid refresh-platform --platform=xxx`,
               `${cmd} @userid refresh-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid get-source --source=xxx [--stage=xxx] `,
+              `${cmd} @userid put-source << payload`,
+              `${cmd} @userid edit-source (cli only)`,
               `${cmd} @userid get-sources [--sources=xxx,xxx|--stage=xxx]`,
               `${cmd} @userid get-post --post=xxx:xxx`,
+              `${cmd} @userid put-post << payload`,
+              `${cmd} @userid edit-post (cli only)`,
               `${cmd} @userid get-posts [--status=xxx] [--sources=xxx,xxx|--stage=xxx] [--platforms=xxx,xxx] `,
               `${cmd} @userid prepare-post --post=xxx:xxx`,
               `${cmd} @userid schedule-post --post=xxx:xxx --date=xxxx-xx-xx `,
@@ -1026,6 +1081,7 @@ class Fairpost {
               `${cmd} @userid publish-post --post=xxx:xxx [--dry-run]`,
               `${cmd} @userid publish-posts [--source=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               `${cmd} @userid set-status [--post=xxx:xxx|--posts=xxx:xxx,xxx:xxx]`,
+              `${cmd} @userid get-fields --model=user|feed|platform|source|post [--platform=xxx]`,
               "\n# feed planning:",
               `${cmd} @userid prepare-posts  [--sources=xxx,xxx|--source=xxx|--stage=xxx] [--platforms=xxx,xxx|--platform=xxx]`,
               `${cmd} @userid schedule-next-posts [--date=xxxx-xx-xx] [--sources=xxx,xxx|--stage] [--platforms=xxx,xxx] `,

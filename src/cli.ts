@@ -117,6 +117,18 @@ switch (COMMAND) {
   case "edit-platform":
     console.info(await editPayload("get-platform", "put-platform"));
     break;
+  case "edit-user":
+    console.info(await editPayload("get-user", "put-user"));
+    break;
+  case "edit-feed":
+    console.info(await editPayload("get-feed", "put-feed"));
+    break;
+  case "edit-source":
+    console.info(await editPayload("get-source", "put-source"));
+    break;
+  case "edit-post":
+    console.info(await editPayload("get-post", "put-post"));
+    break;
   default:
     console.info(await execute(COMMAND));
 }
