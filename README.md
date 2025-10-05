@@ -148,6 +148,7 @@ to get a new pair of tokens.
 fairpost: help
 fairpost: @userid get-user
 fairpost: @userid get-feed
+fairpost: @userid get-fields --model=user|feed|platform|source|post [--platform=xxx]
 fairpost: @userid get-platform --platform=xxx
 fairpost: @userid put-platform --platform=xxx << payload
 fairpost: @userid edit-platform --platform=xxx (cli only)

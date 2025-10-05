@@ -5,7 +5,7 @@ import Platform from "../models/Platform.ts";
 
 export default class PlatformMapper extends AbstractMapper<PlatformDto> {
   private platform: Platform;
-  mapping: FieldMapping = {
+  private static platformMapping: FieldMapping = {
     model: {
       type: "string",
       label: "Model",
@@ -31,8 +31,10 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       set: ["managePlatforms"],
     },
     // more fields from platform.settings
-    // added in constructor
+    // added in mapper constructor
   };
+
+  mapping = structuredClone(PlatformMapper.platformMapping);
 
   constructor(platform: Platform) {
     super(platform.user);

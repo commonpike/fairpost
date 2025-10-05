@@ -1,4 +1,10 @@
 import User from "./User.ts";
+import { FieldMapping, ProcessedFieldMapping } from "../types/index.ts";
+import Platform from "../models/Platform.ts";
+import UserMapper from "../mappers/UserMapper.ts";
+import FeedMapper from "../mappers/FeedMapper.ts";
+import SourceMapper from "../mappers/SourceMapper.ts";
+import PostMapper from "../mappers/PostMapper.ts";
 
 /**
  * Operator - represents the user executing an operation or command.
@@ -78,5 +84,68 @@ export default class Operator {
     //user?.log.info(user.id,this.id,this.roles,this.authenticated);
     //user?.log.info(permissions);
     return permissions;
+  }
+
+  public getFieldMapping(
+    user: User,
+    model: string,
+    instance?: object,
+  ): ProcessedFieldMapping {
+    let rawFieldMapping: FieldMapping | undefined = undefined;
+    let processedFieldMapping: ProcessedFieldMapping = {};
+    switch (model) {
+      case "user":
+        rawFieldMapping = UserMapper.userMapping;
+        break;
+
+      case "feed":
+        rawFieldMapping = FeedMapper.feedMapping;
+        break;
+
+      case "source":
+        rawFieldMapping = SourceMapper.sourceMapping;
+        break;
+
+      case "platform":
+        if (!instance || !(instance instanceof Platform)) {
+          throw user.log.error(
+            "Operator.getFieldMapping",
+            "Platform is required",
+          );
+        }
+        const platform = instance as Platform;
+        rawFieldMapping = platform.mapper.mapping;
+        break;
+
+      case "post":
+        rawFieldMapping = PostMapper.postMapping;
+        break;
+    }
+    if (!rawFieldMapping) {
+      throw user.log.error("Operator.getFieldMapping: no such mapping", model);
+    }
+    const permissions = this.getPermissions(user);
+    for (const fieldName of Object.keys(rawFieldMapping)) {
+      const rawField = rawFieldMapping[fieldName];
+      const processedField = { ...rawField, get: true, set: true };
+      for (const operation of ["get", "set"] as const) {
+        if (rawField[operation].includes("any"))
+          processedField[operation] = true;
+        else if (rawField[operation].includes("none"))
+          processedField[operation] = false;
+        else if (
+          rawField[operation].some(
+            (permission) =>
+              permission in permissions &&
+              permissions[permission as keyof typeof permissions],
+          )
+        )
+          processedField[operation] = true;
+      }
+      if (processedField["get"]) {
+        processedFieldMapping[fieldName] = processedField;
+      }
+    }
+    return processedFieldMapping;
   }
 }

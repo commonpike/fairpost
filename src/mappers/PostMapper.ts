@@ -1,11 +1,11 @@
 import AbstractMapper from "./AbstractMapper.ts";
-import { PostDto, FieldMapping, FileInfo } from "../types/index.ts";
+import { PostDto, FileInfo, FieldMapping } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
 import Post from "../models/Post.ts";
 
 export default class PostMapper extends AbstractMapper<PostDto> {
   private post: Post;
-  mapping: FieldMapping = {
+  static postMapping: FieldMapping = {
     model: {
       type: "string",
       label: "Model",
@@ -121,6 +121,7 @@ export default class PostMapper extends AbstractMapper<PostDto> {
       set: ["none"],
     },
   };
+  mapping = PostMapper.postMapping;
 
   constructor(post: Post) {
     super(post.platform.user);

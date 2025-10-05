@@ -80,6 +80,7 @@ export default class Server {
 
     // read other params from query
     const password = parsed.searchParams.get("password") || undefined;
+    const model = parsed.searchParams.get("model") || undefined;
     const dryrun = parsed.searchParams.get("dry-run") === "true";
     const date = parsed.searchParams.get("date");
     const post = parsed.searchParams.get("post");
@@ -112,6 +113,7 @@ export default class Server {
     const args = {
       password: password,
       dryrun: dryrun || undefined,
+      model: model,
       platforms: platforms,
       platform: platform,
       sources: sources,

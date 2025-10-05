@@ -9,6 +9,7 @@ export default interface CommandArguments {
   dryrun?: boolean;
   user?: string;
   password?: string;
+  model?: string;
   platforms?: PlatformId[];
   platform?: PlatformId;
   sources?: string[];

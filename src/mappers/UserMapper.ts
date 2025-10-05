@@ -3,7 +3,7 @@ import { UserDto, FieldMapping } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
 
 export default class UserMapper extends AbstractMapper<UserDto> {
-  mapping: FieldMapping = {
+  static userMapping: FieldMapping = {
     model: {
       type: "string",
       label: "Model",
@@ -39,6 +39,7 @@ export default class UserMapper extends AbstractMapper<UserDto> {
       required: false,
     },
   };
+  mapping = UserMapper.userMapping;
 
   /**
    * Return a dto based on the operator and operation

@@ -1,6 +1,7 @@
 export type { default as CommandArguments } from "./CommandArguments.ts";
 export type { default as CombinedResult } from "./CombinedResult.ts";
 export type { default as FieldMapping } from "./FieldMapping.ts";
+export type { ProcessedFieldMapping } from "./FieldMapping.ts";
 export type { default as Dto } from "./Dto.ts";
 export type { default as FeedDto } from "./FeedDto.ts";
 export { default as FileGroup } from "./FileGroup.ts";

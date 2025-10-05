@@ -1,7 +1,11 @@
 import log4js from "log4js";
 import log4jsConfig from "../config/log4js.json" with { type: "json" };
 
-import { CommandArguments, CombinedResult } from "../types/index.ts";
+import {
+  CommandArguments,
+  CombinedResult,
+  ProcessedFieldMapping,
+} from "../types/index.ts";
 import { PlatformId } from "../platforms/index.ts";
 import {
   FeedDto,
@@ -20,6 +24,7 @@ import Operator from "../models/Operator.ts";
 import User from "../models/User.ts";
 
 type FairpostOutput =
+  | ProcessedFieldMapping
   | FeedDto
   | PlatformDto
   | PostDto
@@ -187,6 +192,34 @@ class Fairpost {
           break;
         }
         */
+
+        case "get-fields": {
+          if (!permissions.manageAccount) {
+            throw new Error("Missing permissions for command " + command);
+          }
+          if (!user) {
+            throw new Error("user is required for command " + command);
+          }
+          if (!args.model) {
+            throw user.log.error(
+              "CommandHandler " + command,
+              "Missing argument: model",
+            );
+          }
+          let instance: object | undefined = undefined;
+          if (args.model === "platform") {
+            if (!args.platform) {
+              throw user.log.error(
+                "CommandHandler " + command,
+                "Missing argument: platform",
+              );
+            }
+            instance = user.getPlatform(args.platform);
+          }
+
+          output = operator.getFieldMapping(user, args.model, instance);
+          break;
+        }
 
         case "refresh-token": {
           if (!permissions.manageAccount) {
@@ -972,6 +1005,7 @@ class Fairpost {
               `${cmd} help`,
               `${cmd} @userid get-user`,
               `${cmd} @userid get-feed`,
+              `${cmd} @userid get-fields --model=user|feed|platform|source|post [--platform=xxx]`,
               `${cmd} @userid get-platform --platform=xxx`,
               `${cmd} @userid put-platform --platform=xxx << payload`,
               `${cmd} @userid edit-platform --platform=xxx (cli only)`,

@@ -22,3 +22,12 @@ export default interface FieldMapping {
     default?: string | string[] | number | boolean | Date | object;
   };
 }
+
+// after applying operator and user, get and set
+// can be represented by simple booleans:
+export interface ProcessedFieldMapping {
+  [field: string]: Omit<FieldMapping[string], "get" | "set"> & {
+    get: boolean;
+    set: boolean;
+  };
+}

@@ -1,11 +1,11 @@
 import AbstractMapper from "./AbstractMapper.ts";
-import { SourceDto, FieldMapping, FileInfo } from "../types/index.ts";
+import { SourceDto, FileInfo, FieldMapping } from "../types/index.ts";
 import Operator from "../models/Operator.ts";
 import Source from "../models/Source.ts";
 
 export default class SourceMapper extends AbstractMapper<SourceDto> {
   private source: Source;
-  mapping: FieldMapping = {
+  static sourceMapping: FieldMapping = {
     model: {
       type: "string",
       label: "Model",
@@ -49,6 +49,7 @@ export default class SourceMapper extends AbstractMapper<SourceDto> {
       set: ["manageSources"],
     },
   };
+  mapping = SourceMapper.sourceMapping;
 
   constructor(source: Source) {
     super(source.feed.user);
