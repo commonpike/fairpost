@@ -15,15 +15,15 @@ export default class TwitterAuth {
   /**
    * Set up Twitter platform
    */
-  async setupCli() {
+  async connectCli() {
     const { code, verifier } = await this.requestCode();
     const tokens = await this.exchangeCode(code, verifier);
     await this.store(tokens);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async setupApi(payload: object) {
-    throw this.user.log.error("TwitterAuth:setupApi - not implemented");
+  async connectApi(payload: object) {
+    throw this.user.log.error("TwitterAuth:connectApi - not implemented");
   }
 
   /**

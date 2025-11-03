@@ -20,7 +20,7 @@ export default class LinkedInAuth {
   /**
    * Set up LinkedIn platform
    */
-  async setupCli() {
+  async connectCli() {
     const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
@@ -29,7 +29,7 @@ export default class LinkedInAuth {
     await this.store(tokens);
   }
 
-  async setupApi(payload: {
+  async connectApi(payload: {
     state?: string;
     redirect_uri?: string;
     code?: string;
@@ -42,7 +42,10 @@ export default class LinkedInAuth {
       throw this.user.log.error(msg, payload);
     }
     if (!payload.redirect_uri) {
-      throw this.user.log.error("LinkedInAuth.setup: Invalid payload", payload);
+      throw this.user.log.error(
+        "LinkedInAuth.connect: Invalid payload",
+        payload,
+      );
     }
     if (!payload.code) {
       return {

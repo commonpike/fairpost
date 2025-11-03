@@ -281,7 +281,7 @@ class Fairpost {
           break;
         }
 
-        case "setup-platform": {
+        case "connect-platform": {
           if (!permissions.manageFeed) {
             throw new Error("Missing permissions for command " + command);
           }
@@ -299,11 +299,14 @@ class Fairpost {
           ) {
             throw user.log.error(
               "CommandHandler " + command,
-              "Setup payload must be an object",
+              "Connect payload must be an object",
             );
           }
           const platform = await user.addPlatform(args.platform);
-          const result = await platform.setup(operator, args.payload as object);
+          const result = await platform.connect(
+            operator,
+            args.payload as object,
+          );
           output = {
             [args.platform]: {
               success: true,
@@ -1061,7 +1064,7 @@ class Fairpost {
               `${cmd} @userid put-platform --platform=xxx << payload`,
               `${cmd} @userid edit-platform --platform=xxx (cli only)`,
               `${cmd} @userid get-platforms [--platforms=xxx,xxx]`,
-              `${cmd} @userid setup-platform --platform=xxx`,
+              `${cmd} @userid connect-platform --platform=xxx`,
               `${cmd} @userid test-platform --platform=xxx`,
               `${cmd} @userid test-platforms [--platforms=xxx,xxx]`,
               `${cmd} @userid refresh-platform --platform=xxx`,

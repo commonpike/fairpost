@@ -55,7 +55,7 @@ To have Fairpost publish **public** videos, your app has to be audited
 This token last for a few hours and should be refreshed.
 The refresh token (if given) lasts until it is revoked.
 
- - call `./fairpost.js @userid setup-platform --platform=youtube`
+ - call `./fairpost.js @userid connect-platform --platform=youtube`
  - follow instructions from the command line
 
 ### Test the platform
@@ -70,7 +70,7 @@ The refresh token (if given) lasts until it is revoked.
 
 ### Get an OAuth2 Access Token for your other page
 
- - call `./fairpost.js @foo setup-platform --platform=youtube`
+ - call `./fairpost.js @foo connect-platform --platform=youtube`
  - follow instructions from the command line
 
 ### Test the other installation

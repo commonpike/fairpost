@@ -32,7 +32,7 @@ https://www.linkedin.com/developers/apps/new
 This token last for 60 days and should be refreshed.
 The refresh token (if given) lasts for 1 year.
 
- - call `./fairpost.js @userid setup-platform --platform=linkedin`
+ - call `./fairpost.js @userid connect-platform --platform=linkedin`
  - follow instructions from the command line
 
 ### Test the platform
@@ -50,7 +50,7 @@ One fairpost user can only manage one page. If you create a second user, you can
 
 ### Get an OAuth2 Access Token for your other page
 
- - call `./fairpost.js @foo setup-platform --platform=linkedin`
+ - call `./fairpost.js @foo connect-platform --platform=linkedin`
  - follow instructions from the command line
 
 ### Test the other installation

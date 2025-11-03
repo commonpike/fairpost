@@ -17,7 +17,7 @@ export default class FacebookAuth {
     this.user = user;
   }
 
-  async setupCli() {
+  async connectCli() {
     const code = await this.requestCode(
       this.user.data.get("app", "FACEBOOK_APP_ID"),
     );
@@ -40,8 +40,8 @@ export default class FacebookAuth {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public async setupApi(payload: object) {
-    throw this.user.log.error("FacebookAuth:setupApi - not implemented");
+  public async connectApi(payload: object) {
+    throw this.user.log.error("FacebookAuth:connectApi - not implemented");
   }
 
   protected async requestCode(clientId: string): Promise<string> {

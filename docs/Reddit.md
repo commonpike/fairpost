@@ -22,7 +22,7 @@
 
 This token only lasts for 24 hours and should be refreshed.
 
- - call `./fairpost.js @userid setup-platform --platform=reddit`
+ - call `./fairpost.js @userid connect-platform --platform=reddit`
  - follow instructions from the command line
 
 
