@@ -7,7 +7,7 @@ export default class InstagramAuth extends FacebookAuth {
     super(user);
   }
 
-  async setup() {
+  async connect() {
     const code = await this.requestCode(
       this.user.data.get("app", "INSTAGRAM_APP_ID"),
     );
@@ -30,8 +30,8 @@ export default class InstagramAuth extends FacebookAuth {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public async setupApi(payload: object) {
-    throw this.user.log.error("InstagramAuth:setupApi - not implemented");
+  public async connectApi(payload: object) {
+    throw this.user.log.error("InstagramAuth:connectApi - not implemented");
   }
 
   protected async requestCode(clientId: string): Promise<string> {

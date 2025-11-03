@@ -18,7 +18,7 @@ export default class BlueskyAuth {
    * In 2025, this uses a service, user handle, app password
    */
 
-  public async setupCli() {
+  public async connectCli() {
     const reader = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -28,7 +28,9 @@ export default class BlueskyAuth {
     };
     const currentid = this.user.data.get("settings", "BLUESKY_IDENTIFIER", "");
     if (!currentid) {
-      throw this.user.log.error("BlueskyAuth:setupCli - set identifier first");
+      throw this.user.log.error(
+        "BlueskyAuth:connectCli - set identifier first",
+      );
     }
     tokens.password = await reader.question(`BlueSky app password: `);
     reader.close();
@@ -36,13 +38,17 @@ export default class BlueskyAuth {
     console.log("Credentials stored.");
   }
 
-  public async setupApi(payload: { password?: string }) {
+  public async connectApi(payload: { password?: string }) {
     const currentid = this.user.data.get("settings", "BLUESKY_IDENTIFIER", "");
     if (!currentid) {
-      throw this.user.log.error("BlueskyAuth:setupApi - set identifier first");
+      throw this.user.log.error(
+        "BlueskyAuth:connectApi - set identifier first",
+      );
     }
     if (!payload.password) {
-      throw this.user.log.error("BlueskyAuth:setupApi - app password missing");
+      throw this.user.log.error(
+        "BlueskyAuth:connectApi - app password missing",
+      );
     }
     await this.store({
       password: payload.password,

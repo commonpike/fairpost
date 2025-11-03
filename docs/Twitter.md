@@ -44,7 +44,7 @@ keys will not be needed anymore.
 
 This token should last forever (?)
 
- - call `./fairpost.js @userid setup-platform --platform=twitter`
+ - call `./fairpost.js @userid connect-platform --platform=twitter`
  - follow instructions from the command line
 
 ### Test the platform
@@ -60,7 +60,7 @@ account and requires you to specify an 'additional_owner' for the uploaded media
 
 ### Get an OAuth2 Access Token for your other page
 
-- call `./fairpost.js @foo setup-platform --platform=twitter`
+- call `./fairpost.js @foo connect-platform --platform=twitter`
 - follow instructions from the command line
 
 ### Test the other installation

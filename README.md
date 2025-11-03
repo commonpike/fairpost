@@ -71,7 +71,7 @@ but in general, the steps are
 nano users/foobar/var/lib/storage.json
 
 # connect platform `bla` to user `foobar`
-./fairpost.js @foobar setup-platform --platform=bla
+./fairpost.js @foobar connect-platform --platform=bla
 
 ```
 
@@ -137,7 +137,7 @@ Access and refresh tokens for various platforms may
 expire sooner or later. Before you do anything, try
 `fairpost.js @userid refresh-platforms`. Eventually, even
 refresh tokens may expire, and you will have to run
-`fairpost.js @userid setup-platform --platform=bla` again
+`fairpost.js @userid connect-platform --platform=bla` again
 to get a new pair of tokens.
 
 
@@ -156,7 +156,7 @@ fairpost: @userid get-platform --platform=xxx
 fairpost: @userid put-platform --platform=xxx << payload
 fairpost: @userid edit-platform --platform=xxx (cli only)
 fairpost: @userid get-platforms [--platforms=xxx,xxx]
-fairpost: @userid setup-platform --platform=xxx
+fairpost: @userid connect-platform --platform=xxx
 fairpost: @userid test-platform --platform=xxx
 fairpost: @userid test-platforms [--platforms=xxx,xxx]
 fairpost: @userid refresh-platform --platform=xxx

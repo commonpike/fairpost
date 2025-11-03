@@ -59,7 +59,7 @@ tokens, you can turn on Live mode and start posting.
   - go to https://developers.facebook.com/
   - select your app, edit it 
   - set App Mode to 'dev'
-- call `./fairpost.js @userid setup-platform --platform=instagram`
+- call `./fairpost.js @userid connect-platform --platform=instagram`
 - follow instructions from the command line
 
 ### Test the  platform
@@ -94,7 +94,7 @@ One fairpost user can only manage one page. If you create a second user, you can
   - go to https://developers.facebook.com/
   - select your app, edit it 
   - set App Mode to 'dev'
-- call `./fairpost.js @foo setup-platform --platform=instagram`
+- call `./fairpost.js @foo connect-platform --platform=instagram`
 - follow instructions from the command line
 - put your app back in live mode 
 

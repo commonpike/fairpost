@@ -103,9 +103,9 @@ and party.
 This method allows you to call `fairpost.js test-platform --platform=foobar`. 
 You can return anything.
 
-#### FooBar.setup()
+#### FooBar.connect()
 
-This method allows you to call `fairpost.js setup-platform --platform=foobar`, 
+This method allows you to call `fairpost.js connect-platform --platform=foobar`, 
 usually to get the access tokens and save them in Storage.
 
 #### FooBar.refresh()
@@ -215,7 +215,7 @@ import {
 
 Another good approach to refactor is to take the Authentication 
 flow out of your platform into a separate `FooBar/FooBarAuth.ts`.
-Add a method `setup()` and link your `Foobar.setup()` there.
+Add a method `connect()` and link your `Foobar.connect()` there.
 Optionally add a method `refresh()` and link your `Foobar.refresh()` there.
 Store the access tokens in `auth` Storage, so you can access them
 in your platform class.
@@ -240,7 +240,7 @@ export default class FooBarAuth {
   /**
    * Set up FooBar platform
    */
-  async setup() {
+  async connect() {
     const code = await this.requestCode();
     const tokens = await this.exchangeCode(code);
     await this.store(tokens);

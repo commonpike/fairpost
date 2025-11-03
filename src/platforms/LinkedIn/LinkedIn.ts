@@ -62,16 +62,16 @@ export default class LinkedIn extends Platform {
   }
 
   /** @inheritdoc */
-  async setup(operator: Operator, payload?: object) {
+  async connect(operator: Operator, payload?: object) {
     if (operator.ui === "cli") {
-      await this.auth.setupCli();
+      await this.auth.connectCli();
       return await this.test();
     }
     if (operator.ui === "api") {
       if (!payload) {
-        throw this.user.log.error("Setup via api requires a payload");
+        throw this.user.log.error("Connect via api requires a payload");
       }
-      const result = await this.auth.setupApi(payload);
+      const result = await this.auth.connectApi(payload);
       const ready = "ready" in result && result.ready;
       if (!ready) return result;
       return {
@@ -81,7 +81,7 @@ export default class LinkedIn extends Platform {
     }
 
     throw this.user.log.error(
-      `${this.id} setup: ui ${operator.ui} not supported`,
+      `${this.id} connect: ui ${operator.ui} not supported`,
     );
   }
 

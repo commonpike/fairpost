@@ -45,7 +45,7 @@ export default class Platform {
   }
 
   /**
-   * setup
+   * connect
    *
    * Set the platform up. Get the required keys and tokens.
    * This may involve starting a webserver and/or communicating
@@ -55,9 +55,9 @@ export default class Platform {
    * @returns - any object
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async setup(operator?: Operator, payload?: object): Promise<unknown> {
+  async connect(operator?: Operator, payload?: object): Promise<unknown> {
     throw this.user.log.error(
-      "No setup implemented for " +
+      "No connect implemented for " +
         this.id +
         ". Read the docs in the docs folder.",
     );
