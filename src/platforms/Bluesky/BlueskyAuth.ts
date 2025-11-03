@@ -24,39 +24,27 @@ export default class BlueskyAuth {
       output: process.stdout,
     });
     const tokens = {
-      identifier: "",
       password: "",
     };
-    const currentid = this.user.data.get(
-      "auth",
-      "BLUESKY_IDENTIFIER",
-      "like foobar.bsky.social",
-    );
-    tokens.identifier =
-      (await reader.question(`BlueSky account ( ${currentid} ): `)) ||
-      currentid;
-    console.log(
-      "To let Fairpost post on your behalf, Bluesky requires an App Password.",
-    );
-    console.log("We will never ask for your main password.");
-    console.log(
-      "You can create an app password here: https://bsky.app/settings/app-passwords",
-    );
+    const currentid = this.user.data.get("settings", "BLUESKY_IDENTIFIER", "");
+    if (!currentid) {
+      throw this.user.log.error("BlueskyAuth:setupCli - set identifier first");
+    }
     tokens.password = await reader.question(`BlueSky app password: `);
     reader.close();
     await this.store(tokens);
     console.log("Credentials stored.");
   }
 
-  public async setupApi(payload: { identifier?: string; password?: string }) {
-    if (!payload.identifier) {
-      throw this.user.log.error("BlueskyAuth:setupApi - identifier missing");
+  public async setupApi(payload: { password?: string }) {
+    const currentid = this.user.data.get("settings", "BLUESKY_IDENTIFIER", "");
+    if (!currentid) {
+      throw this.user.log.error("BlueskyAuth:setupApi - set identifier first");
     }
     if (!payload.password) {
       throw this.user.log.error("BlueskyAuth:setupApi - app password missing");
     }
     await this.store({
-      identifier: payload.identifier,
       password: payload.password,
     });
   }
@@ -66,8 +54,7 @@ export default class BlueskyAuth {
    * @param tokens - the tokens to store
    */
 
-  private async store(tokens: { identifier: string; password: string }) {
-    this.user.data.set("auth", "BLUESKY_IDENTIFIER", tokens["identifier"]);
+  private async store(tokens: { password: string }) {
     const secret = this.user.data.get("app", "BLUESKY_CRYPT_SECRET");
     const encryptedPassword = await encryptAESWeb(tokens["password"], secret);
     this.user.data.set("auth", "BLUESKY_PASSWORD", encryptedPassword);
@@ -91,7 +78,7 @@ export default class BlueskyAuth {
       we need to refresh it using the password anyway.
       so lets just store the password and log in every time
     */
-    const identifier = this.user.data.get("auth", "BLUESKY_IDENTIFIER");
+    const identifier = this.user.data.get("settings", "BLUESKY_IDENTIFIER");
     const encryptedPassword = this.user.data.get("auth", "BLUESKY_PASSWORD");
     const secret = this.user.data.get("app", "BLUESKY_CRYPT_SECRET");
     const password = await decryptAESWeb(encryptedPassword, secret);

@@ -26,7 +26,23 @@ export default class Bluesky extends Platform {
       max_size: 1000,
     },
   };
-  settings: FieldMapping = {};
+  settings: FieldMapping = {
+    BLUESKY_IDENTIFIER: {
+      type: "string",
+      label: "Bluesky Identifier",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    BLUESKY_PLUGIN_SETTINGS: {
+      type: "json",
+      label: "Bluesky Plugin settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: false,
+      default: this.pluginSettings,
+    },
+  };
   auth: BlueskyAuth;
 
   constructor(user: User) {
