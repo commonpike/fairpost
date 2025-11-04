@@ -65,7 +65,10 @@ export default class LinkedIn extends Platform {
   async connect(operator: Operator, payload?: object) {
     if (operator.ui === "cli") {
       await this.auth.connectCli();
-      return await this.test();
+      const test = await this.test();
+      this.connected = true;
+      await this.save();
+      return test;
     }
     if (operator.ui === "api") {
       if (!payload) {
@@ -74,9 +77,12 @@ export default class LinkedIn extends Platform {
       const result = await this.auth.connectApi(payload);
       const ready = "ready" in result && result.ready;
       if (!ready) return result;
+      const test = await this.test();
+      this.connected = true;
+      await this.save();
       return {
         ...result,
-        test: await this.test(),
+        test: test,
       };
     }
 
