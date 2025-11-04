@@ -302,7 +302,11 @@ class Fairpost {
               "Connect payload must be an object",
             );
           }
-          const platform = await user.addPlatform(args.platform);
+          const platform = await user.getPlatform(args.platform);
+          if (!platform.active) {
+            platform.active = true;
+            await platform.save();
+          }
           const result = await platform.connect(
             operator,
             args.payload as object,

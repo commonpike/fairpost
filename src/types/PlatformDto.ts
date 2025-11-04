@@ -3,6 +3,7 @@ export default interface PlatformDto {
   id: string;
   user_id: string;
   active?: boolean;
+  connected?: boolean;
   // more fields added by platform
   [key: string]: string | string[] | number | boolean | undefined;
 }
