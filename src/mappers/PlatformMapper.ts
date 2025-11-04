@@ -30,6 +30,12 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       get: ["managePlatforms"],
       set: ["managePlatforms"],
     },
+    connected: {
+      type: "boolean",
+      label: "Connected",
+      get: ["managePlatforms"],
+      set: ["none"],
+    },
     // more fields from platform.settings
     // added in mapper constructor
   };
@@ -60,6 +66,9 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       switch (field) {
         case "active":
           dto[field] = !!this.platform.active;
+          break;
+        case "connected":
+          dto[field] = !!this.platform.connected;
           break;
         case "model":
         case "id":

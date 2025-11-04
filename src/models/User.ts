@@ -215,14 +215,20 @@ export default class User {
    */
   private loadPlatforms(): void {
     this.log.trace("User", "loadPlatforms");
-    const platformIds = this.data
+    const activeIds = this.data
       .get("settings", "FEED_PLATFORMS", "")
+      .split(",");
+    const connectedIds = this.data
+      .get("settings", "FEED_CONNECTED", "")
       .split(",");
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
-        if (platformIds.includes(platformClass.id())) {
+        if (activeIds.includes(platformClass.id())) {
           const platform = new platformClass(this);
           platform.active = true;
+          if (connectedIds.includes(platformClass.id())) {
+            platform.connected = true;
+          }
           if (this.platforms === undefined) {
             this.platforms = {};
           }
@@ -247,10 +253,22 @@ export default class User {
       return platform;
     }
 
+    const activeIds = this.data
+      .get("settings", "FEED_PLATFORMS", "")
+      .split(",");
+    const connectedIds = this.data
+      .get("settings", "FEED_CONNECTED", "")
+      .split(",");
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
         if (platformClass.id() === platformId) {
           platform = new platformClass(this);
+          if (activeIds.includes(platform.id)) {
+            platform.active = true;
+          }
+          if (connectedIds.includes(platform.id)) {
+            platform.connected = true;
+          }
         }
       }
     });

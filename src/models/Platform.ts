@@ -18,6 +18,7 @@ import User from "./User.ts";
 export default class Platform {
   id: PlatformId = PlatformId.UNKNOWN;
   active: boolean = false;
+  connected: boolean = false;
   user: User;
   cache: { [id: string]: Post } = {};
   defaultBody: string = "Fairpost feed";
