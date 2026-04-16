@@ -4,6 +4,7 @@ import {
   handleJsonResponse,
 } from "../../utilities.ts";
 
+import { OAuthRequest, OAuthResponse } from "../../types/index.ts";
 import OAuth2Service from "../../services/OAuth2Service.ts";
 import User from "../../models/User.ts";
 import { strict as assert } from "assert";
@@ -18,49 +19,79 @@ export default class LinkedInAuth {
   }
 
   /**
-   * Set up LinkedIn platform
+   * Connect LinkedIn platform via cli
    */
   async connectCli() {
+    // phase 1 : get the code
     const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
-    const code = await this.requestCliCode(redirectUri);
+    const state = String(Math.random()).substring(2);
+    const requestUrl = this.getRequestUrl(redirectUri, state);
+    const code = await this.requestCliCode(redirectUri, requestUrl, state);
+
+    // phase 2: exchange the code for tokens
     const tokens = await this.exchangeCode(code, redirectUri);
     await this.store(tokens);
   }
 
-  async connectApi(payload: {
-    state?: string;
-    redirect_uri?: string;
-    code?: string;
-    error?: string;
-    error_uri?: string;
-    error_description?: string;
-  }): Promise<{ url?: string; ready?: boolean }> {
-    if (payload["error"]) {
-      const msg = payload["error"] + " - " + payload["error_description"];
-      throw this.user.log.error(msg, payload);
-    }
-    if (!payload.redirect_uri) {
+  /**
+   * Connect LinkedIn platform via api
+   *
+   * OAuth basic flow is called in two phases:
+   * - phase1 has redirect_uri and a state - will return a { url: string }
+   * - phase2 has a code - will exchange for tokens and return { ready: true }
+   * @param payload OAuthRequest
+   * @returns OAuthResponse
+   */
+  async connectApi(payload: OAuthRequest): Promise<OAuthResponse> {
+    if (payload.flow !== "basic") {
       throw this.user.log.error(
-        "LinkedInAuth.connect: Invalid payload",
+        "LinkedInAuth.connectApi: Payload flow must be basic",
         payload,
       );
     }
-    if (!payload.code) {
+    if (payload.phase === "start") {
+      if (!payload.redirect_uri) {
+        throw this.user.log.error(
+          "LinkedInAuth.connectApi: Payload:start missing redirect_uri",
+          payload,
+        );
+      }
       return {
-        url: this.getRequestUrl(payload.redirect_uri, payload.state),
+        phase: "start",
+        flow: "basic",
+        request_uri: this.getRequestUrl(payload.redirect_uri, payload.state),
       };
     }
-    const tokens = await this.exchangeCode(payload.code, payload.redirect_uri);
-    await this.store(tokens);
-    return {
-      ready: true,
-    };
+    if (payload.phase === "finish") {
+      if (payload.error !== undefined) {
+        const msg =
+          payload.error + " - " + (payload.error_description ?? "unknown");
+        throw this.user.log.error(msg, payload);
+      }
+      if (!payload.code || !payload.redirect_uri) {
+        throw this.user.log.error(
+          "LinkedInAuth.connectApi: Payload:finish missing code and/or redirect_uri",
+          payload,
+        );
+      }
+      const tokens = await this.exchangeCode(
+        payload.code,
+        payload.redirect_uri,
+      );
+      await this.store(tokens);
+      return {
+        phase: "finish",
+        flow: "basic",
+        authenticated: true,
+      };
+    }
+    throw this.user.log.error("LinkedInAuth.connect: Unknown phase", payload);
   }
 
   /**
-   * Get oath2 url to request a code
+   * Get oauth2 url to request a code
    * @param redirectUri
    * @param state
    * @returns - string
@@ -88,12 +119,17 @@ export default class LinkedInAuth {
   /**
    * Request remote code using OAuth2Service as a local server
    * @param redirectUri
+   * @param requestUrl
+   * @param state
    * @returns - code
    */
-  private async requestCliCode(redirectUri: string): Promise<string> {
-    this.user.log.trace("LinkedInAuth", "requestCode");
-    const state = String(Math.random()).substring(2);
-    const requestUrl = this.getRequestUrl(redirectUri, state);
+  private async requestCliCode(
+    redirectUri: string,
+    requestUrl: string,
+    state: string,
+  ): Promise<string> {
+    this.user.log.trace("LinkedInAuth", "requestCliCode");
+
     const result = await OAuth2Service.requestRemotePermissions(
       "LinkedIn",
       requestUrl,

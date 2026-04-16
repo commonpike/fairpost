@@ -1,4 +1,9 @@
-import { FileGroup, FieldMapping } from "../../types/index.ts";
+import {
+  FileGroup,
+  FieldMapping,
+  OAuthRequest,
+  OAuthResponse,
+} from "../../types/index.ts";
 import Source from "../../models/Source.ts";
 import { handleApiError, handleEmptyResponse } from "../../utilities.ts";
 
@@ -71,19 +76,25 @@ export default class LinkedIn extends Platform {
       return test;
     }
     if (operator.ui === "api") {
-      if (!payload) {
-        throw this.user.log.error("Connect via api requires a payload");
+      const oauthPayload = payload as OAuthRequest;
+      if (oauthPayload?.flow !== "basic") {
+        throw this.user.log.error(
+          "LinkedIn Connect via api requires a OAuth basic flow",
+        );
       }
-      const result = await this.auth.connectApi(payload);
-      const ready = "ready" in result && result.ready;
-      if (!ready) return result;
-      const test = await this.test();
-      this.connected = true;
-      await this.save();
-      return {
-        ...result,
-        test: test,
-      };
+      const oauthResponse = (await this.auth.connectApi(
+        oauthPayload,
+      )) as OAuthResponse; // remove typing
+      if (oauthResponse.phase !== "finish") {
+        return oauthResponse;
+      }
+      if (oauthResponse.authenticated) {
+        oauthResponse.results = await this.test();
+        this.connected = true;
+        await this.save();
+        return oauthResponse;
+      }
+      return oauthResponse;
     }
 
     throw this.user.log.error(
