@@ -10,6 +10,7 @@ export default class InstagramAuth extends FacebookAuth {
 
   /**
    * Connect Instagram platform via cli
+   * Inherits most methods from FacebookAuth
    */
   async connectCli() {
     // phase 1 : get the code
@@ -18,7 +19,7 @@ export default class InstagramAuth extends FacebookAuth {
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
     const state = String(Math.random()).substring(2);
     const requestUri = this.getRequestUri(redirectUri, state);
-    const code = await this.requestCliCode(requestUri, state);
+    const code = await this.requestCliCode("Instagram", requestUri, state);
 
     // phase 2: exchange the code for tokens
     const appId = this.user.data.get("app", "INSTAGRAM_APP_ID");
@@ -42,6 +43,7 @@ export default class InstagramAuth extends FacebookAuth {
 
   /**
    * Connect Instagram platform via api
+   * Inherits most methods from FacebookAuth
    *
    * OAuth basic flow is called in two phases:
    * - phase1 has redirect_uri and a state - will return a { url: string }
@@ -105,53 +107,5 @@ export default class InstagramAuth extends FacebookAuth {
       };
     }
     throw this.user.log.error("InstagramAuth.connect: Unknown phase", payload);
-  }
-
-  protected async requestCode(clientId: string): Promise<string> {
-    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
-    const state = String(Math.random()).substring(2);
-
-    // create auth url
-    const url = new URL("https://www.facebook.com");
-    url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
-    const query = {
-      client_id: clientId,
-      redirect_uri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
-      state: state,
-      response_type: "code",
-      scope: [
-        "pages_manage_engagement",
-        "pages_manage_posts",
-        "pages_read_engagement",
-        //'pages_read_user_engagement',
-        "publish_video",
-        "business_management",
-        "instagram_basic",
-        "instagram_content_publish",
-      ].join(),
-    };
-    url.search = new URLSearchParams(query).toString();
-
-    const result = await OAuth2Service.requestRemotePermissions(
-      "Instagram",
-      url.href,
-      clientHost,
-      clientPort,
-    );
-
-    if (result["error"]) {
-      const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.log.error(msg, result);
-    }
-    if (result["state"] !== state) {
-      const msg = "Response state does not match request state";
-      throw this.user.log.error(msg, result);
-    }
-    if (!result["code"]) {
-      const msg = "Remote response did not return a code";
-      throw this.user.log.error(msg, result);
-    }
-    return result["code"] as string;
   }
 }

@@ -28,7 +28,7 @@ export default class FacebookAuth {
     const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
     const state = String(Math.random()).substring(2);
     const requestUri = this.getRequestUri(redirectUri, state);
-    const code = await this.requestCliCode(requestUri, state);
+    const code = await this.requestCliCode("Facebook", requestUri, state);
 
     // phase 2: exchange the code for tokens
     const appId = this.user.data.get("app", "FACEBOOK_APP_ID");
@@ -149,11 +149,13 @@ export default class FacebookAuth {
 
   /**
    * Request remote code using OAuth2Service as a local server
+   * @param platformName
    * @param requestUri
    * @param state
    * @returns - code
    */
   protected async requestCliCode(
+    platformName: string,
     requestUri: string,
     state: string,
   ): Promise<string> {
@@ -161,7 +163,7 @@ export default class FacebookAuth {
     const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
     const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const result = await OAuth2Service.requestRemotePermissions(
-      "Facebook",
+      platformName,
       requestUri,
       clientHost,
       clientPort,

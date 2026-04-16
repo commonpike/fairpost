@@ -228,53 +228,6 @@ export default class YouTubeAuth {
   }
 
   /**
-   * Request remote code using OAuth2Service
-   * @returns - code
-   
-  private async requestCode(): Promise<string> {
-    this.user.log.trace("YouTubeAuth", "requestCode");
-    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
-    const state = String(Math.random()).substring(2);
-   
-    const auth = new OAuth2Client(
-      this.user.data.get("app", "YOUTUBE_CLIENT_ID"),
-      this.user.data.get("app", "YOUTUBE_CLIENT_SECRET"),
-      OAuth2Service.getCallbackUrl(clientHost, clientPort),
-    );
-    const url = auth.generateAuthUrl({
-      access_type: "offline",
-      scope: [
-        "https://www.googleapis.com/auth/youtube.force-ssl",
-        "https://www.googleapis.com/auth/youtube.readonly",
-        "https://www.googleapis.com/auth/youtube.upload",
-      ],
-      state: state,
-    });
-   
-    const result = await OAuth2Service.requestRemotePermissions(
-      "YouTube",
-      url,
-      clientHost,
-      clientPort,
-    );
-    if (result["error"]) {
-      const msg = result["error_reason"] + " - " + result["error_description"];
-      throw this.user.log.error(msg, result);
-    }
-    if (result["state"] !== state) {
-      const msg = "Response state does not match request state";
-      throw this.user.log.error(msg, result);
-    }
-    if (!result["code"]) {
-      const msg = "Remote response did not return a code";
-      throw this.user.log.error(msg, result);
-    }
-    return result["code"] as string;
-  }
-   */
-
-  /**
    * Save all tokens in auth store
    * @param creds - contains the tokens to store
    */
