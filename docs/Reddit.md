@@ -1,5 +1,10 @@
 # Platform: Reddit
 
+Note: Reddit is moving to a new platform - devvit
+https://developers.reddit.com/app-registration
+
+Documentation below is for the legacy api.
+
 ## Set up the platform
 
 ### Create a new App in your Reddit account

@@ -127,7 +127,7 @@ export default class YouTube extends Platform {
     this.user.log.trace("YouTube.publishPost", post.id, dryrun);
 
     // youtube timeout is 1 hour;
-    // basicly always refresh
+    // TODO: check timeout
     await this.auth.refresh();
 
     let response = { id: "-99" } as {

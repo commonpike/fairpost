@@ -25,7 +25,8 @@
  * - the client has optionally checked the state
  * - the client has received a code (basic,pkce) or
  *   a token (implicit), or the server received the tokens (device)
- * - the server exchange the code and request uri for tokens (basic,pkce)
+ * - the server exchanges the code and request uri for tokens (basic,pkce)
+ * - the server stores these
  * - the server returns success or failure
  *
  */
