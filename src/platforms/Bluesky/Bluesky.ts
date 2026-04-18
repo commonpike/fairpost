@@ -55,14 +55,20 @@ export default class Bluesky extends Platform {
   async connect(operator: Operator, payload?: object) {
     if (operator.ui === "cli") {
       await this.auth.connectCli();
-      return await this.test();
+      const test = await this.test();
+      this.connected = true;
+      await this.save();
+      return test;
     }
     if (operator.ui === "api") {
       if (!payload) {
         throw this.user.log.error("Bluesky connect requires a payload");
       }
       await this.auth.connectApi(payload);
-      return await this.test();
+      const test = await this.test();
+      this.connected = true;
+      await this.save();
+      return test;
     }
     throw this.user.log.error(
       `${this.id} connect: ui ${operator.ui} not supported`,

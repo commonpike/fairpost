@@ -4,6 +4,7 @@ import {
   handleJsonResponse,
 } from "../../utilities.ts";
 
+import { OAuthRequest, OAuthResponse } from "../../types/index.ts";
 import OAuth2Service from "../../services/OAuth2Service.ts";
 import User from "../../models/User.ts";
 import { strict as assert } from "assert";
@@ -17,20 +18,30 @@ export default class FacebookAuth {
     this.user = user;
   }
 
+  /**
+   * Connect Facebook platform via cli
+   */
   async connectCli() {
-    const code = await this.requestCode(
-      this.user.data.get("app", "FACEBOOK_APP_ID"),
-    );
+    // phase 1 : get the code
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
+    const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
+    const state = String(Math.random()).substring(2);
+    const requestUri = this.getRequestUri(redirectUri, state);
+    const code = await this.requestCliCode("Facebook", requestUri, state);
 
+    // phase 2: exchange the code for tokens
+    const appId = this.user.data.get("app", "FACEBOOK_APP_ID");
+    const appSecret = this.user.data.get("app", "FACEBOOK_APP_SECRET");
     const accessToken = await this.exchangeCode(
+      appId,
+      appSecret,
       code,
-      this.user.data.get("app", "FACEBOOK_APP_ID"),
-      this.user.data.get("app", "FACEBOOK_APP_SECRET"),
+      redirectUri,
     );
-
     const pageToken = await this.getLLPageToken(
-      this.user.data.get("app", "FACEBOOK_APP_ID"),
-      this.user.data.get("app", "FACEBOOK_APP_SECRET"),
+      appId,
+      appSecret,
       this.user.data.get("settings", "FACEBOOK_PAGE_ID"),
       accessToken,
     );
@@ -39,24 +50,88 @@ export default class FacebookAuth {
     await this.user.data.save();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public async connectApi(payload: object) {
-    throw this.user.log.error("FacebookAuth:connectApi - not implemented");
+  /**
+   * Connect Facebook platform via api
+   *
+   * OAuth basic flow is called in two phases:
+   * - phase1 has redirect_uri and a state - will return a { url: string }
+   * - phase2 has a code - will exchange for tokens and return { ready: true }
+   * @param payload OAuthRequest
+   * @returns OAuthResponse
+   */
+  async connectApi(payload: OAuthRequest): Promise<OAuthResponse> {
+    if (!payload || payload.flow !== "basic") {
+      throw this.user.log.error(
+        "FacebookAuth.connectApi: Payload flow must be basic",
+        payload,
+      );
+    }
+    if (payload.phase === "start") {
+      if (!payload.redirect_uri) {
+        throw this.user.log.error(
+          "FacebookAuth.connectApi: Payload:start missing redirect_uri",
+          payload,
+        );
+      }
+      return {
+        phase: "start",
+        flow: "basic",
+        request_uri: this.getRequestUri(payload.redirect_uri, payload.state),
+      };
+    }
+    if (payload.phase === "finish") {
+      if (payload.error !== undefined) {
+        const msg =
+          payload.error + " - " + (payload.error_description ?? "unknown");
+        throw this.user.log.error(msg, payload);
+      }
+      if (!payload.code || !payload.redirect_uri) {
+        throw this.user.log.error(
+          "FacebookAuth.connectApi: Payload:finish missing code and/or redirect_uri",
+          payload,
+        );
+      }
+      const appId = this.user.data.get("app", "FACEBOOK_APP_ID");
+      const appSecret = this.user.data.get("app", "FACEBOOK_APP_SECRET");
+      const accessToken = await this.exchangeCode(
+        appId,
+        appSecret,
+        payload.code,
+        payload.redirect_uri,
+      );
+      const pageToken = await this.getLLPageToken(
+        appId,
+        appSecret,
+        this.user.data.get("settings", "FACEBOOK_PAGE_ID"),
+        accessToken,
+      );
+      this.user.data.set("auth", "FACEBOOK_PAGE_ACCESS_TOKEN", pageToken);
+      await this.user.data.save();
+
+      return {
+        phase: "finish",
+        flow: "basic",
+        authenticated: true,
+      };
+    }
+    throw this.user.log.error("LinkedInAuth.connect: Unknown phase", payload);
   }
 
-  protected async requestCode(clientId: string): Promise<string> {
+  /**
+   * Get oauth2 url to request a code
+   * @param redirectUri
+   * @param state
+   * @returns string
+   */
+  protected getRequestUri(redirectUri: string, state?: string): string {
     this.user.log.trace("FacebookAuth", "requestCode");
-    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
-    const state = String(Math.random()).substring(2);
-
-    // create auth url
+    const clientId = this.user.data.get("app", "FACEBOOK_APP_ID");
     const url = new URL("https://www.facebook.com");
     url.pathname = this.GRAPH_API_VERSION + "/dialog/oauth";
     const query = {
       client_id: clientId,
-      redirect_uri: OAuth2Service.getCallbackUrl(clientHost, clientPort),
-      state: state,
+      redirect_uri: redirectUri,
+      state: state ?? "connect",
       response_type: "code",
       scope: [
         "pages_manage_engagement",
@@ -69,10 +144,27 @@ export default class FacebookAuth {
       ].join(),
     };
     url.search = new URLSearchParams(query).toString();
+    return url.href;
+  }
 
+  /**
+   * Request remote code using OAuth2Service as a local server
+   * @param platformName
+   * @param requestUri
+   * @param state
+   * @returns - code
+   */
+  protected async requestCliCode(
+    platformName: string,
+    requestUri: string,
+    state: string,
+  ): Promise<string> {
+    this.user.log.trace("FacebookAuth", "requestCliCode");
+    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
+    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
     const result = await OAuth2Service.requestRemotePermissions(
-      "Facebook",
-      url.href,
+      platformName,
+      requestUri,
       clientHost,
       clientPort,
     );
@@ -91,20 +183,25 @@ export default class FacebookAuth {
     return result["code"] as string;
   }
 
+  /**
+   * Exchange remote code for tokens
+   * @param appId
+   * @param appSecret
+   * @param code - the code to exchange
+   * @param redirectUri
+   * @returns - (short lived) access token
+   */
   protected async exchangeCode(
+    appId: string,
+    appSecret: string,
     code: string,
-    clientId: string,
-    clientSecret: string,
+    redirectUri: string,
   ): Promise<string> {
     this.user.log.trace("FacebookAuth", "exchangeCode");
 
-    const clientHost = this.user.data.get("app", "OAUTH_HOSTNAME");
-    const clientPort = Number(this.user.data.get("app", "OAUTH_PORT"));
-    const redirectUri = OAuth2Service.getCallbackUrl(clientHost, clientPort);
-
     const tokens = (await this.get("oauth/access_token", {
-      client_id: clientId,
-      client_secret: clientSecret,
+      client_id: appId,
+      client_secret: appSecret,
       code: code,
       redirect_uri: redirectUri,
     })) as TokenResponse;

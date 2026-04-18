@@ -1,5 +1,4 @@
 import { basename } from "path";
-import * as readline from "node:readline/promises";
 
 import * as platformClasses from "../platforms/index.ts";
 import { PlatformId } from "../platforms/index.ts";
@@ -13,7 +12,6 @@ import UserData from "./User/UserData.ts";
 import UserFiles from "./User/UserFiles.ts";
 import UserLog from "./User/UserLog.ts";
 import UserMapper from "../mappers/UserMapper.ts";
-import { FieldMapping } from "../types/index.ts";
 
 /**
  * User - represents one fairpost user
@@ -215,14 +213,20 @@ export default class User {
    */
   private loadPlatforms(): void {
     this.log.trace("User", "loadPlatforms");
-    const platformIds = this.data
+    const activeIds = this.data
       .get("settings", "FEED_PLATFORMS", "")
+      .split(",");
+    const connectedIds = this.data
+      .get("settings", "FEED_CONNECTED", "")
       .split(",");
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
-        if (platformIds.includes(platformClass.id())) {
+        if (activeIds.includes(platformClass.id())) {
           const platform = new platformClass(this);
           platform.active = true;
+          if (connectedIds.includes(platformClass.id())) {
+            platform.connected = true;
+          }
           if (this.platforms === undefined) {
             this.platforms = {};
           }
@@ -247,10 +251,22 @@ export default class User {
       return platform;
     }
 
+    const activeIds = this.data
+      .get("settings", "FEED_PLATFORMS", "")
+      .split(",");
+    const connectedIds = this.data
+      .get("settings", "FEED_CONNECTED", "")
+      .split(",");
     Object.values(platformClasses).forEach((platformClass) => {
       if (typeof platformClass === "function") {
         if (platformClass.id() === platformId) {
           platform = new platformClass(this);
+          if (activeIds.includes(platform.id)) {
+            platform.active = true;
+          }
+          if (connectedIds.includes(platform.id)) {
+            platform.connected = true;
+          }
         }
       }
     });
@@ -276,96 +292,24 @@ export default class User {
   }
 
   /**
-   * Enable a platform on this user
-   * @param platformId
-   * @returns the enabled platform
+   * Add one platform on this users platforms[] after it has been set
+   * active. Does not save.
+   * @param platform
    */
-  public async addPlatform(platformId: PlatformId): Promise<Platform> {
-    this.log.trace("User", "addPlatform", platformId);
-    if (
-      Object.values(PlatformId).includes(platformId) &&
-      platformId != PlatformId.UNKNOWN
-    ) {
-      const platforms = this.data.get("settings", "FEED_PLATFORMS", "");
-      const platformIds = platforms ? platforms.split(",") : [];
-      if (!platformIds.includes(platformId)) {
-        platformIds.push(platformId);
-        this.data.set("settings", "FEED_PLATFORMS", platformIds.join(","));
-        await this.data.save();
-      }
-      this.loadPlatforms();
-      this.log.info(`Platform ${platformId} enabled for user ${this.id}`);
-    } else {
-      throw this.log.error("addPlatform: no such platform", platformId);
-    }
-    return this.getPlatform(platformId);
-  }
-
-  /**
-   * Disable a platform on this user
-   * @param platformId
-   */
-  public async removePlatform(platformId: PlatformId): Promise<void> {
-    this.log.trace("User", "removePlatforms", platformId);
-    if (
-      Object.values(PlatformId).includes(platformId) &&
-      platformId != PlatformId.UNKNOWN
-    ) {
-      const platforms = this.data.get("settings", "FEED_PLATFORMS", "");
-      const platformIds = platforms ? platforms.split(",") : [];
-      const index = platformIds.indexOf(platformId);
-      if (index !== -1) {
-        platformIds.splice(index, 1);
-        this.data.set("settings", "FEED_PLATFORMS", platformIds.join(","));
-        await this.data.save();
-      }
-      this.loadPlatforms();
-      this.log.info(`Platform ${platformId} disabled for user ${this.id}`);
-    } else {
-      throw this.log.error("removePlatform: no such platform", platformId);
+  public addPlatform(platform: Platform) {
+    if (this.platforms && platform.active) {
+      this.platforms[platform.id] = platform;
     }
   }
 
   /**
-   * @returns all data from the settings store
-   
-  public getSettings(): { [key: string]: string } {
-    return this.data.getStore("settings");
-  }
+   * Remove one platform on this users platforms[] after it has been set
+   * inactive. Does not save.
+   * @param platform
    */
-
-  public async promptCliFields(
-    fields: FieldMapping,
-  ): Promise<{ [key: string]: string }> {
-    const settings = {} as { [key: string]: string };
-    const reader = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    for (const key in fields) {
-      const current = this.data.get(
-        "settings",
-        key,
-        String(fields[key].default ?? ""),
-      );
-      const value =
-        (await reader.question(`${fields[key].label} ( ${current} ): `)) ||
-        current;
-      settings[key] = value;
+  public removePlatform(platform: Platform) {
+    if (this.platforms && !platform.active) {
+      delete this.platforms[platform.id];
     }
-    reader.close();
-    return settings;
   }
-
-  /**
-   * Update settings with values from payload
-   * @param payload - key/value object to save under settings store
-   
-  public async putSettings(payload: { [key: string]: string }): Promise<void> {
-    for (const key in payload) {
-      this.data.set("settings", key, payload[key]);
-    }
-    await this.data.save();
-  }
-   */
 }

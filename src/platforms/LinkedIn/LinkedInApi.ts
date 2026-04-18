@@ -12,8 +12,8 @@ import User from "../../models/User.ts";
  */
 
 export default class LinkedInApi {
-  LGC_API_VERSION = "v2";
-  API_VERSION = "202307";
+  API_VERSION = "202604";
+  RESTLI_VERSION = "2.0.0";
 
   user: User;
 
@@ -31,9 +31,8 @@ export default class LinkedInApi {
     endpoint: string,
     query: { [key: string]: string } = {},
   ): Promise<object> {
-    // nb this is the legacy format
     const url = new URL("https://api.linkedin.com");
-    url.pathname = this.LGC_API_VERSION + "/" + endpoint;
+    url.pathname = "rest/" + endpoint;
     url.search = new URLSearchParams(query).toString();
 
     const accessToken = this.user.data.get("auth", "LINKEDIN_ACCESS_TOKEN");
@@ -46,6 +45,8 @@ export default class LinkedInApi {
         Connection: "Keep-Alive",
         Authorization: "Bearer " + accessToken,
         "User-Agent": this.user.data.get("app", "OAUTH_USERAGENT"),
+        "Linkedin-Version": this.API_VERSION,
+        "X-Restli-Protocol-Version": this.RESTLI_VERSION,
       },
     })
       .then((res) => handleJsonResponse(res, true))
@@ -80,6 +81,7 @@ export default class LinkedInApi {
         Accept: "application/json",
         "Content-Type": "application/json",
         "Linkedin-Version": this.API_VERSION,
+        "X-Restli-Protocol-Version": this.RESTLI_VERSION,
         Authorization: "Bearer " + accessToken,
       },
       body: JSON.stringify(body),

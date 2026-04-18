@@ -30,6 +30,12 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       get: ["managePlatforms"],
       set: ["managePlatforms"],
     },
+    connected: {
+      type: "boolean",
+      label: "Connected",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+    },
     // more fields from platform.settings
     // added in mapper constructor
   };
@@ -60,6 +66,9 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       switch (field) {
         case "active":
           dto[field] = !!this.platform.active;
+          break;
+        case "connected":
+          dto[field] = !!this.platform.connected;
           break;
         case "model":
         case "id":
@@ -116,8 +125,10 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       if (fields.includes(field)) {
         switch (field) {
           case "active":
-            if (dto[field]) await this.user.addPlatform(this.platform.id);
-            else await this.user.removePlatform(this.platform.id);
+            this.platform.active = !!dto[field];
+            break;
+          case "connected":
+            this.platform.connected = !!dto[field];
             break;
           default: {
             switch (this.mapping[field].type) {
@@ -154,6 +165,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
         this.user.log.trace("Ignoring field: " + field);
       }
     }
+    await this.platform.save();
     await this.user.data.save();
     return true;
   }

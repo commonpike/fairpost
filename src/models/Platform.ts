@@ -18,6 +18,7 @@ import User from "./User.ts";
 export default class Platform {
   id: PlatformId = PlatformId.UNKNOWN;
   active: boolean = false;
+  connected: boolean = false;
   user: User;
   cache: { [id: string]: Post } = {};
   defaultBody: string = "Fairpost feed";
@@ -73,6 +74,60 @@ export default class Platform {
    */
   async test(): Promise<unknown> {
     return "No tests implemented for " + this.id;
+  }
+
+  /**
+   * save
+   *
+   * Save the platform - this is only 'active'
+   * and 'connected', as loaded in the User object
+   */
+  async save() {
+    this.user.log.trace(
+      "Platform",
+      `Save ${this.id} (${this.active}, ${this.connected})`,
+    );
+    const activeIds = this.user.data
+      .get("settings", "FEED_PLATFORMS", "")
+      .split(",");
+    if (this.active) {
+      if (!activeIds.includes(this.id)) {
+        activeIds.push(this.id);
+        this.user.data.set("settings", "FEED_PLATFORMS", activeIds.join(","));
+        this.user.addPlatform(this);
+      }
+    } else {
+      const index = activeIds.indexOf(this.id);
+      if (index !== -1) {
+        activeIds.splice(index, 1);
+        this.user.data.set("settings", "FEED_PLATFORMS", activeIds.join(","));
+        this.user.removePlatform(this);
+      }
+    }
+    const connectedIds = this.user.data
+      .get("settings", "FEED_CONNECTED", "")
+      .split(",");
+    if (this.connected) {
+      if (!connectedIds.includes(this.id)) {
+        connectedIds.push(this.id);
+        this.user.data.set(
+          "settings",
+          "FEED_CONNECTED",
+          connectedIds.join(","),
+        );
+      }
+    } else {
+      const index = connectedIds.indexOf(this.id);
+      if (index !== -1) {
+        connectedIds.splice(index, 1);
+        this.user.data.set(
+          "settings",
+          "FEED_CONNECTED",
+          connectedIds.join(","),
+        );
+      }
+    }
+    await this.user.data.save();
   }
 
   /**

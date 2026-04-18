@@ -14,3 +14,4 @@ export type { default as SourceDto } from "./SourceDto.ts";
 export { default as SourceStage } from "./SourceStage.ts";
 export type { default as UserDto } from "./UserDto.ts";
 export type { default as UserReport } from "./UserReport.ts";
+export type { OAuthRequest, OAuthResponse } from "./OAuth.ts";
