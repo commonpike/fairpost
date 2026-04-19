@@ -200,17 +200,21 @@ export default class Server {
     command: string,
   ) {
     if (process.env.FAIRPOST_USER_AUTH === "fairpost") {
+      const baseCookie = {
+        httpOnly: true,
+        secure: process.env.FAIRPOST_SESSION_SECURE !== "false",
+        sameSite: (process.env.FAIRPOST_SESSION_SAMESITE ?? "strict") as
+          | "strict"
+          | "lax"
+          | "none",
+        path: "/",
+      };
       if (["login", "refresh-token"].includes(command)) {
         const token = await AuthService.getToken(user);
         response.setHeader(
           "Set-Cookie",
           cookie.serialize("FairpostSession", token, {
-            httpOnly: true,
-            secure: process.env.FAIRPOST_SESSION_SECURE !== "false",
-            sameSite: (process.env.FAIRPOST_SESSION_SAMESITE ?? "strict") as
-              | "strict"
-              | "lax"
-              | "none",
+            ...baseCookie,
             maxAge: +(process.env.FAIRPOST_SESSION_TIMEOUT ?? 60 * 60),
           }),
         );
@@ -219,13 +223,8 @@ export default class Server {
         response.setHeader(
           "Set-Cookie",
           cookie.serialize("FairpostSession", "", {
-            httpOnly: true,
-            secure: process.env.FAIRPOST_SESSION_SECURE === "false",
-            sameSite: (process.env.FAIRPOST_SESSION_SAMESITE ?? "strict") as
-              | "strict"
-              | "lax"
-              | "none",
-            maxAge: +(process.env.FAIRPOST_SESSION_TIMEOUT ?? 60 * 60),
+            ...baseCookie,
+            maxAge: 0,
           }),
         );
       }
