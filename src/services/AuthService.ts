@@ -48,7 +48,7 @@ export default class AuthService {
             throw user.log.error("AuthService", "getToken: token timed out");
           }
         } else {
-          throw user.log.error("AuthService", "getToken: no token available");
+          throw user.log.error("AuthService", "getToken: no active tokens");
         }
       }
     }
