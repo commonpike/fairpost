@@ -57,7 +57,7 @@ export default class RedditApi {
 
   public async post(
     endpoint: string,
-    body: { [key: string]: string },
+    body: { [key: string]: string | undefined },
   ): Promise<object> {
     const url = new URL("https://oauth.reddit.com");
     //url.pathname = "api/" + this.API_VERSION + "/" + endpoint;
@@ -65,6 +65,10 @@ export default class RedditApi {
 
     const accessToken = this.user.data.get("auth", "REDDIT_ACCESS_TOKEN");
     this.user.log.trace("POST", url.href);
+
+    const cleanBody = Object.fromEntries(
+      Object.entries(body).filter(([, v]) => v !== undefined),
+    ) as { [key: string]: string };
 
     return await fetch(url, {
       method: "POST",
@@ -74,7 +78,7 @@ export default class RedditApi {
         Authorization: "Bearer " + accessToken,
         "User-Agent": this.user.data.get("app", "OAUTH_USERAGENT"),
       },
-      body: new URLSearchParams(body),
+      body: new URLSearchParams(cleanBody),
     })
       .then((res) => handleJsonResponse(res))
       .catch((err) => this.handleRedditError(err))
