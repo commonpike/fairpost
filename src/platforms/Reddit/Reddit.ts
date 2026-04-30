@@ -35,6 +35,20 @@ export default class Reddit extends Platform {
       set: ["managePlatforms"],
       required: true,
     },
+    REDDIT_FLAIR: {
+      type: "string",
+      label: "Flair to add to posts",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
+    REDDIT_FLAIR_TEXT: {
+      type: "string",
+      label: "Text to add to flair",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+      required: true,
+    },
     REDDIT_PLUGIN_SETTINGS: {
       type: "json",
       label: "Reddit Plugin settings",
@@ -45,12 +59,16 @@ export default class Reddit extends Platform {
     },
   };
   SUBREDDIT: string;
+  FLAIR: string;
+  FLAIR_TEXT: string;
   api: RedditApi;
   auth: RedditAuth;
 
   constructor(user: User) {
     super(user);
     this.SUBREDDIT = this.user.data.get("settings", "REDDIT_SUBREDDIT", "");
+    this.FLAIR = this.user.data.get("settings", "REDDIT_FLAIR", "");
+    this.FLAIR_TEXT = this.user.data.get("settings", "REDDIT_FLAIR_TEXT", "");
     this.api = new RedditApi(user);
     this.auth = new RedditAuth(user);
     this.mapper = new PlatformMapper(this);
@@ -226,7 +244,9 @@ export default class Reddit extends Platform {
     const body = post.getCompiledBody("!title");
     if (!dryrun) {
       const response = (await this.api.post("submit", {
-        sr: this.SUBREDDIT,
+        sr: this.SUBREDDIT || undefined,
+        flair_id: this.FLAIR || undefined,
+        flair_text: this.FLAIR_TEXT || undefined,
         kind: "self",
         title: title,
         text: body,
@@ -266,7 +286,9 @@ export default class Reddit extends Platform {
     const imageUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
       const response = (await this.api.post("submit", {
-        sr: this.SUBREDDIT,
+        sr: this.SUBREDDIT || undefined,
+        flair_id: this.FLAIR || undefined,
+        flair_text: this.FLAIR_TEXT || undefined,
         kind: "image",
         title: title,
         url: imageUrl,
@@ -314,7 +336,9 @@ export default class Reddit extends Platform {
     const videoUrl = await this.uploadFile(leash, file);
     if (!dryrun) {
       const response = (await this.api.post("submit", {
-        sr: this.SUBREDDIT,
+        sr: this.SUBREDDIT || undefined,
+        flair_id: this.FLAIR || undefined,
+        flair_text: this.FLAIR_TEXT || undefined,
         kind: "video",
         title: title,
         url: videoUrl,
