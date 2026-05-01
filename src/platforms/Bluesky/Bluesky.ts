@@ -18,12 +18,17 @@ export default class Bluesky extends Platform {
   assetsFolder = "_bluesky";
   postFileName = "post.json";
   pluginSettings = {
+    textsize: {
+      max_length: 300,
+    },
     limitfiles: {
       video_max: 1,
       image_max: 4,
     },
     imagesize: {
-      max_size: 1000,
+      max_size: 2000,
+      max_width: 4000,
+      max_height: 4000,
     },
   };
   settings: FieldMapping = {
