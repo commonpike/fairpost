@@ -35,7 +35,7 @@ export default class TextSize extends Plugin {
     post.platform.user.log.trace(this.id, post.id, "process");
     if (
       this.settings.min_length &&
-      (!post.body || post.body.length >= this.settings.min_length)
+      (!post.body || post.body.length < this.settings.min_length)
     ) {
       throw post.platform.user.log.error(
         "TextSize.process",
