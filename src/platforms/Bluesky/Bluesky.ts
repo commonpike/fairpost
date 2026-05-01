@@ -18,12 +18,17 @@ export default class Bluesky extends Platform {
   assetsFolder = "_bluesky";
   postFileName = "post.json";
   pluginSettings = {
+    textsize: {
+      max_length: 300,
+    },
     limitfiles: {
       video_max: 1,
       image_max: 4,
     },
     imagesize: {
-      max_size: 1000,
+      max_size: 2000,
+      max_width: 4000,
+      max_height: 4000,
     },
   };
   settings: FieldMapping = {
@@ -103,7 +108,11 @@ export default class Bluesky extends Platform {
       };
       const plugins = this.loadPlugins(pluginSettings);
       for (const plugin of plugins) {
-        await plugin.process(post);
+        try {
+          await plugin.process(post);
+        } catch {
+          post.valid = false;
+        }
       }
 
       // Annimated GIF will be sent as a video. Only one animated GIF can be sent per post.
