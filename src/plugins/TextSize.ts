@@ -34,6 +34,16 @@ export default class TextSize extends Plugin {
   async process(post: Post): Promise<void> {
     post.platform.user.log.trace(this.id, post.id, "process");
     if (
+      this.settings.min_length &&
+      (!post.body || post.body.length >= this.settings.min_length)
+    ) {
+      throw post.platform.user.log.error(
+        "TextSize.process",
+        "Post body is required, min length " + this.settings.min_length,
+        post.id,
+      );
+    }
+    if (
       this.settings.max_length &&
       post.body &&
       post.body.length >= this.settings.max_length

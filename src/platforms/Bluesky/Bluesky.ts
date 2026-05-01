@@ -108,7 +108,11 @@ export default class Bluesky extends Platform {
       };
       const plugins = this.loadPlugins(pluginSettings);
       for (const plugin of plugins) {
-        await plugin.process(post);
+        try {
+          await plugin.process(post);
+        } catch {
+          post.valid = false;
+        }
       }
 
       // Annimated GIF will be sent as a video. Only one animated GIF can be sent per post.
