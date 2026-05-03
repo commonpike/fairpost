@@ -166,10 +166,6 @@ export default class Reddit extends Platform {
         videoposter = dstposter;
       }
     }
-    const plugins = this.loadPlugins();
-    for (const plugin of plugins) {
-      await plugin.process(post);
-    }
     if (videoposter) {
       await post.addFile(videoposter);
     }

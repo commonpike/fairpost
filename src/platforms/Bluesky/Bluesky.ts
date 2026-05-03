@@ -97,14 +97,6 @@ export default class Bluesky extends Platform {
 
   async preparePost(post: Post) {
     this.user.log.trace("Bluesky.preparePost", post.id);
-    const plugins = this.loadPlugins();
-    for (const plugin of plugins) {
-      try {
-        await plugin.process(post);
-      } catch {
-        post.valid = false;
-      }
-    }
 
     // Annimated GIF will be sent as a video. Only one animated GIF can be sent per post.
 

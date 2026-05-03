@@ -113,10 +113,6 @@ export default class Twitter extends Platform {
   /** @inheritdoc */
   async preparePost(post: Post) {
     this.user.log.trace("Twitter.preparePost", post.id);
-    const plugins = this.loadPlugins();
-    for (const plugin of plugins) {
-      await plugin.process(post);
-    }
 
     // remove files whose mime are not supported,
     // this could be a plugin

@@ -355,14 +355,10 @@ export default class Platform {
    * post.status may have manually been set to canceled.
    * @param post - the post to prepare
    */
+
   async preparePost(post: Post) {
-    this.user.log.trace("Platform", this.id, "preparePost");
-    throw this.user.log.error(
-      "Prepare not implemented for " +
-        this.id +
-        ". Read the docs in the docs folder.",
-      post.id,
-    );
+    this.user.log.trace("Platform.preparePost: noop", post.id);
+    // noop
   }
 
   /**

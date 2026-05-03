@@ -104,11 +104,7 @@ export default class LinkedIn extends Platform {
   /** @inheritdoc */
   async preparePost(post: Post) {
     this.user.log.trace("LinkedIn.preparePost", post.id);
-
-    const plugins = this.loadPlugins();
-    for (const plugin of plugins) {
-      await plugin.process(post);
-    }
+    // all good
   }
 
   /** @inheritdoc */

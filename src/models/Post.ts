@@ -229,6 +229,17 @@ export default class Post {
 
     await this.platform.preparePost(this);
 
+    if (this.valid) {
+      const plugins = this.platform.loadPlugins();
+      for (const plugin of plugins) {
+        try {
+          await plugin.process(this);
+        } catch {
+          this.valid = false;
+        }
+      }
+    }
+
     await this.save();
   }
 

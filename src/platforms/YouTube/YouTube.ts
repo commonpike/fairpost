@@ -104,10 +104,7 @@ export default class YouTube extends Platform {
   /** @inheritdoc */
   async preparePost(post: Post) {
     this.user.log.trace("YouTube.preparePost", post.id);
-    const plugins = this.loadPlugins();
-    for (const plugin of plugins) {
-      await plugin.process(post);
-    }
+    // all good
   }
 
   /** @inheritdoc */

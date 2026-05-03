@@ -110,12 +110,6 @@ export default class Instagram extends Platform {
     ) {
       post.valid = false;
     }
-    if (post.valid) {
-      const plugins = this.loadPlugins();
-      for (const plugin of plugins) {
-        await plugin.process(post);
-      }
-    }
   }
 
   /** @inheritdoc */

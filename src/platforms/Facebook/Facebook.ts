@@ -103,10 +103,7 @@ export default class Facebook extends Platform {
   /** @inheritdoc */
   async preparePost(post: Post) {
     this.user.log.trace("Facebook.preparePost", post.id);
-    const plugins = this.loadPlugins();
-    for (const plugin of plugins) {
-      await plugin.process(post);
-    }
+    // all good
   }
 
   /** @inheritdoc */
