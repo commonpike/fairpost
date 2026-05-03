@@ -17,6 +17,7 @@ export default class Bluesky extends Platform {
   assetsFolder = "_bluesky";
   postFileName = "post.json";
   pluginSettings = {
+    name: "BLUESKY_PLUGIN_SETTINGS",
     textsize: {
       max_length: 300,
     },
@@ -96,14 +97,7 @@ export default class Bluesky extends Platform {
 
   async preparePost(post: Post) {
     this.user.log.trace("Bluesky.preparePost", post.id);
-    const userPluginSettings = JSON.parse(
-      this.user.data.get("settings", "BLUESKY_PLUGIN_SETTINGS", "{}"),
-    );
-    const pluginSettings = {
-      ...this.pluginSettings,
-      ...(userPluginSettings || {}),
-    };
-    const plugins = this.loadPlugins(pluginSettings);
+    const plugins = this.loadPlugins();
     for (const plugin of plugins) {
       try {
         await plugin.process(post);

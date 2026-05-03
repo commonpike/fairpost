@@ -26,6 +26,10 @@ export default class Platform {
   postFileName: string = "post.json";
   mapper!: PlatformMapper; // child *must* set this
   settings: FieldMapping = {};
+  pluginSettings: {
+    name?: string;
+    [pluginid: string]: object | string | undefined;
+  } = {};
   interval: number;
   constructor(user: User) {
     this.user = user;
@@ -485,14 +489,32 @@ export default class Platform {
   }
 
   /**
-   * @returns array of instances of the plugins given with the settings given.
+   * @returns array of instances of the plugins
+   *
+   * - will load plugins given in Platform.pluginSettings
+   * - with the settings given in that object
+   * - but if Platform.pluginSettings.name is set,
+   *   also load that value from user settings and
+   *   override the default platform settings
    */
-  loadPlugins(pluginSettings: { [pluginid: string]: object }): Plugin[] {
+  loadPlugins(): Plugin[] {
     const plugins: Plugin[] = [];
+    let pluginSettings = this.pluginSettings;
+    if (this.pluginSettings.name) {
+      const userPluginSettings = JSON.parse(
+        this.user.data.get("settings", this.pluginSettings.name, "{}"),
+      );
+      pluginSettings = {
+        ...this.pluginSettings,
+        ...(userPluginSettings || {}),
+      };
+    }
     Object.values(pluginClasses).forEach((pluginClass) => {
       const pluginId = pluginClass.id();
       if (pluginId in pluginSettings) {
-        plugins?.push(new pluginClass(pluginSettings[pluginId]));
+        if (typeof pluginSettings[pluginId] === "object") {
+          plugins?.push(new pluginClass(pluginSettings[pluginId]));
+        }
       }
     });
     return plugins;

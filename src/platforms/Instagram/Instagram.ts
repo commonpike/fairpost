@@ -20,6 +20,7 @@ export default class Instagram extends Platform {
   assetsFolder = "_instagram";
   postFileName = "post.json";
   pluginSettings = {
+    name: "INSTAGRAM_PLUGIN_SETTINGS",
     limitfiles: {
       total_max: 10,
     },
@@ -110,14 +111,7 @@ export default class Instagram extends Platform {
       post.valid = false;
     }
     if (post.valid) {
-      const userPluginSettings = JSON.parse(
-        this.user.data.get("settings", "INSTAGRAM_PLUGIN_SETTINGS", "{}"),
-      );
-      const pluginSettings = {
-        ...this.pluginSettings,
-        ...(userPluginSettings || {}),
-      };
-      const plugins = this.loadPlugins(pluginSettings);
+      const plugins = this.loadPlugins();
       for (const plugin of plugins) {
         await plugin.process(post);
       }

@@ -228,6 +228,7 @@ export default class Post {
     }
 
     await this.platform.preparePost(this);
+
     await this.save();
   }
 

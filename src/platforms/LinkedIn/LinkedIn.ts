@@ -13,6 +13,7 @@ export default class LinkedIn extends Platform {
   assetsFolder = "_linkedin";
   postFileName = "post.json";
   pluginSettings = {
+    name: "LINKEDIN_PLUGIN_SETTINGS",
     limitfiles: {
       exclusive: ["video"],
       video_max: 1,
@@ -104,14 +105,7 @@ export default class LinkedIn extends Platform {
   async preparePost(post: Post) {
     this.user.log.trace("LinkedIn.preparePost", post.id);
 
-    const userPluginSettings = JSON.parse(
-      this.user.data.get("settings", "LINKEDIN_PLUGIN_SETTINGS", "{}"),
-    );
-    const pluginSettings = {
-      ...this.pluginSettings,
-      ...(userPluginSettings || {}),
-    };
-    const plugins = this.loadPlugins(pluginSettings);
+    const plugins = this.loadPlugins();
     for (const plugin of plugins) {
       await plugin.process(post);
     }

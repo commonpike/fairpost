@@ -26,6 +26,7 @@ export default class Twitter extends Platform {
   assetsFolder = "_twitter";
   postFileName = "post.json";
   pluginSettings = {
+    name: "TWITTER_PLUGIN_SETTINGS",
     limitfiles: {
       video_max: 0,
       image_max: 4,
@@ -112,14 +113,7 @@ export default class Twitter extends Platform {
   /** @inheritdoc */
   async preparePost(post: Post) {
     this.user.log.trace("Twitter.preparePost", post.id);
-    const userPluginSettings = JSON.parse(
-      this.user.data.get("settings", "TWITTER_PLUGIN_SETTINGS", "{}"),
-    );
-    const pluginSettings = {
-      ...this.pluginSettings,
-      ...(userPluginSettings || {}),
-    };
-    const plugins = this.loadPlugins(pluginSettings);
+    const plugins = this.loadPlugins();
     for (const plugin of plugins) {
       await plugin.process(post);
     }

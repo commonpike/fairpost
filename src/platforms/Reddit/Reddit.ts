@@ -17,6 +17,7 @@ export default class Reddit extends Platform {
   assetsFolder = "_reddit";
   postFileName = "post.json";
   pluginSettings = {
+    name: "REDDIT_PLUGIN_SETTINGS",
     limitfiles: {
       prefer: ["video"],
       total_max: 1,
@@ -165,14 +166,7 @@ export default class Reddit extends Platform {
         videoposter = dstposter;
       }
     }
-    const userPluginSettings = JSON.parse(
-      this.user.data.get("settings", "REDDIT_PLUGIN_SETTINGS", "{}"),
-    );
-    const pluginSettings = {
-      ...this.pluginSettings,
-      ...(userPluginSettings || {}),
-    };
-    const plugins = this.loadPlugins(pluginSettings);
+    const plugins = this.loadPlugins();
     for (const plugin of plugins) {
       await plugin.process(post);
     }

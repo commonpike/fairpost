@@ -11,6 +11,7 @@ export default class YouTube extends Platform {
   assetsFolder = "_youtube";
   postFileName = "post.json";
   pluginSettings = {
+    name: "YOUTUBE_PLUGIN_SETTINGS",
     limitfiles: {
       exclusive: ["video"],
       video_min: 1,
@@ -103,14 +104,7 @@ export default class YouTube extends Platform {
   /** @inheritdoc */
   async preparePost(post: Post) {
     this.user.log.trace("YouTube.preparePost", post.id);
-    const userPluginSettings = JSON.parse(
-      this.user.data.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),
-    );
-    const pluginSettings = {
-      ...this.pluginSettings,
-      ...(userPluginSettings || {}),
-    };
-    const plugins = this.loadPlugins(pluginSettings);
+    const plugins = this.loadPlugins();
     for (const plugin of plugins) {
       await plugin.process(post);
     }
