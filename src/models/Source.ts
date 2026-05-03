@@ -39,36 +39,10 @@ export default class Source {
    */
   constructor(feed: Feed, path: string) {
     this.feed = feed;
-    this.id = Source.getSourceId(path);
+    this.id = feed.getSourceId(path);
     this.path = path;
     this.mapper = new SourceMapper(this);
     this.stage = this.getSourceStage();
-  }
-
-  /**
-   * getSourcePath
-   *
-   * Get the path for a source in a feed, based on stage and id
-   * @param feed - the feed this source belongs to
-   * @param id - the id of the source
-   * @param stage - the stage of the source
-   * @returns the path to the source
-   */
-  public static getSourcePath(
-    feed: Feed,
-    id: string,
-    stage: SourceStage,
-  ): string {
-    return feed.getStagePath(stage) + "/" + id;
-  }
-
-  /**
-   * get source id based on the path of a source
-   * @param path the path for the new or existing source
-   * @returns the id for the new or existing source
-   */
-  public static getSourceId(path: string): string {
-    return basename(path); // ah, simple
   }
 
   /**
@@ -170,7 +144,7 @@ export default class Source {
       }
     }
 
-    const newPath = Source.getSourcePath(this.feed, newId, newStage);
+    const newPath = this.feed.getSourcePath(newId, newStage);
     if (await this.feed.user.files.exists(newPath)) {
       this.feed.user.log.error(
         this.id,
