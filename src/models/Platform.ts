@@ -498,7 +498,7 @@ export default class Platform {
     this.user.log.trace("Platform", this.id, "publishDuePost", dryrun);
     const post = await this.getDuePost(sources);
     if (post) {
-      await post.publish(dryrun);
+      await this.publishPost(post,dryrun);
       return post;
     }
   }

@@ -39,7 +39,7 @@ export default class Source {
    */
   constructor(feed: Feed, path: string) {
     this.feed = feed;
-    this.id = this.getSourceId(path);
+    this.id = Source.getSourceId(path);
     this.path = path;
     this.mapper = new SourceMapper(this);
     this.stage = this.getSourceStage();
@@ -67,7 +67,7 @@ export default class Source {
    * @param path the path for the new or existing source
    * @returns the id for the new or existing source
    */
-  public getSourceId(path: string): string {
+  public static getSourceId(path: string): string {
     return basename(path); // ah, simple
   }
 
@@ -88,31 +88,6 @@ export default class Source {
       }
     }
     return SourceStage.UNKNOWN;
-  }
-
-  /**
-   * getSource
-   *
-   * get a new source and do some async checks.
-   * @param feed - the feed this source belongs to
-   * @param id - the id of the source
-   * @param stage - optional stage to find the source in
-   * @returns new source object
-   */
-
-  public static async getSource(
-    feed: Feed,
-    id: string,
-    stage?: SourceStage,
-  ): Promise<Source> {
-    const stages = stage ? [stage] : Object.values(SourceStage);
-    for (const stage of stages) {
-      const sourcePath = Source.getSourcePath(feed, id, stage);
-      if (await feed.user.files.isDir(sourcePath)) {
-        return new Source(feed, sourcePath);
-      }
-    }
-    throw feed.user.log.error("getSource", "No source in stage: " + id, stage);
   }
 
   /**

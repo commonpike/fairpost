@@ -132,7 +132,8 @@ export default class Feed {
         });
 
         for await (const file of files) {
-          const source = await Source.getSource(this, basename(file.path));
+          const sourceId = Source.getSourceId(file.path);
+          const source = await this.getSource(sourceId);
           this.cache[source.id] = source;
           sources.push(source);
         }
@@ -162,8 +163,15 @@ export default class Feed {
     if (id in this.cache) {
       return this.cache[id];
     }
-    const source = await Source.getSource(this, id, stage);
-    this.cache[source.id] = source;
-    return source;
+    const stages = stage ? [stage] : Object.values(SourceStage);
+    for (const stage of stages) {
+      const sourcePath = Source.getSourcePath(this, id, stage);
+      if (await this.user.files.isDir(sourcePath)) {
+        const source = new Source(this, sourcePath);
+        this.cache[source.id] = source;
+        return source;
+      }
+    }
+    throw this.user.log.error("getSource", "Source not found: " + id, stage);
   }
 }
