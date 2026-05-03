@@ -124,67 +124,67 @@ export default class Reddit extends Platform {
   /** @inheritdoc */
   async preparePost(source: Source): Promise<Post> {
     this.user.log.trace("Reddit.preparePost", source.id);
-    const post = await super.preparePost(source);
-    if (post) {
-      // TODO: extract video thumbnail
-      let videoposter = "";
-      if (post.hasFiles(FileGroup.VIDEO)) {
-        let srcposter = "";
-        const dstposter = this.assetsFolder + "/reddit-poster.png";
-        const posters = post
-          .getFiles(FileGroup.IMAGE)
-          .filter((file) => file.basename === "poster");
-        if (posters.length) {
-          srcposter = posters[0].name;
-        } else if (post.hasFiles(FileGroup.IMAGE)) {
-          // copy the first image to poster
-          srcposter = post.getFiles(FileGroup.IMAGE)[0].name;
-        } else {
-          // create a poster using ffmpeg
-          try {
-            throw this.user.log.error(
-              "video poster.jpg missing - thumbnails not implemented",
-            );
-            // https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
-            // const video = post.getFiles('video')[0];
-            // this.user.log.trace("Reddit.preparePost", "creating thumbnail", video.name, dstposter);
-            // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(dstposter));
-          } catch {
-            post.valid = false;
-          }
-        }
-        if (srcposter) {
-          // copy that file to its dest
-          this.user.log.trace(
-            "Reddit.preparePost",
-            "copying poster",
-            srcposter,
-            dstposter,
+    const post = await this.getPost(source);
+    await post.prepare();
+    // TODO: extract video thumbnail
+    let videoposter = "";
+    if (post.hasFiles(FileGroup.VIDEO)) {
+      let srcposter = "";
+      const dstposter = this.assetsFolder + "/reddit-poster.png";
+      const posters = post
+        .getFiles(FileGroup.IMAGE)
+        .filter((file) => file.basename === "poster");
+      if (posters.length) {
+        srcposter = posters[0].name;
+      } else if (post.hasFiles(FileGroup.IMAGE)) {
+        // copy the first image to poster
+        srcposter = post.getFiles(FileGroup.IMAGE)[0].name;
+      } else {
+        // create a poster using ffmpeg
+        try {
+          throw this.user.log.error(
+            "video poster.jpg missing - thumbnails not implemented",
           );
-          await this.user.files.copy(
-            post.getFilePath(srcposter),
-            post.getFilePath(dstposter),
-          );
-          post.removeFiles(FileGroup.IMAGE);
-          videoposter = dstposter;
+          // https://creatomate.com/blog/how-to-use-ffmpeg-in-nodejs
+          // const video = post.getFiles('video')[0];
+          // this.user.log.trace("Reddit.preparePost", "creating thumbnail", video.name, dstposter);
+          // this.generateThumbnail(post.getFilePath(video.name),post.getFilePath(dstposter));
+        } catch {
+          post.valid = false;
         }
       }
-      const userPluginSettings = JSON.parse(
-        this.user.data.get("settings", "REDDIT_PLUGIN_SETTINGS", "{}"),
-      );
-      const pluginSettings = {
-        ...this.pluginSettings,
-        ...(userPluginSettings || {}),
-      };
-      const plugins = this.loadPlugins(pluginSettings);
-      for (const plugin of plugins) {
-        await plugin.process(post);
+      if (srcposter) {
+        // copy that file to its dest
+        this.user.log.trace(
+          "Reddit.preparePost",
+          "copying poster",
+          srcposter,
+          dstposter,
+        );
+        await this.user.files.copy(
+          post.getFilePath(srcposter),
+          post.getFilePath(dstposter),
+        );
+        post.removeFiles(FileGroup.IMAGE);
+        videoposter = dstposter;
       }
-      if (videoposter) {
-        await post.addFile(videoposter);
-      }
-      await post.save();
     }
+    const userPluginSettings = JSON.parse(
+      this.user.data.get("settings", "REDDIT_PLUGIN_SETTINGS", "{}"),
+    );
+    const pluginSettings = {
+      ...this.pluginSettings,
+      ...(userPluginSettings || {}),
+    };
+    const plugins = this.loadPlugins(pluginSettings);
+    for (const plugin of plugins) {
+      await plugin.process(post);
+    }
+    if (videoposter) {
+      await post.addFile(videoposter);
+    }
+    await post.save();
+
     return post;
   }
 

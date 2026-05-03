@@ -241,18 +241,12 @@ export default class Source {
   }
 
   /**
-   * getPost
-   * this is just an alias of Platform.getPost(source)
+   * Get a single post from this source
+   * @param platform - platform for the post
    */
 
   public async getPost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(
-      "Source",
-      this.id,
-      "getPost",
-      this.id,
-      platform.id,
-    );
+    this.feed.user.log.trace("Source", "getPost", this.id, platform.id);
     return await PostFactory.resolve(platform, this);
   }
 

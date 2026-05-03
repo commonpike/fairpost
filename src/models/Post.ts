@@ -77,6 +77,7 @@ export default class Post {
     this.user.log.trace("Post", "save");
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const data = { ...this } as { [key: string]: any };
+    delete data.user;
     delete data.source;
     delete data.platform;
     delete data.mapper;
@@ -141,6 +142,10 @@ export default class Post {
 
   async prepare() {
     this.user.log.trace("Post", "prepare");
+
+    if (this.status === PostStatus.PUBLISHED) {
+      return;
+    }
 
     // purge non-existing files and
     // update existing files
@@ -211,6 +216,12 @@ export default class Post {
 
     if (this.title) {
       this.valid = true;
+    }
+    if (this.status === PostStatus.UNKNOWN) {
+      this.status = PostStatus.UNSCHEDULED;
+    }
+    if (this.status === PostStatus.FAILED) {
+      this.status = PostStatus.UNSCHEDULED;
     }
 
     // done

@@ -35,11 +35,11 @@ export default class FooBar extends Platform {
     
     /** @inheritdoc */
     async preparePost(source: Source): Promise<Post> {
-        const post = await super.preparePost(source);
-        if (post) {
-            // prepare your post here
-            await post.save();
-        }
+        const post = await this.getPost(source);
+        await post.prepare();
+        // prepare your platform specific stuff here
+        // that includes plugins ...
+        await post.save();
         return post;
     }
 

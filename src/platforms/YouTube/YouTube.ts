@@ -104,21 +104,21 @@ export default class YouTube extends Platform {
   /** @inheritdoc */
   async preparePost(source: Source): Promise<Post> {
     this.user.log.trace("YouTube.preparePost", source.id);
-    const post = await super.preparePost(source);
-    if (post) {
-      const userPluginSettings = JSON.parse(
-        this.user.data.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),
-      );
-      const pluginSettings = {
-        ...this.pluginSettings,
-        ...(userPluginSettings || {}),
-      };
-      const plugins = this.loadPlugins(pluginSettings);
-      for (const plugin of plugins) {
-        await plugin.process(post);
-      }
-      await post.save();
+    const post = await this.getPost(source);
+    await post.prepare();
+    const userPluginSettings = JSON.parse(
+      this.user.data.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),
+    );
+    const pluginSettings = {
+      ...this.pluginSettings,
+      ...(userPluginSettings || {}),
+    };
+    const plugins = this.loadPlugins(pluginSettings);
+    for (const plugin of plugins) {
+      await plugin.process(post);
     }
+    await post.save();
+
     return post;
   }
 

@@ -97,34 +97,34 @@ export default class Bluesky extends Platform {
 
   async preparePost(source: Source): Promise<Post> {
     this.user.log.trace("Bluesky.preparePost", source.id);
-    const post = await super.preparePost(source);
-    if (post) {
-      const userPluginSettings = JSON.parse(
-        this.user.data.get("settings", "BLUESKY_PLUGIN_SETTINGS", "{}"),
-      );
-      const pluginSettings = {
-        ...this.pluginSettings,
-        ...(userPluginSettings || {}),
-      };
-      const plugins = this.loadPlugins(pluginSettings);
-      for (const plugin of plugins) {
-        try {
-          await plugin.process(post);
-        } catch {
-          post.valid = false;
-        }
+    const post = await this.getPost(source);
+    await post.prepare();
+    const userPluginSettings = JSON.parse(
+      this.user.data.get("settings", "BLUESKY_PLUGIN_SETTINGS", "{}"),
+    );
+    const pluginSettings = {
+      ...this.pluginSettings,
+      ...(userPluginSettings || {}),
+    };
+    const plugins = this.loadPlugins(pluginSettings);
+    for (const plugin of plugins) {
+      try {
+        await plugin.process(post);
+      } catch {
+        post.valid = false;
       }
-
-      // Annimated GIF will be sent as a video. Only one animated GIF can be sent per post.
-
-      // video
-      // Supported formats: MP4.
-      // Duration max: 4 minutes.
-      // Duration min: 1 second.
-      // Aspect ratio must be between 1:3 and 3:1.
-
-      await post.save();
     }
+
+    // Annimated GIF will be sent as a video. Only one animated GIF can be sent per post.
+
+    // video
+    // Supported formats: MP4.
+    // Duration max: 4 minutes.
+    // Duration min: 1 second.
+    // Aspect ratio must be between 1:3 and 3:1.
+
+    await post.save();
+
     return post;
   }
 
