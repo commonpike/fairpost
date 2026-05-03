@@ -131,16 +131,17 @@ export default class Post {
    * The post may already be prepared before,
    * but then things may have changed.
    *
-   * If the is published, ignores it.
-   * If the is failed, sets it back to
+   * If the post is published, ignores it.
+   * If the post is failed, sets it back to
    * unscheduled.
    *
    * always updates the files, they may have changed
    * on disk; but also maintains some properties that may have
    * been changed manually
    *
-   * Finally, Calls platform.preparePost()
-   * Does not save the post.
+   * Calls platform.preparePost()
+   * Calls plugin.process(this) for all plugins
+   * Saves the post
    */
 
   async prepare() {

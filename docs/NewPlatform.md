@@ -12,7 +12,9 @@ that works depends on the platform; ymmv.
 
 To add support for a new platform, add a class to `src/platforms`
 extending `src/classes/Platform`. You want to override at least the
-method `preparePost(source)` and  `publishPost(post,dryrun)`.
+method `publishPost(post,dryrun)` and the `pluginSettings`
+to configure things like maximum image or text size. For more
+detail, you can override the `preparePost(post)` method, too.
 
 Make sure not to throw errors in or below publishPost; instead, just 
 return false and let the `Post.processResult()` itself.
@@ -28,7 +30,13 @@ export default class FooBar extends Platform {
 
     assetsFolder = "_foobar";
     postFileName = "post.json";
-    
+    pluginSettings = {
+      limitfiles: {
+        prefer: ["video"],
+        total_max: 1,
+      },
+    };
+
     constructor(user: User) {
       super(user);
     }
