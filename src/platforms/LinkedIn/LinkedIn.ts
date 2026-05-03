@@ -1,5 +1,4 @@
 import { FileGroup, FieldMapping, OAuthRequest } from "../../types/index.ts";
-import Source from "../../models/Source.ts";
 import { handleApiError, handleEmptyResponse } from "../../utilities.ts";
 
 import LinkedInApi from "./LinkedInApi.ts";
@@ -102,9 +101,8 @@ export default class LinkedIn extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("LinkedIn.preparePost", source.id);
-    const post = await this.getPost(source);
+  async preparePost(post: Post) {
+    this.user.log.trace("LinkedIn.preparePost", post.id);
 
     const userPluginSettings = JSON.parse(
       this.user.data.get("settings", "LINKEDIN_PLUGIN_SETTINGS", "{}"),
@@ -117,9 +115,6 @@ export default class LinkedIn extends Platform {
     for (const plugin of plugins) {
       await plugin.process(post);
     }
-    await post.save();
-
-    return post;
   }
 
   /** @inheritdoc */

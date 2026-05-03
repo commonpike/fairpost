@@ -1,8 +1,6 @@
 import { basename } from "path";
 import { FileGroup, FieldMapping, OAuthRequest } from "../../types/index.ts";
 
-import Source from "../../models/Source.ts";
-
 import InstagramApi from "./InstagramApi.ts";
 import InstagramAuth from "./InstagramAuth.ts";
 import PlatformMapper from "../../mappers/PlatformMapper.ts";
@@ -101,10 +99,8 @@ export default class Instagram extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("Instagram.preparePost", source.id);
-    const post = await this.getPost(source);
-    await post.prepare();
+  async preparePost(post: Post) {
+    this.user.log.trace("Instagram.preparePost", post.id);
     // instagram: require media
     if (
       post.getFiles(FileGroup.IMAGE).length +
@@ -126,10 +122,6 @@ export default class Instagram extends Platform {
         await plugin.process(post);
       }
     }
-
-    await post.save();
-
-    return post;
   }
 
   /** @inheritdoc */

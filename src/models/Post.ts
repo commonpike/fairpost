@@ -128,15 +128,18 @@ export default class Post {
   /**
    * Prepare this post
    *
-   * Called from Platform.preparePost;
-   *
    * The post may already be prepared before,
    * but then things may have changed.
+   *
+   * If the is published, ignores it.
+   * If the is failed, sets it back to
+   * unscheduled.
    *
    * always updates the files, they may have changed
    * on disk; but also maintains some properties that may have
    * been changed manually
    *
+   * Finally, Calls platform.preparePost()
    * Does not save the post.
    */
 
@@ -224,7 +227,8 @@ export default class Post {
       this.status = PostStatus.UNSCHEDULED;
     }
 
-    // done
+    await this.platform.preparePost(this);
+    await this.save();
   }
 
   /**

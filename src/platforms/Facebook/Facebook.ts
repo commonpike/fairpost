@@ -1,8 +1,6 @@
 import { basename } from "path";
 import { FileGroup, FieldMapping, OAuthRequest } from "../../types/index.ts";
 
-import Source from "../../models/Source.ts";
-
 import FacebookApi from "./FacebookApi.ts";
 import FacebookAuth from "./FacebookAuth.ts";
 import PlatformMapper from "../../mappers/PlatformMapper.ts";
@@ -102,10 +100,8 @@ export default class Facebook extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("Facebook.preparePost", source.id);
-    const post = await this.getPost(source);
-    await post.prepare();
+  async preparePost(post: Post) {
+    this.user.log.trace("Facebook.preparePost", post.id);
     const userPluginSettings = JSON.parse(
       this.user.data.get("settings", "FACEBOOK_PLUGIN_SETTINGS", "{}"),
     );
@@ -117,9 +113,6 @@ export default class Facebook extends Platform {
     for (const plugin of plugins) {
       await plugin.process(post);
     }
-    await post.save();
-
-    return post;
   }
 
   /** @inheritdoc */

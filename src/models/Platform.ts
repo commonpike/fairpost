@@ -340,14 +340,8 @@ export default class Platform {
   /**
    * preparePost
    *
-   * Prepare a post for this platform for the
-   * given source. If it doesn't exist, create it.
-   *
+   * Prepare the post for this platform.
    * Override this in your own platform !
-   *
-   * If the post exists and is published, ignores it.
-   * If the post exists and is failed, sets it back to
-   * unscheduled.
    *
    * Do not throw errors. Instead, catch and log them,
    * and set the post.valid to false
@@ -355,16 +349,15 @@ export default class Platform {
    * Presume the post may have already been prepared
    * before, and manually adapted later. For example,
    * post.status may have manually been set to canceled.
-   * @param source - the source for which to prepare a post for this platform
-   * @returns the prepared post
+   * @param post - the post to prepare
    */
-  async preparePost(source: Source): Promise<Post> {
+  async preparePost(post: Post) {
     this.user.log.trace("Platform", this.id, "preparePost");
     throw this.user.log.error(
       "Prepare not implemented for " +
         this.id +
         ". Read the docs in the docs folder.",
-      source.id,
+      post.id,
     );
   }
 

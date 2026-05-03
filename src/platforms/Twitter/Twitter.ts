@@ -1,5 +1,4 @@
 import { FileGroup, FieldMapping } from "../../types/index.ts";
-import Source from "../../models/Source.ts";
 
 import Platform from "../../models/Platform.ts";
 import Post from "../../models/Post.ts";
@@ -111,10 +110,8 @@ export default class Twitter extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("Twitter.preparePost", source.id);
-    const post = await this.getPost(source);
-    await post.prepare();
+  async preparePost(post: Post) {
+    this.user.log.trace("Twitter.preparePost", post.id);
     const userPluginSettings = JSON.parse(
       this.user.data.get("settings", "TWITTER_PLUGIN_SETTINGS", "{}"),
     );
@@ -166,9 +163,6 @@ export default class Twitter extends Platform {
       this.user.log.warn("Twitter post has no body");
       post.valid = false;
     }
-    await post.save();
-
-    return post;
   }
 
   /** @inheritdoc */

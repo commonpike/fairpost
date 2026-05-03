@@ -1,5 +1,4 @@
 import { FileGroup, FieldMapping, OAuthRequest } from "../../types/index.ts";
-import Source from "../../models/Source.ts";
 
 import Platform from "../../models/Platform.ts";
 import Post from "../../models/Post.ts";
@@ -102,10 +101,8 @@ export default class YouTube extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("YouTube.preparePost", source.id);
-    const post = await this.getPost(source);
-    await post.prepare();
+  async preparePost(post: Post) {
+    this.user.log.trace("YouTube.preparePost", post.id);
     const userPluginSettings = JSON.parse(
       this.user.data.get("settings", "YOUTUBE_PLUGIN_SETTINGS", "{}"),
     );
@@ -117,9 +114,6 @@ export default class YouTube extends Platform {
     for (const plugin of plugins) {
       await plugin.process(post);
     }
-    await post.save();
-
-    return post;
   }
 
   /** @inheritdoc */

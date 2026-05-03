@@ -1,8 +1,6 @@
 import { basename } from "path";
 import { FileGroup, FieldMapping, OAuthRequest } from "../../types/index.ts";
 
-import Source from "../../models/Source.ts";
-
 import Platform from "../../models/Platform.ts";
 import Post from "../../models/Post.ts";
 import RedditApi from "./RedditApi.ts";
@@ -122,10 +120,8 @@ export default class Reddit extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("Reddit.preparePost", source.id);
-    const post = await this.getPost(source);
-    await post.prepare();
+  async preparePost(post: Post) {
+    this.user.log.trace("Reddit.preparePost", post.id);
     // TODO: extract video thumbnail
     let videoposter = "";
     if (post.hasFiles(FileGroup.VIDEO)) {
@@ -183,9 +179,6 @@ export default class Reddit extends Platform {
     if (videoposter) {
       await post.addFile(videoposter);
     }
-    await post.save();
-
-    return post;
   }
 
   /** @inheritdoc */

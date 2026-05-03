@@ -34,13 +34,13 @@ export default class FooBar extends Platform {
     }
     
     /** @inheritdoc */
-    async preparePost(source: Source): Promise<Post> {
-        const post = await this.getPost(source);
-        await post.prepare();
+    async preparePost(post: Post) {
         // prepare your platform specific stuff here
         // that includes plugins ...
-        await post.save();
-        return post;
+        // for example
+        if (post.hasFiles(FileGroup.VIDEO)) {
+          post.removeFiles(FileGroup.IMAGE);
+        }
     }
 
     /** @inheritdoc */

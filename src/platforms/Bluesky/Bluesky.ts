@@ -1,5 +1,4 @@
 import { FileGroup, FieldMapping } from "../../types/index.ts";
-import Source from "../../models/Source.ts";
 
 import Operator from "../../models/Operator.ts";
 import Platform from "../../models/Platform.ts";
@@ -95,10 +94,8 @@ export default class Bluesky extends Platform {
 
   /** @inheritdoc */
 
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("Bluesky.preparePost", source.id);
-    const post = await this.getPost(source);
-    await post.prepare();
+  async preparePost(post: Post) {
+    this.user.log.trace("Bluesky.preparePost", post.id);
     const userPluginSettings = JSON.parse(
       this.user.data.get("settings", "BLUESKY_PLUGIN_SETTINGS", "{}"),
     );
@@ -122,10 +119,6 @@ export default class Bluesky extends Platform {
     // Duration max: 4 minutes.
     // Duration min: 1 second.
     // Aspect ratio must be between 1:3 and 3:1.
-
-    await post.save();
-
-    return post;
   }
 
   /** @inheritdoc */
