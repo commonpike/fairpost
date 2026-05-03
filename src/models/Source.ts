@@ -241,22 +241,6 @@ export default class Source {
   }
 
   /**
-   * preparePost
-   * this is just an alias of Platform.preparePost(source)
-   */
-
-  public async preparePost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(
-      "Source",
-      this.id,
-      "preparePost",
-      this.id,
-      platform.id,
-    );
-    return await platform.preparePost(this);
-  }
-
-  /**
    * getPost
    * this is just an alias of Platform.getPost(source)
    */
