@@ -9,7 +9,7 @@ import {
   FileGroup,
 } from "../types/index.ts";
 import Platform from "./Platform.ts";
-import Post from "./Post.ts";
+import Post, { PostFactory } from "./Post.ts";
 import SourceMapper from "../mappers/SourceMapper.ts";
 
 /**
@@ -269,7 +269,7 @@ export default class Source {
       this.id,
       platform.id,
     );
-    return await platform.getPost(this);
+    return await PostFactory.resolve(platform, this);
   }
 
   /**
@@ -290,7 +290,7 @@ export default class Source {
     }
     for (const platform of platforms) {
       try {
-        const post = await this.getPost(platform);
+        const post = await PostFactory.resolve(platform, this);
         if (!status || status === post.status) {
           posts.push(post);
         }

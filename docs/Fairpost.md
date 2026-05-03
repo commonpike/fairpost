@@ -37,11 +37,14 @@ const post = source.getPost(platform);
 
 ## Post Status and Source Stage
 
+A Post has a `status` in the publishing flow,
+like 'scheduled' or 'canceled'.
+
 The stage of a source depends on the statuses of 
 all posts in the source. The first stage is 
 `incoming`, the final stage is `archived`. 
 The path to the source folder, containing all
-the posts, is defined by the soure stage.
+the posts, is defined by the source stage.
 
 ## DTOs
 

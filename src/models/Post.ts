@@ -1,4 +1,5 @@
 import { FileGroup, FileInfo, PostStatus, PostResult } from "../types/index.ts";
+import User from "./User.ts";
 import Source from "./Source.ts";
 import Platform from "./Platform.ts";
 import { isSimilarArray } from "../utilities.ts";
@@ -7,7 +8,7 @@ import PostMapper from "../mappers/PostMapper.ts";
 /**
  * Post - a post within a source
  *
- * A post belongs to one platform and one source;
+ * A post belongs to both one platform and one source;
  * it is *prepared* and later *published* by the platform.
  * The post serializes to a json file in the source,
  * where it can be read later for further processing.
@@ -21,12 +22,13 @@ import PostMapper from "../mappers/PostMapper.ts";
  */
 export default class Post {
   id: string;
+  user: User;
   source: Source;
   platform: Platform;
   valid: boolean = false;
   status: PostStatus = PostStatus.UNKNOWN;
+  originalStatus: PostStatus = PostStatus.UNKNOWN;
   prepared: boolean = false;
-  private originalStatus: PostStatus = PostStatus.UNKNOWN;
   scheduled?: Date;
   published?: Date;
   results: PostResult[] = [];
@@ -43,11 +45,24 @@ export default class Post {
 
   /**
    * Dont call the constructor yourself;
-   * instead, call `await Post.getPost()`
+   * instead, call `await PostFactory.resolve()`
    * @param platform
    * @param source
    */
   constructor(platform: Platform, source: Source) {
+    if (platform.user !== source.feed.user) {
+      source.feed.user.log.error(
+        "Creating source post from wrong platform",
+        platform.id,
+        source.id,
+      );
+      throw platform.user.log.error(
+        "Creating platform post from wrong source",
+        platform.id,
+        source.id,
+      );
+    }
+    this.user = platform.user;
     this.id = platform.getPostId(source);
     this.platform = platform;
     this.source = source;
@@ -55,45 +70,11 @@ export default class Post {
   }
 
   /**
-   * getPost
-   *
-   * get a new post and load the async data.
-   * @param platform - the platform this post belongs to
-   * @param source - the source this post is derived from
-   * @returns new post object
-   */
-  static async getPost(platform: Platform, source: Source): Promise<Post> {
-    const post = new Post(platform, source);
-    const postFilePath = platform.getPostFilePath(source);
-    if (!(await platform.user.files.exists(postFilePath))) {
-      return post;
-    }
-    const contents = await platform.user.files.readFile(postFilePath);
-    const data = JSON.parse(contents);
-    if (!data) {
-      throw platform.user.log.error(
-        "Cant parse post ",
-        post.id,
-        post.source.id,
-      );
-    }
-    Object.assign(post, data);
-    post.id = platform.getPostId(source);
-    post.prepared = true;
-    post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
-    post.published = post.published ? new Date(post.published) : undefined;
-    post.ignoreFiles = post.ignoreFiles ?? [];
-    post.originalStatus = post.status;
-
-    return post;
-  }
-
-  /**
    * Save this post to disk
    */
 
   async save() {
-    this.platform.user.log.trace("Post", "save");
+    this.user.log.trace("Post", "save");
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     const data = { ...this } as { [key: string]: any };
     delete data.source;
@@ -101,19 +82,19 @@ export default class Post {
     delete data.mapper;
     delete data.prepared;
     delete data.originalStatus;
-    await this.platform.user.files.write(
+    await this.user.files.write(
       this.platform.getPostFilePath(this.source),
       JSON.stringify(data, null, "\t"),
     );
 
     if (this.originalStatus !== this.status) {
       // update the source status if necessary
-      // note, this may *move* the source and all posts
+      // note, this may *move* the source and all posts in it
       const originalSourceStage = this.source.stage;
       const newSourceStage = await this.source.updateStage();
 
       // update the users report
-      const report = await this.platform.user.getReport();
+      const report = await this.user.getReport();
       if (report.platforms[this.platform.id]) {
         if (!report.platforms[this.platform.id]?.count[this.originalStatus]) {
           report.platforms[this.platform.id]!.count[this.originalStatus] = 1;
@@ -135,13 +116,8 @@ export default class Post {
           report.feed.count[newSourceStage]!++;
         }
         // save the report
-        await this.platform.user.putReport(report);
-        this.platform.user.log.trace(
-          "Post",
-          this.id,
-          "save",
-          "updated user report",
-        );
+        await this.user.putReport(report);
+        this.user.log.trace("Post", this.id, "save", "updated user report");
       }
       // all up to date
       this.originalStatus = this.status;
@@ -164,15 +140,15 @@ export default class Post {
    */
 
   async prepare() {
-    this.platform.user.log.trace("Post", "prepare");
+    this.user.log.trace("Post", "prepare");
 
     // purge non-existing files and
     // update existing files
 
     if (!this.prepared) {
       const assetsPath = this.getFilePath(this.platform.assetsFolder);
-      if (!(await this.platform.user.files.exists(assetsPath))) {
-        await this.platform.user.files.mkdir(assetsPath);
+      if (!(await this.user.files.exists(assetsPath))) {
+        await this.user.files.mkdir(assetsPath);
       }
     } else {
       await this.purgeFiles();
@@ -194,44 +170,36 @@ export default class Post {
     const textFiles = this.getFiles(FileGroup.TEXT);
 
     if (this.hasFile("body.txt")) {
-      this.body = await this.platform.user.files.readFile(
-        this.getFilePath("body.txt"),
-      );
+      this.body = await this.user.files.readFile(this.getFilePath("body.txt"));
     } else if (textFiles.length === 1) {
       const bodyFile = textFiles[0].name;
-      this.body = await this.platform.user.files.readFile(
-        this.getFilePath(bodyFile),
-      );
+      this.body = await this.user.files.readFile(this.getFilePath(bodyFile));
     } else {
       this.body = this.platform.defaultBody;
     }
 
     if (this.hasFile("title.txt")) {
-      this.title = await this.platform.user.files.readFile(
+      this.title = await this.user.files.readFile(
         this.getFilePath("title.txt"),
       );
     } else if (this.hasFile("subject.txt")) {
-      this.title = await this.platform.user.files.readFile(
+      this.title = await this.user.files.readFile(
         this.getFilePath("subject.txt"),
       );
     }
 
     if (this.hasFile("tags.txt")) {
       this.tags = (
-        await this.platform.user.files.readFile(this.getFilePath("tags.txt"))
+        await this.user.files.readFile(this.getFilePath("tags.txt"))
       ).split(/\s/);
     }
     if (this.hasFile("mentions.txt")) {
       this.mentions = this.mentions = (
-        await this.platform.user.files.readFile(
-          this.getFilePath("mentions.txt"),
-        )
+        await this.user.files.readFile(this.getFilePath("mentions.txt"))
       ).split(/\s/);
     }
     if (this.hasFile("geo.txt")) {
-      this.geo = await this.platform.user.files.readFile(
-        this.getFilePath("geo.txt"),
-      );
+      this.geo = await this.user.files.readFile(this.getFilePath("geo.txt"));
     }
 
     // decompile the body to see if there are
@@ -257,33 +225,33 @@ export default class Post {
    */
 
   async setStatus(status: PostStatus) {
-    this.platform.user.log.trace("Post", "setStatus", status);
+    this.user.log.trace("Post", "setStatus", status);
     if (!this.prepared) {
-      throw this.platform.user.log.error("Post is not prepared");
+      throw this.user.log.error("Post is not prepared");
     }
     if (!this.valid) {
-      throw this.platform.user.log.error("Post is not valid");
+      throw this.user.log.error("Post is not valid");
     }
 
     if (this.status === status) {
-      throw this.platform.user.log.error("Post already on status " + status);
+      throw this.user.log.error("Post already on status " + status);
     }
-    this.platform.user.log.warn("Changing post status to " + status);
+    this.user.log.warn("Changing post status to " + status);
     switch (status) {
       case PostStatus.UNSCHEDULED:
-        this.platform.user.log.warn("Removing scheduled and published dates");
+        this.user.log.warn("Removing scheduled and published dates");
         delete this.scheduled;
         delete this.published;
         break;
       case PostStatus.SCHEDULED:
-        this.platform.user.log.warn(
+        this.user.log.warn(
           "Resetting scheduled date, removing published date, r",
         );
         this.scheduled = this.scheduled || new Date();
         delete this.published;
         break;
       case PostStatus.PUBLISHED:
-        this.platform.user.log.warn("Resetting scheduled and published dates");
+        this.user.log.warn("Resetting scheduled and published dates");
         this.scheduled = this.scheduled || new Date();
         this.published = this.published || new Date();
         break;
@@ -300,18 +268,18 @@ export default class Post {
    */
 
   async schedule(date: Date) {
-    this.platform.user.log.trace("Post", "schedule", date);
+    this.user.log.trace("Post", "schedule", date);
     if (!this.prepared) {
-      throw this.platform.user.log.error("Post is not prepared");
+      throw this.user.log.error("Post is not prepared");
     }
     if (!this.valid) {
-      throw this.platform.user.log.error("Post is not valid");
+      throw this.user.log.error("Post is not valid");
     }
     if (this.status === PostStatus.CANCELED) {
-      throw this.platform.user.log.error("Post has status canceled");
+      throw this.user.log.error("Post has status canceled");
     }
     if (this.status !== PostStatus.UNSCHEDULED) {
-      this.platform.user.log.warn("Rescheduling post");
+      this.user.log.warn("Rescheduling post");
     }
     this.scheduled = date;
     this.status = PostStatus.SCHEDULED;
@@ -328,22 +296,22 @@ export default class Post {
    * @returns boolean if success
    */
   async publish(dryrun: boolean): Promise<boolean> {
-    this.platform.user.log.trace("Post", "publish");
+    this.user.log.trace("Post", "publish");
     if (!this.prepared) {
-      throw this.platform.user.log.error("Post is not prepared");
+      throw this.user.log.error("Post is not prepared");
     }
     if (!this.valid) {
-      throw this.platform.user.log.error("Post is not valid", this.id);
+      throw this.user.log.error("Post is not valid", this.id);
     }
     if (this.status === PostStatus.CANCELED) {
-      throw this.platform.user.log.error("Post has status canceled", this.id);
+      throw this.user.log.error("Post has status canceled", this.id);
     }
     if (this.published) {
-      throw this.platform.user.log.error("Post was already published", this.id);
+      throw this.user.log.error("Post was already published", this.id);
     }
     // why ?
     // if (!dryrun) post.schedule(now);
-    this.platform.user.log.info("Publishing", this.id);
+    this.user.log.info("Publishing", this.id);
     return await this.platform.publishPost(this, dryrun);
   }
 
@@ -525,11 +493,8 @@ export default class Post {
    */
   async purgeFiles() {
     for (const file of this.getFiles()) {
-      if (
-        file.original &&
-        !(await this.platform.user.files.exists(file.original))
-      ) {
-        this.platform.user.log.info(
+      if (file.original && !(await this.user.files.exists(file.original))) {
+        this.user.log.info(
           "Post",
           "purgeFiles",
           "purging non-existant derivate",
@@ -537,10 +502,8 @@ export default class Post {
         );
         this.removeFile(file.name);
       }
-      if (
-        !(await this.platform.user.files.exists(this.getFilePath(file.name)))
-      ) {
-        this.platform.user.log.info(
+      if (!(await this.user.files.exists(this.getFilePath(file.name)))) {
+        this.user.log.info(
           "Post",
           "purgeFiles",
           "purging non-existent file",
@@ -597,15 +560,11 @@ export default class Post {
       if (!this.files) {
         this.files = [];
       }
-      this.platform.user.log.trace("Post.addFile", newFile);
+      this.user.log.trace("Post.addFile", newFile);
       this.files.push(newFile);
       return newFile;
     } else {
-      this.platform.user.log.warn(
-        "Post.addFile",
-        "Not replacing existing file",
-        name,
-      );
+      this.user.log.warn("Post.addFile", "Not replacing existing file", name);
     }
   }
 
@@ -647,7 +606,7 @@ export default class Post {
     search: string,
     replace: string,
   ): Promise<FileInfo | undefined> {
-    this.platform.user.log.trace("Post.replaceFile", search, replace);
+    this.user.log.trace("Post.replaceFile", search, replace);
     const index = this.files?.findIndex((file) => file.name === search) ?? -1;
     if (index > -1) {
       const oldFile = this.getFile(search);
@@ -658,11 +617,7 @@ export default class Post {
         return this.files[index];
       }
     } else {
-      this.platform.user.log.warn(
-        "Post.replaceFile",
-        "metadata not found",
-        search,
-      );
+      this.user.log.warn("Post.replaceFile", "metadata not found", search);
     }
   }
 
@@ -692,7 +647,7 @@ export default class Post {
     this.results.push(result);
 
     if (result.error) {
-      this.platform.user.log.warn(
+      this.user.log.warn(
         "Post.processResult",
         this.id,
         "failed",
@@ -714,5 +669,33 @@ export default class Post {
 
     await this.save();
     return result.success;
+  }
+}
+
+export class PostFactory {
+  static async resolve(platform: Platform, source: Source): Promise<Post> {
+    const post = new Post(platform, source);
+    const postFilePath = platform.getPostFilePath(source);
+    if (!(await platform.user.files.exists(postFilePath))) {
+      // post doesnt exist yet - tis a new post
+      return post;
+    }
+    const contents = await platform.user.files.readFile(postFilePath);
+    const data = JSON.parse(contents);
+    if (!data) {
+      throw platform.user.log.error(
+        "Cant parse post ",
+        post.id,
+        post.source.id,
+      );
+    }
+    Object.assign(post, data);
+    post.id = platform.getPostId(source);
+    post.prepared = true;
+    post.scheduled = post.scheduled ? new Date(post.scheduled) : undefined;
+    post.published = post.published ? new Date(post.published) : undefined;
+    post.ignoreFiles = post.ignoreFiles ?? [];
+    post.originalStatus = post.status;
+    return post;
   }
 }

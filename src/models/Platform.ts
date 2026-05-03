@@ -6,7 +6,7 @@ import { FieldMapping, SourceStage, PostStatus } from "../types/index.ts";
 import Source from "./Source.ts";
 import Operator from "./Operator.ts";
 import Plugin from "./Plugin.ts";
-import Post from "./Post.ts";
+import Post, { PostFactory } from "./Post.ts";
 import User from "./User.ts";
 
 /**
@@ -201,7 +201,7 @@ export default class Platform {
     const postId = this.getPostId(source);
     if (!(postId in this.cache)) {
       this.user.log.trace("Platform", this.id, "getPost", source.id);
-      const post = await Post.getPost(this, source);
+      const post = await PostFactory.resolve(this, source);
       this.cache[postId] = post;
     }
     return this.cache[postId];
