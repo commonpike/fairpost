@@ -11,12 +11,35 @@ defaults/settings differs per plugin.
 
 It's the platform source that defines the required
 plugins and its default settings; some platform may 
-allow a user to add more plugins and/or change the 
+allow a user to add more plugins and/or override the 
 settings.
 
 ## Calling a plugin
 
-To have a plugin process a post, simply create the
+Inside a `Platform`, `pluginSettings` is an object
+with plugin ids as keys and default settings as values.
+One optional key, 'name', is reserved for the name of these
+settings in User.settings, that can override these
+defaults.
+
+```php
+<?php
+
+export default class MyPlatform extends Platform {
+  pluginSettings = {
+    name: 'MYPLATFORM_PLUGIN_SETTINGS',
+    textsize: {
+      max_length: 300,
+    },
+  }
+```
+
+Using this, on preparePost, the textSite plugin
+will be applied automatically with the settings given,
+and these settings can be overriden with MYPLATFORM_PLUGIN_SETTINGS
+in the user settings.
+
+To call a plugin manually instead, instantiate the
 plugin with optionally its settings, and call the 
 `process` method. The example below will scale all
 images in your post to have a maximum of 300px width,
@@ -36,22 +59,6 @@ await imgsize.process(post);
 post.save();
 ```
 
-Inside a `Platform`, can load multiple plugins at once,
-passing the settings for all of them keyed by their id.
-The below code does the same as the above code:
-
-```php
-<?php
-
-const plugins = this.loadPlugins({
-    'limitfiles': { max_images: 3 },
-    'imagesize': { max_width: 300 }
-});
-for (const plugin of plugins) {
-    await plugin.process(post);
-}
-post.save();
-```
 
 ## Writing a plugin
 

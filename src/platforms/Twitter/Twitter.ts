@@ -1,5 +1,4 @@
 import { FileGroup, FieldMapping } from "../../types/index.ts";
-import Source from "../../models/Source.ts";
 
 import Platform from "../../models/Platform.ts";
 import Post from "../../models/Post.ts";
@@ -27,6 +26,7 @@ export default class Twitter extends Platform {
   assetsFolder = "_twitter";
   postFileName = "post.json";
   pluginSettings = {
+    name: "TWITTER_PLUGIN_SETTINGS",
     limitfiles: {
       video_max: 0,
       image_max: 4,
@@ -111,66 +111,48 @@ export default class Twitter extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("Twitter.preparePost", source.id);
-    const post = await super.preparePost(source);
-    if (post) {
-      const userPluginSettings = JSON.parse(
-        this.user.data.get("settings", "TWITTER_PLUGIN_SETTINGS", "{}"),
-      );
-      const pluginSettings = {
-        ...this.pluginSettings,
-        ...(userPluginSettings || {}),
-      };
-      const plugins = this.loadPlugins(pluginSettings);
-      for (const plugin of plugins) {
-        await plugin.process(post);
-      }
+  async preparePost(post: Post) {
+    this.user.log.trace("Twitter.preparePost", post.id);
 
-      // remove files whose mime are not supported,
-      // this could be a plugin
-      for (const file of post.getFiles()) {
-        if (
-          !Object.values(EUploadMimeType).includes(
-            file.mimetype as EUploadMimeType,
-          )
-        ) {
-          this.user.log.trace(
-            "Removing unsupported file type: " + file.mimetype,
-          );
-          post.removeFile(file.name);
-        }
+    // remove files whose mime are not supported,
+    // this could be a plugin
+    for (const file of post.getFiles()) {
+      if (
+        !Object.values(EUploadMimeType).includes(
+          file.mimetype as EUploadMimeType,
+        )
+      ) {
+        this.user.log.trace("Removing unsupported file type: " + file.mimetype);
+        post.removeFile(file.name);
       }
-
-      // limit the post body to 140 characters
-      // this could be a plugin
-      const charLimit = 140;
-      if (post.body && post.body.length >= charLimit) {
-        const splitBody = post.body.match(/[^.\n]+[.\n]*|[.\n]+/g);
-        if (splitBody) {
-          let newBody = "";
-          let nextLine = splitBody.shift();
-          while (nextLine && newBody.length + nextLine.length < charLimit) {
-            newBody += nextLine;
-            nextLine = splitBody.shift();
-          }
-          if (newBody !== "") {
-            post.body = newBody;
-          }
-        }
-        if (post.body.length >= charLimit) {
-          post.body = post.body.substring(0, charLimit - 4) + "...";
-        }
-      }
-
-      // twitter requires a real body or images
-      if (!post.body && !post.hasFiles(FileGroup.IMAGE)) {
-        this.user.log.warn("Twitter post has no body");
-        post.valid = false;
-      }
-      await post.save();
     }
-    return post;
+
+    // limit the post body to 140 characters
+    // this could be a plugin
+    const charLimit = 140;
+    if (post.body && post.body.length >= charLimit) {
+      const splitBody = post.body.match(/[^.\n]+[.\n]*|[.\n]+/g);
+      if (splitBody) {
+        let newBody = "";
+        let nextLine = splitBody.shift();
+        while (nextLine && newBody.length + nextLine.length < charLimit) {
+          newBody += nextLine;
+          nextLine = splitBody.shift();
+        }
+        if (newBody !== "") {
+          post.body = newBody;
+        }
+      }
+      if (post.body.length >= charLimit) {
+        post.body = post.body.substring(0, charLimit - 4) + "...";
+      }
+    }
+
+    // twitter requires a real body or images
+    if (!post.body && !post.hasFiles(FileGroup.IMAGE)) {
+      this.user.log.warn("Twitter post has no body");
+      post.valid = false;
+    }
   }
 
   /** @inheritdoc */

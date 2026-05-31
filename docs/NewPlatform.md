@@ -12,7 +12,9 @@ that works depends on the platform; ymmv.
 
 To add support for a new platform, add a class to `src/platforms`
 extending `src/classes/Platform`. You want to override at least the
-method `preparePost(source)` and  `publishPost(post,dryrun)`.
+method `publishPost(post,dryrun)` and the `pluginSettings`
+to configure things like maximum image or text size. For more
+detail, you can override the `preparePost(post)` method, too.
 
 Make sure not to throw errors in or below publishPost; instead, just 
 return false and let the `Post.processResult()` itself.
@@ -28,19 +30,25 @@ export default class FooBar extends Platform {
 
     assetsFolder = "_foobar";
     postFileName = "post.json";
-    
+    pluginSettings = {
+      limitfiles: {
+        prefer: ["video"],
+        total_max: 1,
+      },
+    };
+
     constructor(user: User) {
       super(user);
     }
     
     /** @inheritdoc */
-    async preparePost(source: Source): Promise<Post> {
-        const post = await super.preparePost(source);
-        if (post) {
-            // prepare your post here
-            await post.save();
+    async preparePost(post: Post) {
+        // prepare your platform specific stuff here
+        // that includes plugins ...
+        // for example
+        if (post.hasFiles(FileGroup.VIDEO)) {
+          post.removeFiles(FileGroup.IMAGE);
         }
-        return post;
     }
 
     /** @inheritdoc */
@@ -144,14 +152,12 @@ for you to throw:
     throw this.user.log.error('foo', 'bar', 'quz');
 ```
 
-### Using Plugins to prepare your Post
+### Using Plugins after preparing your Post
 
-Inside `preparePost`, you can call plugins to, for example,
-limit the files to a certain type or scale down images, etcetera.
+When a Post is prepared, after `Platform.preparePost`
+has finished, the post calls `this.platform.loadPlugins()`
+to run plugins configured for this platform. 
 See [Plugins](Plugins.md) for a more detailed description.
-If you want users to be able to finetune the plugin settings,
-or even enable additional plugins, read the plugin ids and/or
-settings using `User.get(...)`.
 
 ### Add input/output for custom settings in your platform
 

@@ -7,7 +7,7 @@ import { basename } from "path";
 /**
  * Feed - the sources handler of fairpost
  *
- * The feed is a container of sources. The sources
+ * The feed is the owner of sources. The sources
  * path is set by USER_FEEDPATH. Every dir in there,
  * if not starting with _ or ., is a source.
  *
@@ -79,6 +79,27 @@ export default class Feed {
   }
 
   /**
+   * getSourcePath
+   *
+   * Get the path for a source in this feed, based on stage and id
+   * @param id - the id of the source
+   * @param stage - the stage of the source
+   * @returns the path to the source
+   */
+  public getSourcePath(id: string, stage: SourceStage): string {
+    return this.getStagePath(stage) + "/" + id;
+  }
+
+  /**
+   * get source id based on the path of a source
+   * @param path the path for the new or existing source
+   * @returns the id for the new or existing source
+   */
+  public getSourceId(path: string): string {
+    return basename(path); // ah, simple
+  }
+
+  /**
    * Get multiple sources
    * @param sourceIds optional array of ids of source you want to get
    * @param stage optional stage of the sources you want to get
@@ -132,7 +153,8 @@ export default class Feed {
         });
 
         for await (const file of files) {
-          const source = await Source.getSource(this, basename(file.path));
+          const sourceId = this.getSourceId(file.path);
+          const source = await this.getSource(sourceId);
           this.cache[source.id] = source;
           sources.push(source);
         }
@@ -151,6 +173,7 @@ export default class Feed {
       return sources;
     }
   }
+
   /**
    * Get one source, and use a local cache.
    * @param id - id of the source
@@ -162,8 +185,15 @@ export default class Feed {
     if (id in this.cache) {
       return this.cache[id];
     }
-    const source = await Source.getSource(this, id, stage);
-    this.cache[source.id] = source;
-    return source;
+    const stages = stage ? [stage] : Object.values(SourceStage);
+    for (const stage of stages) {
+      const sourcePath = this.getSourcePath(id, stage);
+      if (await this.user.files.isDir(sourcePath)) {
+        const source = new Source(this, sourcePath);
+        this.cache[source.id] = source;
+        return source;
+      }
+    }
+    throw this.user.log.error("getSource", "Source not found: " + id, stage);
   }
 }

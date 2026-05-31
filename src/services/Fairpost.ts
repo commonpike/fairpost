@@ -670,7 +670,8 @@ class Fairpost {
           const platform = user.getPlatform(args.platform);
           const feed = user.getFeed();
           const source = await feed.getSource(args.source);
-          const post = await platform.preparePost(source);
+          const post = await platform.getPost(source);
+          await post.prepare();
           output = await post.mapper.getDto(operator);
           break;
         }
@@ -701,7 +702,8 @@ class Fairpost {
                 output[platform.id] = [];
               }
               try {
-                const post = await platform.preparePost(source);
+                const post = await platform.getPost(source);
+                await post.prepare();
                 (output[platform.id] as CombinedResult[]).push({
                   success: true,
                   result: await post.mapper.getDto(operator),

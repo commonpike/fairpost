@@ -6,7 +6,7 @@ import { FieldMapping, SourceStage, PostStatus } from "../types/index.ts";
 import Source from "./Source.ts";
 import Operator from "./Operator.ts";
 import Plugin from "./Plugin.ts";
-import Post from "./Post.ts";
+import Post, { PostFactory } from "./Post.ts";
 import User from "./User.ts";
 
 /**
@@ -26,6 +26,10 @@ export default class Platform {
   postFileName: string = "post.json";
   mapper!: PlatformMapper; // child *must* set this
   settings: FieldMapping = {};
+  pluginSettings: {
+    name?: string;
+    [pluginid: string]: object | string | undefined;
+  } = {};
   interval: number;
   constructor(user: User) {
     this.user = user;
@@ -201,7 +205,7 @@ export default class Platform {
     const postId = this.getPostId(source);
     if (!(postId in this.cache)) {
       this.user.log.trace("Platform", this.id, "getPost", source.id);
-      const post = await Post.getPost(this, source);
+      const post = await PostFactory.resolve(this, source);
       this.cache[postId] = post;
     }
     return this.cache[postId];
@@ -340,15 +344,8 @@ export default class Platform {
   /**
    * preparePost
    *
-   * Prepare a post for this platform for the
-   * given source. If it doesn't exist, create it.
-   *
-   * Override this in your own platform, but
-   * always call super.preparePost()
-   *
-   * If the post exists and is published, ignores it.
-   * If the post exists and is failed, sets it back to
-   * unscheduled.
+   * Prepare the post for this platform.
+   * Override this in your own platform !
    *
    * Do not throw errors. Instead, catch and log them,
    * and set the post.valid to false
@@ -356,28 +353,12 @@ export default class Platform {
    * Presume the post may have already been prepared
    * before, and manually adapted later. For example,
    * post.status may have manually been set to canceled.
-   * @param source - the source for which to prepare a post for this platform
-   * @param save - wether to save the post already
-   * @returns the prepared post
+   * @param post - the post to prepare
    */
-  async preparePost(source: Source, save?: true): Promise<Post> {
-    this.user.log.trace("Platform", this.id, "preparePost");
-    const post = await this.getPost(source);
-    if (post.status === PostStatus.PUBLISHED) {
-      return post;
-    }
-    await post.prepare();
-    if (post.status === PostStatus.UNKNOWN) {
-      post.status = PostStatus.UNSCHEDULED;
-    }
-    if (post.status === PostStatus.FAILED) {
-      post.status = PostStatus.UNSCHEDULED;
-    }
-    if (save) {
-      await post.save();
-    }
 
-    return post;
+  async preparePost(post: Post) {
+    this.user.log.trace("Platform.preparePost: noop", post.id);
+    // noop
   }
 
   /**
@@ -504,14 +485,32 @@ export default class Platform {
   }
 
   /**
-   * @returns array of instances of the plugins given with the settings given.
+   * @returns array of instances of the plugins
+   *
+   * - will load plugins given in Platform.pluginSettings
+   * - with the settings given in that object
+   * - but if Platform.pluginSettings.name is set,
+   *   also load that value from user settings and
+   *   override the default platform settings
    */
-  loadPlugins(pluginSettings: { [pluginid: string]: object }): Plugin[] {
+  loadPlugins(): Plugin[] {
     const plugins: Plugin[] = [];
+    let pluginSettings = this.pluginSettings;
+    if (this.pluginSettings.name) {
+      const userPluginSettings = JSON.parse(
+        this.user.data.get("settings", this.pluginSettings.name, "{}"),
+      );
+      pluginSettings = {
+        ...this.pluginSettings,
+        ...(userPluginSettings || {}),
+      };
+    }
     Object.values(pluginClasses).forEach((pluginClass) => {
       const pluginId = pluginClass.id();
       if (pluginId in pluginSettings) {
-        plugins?.push(new pluginClass(pluginSettings[pluginId]));
+        if (typeof pluginSettings[pluginId] === "object") {
+          plugins?.push(new pluginClass(pluginSettings[pluginId]));
+        }
       }
     });
     return plugins;

@@ -1,5 +1,4 @@
 import { FileGroup, FieldMapping } from "../../types/index.ts";
-import Source from "../../models/Source.ts";
 
 import Operator from "../../models/Operator.ts";
 import Platform from "../../models/Platform.ts";
@@ -18,6 +17,7 @@ export default class Bluesky extends Platform {
   assetsFolder = "_bluesky";
   postFileName = "post.json";
   pluginSettings = {
+    name: "BLUESKY_PLUGIN_SETTINGS",
     textsize: {
       max_length: 300,
     },
@@ -95,37 +95,16 @@ export default class Bluesky extends Platform {
 
   /** @inheritdoc */
 
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("Bluesky.preparePost", source.id);
-    const post = await super.preparePost(source);
-    if (post) {
-      const userPluginSettings = JSON.parse(
-        this.user.data.get("settings", "BLUESKY_PLUGIN_SETTINGS", "{}"),
-      );
-      const pluginSettings = {
-        ...this.pluginSettings,
-        ...(userPluginSettings || {}),
-      };
-      const plugins = this.loadPlugins(pluginSettings);
-      for (const plugin of plugins) {
-        try {
-          await plugin.process(post);
-        } catch {
-          post.valid = false;
-        }
-      }
+  async preparePost(post: Post) {
+    this.user.log.trace("Bluesky.preparePost", post.id);
 
-      // Annimated GIF will be sent as a video. Only one animated GIF can be sent per post.
+    // Annimated GIF will be sent as a video. Only one animated GIF can be sent per post.
 
-      // video
-      // Supported formats: MP4.
-      // Duration max: 4 minutes.
-      // Duration min: 1 second.
-      // Aspect ratio must be between 1:3 and 3:1.
-
-      await post.save();
-    }
-    return post;
+    // video
+    // Supported formats: MP4.
+    // Duration max: 4 minutes.
+    // Duration min: 1 second.
+    // Aspect ratio must be between 1:3 and 3:1.
   }
 
   /** @inheritdoc */

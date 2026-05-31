@@ -1,5 +1,4 @@
 import { FileGroup, FieldMapping, OAuthRequest } from "../../types/index.ts";
-import Source from "../../models/Source.ts";
 import { handleApiError, handleEmptyResponse } from "../../utilities.ts";
 
 import LinkedInApi from "./LinkedInApi.ts";
@@ -14,6 +13,7 @@ export default class LinkedIn extends Platform {
   assetsFolder = "_linkedin";
   postFileName = "post.json";
   pluginSettings = {
+    name: "LINKEDIN_PLUGIN_SETTINGS",
     limitfiles: {
       exclusive: ["video"],
       video_max: 1,
@@ -102,24 +102,9 @@ export default class LinkedIn extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("LinkedIn.preparePost", source.id);
-    const post = await super.preparePost(source);
-    if (post) {
-      const userPluginSettings = JSON.parse(
-        this.user.data.get("settings", "LINKEDIN_PLUGIN_SETTINGS", "{}"),
-      );
-      const pluginSettings = {
-        ...this.pluginSettings,
-        ...(userPluginSettings || {}),
-      };
-      const plugins = this.loadPlugins(pluginSettings);
-      for (const plugin of plugins) {
-        await plugin.process(post);
-      }
-      await post.save();
-    }
-    return post;
+  async preparePost(post: Post) {
+    this.user.log.trace("LinkedIn.preparePost", post.id);
+    // all good
   }
 
   /** @inheritdoc */

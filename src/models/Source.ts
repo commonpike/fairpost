@@ -9,7 +9,7 @@ import {
   FileGroup,
 } from "../types/index.ts";
 import Platform from "./Platform.ts";
-import Post from "./Post.ts";
+import Post, { PostFactory } from "./Post.ts";
 import SourceMapper from "../mappers/SourceMapper.ts";
 
 /**
@@ -39,36 +39,10 @@ export default class Source {
    */
   constructor(feed: Feed, path: string) {
     this.feed = feed;
-    this.id = this.getSourceId(path);
+    this.id = feed.getSourceId(path);
     this.path = path;
     this.mapper = new SourceMapper(this);
     this.stage = this.getSourceStage();
-  }
-
-  /**
-   * getSourcePath
-   *
-   * Get the path for a source in a feed, based on stage and id
-   * @param feed - the feed this source belongs to
-   * @param id - the id of the source
-   * @param stage - the stage of the source
-   * @returns the path to the source
-   */
-  public static getSourcePath(
-    feed: Feed,
-    id: string,
-    stage: SourceStage,
-  ): string {
-    return feed.getStagePath(stage) + "/" + id;
-  }
-
-  /**
-   * get source id based on the path of a source
-   * @param path the path for the new or existing source
-   * @returns the id for the new or existing source
-   */
-  public getSourceId(path: string): string {
-    return basename(path); // ah, simple
   }
 
   /**
@@ -88,31 +62,6 @@ export default class Source {
       }
     }
     return SourceStage.UNKNOWN;
-  }
-
-  /**
-   * getSource
-   *
-   * get a new source and do some async checks.
-   * @param feed - the feed this source belongs to
-   * @param id - the id of the source
-   * @param stage - optional stage to find the source in
-   * @returns new source object
-   */
-
-  public static async getSource(
-    feed: Feed,
-    id: string,
-    stage?: SourceStage,
-  ): Promise<Source> {
-    const stages = stage ? [stage] : Object.values(SourceStage);
-    for (const stage of stages) {
-      const sourcePath = Source.getSourcePath(feed, id, stage);
-      if (await feed.user.files.isDir(sourcePath)) {
-        return new Source(feed, sourcePath);
-      }
-    }
-    throw feed.user.log.error("getSource", "No source in stage: " + id, stage);
   }
 
   /**
@@ -195,7 +144,7 @@ export default class Source {
       }
     }
 
-    const newPath = Source.getSourcePath(this.feed, newId, newStage);
+    const newPath = this.feed.getSourcePath(newId, newStage);
     if (await this.feed.user.files.exists(newPath)) {
       this.feed.user.log.error(
         this.id,
@@ -292,35 +241,13 @@ export default class Source {
   }
 
   /**
-   * preparePost
-   * this is just an alias of Platform.preparePost(source)
-   */
-
-  public async preparePost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(
-      "Source",
-      this.id,
-      "preparePost",
-      this.id,
-      platform.id,
-    );
-    return await platform.preparePost(this);
-  }
-
-  /**
-   * getPost
-   * this is just an alias of Platform.getPost(source)
+   * Get a single post from this source
+   * @param platform - platform for the post
    */
 
   public async getPost(platform: Platform): Promise<Post> {
-    this.feed.user.log.trace(
-      "Source",
-      this.id,
-      "getPost",
-      this.id,
-      platform.id,
-    );
-    return await platform.getPost(this);
+    this.feed.user.log.trace("Source", "getPost", this.id, platform.id);
+    return await PostFactory.resolve(platform, this);
   }
 
   /**
@@ -341,7 +268,7 @@ export default class Source {
     }
     for (const platform of platforms) {
       try {
-        const post = await this.getPost(platform);
+        const post = await PostFactory.resolve(platform, this);
         if (!status || status === post.status) {
           posts.push(post);
         }

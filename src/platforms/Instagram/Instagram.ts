@@ -1,8 +1,6 @@
 import { basename } from "path";
 import { FileGroup, FieldMapping, OAuthRequest } from "../../types/index.ts";
 
-import Source from "../../models/Source.ts";
-
 import InstagramApi from "./InstagramApi.ts";
 import InstagramAuth from "./InstagramAuth.ts";
 import PlatformMapper from "../../mappers/PlatformMapper.ts";
@@ -22,6 +20,7 @@ export default class Instagram extends Platform {
   assetsFolder = "_instagram";
   postFileName = "post.json";
   pluginSettings = {
+    name: "INSTAGRAM_PLUGIN_SETTINGS",
     limitfiles: {
       total_max: 10,
     },
@@ -101,35 +100,16 @@ export default class Instagram extends Platform {
   }
 
   /** @inheritdoc */
-  async preparePost(source: Source): Promise<Post> {
-    this.user.log.trace("Instagram.preparePost", source.id);
-    const post = await super.preparePost(source);
-    if (post && post.files) {
-      // instagram: require media
-      if (
-        post.getFiles(FileGroup.IMAGE).length +
-          post.getFiles(FileGroup.VIDEO).length ===
-        0
-      ) {
-        post.valid = false;
-      }
-      if (post.valid) {
-        const userPluginSettings = JSON.parse(
-          this.user.data.get("settings", "INSTAGRAM_PLUGIN_SETTINGS", "{}"),
-        );
-        const pluginSettings = {
-          ...this.pluginSettings,
-          ...(userPluginSettings || {}),
-        };
-        const plugins = this.loadPlugins(pluginSettings);
-        for (const plugin of plugins) {
-          await plugin.process(post);
-        }
-      }
-
-      await post.save();
+  async preparePost(post: Post) {
+    this.user.log.trace("Instagram.preparePost", post.id);
+    // instagram: require media
+    if (
+      post.getFiles(FileGroup.IMAGE).length +
+        post.getFiles(FileGroup.VIDEO).length ===
+      0
+    ) {
+      post.valid = false;
     }
-    return post;
   }
 
   /** @inheritdoc */
