@@ -152,14 +152,12 @@ for you to throw:
     throw this.user.log.error('foo', 'bar', 'quz');
 ```
 
-### Using Plugins to prepare your Post
+### Using Plugins after preparing your Post
 
-Inside `preparePost`, you can call plugins to, for example,
-limit the files to a certain type or scale down images, etcetera.
+When a Post is prepared, after `Platform.preparePost`
+has finished, the post calls `this.platform.loadPlugins()`
+to run plugins configured for this platform. 
 See [Plugins](Plugins.md) for a more detailed description.
-If you want users to be able to finetune the plugin settings,
-or even enable additional plugins, read the plugin ids and/or
-settings using `User.get(...)`.
 
 ### Add input/output for custom settings in your platform
 
