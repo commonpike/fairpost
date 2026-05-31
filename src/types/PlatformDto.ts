@@ -14,7 +14,4 @@ export default interface PlatformDto {
     name?: string;
     [pluginid: string]: object | string | undefined; // stringified object
   };
-  // remove
-  // more fields added by platform
-  //[key: string]: string | string[] | number | boolean | undefined;
 }

@@ -48,8 +48,6 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       get: ["managePlatforms"],
       set: ["managePlatforms"],
     },
-    // more fields from platform.settings
-    // added in mapper constructor
   };
 
   mapping = structuredClone(PlatformMapper.platformMapping);
@@ -57,10 +55,6 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
   constructor(platform: Platform) {
     super(platform.user);
     this.platform = platform;
-    // remove
-    for (const key in platform.settings) {
-      this.mapping[key] = platform.settings[key];
-    }
   }
 
   /**
@@ -72,7 +66,6 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
     const fields = this.getDtoFields(operator, "get");
     const pluginSettingsName = this.platform.pluginSettings.name;
     const permissions = operator.getPermissions(this.platform.user);
-    //const validOperations = Object.keys(permissions).filter(p=>permissions[p]??false)
     const dto: PlatformDto = {
       user_id: this.user.id,
       model: "platform",
@@ -163,7 +156,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
               if (this.platform.settings[key].required) {
                 if (!dto[field]?.[key]) {
                   throw this.platform.user.log.error(
-                    "Missing required field in settings:" + key,
+                    "Missing required field in settings: " + key,
                   );
                 }
               }
