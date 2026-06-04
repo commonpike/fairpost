@@ -39,7 +39,12 @@ type FairpostOutput =
   | {
       [id in PlatformId]?: CombinedResult | CombinedResult[];
     }
-  | { success: boolean; message?: string; messages?: string[] };
+  | {
+      success: boolean;
+      result?: string;
+      message?: string;
+      messages?: string[];
+    };
 
 /**
  * Fairpost - singleton

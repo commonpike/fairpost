@@ -36,8 +36,18 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
       get: ["managePlatforms"],
       set: ["managePlatforms"],
     },
-    // more fields from platform.settings
-    // added in mapper constructor
+    settings: {
+      type: "json",
+      label: "Settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+    },
+    plugins: {
+      type: "json",
+      label: "Settings",
+      get: ["managePlatforms"],
+      set: ["managePlatforms"],
+    },
   };
 
   mapping = structuredClone(PlatformMapper.platformMapping);
@@ -45,9 +55,6 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
   constructor(platform: Platform) {
     super(platform.user);
     this.platform = platform;
-    for (const key in platform.settings) {
-      this.mapping[key] = platform.settings[key];
-    }
   }
 
   /**
@@ -57,6 +64,8 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
    */
   async getDto(operator: Operator): Promise<PlatformDto> {
     const fields = this.getDtoFields(operator, "get");
+    const pluginSettingsName = this.platform.pluginSettings.name;
+    const permissions = operator.getPermissions(this.platform.user);
     const dto: PlatformDto = {
       user_id: this.user.id,
       model: "platform",
@@ -70,44 +79,55 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
         case "connected":
           dto[field] = !!this.platform.connected;
           break;
-        case "model":
-        case "id":
-        case "user_id":
-          break;
-        default:
-          switch (this.mapping[field].type) {
-            case "string":
-              dto[field] = String(this.user.data.get("settings", field, ""));
-              break;
-            case "string[]":
-              dto[field] = String(
-                this.user.data.get("settings", field, ""),
-              ).split(",");
-              break;
-            case "boolean":
-              dto[field] = this.user.data.get("settings", field, "") === "true";
-              break;
-            case "integer":
-              dto[field] = parseInt(this.user.data.get("settings", field, ""));
-              break;
-            case "float":
-              dto[field] = parseFloat(
-                this.user.data.get("settings", field, ""),
-              );
-              break;
-            case "json":
-              if (this.mapping[field].default) {
-                dto[field] = {
-                  ...(this.mapping[field].default as object),
-                  ...JSON.parse(this.user.data.get("settings", field, "{}")),
-                };
-              } else {
-                dto[field] = JSON.parse(
-                  this.user.data.get("settings", field, "{}"),
+        case "settings":
+          const settings = {} as {
+            [key: string]: { label: string; value: string };
+          };
+          for (const key in this.platform.settings) {
+            if (key !== pluginSettingsName) {
+              const needPermissions = this.platform.settings[key].get;
+              const canGet =
+                needPermissions.includes("any") ||
+                needPermissions.some(
+                  (permission) =>
+                    permissions[permission as keyof typeof permissions],
                 );
+              if (canGet) {
+                settings[key] = {
+                  label: this.platform.settings[key].label,
+                  value: this.platform.user.data.get("settings", key, ""),
+                };
               }
-              break;
+            }
           }
+          for (const key in this.platform.settings) {
+            if (this.platform.settings[key].required) {
+              if (!settings[key]) {
+                this.platform.user.log.error(
+                  "Missing required field in settings:" + key,
+                );
+                // now what ? proceed
+              }
+            }
+          }
+          dto[field] = settings;
+          break;
+        case "plugins":
+          if (pluginSettingsName) {
+            const userPluginSettings = this.platform.user.data.get(
+              "settings",
+              pluginSettingsName,
+              "{}",
+            );
+            dto[field] = {
+              ...this.platform.pluginSettings,
+              ...(JSON.parse(userPluginSettings) || {}),
+            };
+            delete dto[field]?.name;
+          } else {
+            dto[field] = {};
+          }
+          break;
       }
     }
     return dto;
@@ -120,6 +140,7 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
    * @returns boolean success
    */
   async putDto(operator: Operator, dto: PlatformDto): Promise<boolean> {
+    const permissions = operator.getPermissions(this.platform.user);
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (fields.includes(field)) {
@@ -130,34 +151,41 @@ export default class PlatformMapper extends AbstractMapper<PlatformDto> {
           case "connected":
             this.platform.connected = !!dto[field];
             break;
-          default: {
-            switch (this.mapping[field].type) {
-              case "string":
-              case "integer":
-              case "float":
-                this.user.data.set("settings", field, String(dto[field]));
-                break;
-              case "string[]":
-                this.user.data.set(
-                  "settings",
-                  field,
-                  (dto[field] as string[]).join(","),
+          case "settings": {
+            for (const key in this.platform.settings) {
+              if (this.platform.settings[key].required) {
+                if (!dto[field]?.[key]) {
+                  throw this.platform.user.log.error(
+                    "Missing required field in settings: " + key,
+                  );
+                }
+              }
+            }
+            for (const key in dto[field]) {
+              const needPermissions = this.platform.settings[key].set;
+              const canSet =
+                needPermissions.includes("any") ||
+                needPermissions.some(
+                  (permission) =>
+                    permissions[permission as keyof typeof permissions],
                 );
-                break;
-              case "boolean":
-                this.user.data.set(
-                  "settings",
-                  field,
-                  dto[field] ? "true" : "false",
-                );
-                break;
-              case "json":
-                this.user.data.set(
-                  "settings",
-                  field,
-                  JSON.stringify(dto[field]),
-                );
-                break;
+              if (canSet) {
+                const value = dto[field][key].value;
+                // todo: check this.platform.settings[key].type
+                this.user.data.set("settings", key, String(value));
+              }
+            }
+            break;
+          }
+          case "plugins": {
+            const pluginSettingsName = this.platform.pluginSettings.name;
+            if (pluginSettingsName) {
+              // todo: remove defaults from platform.pluginSettings
+              this.user.data.set(
+                "settings",
+                pluginSettingsName,
+                JSON.stringify(dto[field]),
+              );
             }
           }
         }
