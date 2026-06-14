@@ -3,5 +3,8 @@ export default interface FeedDto {
   id: string;
   user_id: string;
   path?: string;
+  interval?: number;
+  platforms?: string[];
+  connected?: string[];
   sources?: string[];
 }

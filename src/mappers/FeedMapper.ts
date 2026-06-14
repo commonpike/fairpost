@@ -30,6 +30,24 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
       get: ["manageFeed"],
       set: ["none"],
     },
+    interval: {
+      type: "integer",
+      label: "Interval",
+      get: ["manageFeed"],
+      set: ["manageFeed"],
+    },
+    platforms: {
+      type: "string[]",
+      label: "Active platforms",
+      get: ["manageFeed"],
+      set: ["none"],
+    },
+    connected: {
+      type: "string[]",
+      label: "Connected platforms",
+      get: ["manageFeed"],
+      set: ["none"],
+    },
     sources: {
       type: "string[]",
       label: "Feed sources",
@@ -62,6 +80,19 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
         case "path":
           dto[field] = this.feed.path;
           break;
+        case "interval":
+          dto[field] = Number(this.user.data.get("settings", "FEED_INTERVAL"));
+          break;
+        case "platforms":
+          dto[field] = this.user.data
+            .get("settings", "FEED_PLATFORMS")
+            .split(",");
+          break;
+        case "connected":
+          dto[field] = this.user.data
+            .get("settings", "FEED_CONNECTED")
+            .split(",");
+          break;
         case "sources":
           dto[field] = (await this.feed.getSources()).map((s) => s.id);
           break;
@@ -80,7 +111,14 @@ export default class FeedMapper extends AbstractMapper<FeedDto> {
     const fields = this.getDtoFields(operator, "set");
     for (const field in dto) {
       if (fields.includes(field)) {
-        // there are no settable fields
+        switch (field) {
+          case "interval":
+            const interval = Number(
+              dto[field] || process.env.FAIRPOST_FEED_INTERVAL,
+            );
+            this.user.data.set("settings", "FEED_INTERVAL", String(interval));
+            break;
+        }
       } else {
         this.user.log.trace("Ignoring field: " + field);
       }
