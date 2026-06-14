@@ -19,21 +19,21 @@ export default class UserMapper extends AbstractMapper<UserDto> {
     homedir: {
       type: "string",
       label: "Home directory",
-      get: ["manageUsers"],
+      get: ["manageAccount"],
       set: ["none"],
       required: false,
     },
     is_public: {
       type: "boolean",
       label: "Show my profile in public",
-      get: ["manageUsers"],
-      set: ["manageUsers"],
+      get: ["manageAccount"],
+      set: ["manageAccount"],
       required: false,
     },
     loglevel: {
       type: "string",
       label: "Logger level",
-      get: ["manageUsers"],
+      get: ["manageAccount"],
       set: ["manageUsers"],
       required: false,
     },
@@ -58,24 +58,23 @@ export default class UserMapper extends AbstractMapper<UserDto> {
       model: "user",
       id: this.user.id,
     };
-    for (const field in dto) {
-      if (fields.includes(field)) {
-        switch (field) {
-          case "homedir":
-            dto[field] = this.user.homedir;
-            break;
-          case "is_public":
-            dto[field] = this.user.data.get("settings", "IS_PUBLIC") === "true";
-            break;
-          case "loglevel":
-            dto[field] = this.user.data.get("settings", "LOGGER_LEVEL");
-            break;
-          case "report":
-            dto[field] = await this.user.getReport();
-            break;
-        }
+    for (const field of fields) {
+      switch (field) {
+        case "homedir":
+          dto[field] = this.user.homedir;
+          break;
+        case "is_public":
+          dto[field] = this.user.data.get("settings", "IS_PUBLIC") === "true";
+          break;
+        case "loglevel":
+          dto[field] = this.user.data.get("settings", "LOGGER_LEVEL");
+          break;
+        case "report":
+          dto[field] = await this.user.getReport();
+          break;
       }
     }
+
     return dto;
   }
 
