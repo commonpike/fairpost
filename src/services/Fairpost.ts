@@ -175,24 +175,19 @@ class Fairpost {
           if (!user) {
             throw new Error("user is required for command " + command);
           }
-          if (!args.model) {
+          if (!args.model && !args.platform) {
             throw user.log.error(
               "CommandHandler " + command,
-              "Missing argument: model",
+              "Missing argument: model or platform",
             );
           }
-          let instance: object | undefined = undefined;
-          if (args.model === "platform") {
-            if (!args.platform) {
-              throw user.log.error(
-                "CommandHandler " + command,
-                "Missing argument: platform",
-              );
-            }
-            instance = user.getPlatform(args.platform);
+          if (args.platform) {
+            const platform = user.getPlatform(args.platform);
+            const rawFieldMapping = platform.settings;
+            output = operator.processFieldMapping(user, rawFieldMapping);
+          } else if (args.model) {
+            output = operator.getFieldMapping(user, args.model);
           }
-
-          output = operator.getFieldMapping(user, args.model, instance);
           break;
         }
 

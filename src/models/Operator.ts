@@ -1,9 +1,9 @@
 import User from "./User.ts";
 import { FieldMapping, ProcessedFieldMapping } from "../types/index.ts";
-import Platform from "../models/Platform.ts";
 import UserMapper from "../mappers/UserMapper.ts";
 import FeedMapper from "../mappers/FeedMapper.ts";
 import SourceMapper from "../mappers/SourceMapper.ts";
+import PlatformMapper from "../mappers/PlatformMapper.ts";
 import PostMapper from "../mappers/PostMapper.ts";
 
 /**
@@ -86,13 +86,8 @@ export default class Operator {
     return permissions;
   }
 
-  public getFieldMapping(
-    user: User,
-    model: string,
-    instance?: object,
-  ): ProcessedFieldMapping {
+  public getFieldMapping(user: User, model: string): ProcessedFieldMapping {
     let rawFieldMapping: FieldMapping | undefined = undefined;
-    let processedFieldMapping: ProcessedFieldMapping = {};
     switch (model) {
       case "user":
         rawFieldMapping = UserMapper.userMapping;
@@ -107,14 +102,7 @@ export default class Operator {
         break;
 
       case "platform":
-        if (!instance || !(instance instanceof Platform)) {
-          throw user.log.error(
-            "Operator.getFieldMapping",
-            "Platform is required",
-          );
-        }
-        const platform = instance as Platform;
-        rawFieldMapping = platform.mapper.mapping;
+        rawFieldMapping = PlatformMapper.platformMapping;
         break;
 
       case "post":
@@ -124,6 +112,14 @@ export default class Operator {
     if (!rawFieldMapping) {
       throw user.log.error("Operator.getFieldMapping: no such mapping", model);
     }
+    return this.processFieldMapping(user, rawFieldMapping);
+  }
+
+  public processFieldMapping(
+    user: User,
+    rawFieldMapping: FieldMapping,
+  ): ProcessedFieldMapping {
+    let processedFieldMapping: ProcessedFieldMapping = {};
     const permissions = this.getPermissions(user);
     for (const fieldName of Object.keys(rawFieldMapping)) {
       const rawField = rawFieldMapping[fieldName];

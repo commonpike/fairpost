@@ -5,7 +5,7 @@ import Platform from "../models/Platform.ts";
 
 export default class PlatformMapper extends AbstractMapper<PlatformDto> {
   private platform: Platform;
-  private static platformMapping: FieldMapping = {
+  static platformMapping: FieldMapping = {
     model: {
       type: "string",
       label: "Model",
