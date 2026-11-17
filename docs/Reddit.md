@@ -5,6 +5,11 @@ https://developers.reddit.com/app-registration
 
 Documentation below is for the legacy api.
 
+> [!NOTE]
+> During development, set the oauth redirect url
+> to localhost host here
+> https://old.reddit.com/prefs/apps/
+
 ## Set up the platform
 
 ### Create a new App in your Reddit account

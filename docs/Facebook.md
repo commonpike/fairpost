@@ -3,6 +3,11 @@
 The `facebook` platform manages a facebook **page** (not your feed)
 using the plain graph api - no extensions installed.
 
+> [!NOTE]
+> During development, to reconnect, set the app
+> back to development mode so the localhost return urls
+> work. Dont forget to set it back live again or all
+> your new posts will appear private.
 
 ## Set up the platform
 

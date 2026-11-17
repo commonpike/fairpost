@@ -11,6 +11,11 @@ It uses the related facebook account to
 upload temporary files, because the instagram
 api requires files in posts to have an url.
 
+> [!NOTE]
+> During development, to reconnect, set the app
+> back to development mode so the localhost return urls
+> work. Dont forget to set it back live again or all
+> your new posts will appear private.
 
 ## Set up the platform
 
